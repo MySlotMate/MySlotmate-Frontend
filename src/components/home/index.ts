@@ -1,3 +1,3 @@
 import Hero from "./Hero";
-
-export {Hero};
+import people from "./people";
+export {Hero,people};

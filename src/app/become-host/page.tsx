@@ -634,7 +634,7 @@ export default function BecomeHostPage() {
               <button
                 onClick={() => {
                   // Save for later = draft
-                  handleSaveDraft();
+                  void handleSaveDraft();
                 }}
                 className="text-sm font-medium text-gray-500 transition hover:text-gray-700"
               >

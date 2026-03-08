@@ -4,7 +4,7 @@ const Hero: React.FC = () => {
     return (
         <div className="py-[5rem] px-[8rem] w-full justify-around gap-[3rem] items-center flex flex-col lg:flex-row text-[#000000]">
             <div className="flex flex-col scale-100 lg:scale-150">
-                <h1 className="text-2xl font-bold text-center md:text-left">Book People's<br /><span className="text-[#0094CA]">Time.</span></h1>
+                <h1 className="text-2xl font-bold text-center md:text-left">Book People&apos;s<br /><span className="text-[#0094CA]">Time.</span></h1>
                 <p className="text-sm text-center text-[#606060] md:text-left mb-4">Pick an interest. Meet someone who shares it.</p>
                 <div className="flex flex-row gap-0.5 justify-center text-semibold">
                     <button className="w-[45%] h-[1.2rem] bg-[#0094CA] text-[#ffffff] text-xs rounded-md mt-2">Book Time</button>

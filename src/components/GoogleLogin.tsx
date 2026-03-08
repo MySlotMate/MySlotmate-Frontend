@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "~/utils/firebase";
 import { FcGoogle } from "react-icons/fc";
@@ -11,6 +12,7 @@ interface GoogleLoginProps {
 }
 
 export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
+  const router = useRouter();
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -20,6 +22,15 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+
+      // If the user has never completed signup, redirect to the signup form
+      const userId = localStorage.getItem("msm_user_id");
+      if (!userId) {
+        onClose();
+        router.push("/signup");
+        return;
+      }
+
       onClose();
     } catch (err) {
       console.error("Google sign-in error:", err);

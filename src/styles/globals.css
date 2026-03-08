@@ -13,3 +13,9 @@
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+
+/* All buttons get pointer cursor */
+button,
+[role="button"] {
+  cursor: pointer;
+}

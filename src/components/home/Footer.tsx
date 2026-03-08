@@ -1,5 +1,6 @@
 import { FiArrowRight } from 'react-icons/fi';
 import { FaLinkedin, FaFacebookF, FaTwitter } from 'react-icons/fa';
+import Link from 'next/link';
 
 const Footer = () => {
     return (
@@ -19,7 +20,7 @@ const Footer = () => {
                 </div>
                 <div className="flex flex-col items-center justify-center text-[0.75rem] text-[#1A1919]">
                     <a>Moments</a>
-                    <a>Become a host</a>
+                    <Link href="/become-host" className="hover:text-[#0094CA] transition">Become a host</Link>
                 </div>
                 <div className="flex flex-col items-center md:items-start justify-center">
                     <h1>Subscribe</h1>

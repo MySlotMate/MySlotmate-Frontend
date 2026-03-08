@@ -1,6 +1,6 @@
 "use client";
 
-import { dummyHostPublicProfile } from "~/data/hostProfile";
+import { use, useMemo } from "react";
 import {
   ProfileHeader,
   PhotoGallery,
@@ -11,11 +11,30 @@ import {
 } from "~/components/host";
 import { Navbar } from "~/components";
 import { FiChevronRight } from "react-icons/fi";
+import Link from "next/link";
+import { dummyHostPublicProfile } from "~/data/hostProfile";
 
 export const runtime = "edge";
 
-export default function HostProfilePage() {
-  // TODO: replace with API call using params.id
+/**
+ * Public host profile page.
+ *
+ * ⚠️  Backend is missing a public endpoint:
+ *     GET /hosts/{hostID}   →  Returns host profile by host ID
+ *
+ * Once that endpoint exists, replace the dummy data below with:
+ *   const { data: host } = useHostById(hostId);
+ *   const { data: events } = useEventsByHost(hostId);
+ *   const { data: reviews } = useReviewsByEvent(firstEventId);
+ */
+export default function HostProfilePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: hostId } = use(params);
+
+  // TODO: Replace with API call once GET /hosts/{hostID} endpoint is added
   const profile = dummyHostPublicProfile;
   const { host } = profile;
   const fullName = `${host.first_name} ${host.last_name}`;
@@ -27,13 +46,13 @@ export default function HostProfilePage() {
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-1 text-sm text-gray-400">
-          <a href="#" className="hover:text-[#0094CA]">
+          <Link href="/" className="hover:text-[#0094CA]">
             Home
-          </a>
+          </Link>
           <FiChevronRight className="h-3 w-3" />
-          <a href="#" className="hover:text-[#0094CA]">
+          <Link href="/" className="hover:text-[#0094CA]">
             Interesting people near you
-          </a>
+          </Link>
           <FiChevronRight className="h-3 w-3" />
           <span className="font-medium text-gray-700">{fullName}</span>
         </nav>

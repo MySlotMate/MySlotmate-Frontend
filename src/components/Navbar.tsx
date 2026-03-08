@@ -6,15 +6,46 @@ import { signOut } from "firebase/auth";
 import { auth } from "~/utils/firebase";
 import { FiSearch, FiMenu, FiX, FiChevronRight } from "react-icons/fi";
 import { IoLocationSharp } from "react-icons/io5";
-import { LuCalendarDays, LuBookmarkMinus, LuMessageSquare, LuShield, LuFileText, LuLogOut, LuArrowLeft } from "react-icons/lu";
+import { LuCalendarDays, LuBookmarkMinus, LuMessageSquare, LuShield, LuFileText, LuLogOut, LuArrowLeft, LuHome, LuHeart } from "react-icons/lu";
+import Link from "next/link";
 import GoogleLogin from "./GoogleLogin";
+import { BecomeHostModal } from "./become-host";
+import AadharVerificationModal from "./AadharVerificationModal";
+import { useMyProfile, useApplicationStatus, queryKeys } from "~/hooks/useApi";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function Navbar() {
   const [user] = useAuthState(auth);
   const [showLogin, setShowLogin] = useState(false);
+  const [showBecomeHost, setShowBecomeHost] = useState(false);
+  const [showAadharVerify, setShowAadharVerify] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
+
+  // Read stored user id
+  const [storedUserId, setStoredUserId] = useState<string | null>(null);
+  useEffect(() => {
+    setStoredUserId(localStorage.getItem("msm_user_id"));
+  }, [profileOpen]);
+
+  const validUserId =
+    storedUserId && storedUserId !== "existing" ? storedUserId : null;
+
+  // React Query — user profile & host status
+  const { data: userProfile } = useMyProfile(validUserId);
+  const { data: hostData } = useApplicationStatus(validUserId);
+
+  const hostStatus = hostData?.application_status ?? null;
+  const isVerified = userProfile?.is_verified ?? false;
+
+  // Sync host_id to localStorage for other pages
+  useEffect(() => {
+    if (hostData?.id) {
+      localStorage.setItem("msm_host_id", hostData.id);
+    }
+  }, [hostData?.id]);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -123,35 +154,119 @@ export default function Navbar() {
                         className="h-14 w-14 rounded-full object-cover"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="overflow-hidden">
+                      <div className="overflow-hidden flex-1">
                         <p className="truncate text-base font-bold text-gray-900">
                           {user.displayName}
                         </p>
                         <p className="truncate text-sm text-gray-500">
-                          {user.email}
+                          {user.phoneNumber ?? user.email}
                         </p>
                       </div>
+                      {/* Host status badge */}
+                      {hostStatus === "pending" || hostStatus === "under_review" ? (
+                        <span className="ml-auto flex-shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                          🟡 Host Request Under Review
+                        </span>
+                      ) : hostStatus === "approved" ? (
+                        <span className="ml-auto flex-shrink-0 rounded-full bg-[#e6f8ff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#0094CA]">
+                          ✅ Verified Host
+                        </span>
+                      ) : null}
                     </div>
+
+                    {/* Aadhaar Verification section */}
+                    {validUserId && !isVerified && (
+                      <div className="mx-5 mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900">
+                              Aadhaar Verification
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Required to become a host
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setShowAadharVerify(true)}
+                            className="rounded-lg bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#007dab]"
+                          >
+                            Verify Now
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {validUserId && isVerified && (
+                      <div className="mx-5 mb-3 flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3">
+                        <LuShield className="h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="text-sm font-semibold text-green-800">
+                            Aadhaar Verified
+                          </p>
+                          <p className="text-xs text-green-600">
+                            Your identity has been verified
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Menu sections */}
                     <div className="flex-1 overflow-y-auto px-5">
-                      {/* Bookings & Saved */}
-                      <div className="rounded-xl border border-gray-200 divide-y divide-gray-200">
-                        <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
-                          <span className="flex items-center gap-3">
-                            <LuCalendarDays className="h-5 w-5 text-gray-600" />
-                            View all bookings
-                          </span>
-                          <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </button>
-                        <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
-                          <span className="flex items-center gap-3">
-                            <LuBookmarkMinus className="h-5 w-5 text-gray-600" />
-                            Saved experiences
-                          </span>
-                          <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </button>
-                      </div>
+                      {/* Host-specific items (shown for verified hosts) */}
+                      {hostStatus === "approved" && (
+                        <div className="mb-4 rounded-xl border border-gray-200 divide-y divide-gray-200">
+                          <Link
+                            href="/host-dashboard"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                          >
+                            <span className="flex items-center gap-3">
+                              <LuHome className="h-5 w-5 text-gray-600" />
+                              Host dashboard
+                            </span>
+                            <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          </Link>
+                          <button
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                          >
+                            <span className="flex items-center gap-3">
+                              <LuCalendarDays className="h-5 w-5 text-gray-600" />
+                              View all bookings
+                            </span>
+                            <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          </button>
+                          <button
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                          >
+                            <span className="flex items-center gap-3">
+                              <LuHeart className="h-5 w-5 text-gray-600" />
+                              Saved experiences
+                            </span>
+                            <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Regular user items (no host or pending) */}
+                      {hostStatus !== "approved" && (
+                        <div className="rounded-xl border border-gray-200 divide-y divide-gray-200">
+                          <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                            <span className="flex items-center gap-3">
+                              <LuCalendarDays className="h-5 w-5 text-gray-600" />
+                              View all bookings
+                            </span>
+                            <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          </button>
+                          <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                            <span className="flex items-center gap-3">
+                              <LuBookmarkMinus className="h-5 w-5 text-gray-600" />
+                              Saved experiences
+                            </span>
+                            <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          </button>
+                        </div>
+                      )}
 
                       {/* Support */}
                       <p className="mb-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -286,6 +401,23 @@ export default function Navbar() {
 
       {/* Google Login Modal */}
       <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
+
+      {/* Become a Host Modal */}
+      <BecomeHostModal open={showBecomeHost} onClose={() => setShowBecomeHost(false)} />
+
+      {/* Aadhaar Verification Modal */}
+      {validUserId && (
+        <AadharVerificationModal
+          open={showAadharVerify}
+          onClose={() => setShowAadharVerify(false)}
+          userId={validUserId}
+          onVerified={() => {
+            void queryClient.invalidateQueries({
+              queryKey: queryKeys.myProfile(validUserId),
+            });
+          }}
+        />
+      )}
     </>
   );
 }

@@ -1,15 +1,19 @@
 "use client";
 
-import { type Event, type EventMood } from "~/data/hostProfile";
+import { type Event } from "~/data/hostProfile";
 import { HiOutlineCalendar } from "react-icons/hi";
 
 /** Map mood → colour for badge */
-const moodColorMap: Record<EventMood, string> = {
+const moodColorMap: Record<string, string> = {
   adventure: "#2ECC71",
   social: "#F5A623",
   wellness: "#7B61FF",
   creative: "#E85D3A",
   chill: "#0094CA",
+  romantic: "#E8436D",
+  intellectual: "#3A7BD5",
+  foodie: "#FF6B35",
+  nightlife: "#9B59B6",
 };
 
 /** Format cents → "$45 / person" */

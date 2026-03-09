@@ -1,6 +1,6 @@
 "use client";
 
-import { type Event } from "~/data/hostProfile";
+import { type EventDTO } from "~/lib/api";
 import { HiOutlineCalendar } from "react-icons/hi";
 
 /** Map mood → colour for badge */
@@ -38,7 +38,7 @@ function formatEventDate(iso: string): string {
     });
 }
 
-function ExperienceCard({ event }: { event: Event }) {
+function ExperienceCard({ event }: { event: EventDTO }) {
   const moodColor =
     event.mood ? (moodColorMap[event.mood] ?? "#0094CA") : "#0094CA";
 
@@ -88,7 +88,7 @@ function ExperienceCard({ event }: { event: Event }) {
 export default function ExperiencesList({
   events,
 }: {
-  events: Event[];
+  events: EventDTO[];
 }) {
   return (
     <div>

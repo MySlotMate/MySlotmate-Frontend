@@ -1,11 +1,7 @@
 "use client";
 
-import { type Review, type User } from "~/data/hostProfile";
+import { type ReviewDTO } from "~/lib/api";
 import { FaStar } from "react-icons/fa";
-
-type ReviewWithReviewer = Review & {
-  reviewer: Pick<User, "id" | "name" | "avatar_url">;
-};
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -46,7 +42,7 @@ function sentimentLabel(score: number | null): {
   return { text: "Genuine", color: "#0094CA" };
 }
 
-function ReviewCard({ review }: { review: ReviewWithReviewer }) {
+function ReviewCard({ review }: { review: ReviewDTO }) {
   const label = sentimentLabel(review.sentiment_score);
 
   return (
@@ -55,12 +51,12 @@ function ReviewCard({ review }: { review: ReviewWithReviewer }) {
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={review.reviewer.avatar_url ?? "/assets/home/avatar-placeholder.png"}
-            alt={review.reviewer.name}
+            src="/assets/home/avatar-placeholder.png"
+            alt={review.name ?? "Reviewer"}
             className="h-8 w-8 rounded-full object-cover"
           />
           <span className="text-sm font-semibold text-gray-900">
-            {review.name ?? review.reviewer.name}
+            {review.name ?? "Anonymous"}
           </span>
         </div>
         <span className="text-xs text-gray-400">
@@ -89,7 +85,7 @@ export default function RatingsSection({
 }: {
   avg_rating: number;
   total_reviews: number;
-  reviews: ReviewWithReviewer[];
+  reviews: ReviewDTO[];
 }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

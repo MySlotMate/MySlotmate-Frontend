@@ -6,17 +6,12 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { HostNavbar } from "~/components/host-dashboard";
 import {
-  FiUploadCloud,
   FiX,
   FiEdit2,
-  FiPlus,
   FiCheck,
-  FiExternalLink,
 } from "react-icons/fi";
 import {
   LuShieldCheck,
-  LuMail,
-  LuPhone,
   LuBadgeCheck,
   LuStar,
   LuUsers,

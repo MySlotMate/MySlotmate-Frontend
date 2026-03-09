@@ -12,7 +12,6 @@ import {
   FiClock,
   FiMapPin,
   FiMoreHorizontal,
-  FiUsers,
 } from "react-icons/fi";
 import {
   LuCalendarDays,
@@ -41,21 +40,21 @@ const ATTENTION: AttentionItem[] = [
     title: "2 Booking Received",
     description: "Pending approval for next week.",
     linkText: "View Experiences",
-    linkHref: "#",
+    linkHref: "/host-dashboard/experiences",
   },
   {
     icon: <LuWallet className="h-5 w-5 text-white" />,
     title: "Payout Processed",
     description: "$450.00 has been sent to your account.",
     linkText: "View History",
-    linkHref: "#",
+    linkHref: "/host-dashboard/earnings",
   },
   {
     icon: <LuCalendarClock className="h-5 w-5 text-white" />,
     title: "Update Availability",
     description: "Your calendar is empty for next month.",
     linkText: "Open Calendar",
-    linkHref: "#",
+    linkHref: "/host-dashboard/calendar",
   },
 ];
 
@@ -178,7 +177,7 @@ export default function HostDashboardPage() {
               ✏️ Edit Profile
             </Link>
             <Link
-              href="#"
+              href="/host-dashboard/experiences"
               className="rounded-lg bg-[#0094CA] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab]"
             >
               My Experiences
@@ -220,7 +219,7 @@ export default function HostDashboardPage() {
                 Today&apos;s Schedule
               </h2>
               <Link
-                href="#"
+                href="/host-dashboard/calendar"
                 className="text-sm font-medium text-[#0094CA] hover:underline"
               >
                 View Calendar

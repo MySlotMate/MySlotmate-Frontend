@@ -12,21 +12,14 @@ import {
 import { Navbar } from "~/components";
 import { FiChevronRight } from "react-icons/fi";
 import Link from "next/link";
-import { dummyHostPublicProfile } from "~/data/hostProfile";
+import {
+  usePublicHostProfile,
+  useEventsByHost,
+  useReviewsByEvent,
+} from "~/hooks/useApi";
 
 export const runtime = "edge";
 
-/**
- * Public host profile page.
- *
- * ⚠️  Backend is missing a public endpoint:
- *     GET /hosts/{hostID}   →  Returns host profile by host ID
- *
- * Once that endpoint exists, replace the dummy data below with:
- *   const { data: host } = useHostById(hostId);
- *   const { data: events } = useEventsByHost(hostId);
- *   const { data: reviews } = useReviewsByEvent(firstEventId);
- */
 export default function HostProfilePage({
   params,
 }: {
@@ -34,9 +27,53 @@ export default function HostProfilePage({
 }) {
   const { id: hostId } = use(params);
 
-  // TODO: Replace with API call once GET /hosts/{hostID} endpoint is added
-  const profile = dummyHostPublicProfile;
-  const { host } = profile;
+  const { data: host, isLoading: hostLoading } = usePublicHostProfile(hostId);
+  const { data: events } = useEventsByHost(hostId);
+
+  // Pick the first event's reviews as representative reviews for the host
+  const firstEventId = events?.[0]?.id ?? null;
+  const { data: reviewsEnvelope } = useReviewsByEvent(firstEventId);
+  const reviews = reviewsEnvelope ?? [];
+
+  // Derive gallery from all event cover images + gallery URLs
+  const galleryUrls = useMemo(() => {
+    if (!events) return [];
+    const urls: string[] = [];
+    for (const evt of events) {
+      if (evt.cover_image_url) urls.push(evt.cover_image_url);
+      if (evt.gallery_urls) urls.push(...evt.gallery_urls);
+    }
+    return urls;
+  }, [events]);
+
+  // Derive aggregate stats from events
+  const totalEvents = events?.length ?? 0;
+  const totalPeopleMet = useMemo(
+    () => events?.reduce((sum, e) => sum + (e.total_bookings ?? 0), 0) ?? 0,
+    [events],
+  );
+
+  // Derive moods from events
+  const moods = useMemo(() => {
+    if (!events) return [];
+    const set = new Set<string>();
+    for (const evt of events) {
+      if (evt.mood) set.add(evt.mood);
+    }
+    return Array.from(set);
+  }, [events]);
+
+  if (hostLoading || !host) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center py-32">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+        </div>
+      </main>
+    );
+  }
+
   const fullName = `${host.first_name} ${host.last_name}`;
 
   return (
@@ -61,16 +98,18 @@ export default function HostProfilePage({
         <ProfileHeader host={host} />
 
         {/* Gallery */}
-        <div className="mt-6">
-          <PhotoGallery images={profile.gallery_urls} />
-        </div>
+        {galleryUrls.length > 0 && (
+          <div className="mt-6">
+            <PhotoGallery images={galleryUrls} />
+          </div>
+        )}
 
         {/* Stats */}
         <div className="mt-6">
           <StatsBar
-            total_events_hosted={profile.total_events_hosted}
-            total_people_met={profile.total_people_met}
-            avg_rating={host.avg_rating}
+            total_events_hosted={totalEvents}
+            total_people_met={totalPeopleMet}
+            avg_rating={host.avg_rating ?? 0}
           />
         </div>
 
@@ -81,22 +120,24 @@ export default function HostProfilePage({
               first_name={host.first_name}
               bio={host.bio}
               expertise_tags={host.expertise_tags}
-              moods={host.moods}
+              moods={moods}
             />
           </div>
           <div className="lg:col-span-2">
             <RatingsSection
-              avg_rating={host.avg_rating}
+              avg_rating={host.avg_rating ?? 0}
               total_reviews={host.total_reviews}
-              reviews={profile.reviews}
+              reviews={reviews}
             />
           </div>
         </div>
 
         {/* Live & Upcoming Experiences */}
-        <div className="mt-10 mb-12">
-          <ExperiencesList events={profile.upcoming_events} />
-        </div>
+        {events && events.length > 0 && (
+          <div className="mt-10 mb-12">
+            <ExperiencesList events={events} />
+          </div>
+        )}
       </div>
     </main>
   );

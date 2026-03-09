@@ -9,8 +9,10 @@ import { IoLocationSharp } from "react-icons/io5";
 import { LuCalendarDays, LuBookmarkMinus, LuMessageSquare, LuShield, LuFileText, LuLogOut, LuArrowLeft, LuHome, LuHeart } from "react-icons/lu";
 import Link from "next/link";
 import GoogleLogin from "./GoogleLogin";
+import LocationModal, { getSavedLocation, saveLocation, type CityLocation } from "./LocationModal";
 import { BecomeHostModal } from "./become-host";
 import AadharVerificationModal from "./AadharVerificationModal";
+import { WalletDisplay } from "./wallet";
 import { useMyProfile, useApplicationStatus, queryKeys } from "~/hooks/useApi";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -21,6 +23,8 @@ export default function Navbar() {
   const [showAadharVerify, setShowAadharVerify] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [location, setLocation] = useState<CityLocation | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -29,6 +33,42 @@ export default function Navbar() {
   useEffect(() => {
     setStoredUserId(localStorage.getItem("msm_user_id"));
   }, [profileOpen]);
+
+  // Load saved location or auto-detect on first visit
+  useEffect(() => {
+    const saved = getSavedLocation();
+    if (saved) {
+      setLocation(saved);
+      return;
+    }
+    // Auto-detect on first visit
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          void (async () => {
+            try {
+              const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
+                { headers: { "User-Agent": "MySlotMate/1.0" } },
+              );
+              const data = (await res.json()) as {
+                address?: { city?: string; town?: string; village?: string; state_district?: string; county?: string; state?: string };
+              };
+              const addr = data.address;
+              if (addr) {
+                const city = addr.city ?? addr.town ?? addr.village ?? addr.state_district ?? addr.county ?? "Unknown";
+                const loc: CityLocation = { city, state: addr.state ?? "" };
+                saveLocation(loc);
+                setLocation(loc);
+              }
+            } catch { /* silently fail */ }
+          })();
+        },
+        () => { /* permission denied — user can pick manually */ },
+        { enableHighAccuracy: false, timeout: 10_000 },
+      );
+    }
+  }, []);
 
   const validUserId =
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
@@ -78,13 +118,16 @@ export default function Navbar() {
           {/* Right side — desktop */}
           <div className="hidden md:flex items-center gap-5">
             {/* Location */}
-            <div className="flex items-center gap-1.5 text-sm">
+            <button
+              onClick={() => setLocationOpen(true)}
+              className="flex items-center gap-1.5 text-sm rounded-lg px-2 py-1.5 hover:bg-gray-50 transition cursor-pointer"
+            >
               <IoLocationSharp className="h-5 w-5 text-[#0094CA]" />
-              <div className="leading-tight">
-                <p className="font-semibold text-gray-900">Guwahati</p>
-                <p className="text-xs text-gray-500">Assam</p>
+              <div className="leading-tight text-left">
+                <p className="font-semibold text-gray-900">{location?.city ?? "Select City"}</p>
+                <p className="text-xs text-gray-500">{location?.state ?? "Tap to detect"}</p>
               </div>
-            </div>
+            </button>
 
             {/* Search */}
             <button
@@ -93,6 +136,17 @@ export default function Navbar() {
             >
               <FiSearch className="h-5 w-5" />
             </button>
+
+            {/* Wallet (only for logged-in users) */}
+            {user && validUserId && (
+              <WalletDisplay
+                userId={validUserId}
+                userName={user.displayName ?? undefined}
+                userEmail={user.email ?? undefined}
+                userPhone={user.phoneNumber ?? undefined}
+                variant="compact"
+              />
+            )}
 
             {/* Profile / Login */}
             <div className="relative" ref={profileRef}>
@@ -173,6 +227,19 @@ export default function Navbar() {
                         </span>
                       ) : null}
                     </div>
+
+                    {/* Wallet Balance section */}
+                    {validUserId && (
+                      <div className="mx-5 mb-3">
+                        <WalletDisplay
+                          userId={validUserId}
+                          userName={user.displayName ?? undefined}
+                          userEmail={user.email ?? undefined}
+                          userPhone={user.phoneNumber ?? undefined}
+                          variant="sidebar"
+                        />
+                      </div>
+                    )}
 
                     {/* Aadhaar Verification section */}
                     {validUserId && !isVerified && (
@@ -341,13 +408,16 @@ export default function Navbar() {
         {mobileOpen && (
           <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 shadow-lg">
             {/* Location */}
-            <div className="flex items-center gap-2 py-3">
+            <button
+              onClick={() => { setLocationOpen(true); setMobileOpen(false); }}
+              className="flex items-center gap-2 py-3 w-full rounded-lg hover:bg-gray-50 transition"
+            >
               <IoLocationSharp className="h-5 w-5 text-[#0094CA]" />
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Guwahati</p>
-                <p className="text-xs text-gray-500">Assam</p>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">{location?.city ?? "Select City"}</p>
+                <p className="text-xs text-gray-500">{location?.state ?? "Tap to detect"}</p>
               </div>
-            </div>
+            </button>
 
             {/* Search */}
             <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -401,6 +471,14 @@ export default function Navbar() {
 
       {/* Google Login Modal */}
       <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
+
+      {/* Location Modal */}
+      <LocationModal
+        open={locationOpen}
+        onClose={() => setLocationOpen(false)}
+        onSelect={(loc) => setLocation(loc)}
+        current={location}
+      />
 
       {/* Become a Host Modal */}
       <BecomeHostModal open={showBecomeHost} onClose={() => setShowBecomeHost(false)} />

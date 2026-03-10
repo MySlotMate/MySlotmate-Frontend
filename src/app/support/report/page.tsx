@@ -1,11 +1,19 @@
 "use client";
 import Link from "next/link";
 import { useState, useRef } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { toast } from "sonner";
 import { FiArrowLeft } from "react-icons/fi";
+import { auth } from "~/utils/firebase";
+import { useUploadFiles, useCreateSupportTicket } from "~/hooks/useApi";
 
 export default function ReportIssuePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [user] = useAuthState(auth);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const uploadFilesMutation = useUploadFiles();
+  const createTicketMutation = useCreateSupportTicket();
+  
   const [formData, setFormData] = useState({
     issueType: "behavioral",
     participantName: "",
@@ -29,11 +37,15 @@ export default function ReportIssuePage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be less than 10MB");
+        return;
+      }
       setFormData({
         ...formData,
         evidence: file,
       });
-      toast.success(`File "${file.name}" uploaded successfully`);
+      toast.success(`File "${file.name}" selected`);
     }
   };
 
@@ -53,28 +65,94 @@ export default function ReportIssuePage() {
     setDragActive(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be less than 10MB");
+        return;
+      }
       setFormData({
         ...formData,
         evidence: file,
       });
-      toast.success(`File "${file.name}" uploaded successfully`);
+      toast.success(`File "${file.name}" selected`);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Report submitted successfully. Our team will review it shortly.");
-    setFormData({
-      issueType: "behavioral",
-      participantName: "",
-      description: "",
-      date: "",
-      evidence: null,
-      reportReason: "",
-      isUrgent: false,
-    });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    
+    if (!user?.uid) {
+      toast.error("Please sign in to submit a report");
+      return;
+    }
+
+    if (!formData.participantName.trim()) {
+      toast.error("Please provide participant name");
+      return;
+    }
+
+    if (!formData.description.trim()) {
+      toast.error("Please provide a description");
+      return;
+    }
+
+    if (!formData.reportReason) {
+      toast.error("Please select a report reason");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let evidenceUrls: string[] = [];
+
+      // Upload evidence if exists
+      if (formData.evidence) {
+        const uploadRes = await uploadFilesMutation.mutateAsync({
+          files: [formData.evidence],
+          folder: "support/evidence",
+        });
+        if (uploadRes.success && uploadRes.data) {
+          evidenceUrls = uploadRes.data.map((item) => item.url);
+        }
+      }
+
+      // Map report reason to API format (snake_case)
+      const reportReasonMap: Record<string, string> = {
+        "Verbal harassment": "verbal_harassment",
+        "Safety concern": "safety_concern",
+        "Inappropriate behavior": "inappropriate_behavior",
+        "Spam or scam": "spam_or_scam",
+      };
+
+      // Create support ticket with report_participant category
+      await createTicketMutation.mutateAsync({
+        user_id: user.uid,
+        category: "report_participant",
+        subject: `Report: ${formData.participantName}`,
+        message: formData.description,
+        session_date: formData.date ? new Date(formData.date).toISOString() : undefined,
+        report_reason: reportReasonMap[formData.reportReason] || "safety_concern",
+        evidence_urls: evidenceUrls,
+        is_urgent: formData.isUrgent,
+      });
+
+      toast.success("Report submitted successfully. Our team will review it shortly.");
+      setFormData({
+        issueType: "behavioral",
+        participantName: "",
+        description: "",
+        date: "",
+        evidence: null,
+        reportReason: "",
+        isUrgent: false,
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      toast.error("Failed to submit report. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -258,9 +336,10 @@ export default function ReportIssuePage() {
               </div>
               <button
                 type="submit"
-                className="flex-1 px-6 py-3 bg-[#0094CA] text-white font-semibold rounded-lg hover:bg-[#007dab] transition w-full md:w-[40%]"
+                disabled={isSubmitting || !user}
+                className="flex-1 px-6 py-3 bg-[#0094CA] text-white font-semibold rounded-lg hover:bg-[#007dab] transition w-full md:w-[40%] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit Report
+                {isSubmitting ? "Submitting..." : "Submit Report"}
               </button>
             </div>
           </form>

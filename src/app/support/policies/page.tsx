@@ -1,8 +1,23 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { FiArrowLeft, FiChevronDown } from "react-icons/fi";
+import { FiArrowLeft, FiChevronDown, FiSearch, FiArrowRight, FiCheckCircle, FiMaximize2 } from "react-icons/fi";
+import { 
+  MdBusinessCenter,
+  MdEventBusy,
+  MdAttachMoney,
+  MdGroups,
+  MdSecurityUpdateGood,
+  MdOutlineCopyright,
+  MdPets,
+  MdPhotoCameraFront,
+  MdOutlineWifi,
+  MdMovieCreation,
+  MdAutoAwesome,
+  MdElectricBolt
+} from "react-icons/md";
 
+// --- User's Existing Interfaces & Data ---
 interface PolicySection {
   id: number;
   title: string;
@@ -112,6 +127,82 @@ const policySections: PolicySection[] = [
   },
 ];
 
+// --- New Interfaces for Cards ---
+interface PolicyCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  linkText?: string;
+  isUpdated?: boolean;
+  isActive?: boolean;
+  children?: React.ReactNode;
+}
+
+interface QuickLinkProps {
+  icon: React.ReactNode;
+  title: string;
+}
+
+// --- New Card Components ---
+const PolicyCard: React.FC<PolicyCardProps> = ({
+  icon,
+  title,
+  description,
+  linkText = "Read summary",
+  isUpdated = false,
+  isActive = false,
+  children
+}) => {
+  return (
+    <div 
+      className={`flex flex-col p-6 bg-white rounded-2xl border transition-all duration-200 hover:shadow-md ${
+        isActive ? 'border-[#0094CA] shadow-sm ring-1 ring-[#e4f8ff]' : 'border-gray-100 shadow-sm'
+      }`}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center justify-center w-12 h-12 bg-[#e4f8ff] text-[#0094CA] rounded-xl">
+          {icon}
+        </div>
+        {isUpdated && (
+          <span className="flex items-center px-2.5 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-md">
+            Updated
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col grow">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
+        <p className="text-sm text-gray-500 leading-relaxed mb-6 grow">
+          {description}
+        </p>
+
+        {children && <div className="mb-4 flex flex-col">{children}</div>}
+
+        <div className="flex items-center mt-auto">
+          {!children && (
+            <button className="flex items-center text-sm font-medium text-[#0094CA] hover:text-[#007dab] group">
+              {linkText}
+                <FiArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const QuickLink: React.FC<QuickLinkProps> = ({ icon, title }) => {
+  return (
+    <div className="flex items-center p-4 space-x-3 bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200">
+      <div className="flex items-center justify-center text-gray-400">
+        {icon}
+      </div>
+      <span className="text-sm font-medium text-gray-700">{title}</span>
+    </div>
+  );
+};
+
+// --- Main Page Component ---
 export default function PoliciesPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -120,8 +211,12 @@ export default function PoliciesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#e4f8ff] to-white">
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-4xl mx-auto w-full">
+    <div className="min-h-screen bg-linear-to-b from-[#e4f8ff] to-white w-full">
+      {/* Note: Changed max-w-4xl to max-w-6xl so the 3-column grid has enough room to breathe,
+        while still keeping your header centered nicely.
+      */}
+      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-6xl mx-auto w-full">
+        
         {/* Back Button */}
         <Link
           href="/support"
@@ -132,90 +227,120 @@ export default function PoliciesPage() {
         </Link>
 
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-            Policies & Guidelines
+        <div className="mb-12 flex flex-col items-center gap-2 justify-center text-center">
+          <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">
+            Platform Policies & <span className="text-[#0094CA]">Guidelines</span>
           </h1>
-          <p className="text-gray-600">
-            Understand our booking, cancellation, and payout policies to host with
-            confidence.
+          <p className="text-gray-500 max-w-2xl">
+            We believe in transparency. Here is everything you need to know about
+            hosting responsibly, keeping our community safe, and understanding
+            how we work together.
           </p>
         </div>
 
-        {/* Policy Sections */}
-        <div className="space-y-4">
-          {policySections.map((section) => (
-            <div
-              key={section.id}
-              className="border border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition"
+        {/* Search Bar */}
+        <div className="flex flex-col items-center justify-center">
+          <div className="flex flex-row items-center justify-center bg-[#ffffff] shadow-sm shadow-[#6d6d6d6b] rounded-full w-full md:w-[80%] lg:w-[60%] border border-gray-100">
+            <FiSearch color="#94A3B8" size={20} className="ml-4" />
+            <input 
+              type="text" 
+              placeholder="Search for articles, errors or anything you need..." 
+              className="rounded-full py-3 px-4 text-[#474956] border-0 bg-transparent outline-0 w-full focus:ring-0" 
+            />
+          </div>
+        </div>
+
+        {/* --- NEW SECTION STARTS HERE --- */}
+        {/* Substantial gap added with mt-24 */}
+        <div className="mt-24 w-full flex flex-col space-y-12">
+          
+          {/* Main Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <PolicyCard
+              icon={<MdBusinessCenter className="w-6 h-6" />}
+              title="Hosting Guidelines"
+              description="Standards for creating a welcoming space, check-in procedures, and maintaining quality..."
+            />
+
+            {/* Special Active Card with Inner Children */}
+            <PolicyCard
+              icon={<MdEventBusy className="w-6 h-6" />}
+              title="Cancellation Policy"
+              description="How refunds, rescheduling, and host cancellations are handled to ensure fairness."
+              isUpdated={true}
+              isActive={true}
             >
-              <button
-                onClick={() => handleToggle(section.id)}
-                className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{section.icon}</span>
-                  <span className="font-semibold text-gray-900 text-lg">
-                    {section.title}
-                  </span>
-                </div>
-                <FiChevronDown
-                  className={`h-5 w-5 text-gray-400 transition-transform ${
-                    expandedId === section.id ? "transform rotate-180" : ""
-                  }`}
-                />
-              </button>
+              {/* Inner Gray Box for Plain English Summary */}
+              <div className="flex flex-col bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
+                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                  Plain English Summary
+                </span>
+                <ul className="flex flex-col space-y-3">
+                  <li className="flex items-start text-sm text-gray-600">
+                    <FiCheckCircle className="w-4 h-4 text-[#0094CA] mr-2 mt-0.5 shrink-0" />
+                    <span>Guests get full refund if canceled 48h prior.</span>
+                  </li>
+                  <li className="flex items-start text-sm text-gray-600">
+                    <FiCheckCircle className="w-4 h-4 text-[#0094CA] mr-2 mt-0.5 shrink-0" />
+                    <span>Host cancellations may incur a fee.</span>
+                  </li>
+                </ul>
+              </div>
+              {/* Action Links for Cancellation Card */}
+              <div className="flex items-center justify-between mt-2">
+                <button className="flex items-center text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors">
+                  <FiMaximize2 className="w-3 h-3 mr-1.5" />
+                  Expand legal details
+                </button>
+                <button className="text-sm font-medium text-[#0094CA] hover:text-[#007dab] transition-colors">
+                  View Full Policy
+                </button>
+              </div>
+            </PolicyCard>
 
-              {expandedId === section.id && (
-                <div className="px-6 py-6 bg-gray-50 border-t border-gray-200 space-y-6">
-                  {section.content.map((subsection, idx) => (
-                    <div key={idx}>
-                      <h3 className="font-semibold text-gray-900 mb-3">
-                        {subsection.heading}
-                      </h3>
-                      <ul className="space-y-2">
-                        {subsection.items.map((item, itemIdx) => (
-                          <li
-                            key={itemIdx}
-                            className="flex items-start gap-3 text-gray-700"
-                          >
-                            <span className="text-[#0094CA] font-bold mt-0.5">
-                              •
-                            </span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
+            <PolicyCard
+              icon={<MdAttachMoney className="w-6 h-6" />}
+              title="Payment & Fees"
+              description="Understanding payout schedules, service fees, taxes, and currency conversion."
+            />
+
+            <PolicyCard
+              icon={<MdGroups className="w-6 h-6" />}
+              title="Community Standards"
+              description="Our commitment to inclusion, non-discrimination, and respectful behavior."
+            />
+
+            <PolicyCard
+              icon={<MdSecurityUpdateGood className="w-6 h-6" />}
+              title="Safety & Conduct"
+              description="Emergency procedures, prohibited items, and ensuring guest wellbeing."
+            />
+
+            <PolicyCard
+              icon={<MdOutlineCopyright className="w-6 h-6" />}
+              title="Content & IP"
+              description="Rights regarding photos, descriptions, and user-generated content on the platform."
+            />
+
+          </div>
+
+          {/* Frequently Requested Section */}
+          <div className="flex flex-col p-6 lg:p-8 bg-white border border-gray-100 shadow-sm rounded-3xl">
+            <h2 className="text-xl font-bold text-gray-900 mb-6">Frequently Requested</h2>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <QuickLink icon={<MdPets className="w-5 h-5" />} title="Pet Policy Guidelines" />
+              <QuickLink icon={<MdPhotoCameraFront className="w-5 h-5" />} title="Photography Rules" />
+              <QuickLink icon={<MdOutlineWifi className="w-5 h-5" />} title="Internet Usage Policy" />
+              <QuickLink icon={<MdMovieCreation className="w-5 h-5" />} title="Security Camera Disclosure" />
+              <QuickLink icon={<MdAutoAwesome className="w-5 h-5" />} title="Cleaning Standards" />
+              <QuickLink icon={<MdElectricBolt className="w-5 h-5" />} title="Instant Book Rules" />
             </div>
-          ))}
+          </div>
+          
         </div>
 
-        {/* Important Notice */}
-        <div className="mt-12 bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <h3 className="font-semibold text-gray-900 mb-2">📌 Important Notice</h3>
-          <p className="text-gray-700 text-sm leading-relaxed">
-            These policies are designed to protect both hosts and participants. For
-            specific situations or exceptions, please contact our support team. All
-            policies are subject to change with 30 days' notice.
-          </p>
-        </div>
-
-        {/* Need Help Section */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-600 mb-4">
-            Can't find the answer you're looking for?
-          </p>
-          <Link
-            href="/support"
-            className="inline-block px-6 py-3 bg-[#0094CA] text-white font-semibold rounded-lg hover:bg-[#007dab] transition"
-          >
-            Go Back to Support
-          </Link>
-        </div>
       </main>
     </div>
   );

@@ -1,8 +1,11 @@
 "use client";
 import Link from "next/link";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useAuthState } from "react-firebase-hooks/auth";
 import { toast } from "sonner";
 import { FiArrowLeft, FiSearch } from "react-icons/fi";
+import { auth } from "~/utils/firebase";
+import { useUploadFiles, useCreateSupportTicket } from "~/hooks/useApi";
 
 interface CommonTopic {
   id: number;
@@ -49,8 +52,13 @@ const CommonTopicsCard=({ topic }: { topic: CommonTopic })=>{
 
 export default function TechnicalSupportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [user] = useAuthState(auth);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const uploadFilesMutation = useUploadFiles();
+  const createTicketMutation = useCreateSupportTicket();
+  
   const [contactDetails, setContactDetails] = useState({
     issueCategory: "session",
     selectedExperience: "",
@@ -71,11 +79,15 @@ export default function TechnicalSupportPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be less than 10MB");
+        return;
+      }
       setContactDetails({
         ...contactDetails,
         attachments: file,
       });
-      toast.success(`File "${file.name}" uploaded successfully`);
+      toast.success(`File "${file.name}" selected`);
     }
   };
 
@@ -95,11 +107,15 @@ export default function TechnicalSupportPage() {
     setDragActive(false);
     const file = e.dataTransfer.files?.[0];
     if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("File size must be less than 10MB");
+        return;
+      }
       setContactDetails({
         ...contactDetails,
         attachments: file,
       });
-      toast.success(`File "${file.name}" uploaded successfully`);
+      toast.success(`File "${file.name}" selected`);
     }
   };
 
@@ -107,18 +123,60 @@ export default function TechnicalSupportPage() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Your request has been submitted. We'll get back to you soon!");
-    setContactDetails({
-      issueCategory: "session",
-      selectedExperience: "",
-      priorityLevel: "medium",
-      description: "",
-      attachments: null,
-    });
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+    
+    if (!user?.uid) {
+      toast.error("Please sign in to submit a support ticket");
+      return;
+    }
+
+    if (!contactDetails.description.trim()) {
+      toast.error("Please provide a description");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let evidenceUrls: string[] = [];
+
+      // Upload attachment if exists
+      if (contactDetails.attachments) {
+        const uploadRes = await uploadFilesMutation.mutateAsync({
+          files: [contactDetails.attachments],
+          folder: "support/evidence",
+        });
+        if (uploadRes.success && uploadRes.data) {
+          evidenceUrls = uploadRes.data.map((item) => item.url);
+        }
+      }
+
+      // Create support ticket
+      await createTicketMutation.mutateAsync({
+        user_id: user.uid,
+        category: "technical_support",
+        subject: `${contactDetails.issueCategory} - Priority: ${contactDetails.priorityLevel}`,
+        message: contactDetails.description,
+        evidence_urls: evidenceUrls,
+        is_urgent: contactDetails.priorityLevel === "critical",
+      });
+
+      toast.success("Your support ticket has been submitted successfully!");
+      setContactDetails({
+        issueCategory: "session",
+        selectedExperience: "",
+        priorityLevel: "medium",
+        description: "",
+        attachments: null,
+      });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Error submitting support ticket:", error);
+      toast.error("Failed to submit support ticket. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -297,9 +355,10 @@ export default function TechnicalSupportPage() {
               <div className="flex gap-3 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-[#0094CA] text-white font-semibold rounded-lg hover:bg-[#007dab] transition"
+                  disabled={isSubmitting || !user}
+                  className="flex-1 px-6 py-3 bg-[#0094CA] text-white font-semibold rounded-lg hover:bg-[#007dab] transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Submit Request
+                  {isSubmitting ? "Submitting..." : "Submit Request"}
                 </button>
                 <Link
                   href="/support"

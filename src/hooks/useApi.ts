@@ -31,6 +31,10 @@ export const queryKeys = {
   hostMessages: (hostId: string) => ["hostMessages", hostId] as const,
   supportTicket: (ticketId: string) => ["supportTicket", ticketId] as const,
   userTickets: (userId: string) => ["userTickets", userId] as const,
+  listHosts: ["listHosts"] as const,
+  listPublicEvents: ["listPublicEvents"] as const,
+  publicHostProfile: (hostId: string) => ["publicHostProfile", hostId] as const,
+  pendingHostApplications: ["pendingHostApplications"] as const,
 };
 
 /* ═══ Queries ══════════════════════════════════════════════════ */
@@ -61,6 +65,44 @@ export function useMyHost(userId: string | null) {
     queryKey: queryKeys.myHost(userId ?? ""),
     queryFn: () => api.getMyHost(userId!),
     enabled: !!userId,
+    staleTime: 2 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useListHosts() {
+  return useQuery({
+    queryKey: queryKeys.listHosts,
+    queryFn: () => api.listHosts(),
+    staleTime: 5 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useListPublicEvents() {
+  return useQuery({
+    queryKey: queryKeys.listPublicEvents,
+    queryFn: () => api.listPublicEvents(),
+    staleTime: 5 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function usePendingHostApplications(idToken: string | null) {
+  return useQuery({
+    queryKey: queryKeys.pendingHostApplications,
+    queryFn: () => api.listPendingHostApplications(idToken!),
+    enabled: !!idToken,
+    staleTime: 30 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function usePublicHostProfile(hostId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.publicHostProfile(hostId ?? ""),
+    queryFn: () => api.getPublicHostProfile(hostId!),
+    enabled: !!hostId,
     staleTime: 2 * 60 * 1000,
     select: (res) => res.data,
   });
@@ -284,6 +326,35 @@ export function useSubmitHostApplication() {
 
 export function useSaveHostDraft() {
   return useMutation({ mutationFn: api.saveHostDraft });
+}
+
+export function useApproveHostApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ hostId, idToken }: { hostId: string; idToken: string }) =>
+      api.approveHostApplication(hostId, idToken),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.pendingHostApplications });
+    },
+  });
+}
+
+export function useRejectHostApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      hostId,
+      idToken,
+      reason,
+    }: {
+      hostId: string;
+      idToken: string;
+      reason?: string;
+    }) => api.rejectHostApplication(hostId, idToken, reason),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.pendingHostApplications });
+    },
+  });
 }
 
 export function useUpdateHostProfile() {
@@ -531,6 +602,9 @@ export function useSendMessage() {
       void qc.invalidateQueries({
         queryKey: queryKeys.eventMessages(variables.event_id),
       });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.hostMessages(variables.sender_id ?? ""),
+      });
     },
   });
 }
@@ -543,13 +617,21 @@ export function useBroadcastMessage() {
       void qc.invalidateQueries({
         queryKey: queryKeys.eventMessages(variables.event_id),
       });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.hostMessages(variables.host_id),
+      });
     },
   });
 }
 
 export function useMarkMessageRead() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (messageId: string) => api.markMessageRead(messageId),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["eventMessages"] });
+      void qc.invalidateQueries({ queryKey: ["hostMessages"] });
+    },
   });
 }
 
@@ -608,6 +690,40 @@ export function useUpdateUserProfile() {
     }) => api.updateUserProfile(userId, body),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["myProfile"] });
+    },
+  });
+}
+
+/* ═══ Wallet Queries & Mutations ═══════════════════════════════ */
+
+export const walletKeys = {
+  balance: (userId: string) => ["walletBalance", userId] as const,
+};
+
+export function useWalletBalance(userId: string | null) {
+  return useQuery({
+    queryKey: walletKeys.balance(userId ?? ""),
+    queryFn: () => api.getWalletBalance(userId!),
+    enabled: !!userId,
+    staleTime: 30 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useCreateTopupOrder() {
+  return useMutation({
+    mutationFn: (payload: api.CreateTopupPayload) => api.createTopupOrder(payload),
+  });
+}
+
+export function useVerifyTopupPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: api.TopupVerifyPayload) => api.verifyTopupPayment(payload),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({
+        queryKey: walletKeys.balance(variables.user_id),
+      });
     },
   });
 }

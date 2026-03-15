@@ -1,347 +1,316 @@
 "use client";
-import Link from "next/link";
-import { useState } from "react";
-import { FiArrowLeft, FiChevronDown, FiSearch, FiArrowRight, FiCheckCircle, FiMaximize2 } from "react-icons/fi";
-import { 
-  MdBusinessCenter,
-  MdEventBusy,
+
+import { useEffect, useMemo, useState } from "react";
+import type { IconType } from "react-icons";
+import {
+  FiArrowRight,
+  FiCheckCircle,
+  FiMaximize2,
+  FiSearch,
+} from "react-icons/fi";
+import {
   MdAttachMoney,
+  MdAutoAwesome,
+  MdBusinessCenter,
+  MdElectricBolt,
+  MdEventBusy,
   MdGroups,
-  MdSecurityUpdateGood,
+  MdMovieCreation,
   MdOutlineCopyright,
+  MdOutlineWifi,
   MdPets,
   MdPhotoCameraFront,
-  MdOutlineWifi,
-  MdMovieCreation,
-  MdAutoAwesome,
-  MdElectricBolt
+  MdSecurityUpdateGood,
 } from "react-icons/md";
+import { SupportBreadcrumb, SupportPageShell } from "~/components/support";
 
-// --- User's Existing Interfaces & Data ---
-interface PolicySection {
-  id: number;
+interface PolicyCardData {
   title: string;
-  icon: string;
-  content: {
-    heading: string;
-    items: string[];
-  }[];
+  description: string;
+  icon: IconType;
+  keywords: string[];
+  updated?: boolean;
+  featured?: boolean;
 }
 
-const policySections: PolicySection[] = [
+interface QuickLinkData {
+  title: string;
+  icon: IconType;
+  keywords: string[];
+}
+
+const policyCards: PolicyCardData[] = [
   {
-    id: 1,
-    title: "Booking Policies",
-    icon: "📅",
-    content: [
-      {
-        heading: "Booking Confirmation",
-        items: [
-          "Bookings are confirmed once payment is received",
-          "You'll receive a confirmation email with slot details",
-          "Cancellations must be made 24 hours before the experience",
-          "Late cancellations may incur a cancellation fee",
-        ],
-      },
-      {
-        heading: "Rescheduling",
-        items: [
-          "Reschedule for free if done 48 hours in advance",
-          "Limited reschedule options after 48 hours",
-          "Contact our support team for urgent rescheduling needs",
-        ],
-      },
-    ],
+    title: "Hosting Guidelines",
+    description:
+      "Standards for creating a welcoming space, smooth check-ins, and maintaining quality hosting.",
+    icon: MdBusinessCenter,
+    keywords: ["hosting", "guidelines", "standards", "quality"],
   },
   {
-    id: 2,
     title: "Cancellation Policy",
-    icon: "🚫",
-    content: [
-      {
-        heading: "Cancellation by Participant",
-        items: [
-          "Full refund if cancelled more than 48 hours before",
-          "50% refund if cancelled 24-48 hours before",
-          "No refund if cancelled less than 24 hours before",
-          "Emergency cancellations may be eligible for refund",
-        ],
-      },
-      {
-        heading: "Host Cancellation",
-        items: [
-          "Host must provide at least 48 hours notice",
-          "Participant receives full refund + 10% credit",
-          "Emergency cancellations are handled case-by-case",
-        ],
-      },
-    ],
+    description:
+      "How refunds, rescheduling, and host cancellations are handled to keep experiences fair.",
+    icon: MdEventBusy,
+    keywords: ["cancellation", "refund", "reschedule", "fees"],
+    updated: true,
+    featured: true,
   },
   {
-    id: 3,
-    title: "Payout Schedule",
-    icon: "💰",
-    content: [
-      {
-        heading: "Earnings & Payouts",
-        items: [
-          "Earnings are calculated after 5% platform fee",
-          "Payouts are processed every 7 days",
-          "Minimum payout threshold is $25",
-          "Direct bank transfer to your registered account",
-        ],
-      },
-      {
-        heading: "Payment Hold",
-        items: [
-          "Payments are held for 48 hours after experience",
-          "This allows time for dispute resolution",
-          "Review the holding window in your dashboard",
-        ],
-      },
-    ],
+    title: "Payment & Fees",
+    description:
+      "Understand payout schedules, service fees, taxes, and currency conversion details.",
+    icon: MdAttachMoney,
+    keywords: ["payment", "fees", "payout", "taxes"],
   },
   {
-    id: 4,
-    title: "Host Responsibilities",
-    icon: "🎯",
-    content: [
-      {
-        heading: "During the Experience",
-        items: [
-          "Start the experience on time",
-          "Maintain a safe and respectful environment",
-          "Follow all community guidelines",
-          "Be responsive to participant needs",
-        ],
-      },
-      {
-        heading: "Cancellation Penalties",
-        items: [
-          "Repeated cancellations may result in account suspension",
-          "Last-minute cancellations affect your rating",
-          "Provide valid reasons for cancellations",
-        ],
-      },
-    ],
+    title: "Community Standards",
+    description:
+      "Our expectations around respectful conduct, inclusion, and non-discrimination.",
+    icon: MdGroups,
+    keywords: ["community", "standards", "behavior", "respect"],
+  },
+  {
+    title: "Safety & Conduct",
+    description:
+      "Emergency procedures, prohibited items, and practical steps to protect guests and hosts.",
+    icon: MdSecurityUpdateGood,
+    keywords: ["safety", "conduct", "emergency", "trust"],
+  },
+  {
+    title: "Content & IP",
+    description:
+      "Rights and responsibilities around photos, descriptions, and user-generated content.",
+    icon: MdOutlineCopyright,
+    keywords: ["content", "ip", "copyright", "photos"],
   },
 ];
 
-// --- New Interfaces for Cards ---
-interface PolicyCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  linkText?: string;
-  isUpdated?: boolean;
-  isActive?: boolean;
-  children?: React.ReactNode;
+const quickLinks: QuickLinkData[] = [
+  {
+    title: "Pet Policy Guidelines",
+    icon: MdPets,
+    keywords: ["pets", "policy"],
+  },
+  {
+    title: "Photography Rules",
+    icon: MdPhotoCameraFront,
+    keywords: ["photography", "media"],
+  },
+  {
+    title: "Internet Usage Policy",
+    icon: MdOutlineWifi,
+    keywords: ["internet", "wifi", "usage"],
+  },
+  {
+    title: "Security Camera Disclosure",
+    icon: MdMovieCreation,
+    keywords: ["camera", "security", "disclosure"],
+  },
+  {
+    title: "Cleaning Standards",
+    icon: MdAutoAwesome,
+    keywords: ["cleaning", "standards"],
+  },
+  {
+    title: "Instant Book Rules",
+    icon: MdElectricBolt,
+    keywords: ["instant book", "rules"],
+  },
+];
+
+function matchesQuery(query: string, values: string[]) {
+  if (!query) {
+    return true;
+  }
+
+  const normalizedQuery = query.toLowerCase();
+  return values.some((value) => value.toLowerCase().includes(normalizedQuery));
 }
 
-interface QuickLinkProps {
-  icon: React.ReactNode;
-  title: string;
-}
+function PolicyCard({ card, active }: { card: PolicyCardData; active?: boolean }) {
+  const Icon = card.icon;
 
-// --- New Card Components ---
-const PolicyCard: React.FC<PolicyCardProps> = ({
-  icon,
-  title,
-  description,
-  linkText = "Read summary",
-  isUpdated = false,
-  isActive = false,
-  children
-}) => {
   return (
-    <div 
-      className={`flex flex-col p-6 bg-white rounded-2xl border transition-all duration-200 hover:shadow-md ${
-        isActive ? 'border-[#0094CA] shadow-sm ring-1 ring-[#e4f8ff]' : 'border-gray-100 shadow-sm'
+    <div
+      className={`flex h-full flex-col rounded-3xl border bg-white p-6 shadow-sm transition ${
+        active
+          ? "border-[#0094CA] ring-1 ring-[#d6f2ff]"
+          : "border-gray-200 hover:-translate-y-0.5 hover:shadow-md"
       }`}
     >
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex items-center justify-center w-12 h-12 bg-[#e4f8ff] text-[#0094CA] rounded-xl">
-          {icon}
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#e6f8ff] text-[#0094CA]">
+          <Icon className="h-6 w-6" />
         </div>
-        {isUpdated && (
-          <span className="flex items-center px-2.5 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-md">
+        {card.updated && (
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
             Updated
           </span>
         )}
       </div>
 
-      <div className="flex flex-col grow">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-        <p className="text-sm text-gray-500 leading-relaxed mb-6 grow">
-          {description}
-        </p>
+      <h3 className="text-xl font-semibold text-slate-900">{card.title}</h3>
+      <p className="mt-3 text-sm leading-6 text-slate-500">{card.description}</p>
 
-        {children && <div className="mb-4 flex flex-col">{children}</div>}
-
-        <div className="flex items-center mt-auto">
-          {!children && (
-            <button className="flex items-center text-sm font-medium text-[#0094CA] hover:text-[#007dab] group">
-              {linkText}
-                <FiArrowRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+      {card.featured && (
+        <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+            Plain English Summary
+          </p>
+          <ul className="mt-3 space-y-3">
+            <li className="flex items-start gap-2 text-sm text-slate-600">
+              <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#0094CA]" />
+              Guests get a full refund if they cancel at least 48 hours in advance.
+            </li>
+            <li className="flex items-start gap-2 text-sm text-slate-600">
+              <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#0094CA]" />
+              Last-minute host cancellations can lead to a fee or reduced ranking.
+            </li>
+          </ul>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 transition hover:text-slate-600"
+            >
+              <FiMaximize2 className="h-3.5 w-3.5" />
+              Expand legal details
             </button>
-          )}
+            <button
+              type="button"
+              className="text-sm font-semibold text-[#0094CA] transition hover:text-[#007dab]"
+            >
+              View full policy
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
-  );
-};
+      )}
 
-const QuickLink: React.FC<QuickLinkProps> = ({ icon, title }) => {
-  return (
-    <div className="flex items-center p-4 space-x-3 bg-gray-50 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors duration-200 border border-transparent hover:border-gray-200">
-      <div className="flex items-center justify-center text-gray-400">
-        {icon}
-      </div>
-      <span className="text-sm font-medium text-gray-700">{title}</span>
-    </div>
-  );
-};
-
-// --- Main Page Component ---
-export default function PoliciesPage() {
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-
-  const handleToggle = (id: number) => {
-    setExpandedId(expandedId === id ? null : id);
-  };
-
-  return (
-    <div className="min-h-screen bg-linear-to-b from-[#e4f8ff] to-white w-full">
-      {/* Note: Changed max-w-4xl to max-w-6xl so the 3-column grid has enough room to breathe,
-        while still keeping your header centered nicely.
-      */}
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8 sm:py-12 max-w-6xl mx-auto w-full">
-        
-        {/* Back Button */}
-        <Link
-          href="/support"
-          className="inline-flex items-center gap-2 text-[#0094CA] hover:text-[#007dab] mb-6 font-medium"
+      {!card.featured && (
+        <button
+          type="button"
+          className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#0094CA] transition hover:text-[#007dab]"
         >
-          <FiArrowLeft className="h-5 w-5" />
-          Back to Support
-        </Link>
+          Read summary
+          <FiArrowRight className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
 
-        {/* Header */}
-        <div className="mb-12 flex flex-col items-center gap-2 justify-center text-center">
-          <h1 className="text-3xl sm:text-4xl font-semibold text-gray-900 mb-2">
-            Platform Policies & <span className="text-[#0094CA]">Guidelines</span>
-          </h1>
-          <p className="text-gray-500 max-w-2xl">
-            We believe in transparency. Here is everything you need to know about
-            hosting responsibly, keeping our community safe, and understanding
-            how we work together.
+function QuickLinkChip({
+  item,
+  onClick,
+}: {
+  item: QuickLinkData;
+  onClick: () => void;
+}) {
+  const Icon = item.icon;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:border-[#0094CA] hover:bg-white hover:text-[#0094CA]"
+    >
+      <Icon className="h-5 w-5 text-slate-400" />
+      {item.title}
+    </button>
+  );
+}
+
+export default function PoliciesPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const topic = params.get("topic");
+
+    if (topic) {
+      setSearchQuery(topic.replace(/[-_]/g, " "));
+    }
+  }, []);
+
+  const filteredCards = useMemo(() => {
+    return policyCards.filter((card) =>
+      matchesQuery(searchQuery, [card.title, card.description, ...card.keywords]),
+    );
+  }, [searchQuery]);
+
+  const filteredQuickLinks = useMemo(() => {
+    return quickLinks.filter((item) =>
+      matchesQuery(searchQuery, [item.title, ...item.keywords]),
+    );
+  }, [searchQuery]);
+
+  return (
+    <SupportPageShell contentClassName="max-w-6xl">
+      <SupportBreadcrumb
+        items={[
+          { label: "Support & Safety", href: "/support" },
+          { label: "Policy help" },
+        ]}
+      />
+
+      <div className="flex flex-col items-center text-center">
+        <div className="inline-flex items-center rounded-full bg-[#e6f8ff] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#0094CA]">
+          Community Trust Center
+        </div>
+        <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+          Platform Policies &amp; <span className="text-[#0094CA]">Guidelines</span>
+        </h1>
+        <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
+          Everything you need to know about hosting responsibly, protecting the
+          community, and understanding how we work together.
+        </p>
+      </div>
+
+      <div className="mx-auto mt-8 flex w-full max-w-2xl items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-3 shadow-sm">
+        <FiSearch className="h-4 w-4 text-slate-400" />
+        <input
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          type="text"
+          placeholder="Search for policies, payouts, safety..."
+          className="w-full bg-transparent text-sm text-slate-700 outline-none"
+        />
+      </div>
+
+      <section className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {filteredCards.map((card) => (
+          <PolicyCard
+            key={card.title}
+            card={card}
+            active={card.featured && matchesQuery(searchQuery, [card.title, ...card.keywords])}
+          />
+        ))}
+      </section>
+
+      {filteredCards.length === 0 && (
+        <div className="mt-8 rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center text-sm text-slate-500">
+          No policy sections matched your search. Try a different keyword.
+        </div>
+      )}
+
+      <section className="mt-12 rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-2xl font-bold text-slate-900">Frequently Requested</h2>
+          <p className="text-sm text-slate-500">
+            Quick shortcuts for common policy questions.
           </p>
         </div>
 
-        {/* Search Bar */}
-        <div className="flex flex-col items-center justify-center">
-          <div className="flex flex-row items-center justify-center bg-[#ffffff] shadow-sm shadow-[#6d6d6d6b] rounded-full w-full md:w-[80%] lg:w-[60%] border border-gray-100">
-            <FiSearch color="#94A3B8" size={20} className="ml-4" />
-            <input 
-              type="text" 
-              placeholder="Search for articles, errors or anything you need..." 
-              className="rounded-full py-3 px-4 text-[#474956] border-0 bg-transparent outline-0 w-full focus:ring-0" 
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredQuickLinks.map((item) => (
+            <QuickLinkChip
+              key={item.title}
+              item={item}
+              onClick={() => setSearchQuery(item.title)}
             />
-          </div>
+          ))}
         </div>
-
-        {/* --- NEW SECTION STARTS HERE --- */}
-        {/* Substantial gap added with mt-24 */}
-        <div className="mt-24 w-full flex flex-col space-y-12">
-          
-          {/* Main Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <PolicyCard
-              icon={<MdBusinessCenter className="w-6 h-6" />}
-              title="Hosting Guidelines"
-              description="Standards for creating a welcoming space, check-in procedures, and maintaining quality..."
-            />
-
-            {/* Special Active Card with Inner Children */}
-            <PolicyCard
-              icon={<MdEventBusy className="w-6 h-6" />}
-              title="Cancellation Policy"
-              description="How refunds, rescheduling, and host cancellations are handled to ensure fairness."
-              isUpdated={true}
-              isActive={true}
-            >
-              {/* Inner Gray Box for Plain English Summary */}
-              <div className="flex flex-col bg-gray-50 rounded-xl p-4 mb-4 border border-gray-100">
-                <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                  Plain English Summary
-                </span>
-                <ul className="flex flex-col space-y-3">
-                  <li className="flex items-start text-sm text-gray-600">
-                    <FiCheckCircle className="w-4 h-4 text-[#0094CA] mr-2 mt-0.5 shrink-0" />
-                    <span>Guests get full refund if canceled 48h prior.</span>
-                  </li>
-                  <li className="flex items-start text-sm text-gray-600">
-                    <FiCheckCircle className="w-4 h-4 text-[#0094CA] mr-2 mt-0.5 shrink-0" />
-                    <span>Host cancellations may incur a fee.</span>
-                  </li>
-                </ul>
-              </div>
-              {/* Action Links for Cancellation Card */}
-              <div className="flex items-center justify-between mt-2">
-                <button className="flex items-center text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors">
-                  <FiMaximize2 className="w-3 h-3 mr-1.5" />
-                  Expand legal details
-                </button>
-                <button className="text-sm font-medium text-[#0094CA] hover:text-[#007dab] transition-colors">
-                  View Full Policy
-                </button>
-              </div>
-            </PolicyCard>
-
-            <PolicyCard
-              icon={<MdAttachMoney className="w-6 h-6" />}
-              title="Payment & Fees"
-              description="Understanding payout schedules, service fees, taxes, and currency conversion."
-            />
-
-            <PolicyCard
-              icon={<MdGroups className="w-6 h-6" />}
-              title="Community Standards"
-              description="Our commitment to inclusion, non-discrimination, and respectful behavior."
-            />
-
-            <PolicyCard
-              icon={<MdSecurityUpdateGood className="w-6 h-6" />}
-              title="Safety & Conduct"
-              description="Emergency procedures, prohibited items, and ensuring guest wellbeing."
-            />
-
-            <PolicyCard
-              icon={<MdOutlineCopyright className="w-6 h-6" />}
-              title="Content & IP"
-              description="Rights regarding photos, descriptions, and user-generated content on the platform."
-            />
-
-          </div>
-
-          {/* Frequently Requested Section */}
-          <div className="flex flex-col p-6 lg:p-8 bg-white border border-gray-100 shadow-sm rounded-3xl">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Frequently Requested</h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <QuickLink icon={<MdPets className="w-5 h-5" />} title="Pet Policy Guidelines" />
-              <QuickLink icon={<MdPhotoCameraFront className="w-5 h-5" />} title="Photography Rules" />
-              <QuickLink icon={<MdOutlineWifi className="w-5 h-5" />} title="Internet Usage Policy" />
-              <QuickLink icon={<MdMovieCreation className="w-5 h-5" />} title="Security Camera Disclosure" />
-              <QuickLink icon={<MdAutoAwesome className="w-5 h-5" />} title="Cleaning Standards" />
-              <QuickLink icon={<MdElectricBolt className="w-5 h-5" />} title="Instant Book Rules" />
-            </div>
-          </div>
-          
-        </div>
-
-      </main>
-    </div>
+      </section>
+    </SupportPageShell>
   );
 }

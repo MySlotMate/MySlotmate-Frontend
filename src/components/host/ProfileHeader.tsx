@@ -1,6 +1,6 @@
 "use client";
 
-import { type Host } from "~/data/hostProfile";
+import { type PublicHostProfileDTO } from "~/lib/api";
 import { FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import { FiGlobe } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
@@ -8,7 +8,7 @@ import { IoLocationSharp } from "react-icons/io5";
 import { FiMessageSquare } from "react-icons/fi";
 import { HiArrowRight } from "react-icons/hi";
 
-export default function ProfileHeader({ host }: { host: Host }) {
+export default function ProfileHeader({ host }: { host: PublicHostProfileDTO }) {
   const fullName = `${host.first_name} ${host.last_name}`;
 
   const socialLinks = [

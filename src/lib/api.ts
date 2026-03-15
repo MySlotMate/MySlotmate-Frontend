@@ -256,6 +256,72 @@ export function updateHostProfile(
   });
 }
 
+/** Public-facing host profile (no sensitive fields like phn_number, government_id_url, etc.) */
+export interface PublicHostProfileDTO {
+  id: string;
+  first_name: string;
+  last_name: string;
+  city: string;
+  avatar_url: string | null;
+  tagline: string | null;
+  bio: string | null;
+  is_identity_verified: boolean;
+  is_super_host: boolean;
+  is_community_champ: boolean;
+  expertise_tags: string[];
+  social_instagram: string | null;
+  social_linkedin: string | null;
+  social_website: string | null;
+  avg_rating: number | null;
+  total_reviews: number;
+}
+
+/** GET /hosts — list all approved hosts (public) */
+export function listHosts() {
+  return apiFetch<PublicHostProfileDTO[]>("/hosts");
+}
+
+/** GET /hosts/{hostID} — view a host's public profile */
+export function getPublicHostProfile(hostId: string) {
+  return apiFetch<PublicHostProfileDTO>(`/hosts/${hostId}`);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Admin                                                              */
+/* ------------------------------------------------------------------ */
+
+function getAuthHeader(idToken: string) {
+  return { Authorization: `Bearer ${idToken}` };
+}
+
+/** GET /admin/hosts/applications — list all pending host applications */
+export function listPendingHostApplications(idToken: string) {
+  return apiFetch<HostDTO[]>("/admin/hosts/applications", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** POST /admin/hosts/{hostID}/approve — approve host application */
+export function approveHostApplication(hostId: string, idToken: string) {
+  return apiFetch<HostDTO>(`/admin/hosts/${hostId}/approve`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** POST /admin/hosts/{hostID}/reject — reject host application */
+export function rejectHostApplication(
+  hostId: string,
+  idToken: string,
+  reason?: string,
+) {
+  return apiFetch<HostDTO>(`/admin/hosts/${hostId}/reject`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: reason ? { reason } : {},
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /*  Host Dashboard                                                     */
 /* ------------------------------------------------------------------ */
@@ -318,11 +384,17 @@ export interface EventDTO {
   total_bookings: number;
   created_at: string;
   updated_at: string;
+  
 }
 
 /** GET /events/host/{hostID} */
 export function getEventsByHost(hostId: string) {
   return apiFetch<EventDTO[]>(`/events/host/${hostId}`);
+}
+
+/** GET /events/ — list all published (live) events (public) */
+export function listPublicEvents() {
+  return apiFetch<EventDTO[]>("/events/");
 }
 
 /** GET /events/{eventID} */
@@ -803,5 +875,55 @@ export function addSupportMessage(ticketId: string, message: string) {
 export function resolveSupportTicket(ticketId: string) {
   return apiFetch<SupportTicketDTO>(`/support/${ticketId}/resolve`, {
     method: "POST",
+  });
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   WALLET / TOP-UP
+   ══════════════════════════════════════════════════════════════════════════ */
+
+export interface WalletBalanceDTO {
+  account_id: string;
+  balance_cents: number; // balance in paise (100 paise = ₹1)
+}
+
+export interface TopupOrderDTO {
+  order_id: string; // Razorpay order ID
+  key_id: string; // Razorpay key for frontend
+  amount_cents: number;
+  currency: string;
+}
+
+export interface CreateTopupPayload {
+  user_id: string;
+  amount_cents: number;
+  idempotency_key: string;
+}
+
+export interface TopupVerifyPayload {
+  user_id: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+/** GET /users/wallet/balance — get user's wallet balance */
+export function getWalletBalance(userId: string) {
+  return apiFetch<WalletBalanceDTO>(`/users/wallet/balance?user_id=${userId}`);
+}
+
+/** POST /users/wallet/topup — create a Razorpay order for topping up wallet */
+export function createTopupOrder(payload: CreateTopupPayload) {
+  return apiFetch<TopupOrderDTO>("/users/wallet/topup", {
+    method: "POST",
+    data: payload,
+  });
+}
+
+/** POST /users/wallet/topup/verify — verify Razorpay payment and credit wallet */
+export function verifyTopupPayment(payload: TopupVerifyPayload) {
+  return apiFetch<WalletBalanceDTO>("/users/wallet/topup/verify", {
+    method: "POST",
+    data: payload,
   });
 }

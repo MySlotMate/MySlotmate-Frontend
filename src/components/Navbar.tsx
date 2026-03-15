@@ -9,10 +9,13 @@ import { IoLocationSharp } from "react-icons/io5";
 import { LuCalendarDays, LuBookmarkMinus, LuMessageSquare, LuShield, LuFileText, LuLogOut, LuArrowLeft, LuHome, LuHeart } from "react-icons/lu";
 import Link from "next/link";
 import GoogleLogin from "./GoogleLogin";
+import LocationModal, { getSavedLocation, saveLocation, type CityLocation } from "./LocationModal";
 import { BecomeHostModal } from "./become-host";
 import AadharVerificationModal from "./AadharVerificationModal";
+import { WalletDisplay } from "./wallet";
 import { useMyProfile, useApplicationStatus, queryKeys } from "~/hooks/useApi";
 import { useQueryClient } from "@tanstack/react-query";
+import { env } from "~/env";
 
 export default function Navbar() {
   const [user] = useAuthState(auth);
@@ -21,6 +24,8 @@ export default function Navbar() {
   const [showAadharVerify, setShowAadharVerify] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [location, setLocation] = useState<CityLocation | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -29,6 +34,42 @@ export default function Navbar() {
   useEffect(() => {
     setStoredUserId(localStorage.getItem("msm_user_id"));
   }, [profileOpen]);
+
+  // Load saved location or auto-detect on first visit
+  useEffect(() => {
+    const saved = getSavedLocation();
+    if (saved) {
+      setLocation(saved);
+      return;
+    }
+    // Auto-detect on first visit
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          void (async () => {
+            try {
+              const res = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
+                { headers: { "User-Agent": "MySlotMate/1.0" } },
+              );
+              const data = (await res.json()) as {
+                address?: { city?: string; town?: string; village?: string; state_district?: string; county?: string; state?: string };
+              };
+              const addr = data.address;
+              if (addr) {
+                const city = addr.city ?? addr.town ?? addr.village ?? addr.state_district ?? addr.county ?? "Unknown";
+                const loc: CityLocation = { city, state: addr.state ?? "" };
+                saveLocation(loc);
+                setLocation(loc);
+              }
+            } catch { /* silently fail */ }
+          })();
+        },
+        () => { /* permission denied — user can pick manually */ },
+        { enableHighAccuracy: false, timeout: 10_000 },
+      );
+    }
+  }, []);
 
   const validUserId =
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
@@ -39,6 +80,9 @@ export default function Navbar() {
 
   const hostStatus = hostData?.application_status ?? null;
   const isVerified = userProfile?.is_verified ?? false;
+  const isAdminUser =
+    !!user?.email &&
+    user.email.toLowerCase() === env.NEXT_PUBLIC_ADMIN_EMAIL.toLowerCase();
 
   // Sync host_id to localStorage for other pages
   useEffect(() => {
@@ -78,13 +122,16 @@ export default function Navbar() {
           {/* Right side — desktop */}
           <div className="hidden md:flex items-center gap-5">
             {/* Location */}
-            <div className="flex items-center gap-1.5 text-sm">
+            <button
+              onClick={() => setLocationOpen(true)}
+              className="flex items-center gap-1.5 text-sm rounded-lg px-2 py-1.5 hover:bg-gray-50 transition cursor-pointer"
+            >
               <IoLocationSharp className="h-5 w-5 text-[#0094CA]" />
-              <div className="leading-tight">
-                <p className="font-semibold text-gray-900">Guwahati</p>
-                <p className="text-xs text-gray-500">Assam</p>
+              <div className="leading-tight text-left">
+                <p className="font-semibold text-gray-900">{location?.city ?? "Select City"}</p>
+                <p className="text-xs text-gray-500">{location?.state ?? "Tap to detect"}</p>
               </div>
-            </div>
+            </button>
 
             {/* Search */}
             <button
@@ -93,6 +140,17 @@ export default function Navbar() {
             >
               <FiSearch className="h-5 w-5" />
             </button>
+
+            {/* Wallet (only for logged-in users) */}
+            {user && validUserId && (
+              <WalletDisplay
+                userId={validUserId}
+                userName={user.displayName ?? undefined}
+                userEmail={user.email ?? undefined}
+                userPhone={user.phoneNumber ?? undefined}
+                variant="compact"
+              />
+            )}
 
             {/* Profile / Login */}
             <div className="relative" ref={profileRef}>
@@ -176,6 +234,19 @@ export default function Navbar() {
                       ) : null}
                     </div>
 
+                    {/* Wallet Balance section */}
+                    {validUserId && (
+                      <div className="mx-5 mb-3">
+                        <WalletDisplay
+                          userId={validUserId}
+                          userName={user.displayName ?? undefined}
+                          userEmail={user.email ?? undefined}
+                          userPhone={user.phoneNumber ?? undefined}
+                          variant="sidebar"
+                        />
+                      </div>
+                    )}
+
                     {/* Aadhaar Verification section */}
                     {validUserId && !isVerified && (
                       <div className="mx-5 mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
@@ -227,7 +298,8 @@ export default function Navbar() {
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
                           </Link>
-                          <button
+                          <Link
+                            href="/activities"
                             onClick={() => setProfileOpen(false)}
                             className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
                           >
@@ -236,8 +308,9 @@ export default function Navbar() {
                               View all bookings
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </button>
-                          <button
+                          </Link>
+                          <Link
+                            href="/activities"
                             onClick={() => setProfileOpen(false)}
                             className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
                           >
@@ -246,28 +319,57 @@ export default function Navbar() {
                               Saved experiences
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </button>
+                          </Link>
                         </div>
                       )}
 
                       {/* Regular user items (no host or pending) */}
                       {hostStatus !== "approved" && (
                         <div className="rounded-xl border border-gray-200 divide-y divide-gray-200">
-                          <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                          <Link
+                            href="/activities"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                          >
                             <span className="flex items-center gap-3">
                               <LuCalendarDays className="h-5 w-5 text-gray-600" />
                               View all bookings
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </button>
-                          <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                          </Link>
+                          <Link
+                            href="/activities"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                          >
                             <span className="flex items-center gap-3">
                               <LuBookmarkMinus className="h-5 w-5 text-gray-600" />
                               Saved experiences
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </button>
+                          </Link>
                         </div>
+                      )}
+
+                      {isAdminUser && (
+                        <>
+                          <p className="mb-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Admin
+                          </p>
+                          <div className="rounded-xl border border-gray-200">
+                            <Link
+                              href="/host-dashboard/admin"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                            >
+                              <span className="flex items-center gap-3">
+                                <LuShield className="h-5 w-5 text-gray-600" />
+                                Pending host applications
+                              </span>
+                              <FiChevronRight className="h-4 w-4 text-gray-400" />
+                            </Link>
+                          </div>
+                        </>
                       )}
 
                       {/* Support */}
@@ -275,13 +377,17 @@ export default function Navbar() {
                         Support
                       </p>
                       <div className="rounded-xl border border-gray-200">
-                        <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                        <Link
+                          href="/support"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                        >
                           <span className="flex items-center gap-3">
                             <LuMessageSquare className="h-5 w-5 text-gray-600" />
-                            Chat with us
+                            Support &amp; Safety
                           </span>
                           <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </button>
+                        </Link>
                       </div>
 
                       {/* More */}
@@ -341,15 +447,18 @@ export default function Navbar() {
 
         {/* Mobile drawer */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 shadow-lg">
+          <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 shadow-lg max-h-[80vh] overflow-y-auto">
             {/* Location */}
-            <div className="flex items-center gap-2 py-3">
+            <button
+              onClick={() => { setLocationOpen(true); setMobileOpen(false); }}
+              className="flex items-center gap-2 py-3 w-full rounded-lg hover:bg-gray-50 transition"
+            >
               <IoLocationSharp className="h-5 w-5 text-[#0094CA]" />
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Guwahati</p>
-                <p className="text-xs text-gray-500">Assam</p>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-gray-900">{location?.city ?? "Select City"}</p>
+                <p className="text-xs text-gray-500">{location?.state ?? "Tap to detect"}</p>
               </div>
-            </div>
+            </button>
 
             {/* Search */}
             <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
@@ -361,29 +470,179 @@ export default function Navbar() {
 
             {/* Auth section */}
             {user ? (
-              <button
-                onClick={() => {
-                  setProfileOpen(true);
-                  setMobileOpen(false);
-                }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-gray-50 transition"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="overflow-hidden text-left">
-                  <p className="truncate text-sm font-semibold text-gray-900">
-                    {user.displayName}
-                  </p>
-                  <p className="truncate text-xs text-gray-500">
-                    {user.email}
-                  </p>
+              <>
+                <div className="flex w-full items-center gap-3 rounded-lg px-3 py-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
+                    alt=""
+                    className="h-10 w-10 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="overflow-hidden text-left">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {user.displayName}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                      {user.email}
+                    </p>
+                  </div>
                 </div>
-              </button>
+
+                {/* Wallet Balance section — mobile */}
+                {validUserId && (
+                  <div className="mx-0 my-3">
+                    <WalletDisplay
+                      userId={validUserId}
+                      userName={user.displayName ?? undefined}
+                      userEmail={user.email ?? undefined}
+                      userPhone={user.phoneNumber ?? undefined}
+                      variant="compact"
+                    />
+                  </div>
+                )}
+
+                {/* Aadhaar Verification section — mobile */}
+                {validUserId && !isVerified && (
+                  <div className="my-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold text-gray-900">Aadhaar Verification</p>
+                        <p className="text-xs text-gray-500">Required to become a host</p>
+                      </div>
+                      <button
+                        onClick={() => { setShowAadharVerify(true); setMobileOpen(false); }}
+                        className="rounded-lg bg-[#0094CA] px-2 py-1 text-xs font-semibold text-white transition hover:bg-[#007dab] whitespace-nowrap"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {validUserId && isVerified && (
+                  <div className="my-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                    <LuShield className="h-5 w-5 shrink-0 text-green-600" />
+                    <div>
+                      <p className="text-xs font-semibold text-green-800">Aadhaar Verified</p>
+                      <p className="text-xs text-green-600">Identity verified</p>
+                    </div>
+                  </div>
+                )}
+
+                <hr className="my-2" />
+
+                {/* Host-specific items (shown for verified hosts) */}
+                {hostStatus === "approved" && (
+                  <div className="mb-3 space-y-1.5">
+                    <Link
+                      href="/host-dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <span className="flex items-center gap-3">
+                        <LuHome className="h-5 w-5 text-gray-600" />
+                        Host dashboard
+                      </span>
+                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    </Link>
+                  </div>
+                )}
+
+                {/* Bookings & Saved */}
+                <div className="mb-3 space-y-1.5">
+                  <Link
+                    href="/activities"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    <span className="flex items-center gap-3">
+                      <LuCalendarDays className="h-5 w-5 text-gray-600" />
+                      View all bookings
+                    </span>
+                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                  </Link>
+                  <Link
+                    href="/activities"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    <span className="flex items-center gap-3">
+                      <LuBookmarkMinus className="h-5 w-5 text-gray-600" />
+                      Saved experiences
+                    </span>
+                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                  </Link>
+                </div>
+
+                {/* Admin section */}
+                {isAdminUser && (
+                  <div className="mb-3">
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Admin</p>
+                    <Link
+                      href="/host-dashboard/admin"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <span className="flex items-center gap-3">
+                        <LuShield className="h-5 w-5 text-gray-600" />
+                        Pending applications
+                      </span>
+                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    </Link>
+                  </div>
+                )}
+
+                <hr className="my-2" />
+
+                {/* Support section */}
+                <div className="mb-3">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Support</p>
+                  <Link
+                    href="/support"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    <span className="flex items-center gap-3">
+                      <LuMessageSquare className="h-5 w-5 text-gray-600" />
+                      Support &amp; Safety
+                    </span>
+                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                  </Link>
+                </div>
+
+                {/* More section */}
+                <div className="mb-3">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">More</p>
+                  <div className="space-y-1.5">
+                    <button className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                      <span className="flex items-center gap-3">
+                        <LuShield className="h-5 w-5 text-gray-600" />
+                        Terms &amp; Conditions
+                      </span>
+                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    </button>
+                    <button className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                      <span className="flex items-center gap-3">
+                        <LuFileText className="h-5 w-5 text-gray-600" />
+                        Privacy Policy
+                      </span>
+                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Logout */}
+                <button
+                  onClick={() => {
+                    void signOut(auth);
+                    setMobileOpen(false);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-red-50 transition"
+                >
+                  <LuLogOut className="h-5 w-5 text-gray-600" />
+                  Logout
+                </button>
+              </>
             ) : (
               <button
                 onClick={() => {
@@ -404,6 +663,14 @@ export default function Navbar() {
 
       {/* Google Login Modal */}
       <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
+
+      {/* Location Modal */}
+      <LocationModal
+        open={locationOpen}
+        onClose={() => setLocationOpen(false)}
+        onSelect={(loc) => setLocation(loc)}
+        current={location}
+      />
 
       {/* Become a Host Modal */}
       <BecomeHostModal open={showBecomeHost} onClose={() => setShowBecomeHost(false)} />

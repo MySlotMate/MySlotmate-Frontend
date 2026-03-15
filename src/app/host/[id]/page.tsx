@@ -17,11 +17,6 @@ import {
   useEventsByHost,
   useReviewsByEvent,
 } from "~/hooks/useApi";
-import {
-  usePublicHostProfile,
-  useEventsByHost,
-  useReviewsByEvent,
-} from "~/hooks/useApi";
 
 export const runtime = "edge";
 
@@ -120,9 +115,6 @@ export default function HostProfilePage({
             total_events_hosted={totalEvents}
             total_people_met={totalPeopleMet}
             avg_rating={host.avg_rating ?? 0}
-            total_events_hosted={totalEvents}
-            total_people_met={totalPeopleMet}
-            avg_rating={host.avg_rating ?? 0}
           />
         </div>
 
@@ -134,15 +126,12 @@ export default function HostProfilePage({
               bio={host.bio}
               expertise_tags={host.expertise_tags}
               moods={moods}
-              moods={moods}
             />
           </div>
           <div className="lg:col-span-2">
             <RatingsSection
               avg_rating={host.avg_rating ?? 0}
-              avg_rating={host.avg_rating ?? 0}
               total_reviews={host.total_reviews}
-              reviews={reviews}
               reviews={reviews}
             />
           </div>

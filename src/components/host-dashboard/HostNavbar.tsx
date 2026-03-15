@@ -21,7 +21,7 @@ export default function HostNavbar() {
     <nav className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="shrink-0">
+        <Link href="/" className="shrink-0">{/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/home/logo.png"
             alt="Myslotmate"
@@ -64,7 +64,7 @@ export default function HostNavbar() {
 
           {/* Avatar */}
           {user && (
-            <Link href="/host-dashboard/profile">
+            <Link href="/host-dashboard/profile">{/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
                 alt={user.displayName ?? "Profile"}

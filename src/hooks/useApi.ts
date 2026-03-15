@@ -34,6 +34,7 @@ export const queryKeys = {
   listHosts: ["listHosts"] as const,
   listPublicEvents: ["listPublicEvents"] as const,
   publicHostProfile: (hostId: string) => ["publicHostProfile", hostId] as const,
+  pendingHostApplications: ["pendingHostApplications"] as const,
 };
 
 /* ═══ Queries ══════════════════════════════════════════════════ */
@@ -83,6 +84,16 @@ export function useListPublicEvents() {
     queryKey: queryKeys.listPublicEvents,
     queryFn: () => api.listPublicEvents(),
     staleTime: 5 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function usePendingHostApplications(idToken: string | null) {
+  return useQuery({
+    queryKey: queryKeys.pendingHostApplications,
+    queryFn: () => api.listPendingHostApplications(idToken!),
+    enabled: !!idToken,
+    staleTime: 30 * 1000,
     select: (res) => res.data,
   });
 }
@@ -315,6 +326,35 @@ export function useSubmitHostApplication() {
 
 export function useSaveHostDraft() {
   return useMutation({ mutationFn: api.saveHostDraft });
+}
+
+export function useApproveHostApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ hostId, idToken }: { hostId: string; idToken: string }) =>
+      api.approveHostApplication(hostId, idToken),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.pendingHostApplications });
+    },
+  });
+}
+
+export function useRejectHostApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      hostId,
+      idToken,
+      reason,
+    }: {
+      hostId: string;
+      idToken: string;
+      reason?: string;
+    }) => api.rejectHostApplication(hostId, idToken, reason),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.pendingHostApplications });
+    },
+  });
 }
 
 export function useUpdateHostProfile() {

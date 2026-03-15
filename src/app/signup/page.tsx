@@ -97,6 +97,7 @@ export default function SignUpPage() {
         <div className="rounded-2xl bg-white p-8 shadow-xl ring-1 ring-gray-100">
           {/* Logo */}
           <div className="mb-6 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/navbar/roundlogo.png"
               alt="MySlotMate"
@@ -113,6 +114,7 @@ export default function SignUpPage() {
 
           {/* Google info preview */}
           <div className="mt-6 flex items-center gap-3 rounded-xl bg-[#e6f8ff] px-4 py-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
               alt=""

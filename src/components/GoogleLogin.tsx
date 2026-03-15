@@ -62,7 +62,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
 
         {/* Logo placeholder — replace src with your logo */}
         <div className="mb-6 flex justify-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full">{/* eslint-disable-next-line @next/next/no-img-element */}
             {/* Replace with your logo image */}
             <img
               src="/assets/navbar/roundlogo.png"

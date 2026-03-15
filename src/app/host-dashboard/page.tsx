@@ -255,11 +255,14 @@ export default function HostDashboardPage() {
                 >
                   {/* Thumbnail */}
                   {item.cover_image_url && (
-                  <img
-                    src={item.cover_image_url}
-                    alt={item.title}
-                    className="h-28 w-40 shrink-0 rounded-lg object-cover hidden sm:block"
-                  />
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.cover_image_url}
+                        alt={item.title}
+                        className="h-28 w-40 shrink-0 rounded-lg object-cover hidden sm:block"
+                      />
+                    </>
                   )}
 
                   {/* Info */}

@@ -6,9 +6,9 @@ const Hero: React.FC = () => {
             <div className="flex flex-col scale-100 lg:scale-150">
                 <h1 className="text-2xl font-bold text-center md:text-left">Book People&apos;s<br /><span className="text-[#0094CA]">Time.</span></h1>
                 <p className="text-sm text-center text-[#606060] md:text-left mb-4">Pick an interest. Meet someone who shares it.</p>
-                <div className="flex flex-row gap-0.5 justify-center text-semibold">
-                    <button className="w-[45%] h-[1.2rem] bg-[#0094CA] text-[#ffffff] text-xs rounded-md mt-2">Book Time</button>
-                    <button className="w-[45%] h-[1.2rem] bg-[#ffffff] text-[#231F20] border border-[#BBBBBB] rounded-md mt-2 text-xs">List Time</button>
+                <div className="flex flex-row gap-6 justify-center text-semibold">
+                    <button className="w-[45%]  bg-[#0094CA] text-[#ffffff] text-sm rounded-md mt-2 p-2">Book Time</button>
+                    <button className="w-[45%]  bg-[#ffffff] text-[#231F20] border border-[#BBBBBB] rounded-md mt-2 text-sm p-2">List Time</button>
                 </div>
                 <div className="flex flex-row justify-center items-center md:justify-start mt-2">
                     <div className="h-[1.5rem] w-[1.5rem] rounded-full bg-[#EEEEEE] border border-[#ffffff] z-0"><img className="rounded-full" src="/assets/home/profile1.png"/></div>

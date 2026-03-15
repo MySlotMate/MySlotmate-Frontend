@@ -1,0 +1,14 @@
+[
+  {"id":1,"name":"John Doe","imageUrl":"/assets/home/people1.png","rating":"4.5","location":"New York, USA"},
+  {"id":2,"name":"Jane Smith","imageUrl":"/assets/home/people2.png","rating":"4.8","location":"London, UK"},
+  {"id":3,"name":"Robert Johnson","imageUrl":"/assets/home/people3.png","rating":"4.2","location":"Sydney, AU"},
+  {"id":4,"name":"Alice Williams","imageUrl":"/assets/home/people1.png","rating":"4.6","location":"Toronto, CA"},
+  {"id":5,"name":"Michael Brown","imageUrl":"/assets/home/people2.png","rating":"4.7","location":"Berlin, DE"},
+  {"id":6,"name":"Emily Davis","imageUrl":"/assets/home/people3.png","rating":"4.4","location":"Mumbai, IN"},
+  {"id":7,"name":"Daniel Wilson","imageUrl":"/assets/home/people1.png","rating":"4.3","location":"Cape Town, ZA"},
+  {"id":8,"name":"Olivia Martinez","imageUrl":"/assets/home/people2.png","rating":"4.9","location":"Madrid, ES"},
+  {"id":9,"name":"Sophia Lee","imageUrl":"/assets/home/people3.png","rating":"4.1","location":"Seoul, KR"},
+  {"id":10,"name":"Liam Garcia","imageUrl":"/assets/home/people1.png","rating":"4.0","location":"Mexico City, MX"},
+  {"id":11,"name":"Mia Thompson","imageUrl":"/assets/home/people2.png","rating":"4.6","location":"Dublin, IE"},
+  {"id":12,"name":"Noah Anderson","imageUrl":"/assets/home/people3.png","rating":"4.2","location":"Auckland, NZ"}
+]

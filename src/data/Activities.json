@@ -1,0 +1,14 @@
+[
+  {"id":1,"title":"Hiking","imageUrl":"/assets/home/hiking.jpg","pricing":"$50","location":"Blue Ridge Mountains"},
+  {"id":2,"title":"Dining","imageUrl":"/assets/home/dining.png","pricing":"$30","location":"Downtown Bistro"},
+  {"id":3,"title":"An Evening of Jazz","imageUrl":"/assets/home/jazz.png","pricing":"$40","location":"City Jazz Club"},
+  {"id":4,"title":"Pottery","imageUrl":"/assets/home/pottery.png","pricing":"$35","location":"Community Studio"},
+  {"id":5,"title":"Kayaking","imageUrl":"/assets/home/kayak.jpg","pricing":"$60","location":"Lakeside"},
+  {"id":6,"title":"City Walking Tour","imageUrl":"/assets/home/tour.jpg","pricing":"$25","location":"Historic District"},
+  {"id":7,"title":"Cooking Class","imageUrl":"/assets/home/cooking.jpg","pricing":"$45","location":"Culinary School"},
+  {"id":8,"title":"Photography Walk","imageUrl":"/assets/home/photo.jpg","pricing":"$20","location":"Riverside"},
+  {"id":9,"title":"Wine Tasting","imageUrl":"/assets/home/wine.jpg","pricing":"$55","location":"Vineyard"},
+  {"id":10,"title":"Yoga in the Park","imageUrl":"/assets/home/yoga.jpg","pricing":"$15","location":"Central Park"},
+  {"id":11,"title":"Stand-up Comedy","imageUrl":"/assets/home/comedy.jpg","pricing":"$30","location":"Local Club"},
+  {"id":12,"title":"Art Workshop","imageUrl":"/assets/home/art.jpg","pricing":"$40","location":"Art Center"}
+]

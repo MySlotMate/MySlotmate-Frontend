@@ -287,6 +287,42 @@ export function getPublicHostProfile(hostId: string) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Admin                                                              */
+/* ------------------------------------------------------------------ */
+
+function getAuthHeader(idToken: string) {
+  return { Authorization: `Bearer ${idToken}` };
+}
+
+/** GET /admin/hosts/applications — list all pending host applications */
+export function listPendingHostApplications(idToken: string) {
+  return apiFetch<HostDTO[]>("/admin/hosts/applications", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** POST /admin/hosts/{hostID}/approve — approve host application */
+export function approveHostApplication(hostId: string, idToken: string) {
+  return apiFetch<HostDTO>(`/admin/hosts/${hostId}/approve`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** POST /admin/hosts/{hostID}/reject — reject host application */
+export function rejectHostApplication(
+  hostId: string,
+  idToken: string,
+  reason?: string,
+) {
+  return apiFetch<HostDTO>(`/admin/hosts/${hostId}/reject`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: reason ? { reason } : {},
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Host Dashboard                                                     */
 /* ------------------------------------------------------------------ */
 

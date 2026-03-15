@@ -15,6 +15,7 @@ import AadharVerificationModal from "./AadharVerificationModal";
 import { WalletDisplay } from "./wallet";
 import { useMyProfile, useApplicationStatus, queryKeys } from "~/hooks/useApi";
 import { useQueryClient } from "@tanstack/react-query";
+import { env } from "~/env";
 
 export default function Navbar() {
   const [user] = useAuthState(auth);
@@ -79,6 +80,9 @@ export default function Navbar() {
 
   const hostStatus = hostData?.application_status ?? null;
   const isVerified = userProfile?.is_verified ?? false;
+  const isAdminUser =
+    !!user?.email &&
+    user.email.toLowerCase() === env.NEXT_PUBLIC_ADMIN_EMAIL.toLowerCase();
 
   // Sync host_id to localStorage for other pages
   useEffect(() => {
@@ -107,7 +111,7 @@ export default function Navbar() {
 
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Left: Logo */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0">{/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/home/logo.png"
               alt="Myslotmate"
@@ -155,6 +159,7 @@ export default function Navbar() {
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="flex cursor-pointer items-center gap-2 rounded-full border-2 border-[#0094CA] p-0.5 transition hover:shadow-md"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
                     alt={user.displayName ?? "Profile"}
@@ -202,6 +207,7 @@ export default function Navbar() {
 
                     {/* User info */}
                     <div className="flex items-center gap-4 px-5 py-5">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
                         alt=""
@@ -292,7 +298,8 @@ export default function Navbar() {
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
                           </Link>
-                          <button
+                          <Link
+                            href="/activities"
                             onClick={() => setProfileOpen(false)}
                             className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
                           >
@@ -301,8 +308,9 @@ export default function Navbar() {
                               View all bookings
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </button>
-                          <button
+                          </Link>
+                          <Link
+                            href="/activities"
                             onClick={() => setProfileOpen(false)}
                             className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
                           >
@@ -311,28 +319,57 @@ export default function Navbar() {
                               Saved experiences
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </button>
+                          </Link>
                         </div>
                       )}
 
                       {/* Regular user items (no host or pending) */}
                       {hostStatus !== "approved" && (
                         <div className="rounded-xl border border-gray-200 divide-y divide-gray-200">
-                          <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                          <Link
+                            href="/activities"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                          >
                             <span className="flex items-center gap-3">
                               <LuCalendarDays className="h-5 w-5 text-gray-600" />
                               View all bookings
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </button>
-                          <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                          </Link>
+                          <Link
+                            href="/activities"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                          >
                             <span className="flex items-center gap-3">
                               <LuBookmarkMinus className="h-5 w-5 text-gray-600" />
                               Saved experiences
                             </span>
                             <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </button>
+                          </Link>
                         </div>
+                      )}
+
+                      {isAdminUser && (
+                        <>
+                          <p className="mb-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Admin
+                          </p>
+                          <div className="rounded-xl border border-gray-200">
+                            <Link
+                              href="/host-dashboard/admin"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                            >
+                              <span className="flex items-center gap-3">
+                                <LuShield className="h-5 w-5 text-gray-600" />
+                                Pending host applications
+                              </span>
+                              <FiChevronRight className="h-4 w-4 text-gray-400" />
+                            </Link>
+                          </div>
+                        </>
                       )}
 
                       {/* Support */}
@@ -340,13 +377,17 @@ export default function Navbar() {
                         Support
                       </p>
                       <div className="rounded-xl border border-gray-200">
-                        <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                        <Link
+                          href="/support"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                        >
                           <span className="flex items-center gap-3">
                             <LuMessageSquare className="h-5 w-5 text-gray-600" />
-                            Chat with us
+                            Support &amp; Safety
                           </span>
                           <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </button>
+                        </Link>
                       </div>
 
                       {/* More */}
@@ -406,7 +447,7 @@ export default function Navbar() {
 
         {/* Mobile drawer */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 shadow-lg">
+          <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 shadow-lg max-h-[80vh] overflow-y-auto">
             {/* Location */}
             <button
               onClick={() => { setLocationOpen(true); setMobileOpen(false); }}
@@ -429,28 +470,179 @@ export default function Navbar() {
 
             {/* Auth section */}
             {user ? (
-              <button
-                onClick={() => {
-                  setProfileOpen(true);
-                  setMobileOpen(false);
-                }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-gray-50 transition"
-              >
-                <img
-                  src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
-                  alt=""
-                  className="h-10 w-10 rounded-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="overflow-hidden text-left">
-                  <p className="truncate text-sm font-semibold text-gray-900">
-                    {user.displayName}
-                  </p>
-                  <p className="truncate text-xs text-gray-500">
-                    {user.email}
-                  </p>
+              <>
+                <div className="flex w-full items-center gap-3 rounded-lg px-3 py-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
+                    alt=""
+                    className="h-10 w-10 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="overflow-hidden text-left">
+                    <p className="truncate text-sm font-semibold text-gray-900">
+                      {user.displayName}
+                    </p>
+                    <p className="truncate text-xs text-gray-500">
+                      {user.email}
+                    </p>
+                  </div>
                 </div>
-              </button>
+
+                {/* Wallet Balance section — mobile */}
+                {validUserId && (
+                  <div className="mx-0 my-3">
+                    <WalletDisplay
+                      userId={validUserId}
+                      userName={user.displayName ?? undefined}
+                      userEmail={user.email ?? undefined}
+                      userPhone={user.phoneNumber ?? undefined}
+                      variant="compact"
+                    />
+                  </div>
+                )}
+
+                {/* Aadhaar Verification section — mobile */}
+                {validUserId && !isVerified && (
+                  <div className="my-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <p className="text-xs font-semibold text-gray-900">Aadhaar Verification</p>
+                        <p className="text-xs text-gray-500">Required to become a host</p>
+                      </div>
+                      <button
+                        onClick={() => { setShowAadharVerify(true); setMobileOpen(false); }}
+                        className="rounded-lg bg-[#0094CA] px-2 py-1 text-xs font-semibold text-white transition hover:bg-[#007dab] whitespace-nowrap"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {validUserId && isVerified && (
+                  <div className="my-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                    <LuShield className="h-5 w-5 shrink-0 text-green-600" />
+                    <div>
+                      <p className="text-xs font-semibold text-green-800">Aadhaar Verified</p>
+                      <p className="text-xs text-green-600">Identity verified</p>
+                    </div>
+                  </div>
+                )}
+
+                <hr className="my-2" />
+
+                {/* Host-specific items (shown for verified hosts) */}
+                {hostStatus === "approved" && (
+                  <div className="mb-3 space-y-1.5">
+                    <Link
+                      href="/host-dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <span className="flex items-center gap-3">
+                        <LuHome className="h-5 w-5 text-gray-600" />
+                        Host dashboard
+                      </span>
+                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    </Link>
+                  </div>
+                )}
+
+                {/* Bookings & Saved */}
+                <div className="mb-3 space-y-1.5">
+                  <Link
+                    href="/activities"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    <span className="flex items-center gap-3">
+                      <LuCalendarDays className="h-5 w-5 text-gray-600" />
+                      View all bookings
+                    </span>
+                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                  </Link>
+                  <Link
+                    href="/activities"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    <span className="flex items-center gap-3">
+                      <LuBookmarkMinus className="h-5 w-5 text-gray-600" />
+                      Saved experiences
+                    </span>
+                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                  </Link>
+                </div>
+
+                {/* Admin section */}
+                {isAdminUser && (
+                  <div className="mb-3">
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Admin</p>
+                    <Link
+                      href="/host-dashboard/admin"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <span className="flex items-center gap-3">
+                        <LuShield className="h-5 w-5 text-gray-600" />
+                        Pending applications
+                      </span>
+                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    </Link>
+                  </div>
+                )}
+
+                <hr className="my-2" />
+
+                {/* Support section */}
+                <div className="mb-3">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Support</p>
+                  <Link
+                    href="/support"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    <span className="flex items-center gap-3">
+                      <LuMessageSquare className="h-5 w-5 text-gray-600" />
+                      Support &amp; Safety
+                    </span>
+                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                  </Link>
+                </div>
+
+                {/* More section */}
+                <div className="mb-3">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">More</p>
+                  <div className="space-y-1.5">
+                    <button className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                      <span className="flex items-center gap-3">
+                        <LuShield className="h-5 w-5 text-gray-600" />
+                        Terms &amp; Conditions
+                      </span>
+                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    </button>
+                    <button className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                      <span className="flex items-center gap-3">
+                        <LuFileText className="h-5 w-5 text-gray-600" />
+                        Privacy Policy
+                      </span>
+                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Logout */}
+                <button
+                  onClick={() => {
+                    void signOut(auth);
+                    setMobileOpen(false);
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-red-50 transition"
+                >
+                  <LuLogOut className="h-5 w-5 text-gray-600" />
+                  Logout
+                </button>
+              </>
             ) : (
               <button
                 onClick={() => {

@@ -37,8 +37,8 @@ export default function HostApplicationSubmittedModal({
         </button>
 
         {/* Logo */}
-        <div className="mb-5 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#0094CA]">
+          <div className="mb-5 flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#0094CA]">{/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/home/logo.png"
               alt="Myslotmate"

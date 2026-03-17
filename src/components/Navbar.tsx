@@ -11,7 +11,7 @@ import GoogleLogin from "./GoogleLogin";
 import LocationModal, { getSavedLocation, saveLocation, type CityLocation } from "./LocationModal";
 import { BecomeHostModal } from "./become-host";
 import { WalletDisplay } from "./wallet";
-import { useMyProfile, useApplicationStatus} from "~/hooks/useApi";
+import { useMyProfile, useApplicationStatus } from "~/hooks/useApi";
 import { useQueryClient } from "@tanstack/react-query";
 import { env } from "~/env";
 
@@ -53,7 +53,12 @@ export default function Navbar() {
               const addr = data.address;
               if (addr) {
                 const city = addr.city ?? addr.town ?? addr.village ?? addr.state_district ?? addr.county ?? "Unknown";
-                const loc: CityLocation = { city, state: addr.state ?? "" };
+                const loc: CityLocation = {
+                  city,
+                  state: addr.state ?? "",
+                  lat: pos.coords.latitude,
+                  lng: pos.coords.longitude,
+                };
                 saveLocation(loc);
                 setLocation(loc);
               }
@@ -77,7 +82,7 @@ export default function Navbar() {
   const { data: userProfile } = useMyProfile(validUserId);
   const { data: hostData, isLoading: hostLoading } = useApplicationStatus(validUserId);
 
-  const hostStatus = hostData?.status?.application_status ?? null;
+  const hostStatus = hostData?.application_status ?? null;
 
   const isAdminUser =
     !!user?.email &&

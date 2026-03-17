@@ -396,6 +396,7 @@ export default function HostMessagesPage() {
                     sendMessage.mutate(
                       {
                         event_id: selectedEventId,
+                        host_id: hostId,
                         sender_type: "host",
                         sender_id: hostId,
                         message: input.trim(),
@@ -413,6 +414,7 @@ export default function HostMessagesPage() {
                     sendMessage.mutate(
                       {
                         event_id: selectedEventId,
+                        host_id: hostId,
                         sender_type: "host",
                         sender_id: hostId,
                         message: input.trim(),

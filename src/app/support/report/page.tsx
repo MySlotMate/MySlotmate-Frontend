@@ -336,8 +336,8 @@ export default function ReportIssuePage() {
               </div>
               <button
                 type="submit"
-                disabled={isSubmitting || !user}
-                className="flex-1 px-6 py-3 bg-[#0094CA] text-white font-semibold rounded-lg hover:bg-[#007dab] transition w-full md:w-[40%] disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+                className="px-6 py-3 bg-[#0094CA] text-white font-semibold rounded-lg hover:bg-[#007dab] transition w-full md:w-[40%] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? "Submitting..." : "Submit Report"}
               </button>

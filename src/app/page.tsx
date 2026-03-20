@@ -13,10 +13,11 @@ export default function HomePage() {
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
-      // 1. Standard Fade: Elements that fade in AND out
       const fadeElements = gsap.utils.toArray<HTMLElement>(".scroll-fade");
+
       fadeElements.forEach((el) => {
-        gsap.fromTo(el,
+        gsap.fromTo(
+          el,
           { opacity: 0, y: 30 },
           {
             opacity: 1,
@@ -32,26 +33,6 @@ export default function HomePage() {
           }
         );
       });
-
-      // 2. Sticky Fade: Elements that fade in once and STAY visible (Opacity 1)
-      const stickyElements = gsap.utils.toArray<HTMLElement>(".scroll-fade-sticky");
-      stickyElements.forEach((el) => {
-        gsap.fromTo(el,
-          { opacity: 0, y: 20 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 1,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: el,
-              start: "top 95%",
-              // "play none none none" means once it's triggered, it never reverses
-              toggleActions: "play none none none", 
-            },
-          }
-        );
-      });
     }, mainRef);
 
     return () => ctx.revert();
@@ -60,11 +41,15 @@ export default function HomePage() {
   return (
     <main 
       ref={mainRef} 
+      // justify-start keeps the vertical flow, items-center centers horizontally
       className="overflow-hidden flex min-h-screen flex-col gap-12 items-center justify-start bg-linear-to-b from-[#e4f8ff] to-white text-[#000000] pb-16"
     >
       <components.Navbar />
 
-      {/* --- STANDARD FADING SECTIONS --- */}
+      {/* Each 'scroll-fade' div is now a flex container 
+          with 'items-center' to ensure the component inside is centered 
+      */}
+      
       <div className="scroll-fade w-full flex flex-col items-center">
         <components.Home.Hero />
       </div>
@@ -80,11 +65,17 @@ export default function HomePage() {
               key={cat}
               onClick={() => setMode(cat)} 
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                mode === cat ? "bg-[#0094CA] text-white" : "bg-white border border-gray-200 text-gray-700 hover:border-[#0094CA]"
+                mode === cat 
+                  ? "bg-[#0094CA] text-white" 
+                  : "bg-white border border-gray-200 text-gray-700 hover:border-[#0094CA]"
               }`}
             >
               <span className="flex items-center gap-2">
-                {cat === "All" && "🏠"} {cat === "Adventure" && "⛰️"} {cat === "Social" && "🎉"} {cat === "Wellness" && "🧘"} {cat}
+                {cat === "All" && "🏠"}
+                {cat === "Adventure" && "⛰️"}
+                {cat === "Social" && "🎉"}
+                {cat === "Wellness" && "🧘"}
+                {cat}
               </span>
             </button>
           ))}
@@ -99,18 +90,12 @@ export default function HomePage() {
         <components.Home.Banner />
       </div>
 
-      {/* --- STICKY SECTIONS (Stay Opacity 1 once reached) --- */}
-      <div className="scroll-fade-sticky w-full flex flex-col items-center">
+      <div className="scroll-fade w-full flex flex-col items-center">
         <components.Home.AllHosts />
-      </div>
+      <components.Home.Idea/>
 
-      <div className="scroll-fade-sticky w-full flex flex-col items-center">
-        <components.Home.Idea />
-      </div>
-
-      <div className="w-full flex flex-col items-center">
-        {/* Footer usually doesn't need a fade, but added for consistency */}
-        <components.Home.Footer />
+      
+        <components.Home.Footer/>
       </div>
     </main>
   );

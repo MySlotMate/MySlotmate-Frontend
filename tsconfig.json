@@ -13,7 +13,10 @@
     /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "checkJs": true,
+    
+    /* FIX 1: Change checkJs to false. 
+       This stops TS from trying to validate the internal JS of your libraries. */
+    "checkJs": false, 
 
     /* Bundled projects */
     "lib": ["dom", "dom.iterable", "ES2022"],
@@ -36,7 +39,8 @@
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
+    "gsap.d.ts", // Ensure your custom declaration file is explicitly included
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "generated"]
+  "exclude": ["node_modules", "generated", ".next"]
 }

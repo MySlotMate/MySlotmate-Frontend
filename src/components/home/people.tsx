@@ -47,7 +47,7 @@ const PeopleCard = ({ id, name, imageUrl, rating, isVerified }: PeopleCardProps)
   );
 };
 
-const People = () => {
+const People = ({ currentHostId }: { currentHostId?: string | null }) => {
   const [location, setLocation] = useState<CityLocation | null>(null);
   const [mounted, setMounted] = useState(false);
   const { data: hosts, isLoading } = useListHosts();
@@ -65,15 +65,21 @@ const People = () => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Filter hosts by distance (nearest first)
+  // Filter hosts by distance (nearest first) and exclude current host
   const filteredHosts = useMemo(() => {
     if (!hosts) return [];
+    
+    // Filter out current host
+    const hostsWithoutCurrentHost = currentHostId 
+      ? hosts.filter(host => host.id !== currentHostId)
+      : hosts;
+    
     if (!mounted || !location) {
-      return hosts.slice(0, 8);
+      return hostsWithoutCurrentHost.slice(0, 8);
     }
     
     // Calculate distance for each host
-    const hostsWithDistance = hosts.map((host) => {
+    const hostsWithDistance = hostsWithoutCurrentHost.map((host) => {
       let distance = Infinity; // Default: very far away
       
       // Find host's city in POPULAR_CITIES to get coordinates
@@ -102,7 +108,7 @@ const People = () => {
       .map(({ host }) => host);
     
     return sorted;
-  }, [hosts, location, mounted]);
+  }, [hosts, location, mounted, currentHostId]);
 
   return (
     <div className="flex flex-col w-full px-6 md:px-12 lg:px-20 mt-8">

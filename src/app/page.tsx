@@ -1,6 +1,6 @@
 "use client";
 import * as components from "../components";
-import { useState, useLayoutEffect, useRef } from "react";
+import { useState, useLayoutEffect, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -9,7 +9,15 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function HomePage() {
   const [mode, setMode] = useState<string>("All");
+  const [hostId, setHostId] = useState<string | null>(null);
   const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const id = localStorage.getItem("msm_host_id");
+    if (id) {
+      setHostId(id);
+    }
+  }, []);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
@@ -55,7 +63,7 @@ export default function HomePage() {
       </div>
       
       <div className="scroll-fade w-full flex flex-col items-center">
-        <components.Home.people />
+        <components.Home.people currentHostId={hostId} />
       </div>
 
       <div className="scroll-fade w-full flex flex-col items-center px-6 md:px-12 lg:px-20">
@@ -91,7 +99,7 @@ export default function HomePage() {
       </div>
 
       <div className="scroll-fade w-full flex flex-col items-center">
-        <components.Home.AllHosts />
+        <components.Home.AllHosts currentHostId={hostId} />
       <components.Home.Idea/>
 
       

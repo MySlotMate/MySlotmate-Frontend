@@ -48,7 +48,7 @@ const HostCard = ({ id, name, imageUrl, rating, city, isVerified }: HostCardProp
   );
 };
 
-const AllHosts = () => {
+const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
   const [mounted, setMounted] = useState(false);
   const { data: hosts, isLoading } = useListHosts();
 
@@ -56,8 +56,10 @@ const AllHosts = () => {
     setMounted(true);
   }, []);
 
-  // Show all hosts without any filtering
-  const displayHosts = mounted && hosts ? hosts.slice(0, 8) : [];
+  // Filter out current host and show rest
+  const displayHosts = mounted && hosts 
+    ? hosts.filter(host => host.id !== currentHostId).slice(0, 8)
+    : [];
 
   return (
     <div className="flex flex-col w-full px-6 md:px-12 lg:px-20">

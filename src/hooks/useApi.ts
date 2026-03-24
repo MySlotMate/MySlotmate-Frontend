@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
 import * as api from "~/lib/api";
 
 /* ═══ Query Keys ═══════════════════════════════════════════════ */
@@ -29,6 +29,8 @@ export const queryKeys = {
   payoutMethods: (hostId: string) => ["payoutMethods", hostId] as const,
   earnings: (hostId: string) => ["earnings", hostId] as const,
   payoutHistory: (hostId: string) => ["payoutHistory", hostId] as const,
+  platformBalance: ["platformBalance"] as const,
+  platformPayoutMethods: ["platformPayoutMethods"] as const,
   eventMessages: (eventId: string) => ["eventMessages", eventId] as const,
   hostMessages: (hostId: string) => ["hostMessages", hostId] as const,
   supportTicket: (ticketId: string) => ["supportTicket", ticketId] as const,
@@ -148,6 +150,54 @@ export function usePendingHostApplications(idToken: string | null) {
     staleTime: 30 * 1000,
     select: (res) => res.data,
   });
+}
+
+export function usePlatformBalance(idToken: string | null) {
+  return useQuery({
+    queryKey: queryKeys.platformBalance,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    queryFn: async () => {
+      try {
+        const result = await api.getPlatformBalance(idToken!);
+        console.log("✅ getPlatformBalance response:", result);
+        return result;
+      } catch (err) {
+        console.error("❌ getPlatformBalance error:", err);
+        throw err;
+      }
+    },
+    enabled: !!idToken,
+    staleTime: 60 * 1000,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    select: (res) => {
+      console.log("💾 usePlatformBalance select - res.data:", res.data);
+      return res.data;
+    },
+  });
+}
+
+export function usePlatformPayoutMethods(idToken: string | null) {
+  return useQuery({
+    queryKey: queryKeys.platformPayoutMethods,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    queryFn: async () => {
+      try {
+        const result = await api.getPlatformPayoutMethods(idToken!);
+        console.log("✅ getPlatformPayoutMethods response:", result);
+        return result;
+      } catch (err) {
+        console.error("❌ getPlatformPayoutMethods error:", err);
+        throw err;
+      }
+    },
+    enabled: !!idToken,
+    staleTime: 2 * 60 * 1000,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+    select: (res) => {
+      console.log("💾 usePlatformPayoutMethods select - res.data:", res.data);
+      return res.data;
+    },
+  }) as UseQueryResult<api.PayoutMethodDTO[] | undefined, unknown>;
 }
 
 export function usePublicHostProfile(hostId: string | null) {
@@ -427,6 +477,54 @@ export function useRejectHostApplication() {
       void qc.invalidateQueries({ queryKey: queryKeys.pendingHostApplications });
     },
   });
+}
+
+export function useAddPlatformPayoutMethod() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ body, idToken }: { body: api.PlatformAddPayoutMethodPayload; idToken: string }) =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      api.addPlatformPayoutMethod(body, idToken),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
+    },
+  }) as UseMutationResult<api.Envelope<api.PayoutMethodDTO>, unknown, { body: api.PlatformAddPayoutMethodPayload; idToken: string }>;
+}
+
+export function useSetPlatformPrimaryPayoutMethod() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ methodId, idToken }: { methodId: string; idToken: string }) =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      api.setPlatformPrimaryPayoutMethod(methodId, idToken),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
+    },
+  }) as UseMutationResult<api.Envelope<{ message: string }>, unknown, { methodId: string; idToken: string }>;
+}
+
+export function useDeletePlatformPayoutMethod() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ methodId, idToken }: { methodId: string; idToken: string }) =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      api.deletePlatformPayoutMethod(methodId, idToken),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
+    },
+  }) as UseMutationResult<api.Envelope<{ message: string }>, unknown, { methodId: string; idToken: string }>;
+}
+
+export function useWithdrawPlatformFees() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ body, idToken }: { body: { amount_cents: number; idempotency_key?: string }; idToken: string }) =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      api.withdrawPlatformFees(body, idToken),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.platformBalance });
+    },
+  }) as UseMutationResult<api.Envelope<api.PaymentDTO>, unknown, { body: { amount_cents: number; idempotency_key?: string }; idToken: string }>;
 }
 
 export function useUpdateHostProfile() {

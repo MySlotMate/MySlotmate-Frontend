@@ -370,7 +370,7 @@ export default function Navbar() {
                             >
                               <span className="flex items-center gap-3">
                                 <LuShield className="h-5 w-5 text-gray-600" />
-                                Pending host applications
+                                View Host Dashboard
                               </span>
                               <FiChevronRight className="h-4 w-4 text-gray-400" />
                             </Link>

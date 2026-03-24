@@ -18,6 +18,8 @@ import { LuWallet, LuPlus, LuLoader2 } from "react-icons/lu";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
+export const runtime = "edge";
+
 // Razorpay types
 declare global {
   interface Window {

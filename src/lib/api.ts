@@ -360,6 +360,74 @@ export function rejectHostApplication(
   });
 }
 
+/** GET /admin/platform/balance — get platform account balance and fee collection */
+export interface PlatformBalanceDTO {
+  account_id: string;
+  balance_cents: number;
+  collected_from_bookings: number;
+}
+
+export function getPlatformBalance(idToken: string) {
+  return apiFetch<PlatformBalanceDTO>("/admin/platform/balance", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** GET /admin/platform/payout-methods — list all payout methods for platform account */
+export function getPlatformPayoutMethods(idToken: string) {
+  return apiFetch<PayoutMethodDTO[]>("/admin/platform/payout-methods", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** Platform payout method payload (no host_id required) */
+export interface PlatformAddPayoutMethodPayload {
+  type: "bank" | "upi";
+  bank_name?: string;
+  account_type?: string;
+  account_number?: string;
+  ifsc?: string;
+  beneficiary_name?: string;
+  upi_id?: string;
+}
+
+/** POST /admin/platform/payout-methods — add a payout method for platform account */
+export function addPlatformPayoutMethod(body: PlatformAddPayoutMethodPayload, idToken: string) {
+  return apiFetch<PayoutMethodDTO>("/admin/platform/payout-methods", {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: body,
+  });
+}
+
+/** PUT /admin/platform/payout-methods/{methodID}/primary — set primary for platform */
+export function setPlatformPrimaryPayoutMethod(methodId: string, idToken: string) {
+  return apiFetch<{ message: string }>(`/admin/platform/payout-methods/${methodId}/primary`, {
+    method: "PUT",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** DELETE /admin/platform/payout-methods/{methodID} — delete payout method from platform */
+export function deletePlatformPayoutMethod(methodId: string, idToken: string) {
+  return apiFetch<{ message: string }>(`/admin/platform/payout-methods/${methodId}`, {
+    method: "DELETE",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** POST /admin/platform/withdraw — withdraw platform fees to admin's bank/UPI */
+export function withdrawPlatformFees(body: {
+  amount_cents: number;
+  idempotency_key?: string;
+}, idToken: string) {
+  return apiFetch<PaymentDTO>("/admin/platform/withdraw", {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: body,
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /*  Host Dashboard                                                     */
 /* ------------------------------------------------------------------ */

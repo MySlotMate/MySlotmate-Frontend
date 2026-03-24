@@ -8,6 +8,8 @@ import { useEvent, usePublicHostProfile } from "~/hooks/useApi";
 import { FiCheck, FiCalendar, FiMessageCircle } from "react-icons/fi";
 import { format } from "date-fns";
 
+export const runtime = "edge";
+
 /* ------------------------------------------------------------------ */
 /*  Confirmation Content Component                                     */
 /* ------------------------------------------------------------------ */

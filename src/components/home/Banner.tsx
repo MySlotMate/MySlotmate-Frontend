@@ -1,6 +1,6 @@
 const Banner = () => {
     return (
-        <div className="mx-auto w-full max-w-7xl site-x">
+        <div className="mx-auto w-[100%] site-x">
             <section className="w-full rounded-2xl border-[1px] border-[#0094CA] bg-[#bdedff80] text-[#000000]">
                 <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
                     <div className="w-full lg:w-1/2 flex items-center justify-center">{/* eslint-disable-next-line @next/next/no-img-element */}

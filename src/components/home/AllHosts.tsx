@@ -62,8 +62,8 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
     : [];
 
   return (
-    <div className="flex flex-col w-full site-x">
-      <div className="flex justify-between items-center mb-4">
+    <div className="mx-auto mt-8 flex w-full max-w-7xl flex-col">
+      <div className="flex justify-between items-center mb-4 site-x">
         <h2 className="text-xl font-semibold text-gray-900">Find People like You</h2>
         <Link href="/hosts" className="text-[#0094CA] text-sm flex items-center gap-2 hover:opacity-80">
           <span>see more</span>
@@ -76,7 +76,7 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
       </div>
 
       <div
-        className="flex flex-row items-center justify-center gap-6 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar"
+        className="flex flex-row items-center site-x justify-start gap-6 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {isLoading ? (

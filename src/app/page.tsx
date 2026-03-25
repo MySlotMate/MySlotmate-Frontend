@@ -88,15 +88,13 @@ export default function HomePage() {
         <components.Home.Trending />
       </div>
 
-      <div className="scroll-fade w-full flex flex-col items-center">
+      <div className="scroll-fade w-full flex flex-col items-center px-[8rem]">
         <components.Home.Banner />
       </div>
 
       <div className="scroll-fade w-full flex flex-col items-center">
         <components.Home.AllHosts currentHostId={hostId} />
-      <components.Home.Idea/>
-
-      
+        <components.Home.Idea/>
         <components.Home.Footer/>
       </div>
     </main>

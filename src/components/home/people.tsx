@@ -111,7 +111,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
   }, [hosts, location, mounted, currentHostId]);
 
   return (
-    <div className="flex flex-col w-full px-6 md:px-12 lg:px-20 mt-8">
+    <div className="flex flex-col w-full site-x mt-8">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-semibold text-gray-900">
           Interesting People Near You

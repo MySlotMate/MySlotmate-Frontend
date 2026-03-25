@@ -73,7 +73,7 @@ export default function HostCalendarPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <HostNavbar />
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-7xl site-x py-8">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
             No host profile found. Please apply as a host first.
           </div>
@@ -86,7 +86,7 @@ export default function HostCalendarPage() {
     <div className="min-h-screen bg-gray-50">
       <HostNavbar />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl site-x py-8">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div>

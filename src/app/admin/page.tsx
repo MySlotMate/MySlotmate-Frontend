@@ -323,7 +323,7 @@ export default function AdminPage() {
     <>
       <Navbar />
       <main className="min-h-screen bg-gray-50 py-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl site-x">
           {/* Global feedback banners */}
           {actionSuccess && (
             <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">

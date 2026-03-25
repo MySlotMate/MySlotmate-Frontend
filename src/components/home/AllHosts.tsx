@@ -62,7 +62,7 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
     : [];
 
   return (
-    <div className="flex flex-col w-full px-6 md:px-12 lg:px-20">
+    <div className="flex flex-col w-full site-x">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-900">Find People like You</h2>
         <Link href="/hosts" className="text-[#0094CA] text-sm flex items-center gap-2 hover:opacity-80">

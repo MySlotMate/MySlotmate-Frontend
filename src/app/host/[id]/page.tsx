@@ -87,7 +87,7 @@ export default function HostProfilePage({
     <main className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl site-x py-6">
         {/* Breadcrumb */}
         <nav className="mb-6 flex items-center gap-1 text-sm text-gray-400">
           <Link href="/" className="hover:text-[#0094CA]">

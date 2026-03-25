@@ -139,7 +139,7 @@ export default function Navbar() {
     <>
       <nav className="sticky top-0 z-40 w-full bg-white shadow-sm">
         <div className="h-[3px] w-full bg-[#0094CA]" />
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between site-x">
           {/* Logo */}
           <div className="flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -442,7 +442,7 @@ export default function Navbar() {
 
         {/* Mobile drawer */}
         {mobileOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white px-4 pb-4 pt-2 shadow-lg max-h-[80vh] overflow-y-auto">
+          <div className="md:hidden border-t border-gray-100 bg-white site-x pb-4 pt-2 shadow-lg max-h-[80vh] overflow-y-auto">
             <button
               onClick={() => { setLocationOpen(true); setMobileOpen(false); }}
               className="flex items-center gap-2 py-3 w-full rounded-lg hover:bg-gray-50 transition"

@@ -14,7 +14,7 @@ export default function SupportPageShell({
     <div className="min-h-screen bg-linear-to-b from-[#ecf9ff] via-[#f7fcff] to-white">
       <SupportNavbar />
       <main
-        className={`mx-auto w-full px-4 py-8 sm:px-6 sm:py-12 lg:px-8 ${contentClassName}`}
+        className={`mx-auto w-full site-x py-8 sm:py-12 ${contentClassName}`}
       >
         {children}
       </main>

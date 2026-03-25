@@ -32,12 +32,6 @@ export default function HomePage() {
             y: 0,
             duration: 0.8,
             ease: "power2.out",
-            scrollTrigger: {
-              trigger: el,
-              start: "top 92%",
-              end: "bottom 8%",
-              toggleActions: "play reverse play reverse",
-            },
           }
         );
       });
@@ -66,7 +60,7 @@ export default function HomePage() {
         <components.Home.people currentHostId={hostId} />
       </div>
 
-      <div className="scroll-fade w-full flex flex-col items-center px-6 md:px-12 lg:px-20">
+      <div className="scroll-fade w-full flex flex-col items-center site-x">
         <div className="flex gap-3 flex-wrap justify-center">
           {["All", "Adventure", "Social", "Wellness"].map((cat) => (
             <button 

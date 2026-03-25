@@ -5,6 +5,31 @@
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
+:root {
+  --site-px-mobile: 1rem;
+  --site-px-tablet: 1.5rem;
+  --site-px-desktop: 4rem;
+}
+
+.site-x {
+  padding-left: var(--site-px-mobile);
+  padding-right: var(--site-px-mobile);
+}
+
+@media (min-width: 640px) {
+  .site-x {
+    padding-left: var(--site-px-tablet);
+    padding-right: var(--site-px-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-x {
+    padding-left: var(--site-px-desktop);
+    padding-right: var(--site-px-desktop);
+  }
+}
+
 /* Utility to hide scrollbars across browsers */
 .hide-scrollbar {
   -ms-overflow-style: none; /* IE and Edge */

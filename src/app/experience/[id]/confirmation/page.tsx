@@ -45,7 +45,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
   return (
     <main className="min-h-screen bg-gray-50 py-16">
-      <div className="max-w-lg mx-auto px-4 text-center">
+      <div className="max-w-lg mx-auto site-x text-center">
         {/* Success Checkmark */}
         <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center">

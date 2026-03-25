@@ -390,7 +390,7 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   return (
     <main className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-xl mx-auto px-4">
+      <div className="max-w-xl mx-auto site-x">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Review your booking</h1>

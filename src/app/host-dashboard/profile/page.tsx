@@ -225,7 +225,7 @@ export default function HostProfileEditPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
         </div>
       ) : (
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-6xl site-x py-8">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Link href="/host-dashboard" className="hover:text-gray-700">

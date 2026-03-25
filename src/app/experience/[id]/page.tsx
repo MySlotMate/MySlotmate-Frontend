@@ -559,7 +559,7 @@ function AllPhotosModal({
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto site-x py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-white text-xl font-bold">All photos</h2>
           <button
@@ -690,7 +690,7 @@ export default function ExperienceDetailPage({
       <Navbar />
 
       <main className="min-h-screen bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto site-x py-6">
           {/* Breadcrumb */}
           <nav className="text-sm mb-4">
             <Link href="/" className="text-gray-500 hover:text-gray-700">Home</Link>

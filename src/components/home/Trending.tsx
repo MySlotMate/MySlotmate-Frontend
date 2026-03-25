@@ -102,8 +102,8 @@ const Trending = () => {
   };
 
   return (
-    <div className="flex flex-col w-full px-6 md:px-12 lg:px-20 mt-12">
-      <div className="flex justify-between items-center mb-4">
+    <div className="mx-auto mt-8 flex w-full max-w-7xl flex-col">
+      <div className="flex justify-between items-center mb-4 site-x">
         <h1 className="text-xl font-semibold text-gray-900">
           Trending Now
         </h1>
@@ -118,7 +118,7 @@ const Trending = () => {
       </div>
 
       <div
-        className="flex flex-row items-center justify-center gap-6 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar"
+        className="flex flex-row items-center justify-start gap-6 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar site-x"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         {isLoading ? (

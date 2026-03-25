@@ -19,7 +19,7 @@ export default function HostNavbar() {
 
   return (
     <nav className="sticky top-0 z-40 w-full border-b border-gray-200 bg-white">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between site-x">
         {/* Logo */}
         <Link href="/" className="shrink-0">{/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -77,7 +77,7 @@ export default function HostNavbar() {
       </div>
 
       {/* Mobile nav links */}
-      <div className="flex md:hidden items-center gap-1 overflow-x-auto border-t border-gray-100 px-4 hide-scrollbar">
+      <div className="flex md:hidden items-center gap-1 overflow-x-auto border-t border-gray-100 site-x hide-scrollbar">
         {NAV_LINKS.map(({ label, href }) => {
           const active = pathname === href;
           return (

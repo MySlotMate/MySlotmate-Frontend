@@ -225,7 +225,7 @@ export default function BecomeHostPage() {
       <>
         <Navbar />
         <main className="min-h-screen bg-gray-50">
-          <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl site-x py-20">
             <div className={`rounded-2xl border-2 ${config.borderColor} ${config.bgColor} p-8 text-center`}>
               <div className="mb-6 text-6xl">{config.icon}</div>
               <h1 className="text-3xl font-bold text-gray-900">{config.title}</h1>
@@ -375,7 +375,7 @@ export default function BecomeHostPage() {
     <>
       <Navbar />
 
-      <main className="mx-auto min-h-screen max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto min-h-screen max-w-5xl site-x py-8">
         {/* Header row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>

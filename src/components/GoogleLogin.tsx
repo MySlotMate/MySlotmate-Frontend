@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "~/utils/firebase";
+import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
 
 interface GoogleLoginProps {
@@ -21,11 +22,34 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
 
-      // If the user has never completed signup, redirect to the signup form
-      const userId = localStorage.getItem("msm_user_id");
+      // Check if user ID is already in localStorage
+      let userId = localStorage.getItem("msm_user_id");
+
+      // If not in localStorage, check if user exists in database by Firebase UID
       if (!userId) {
+        try {
+          const profileRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/users/by-firebase/${firebaseUser.uid}`,
+          );
+          if (profileRes.ok) {
+            const response = (await profileRes.json()) as { data?: { id?: string } };
+            userId = response.data?.id;
+            if (userId) {
+              // Existing user — save ID and proceed
+              localStorage.setItem("msm_user_id", userId);
+              toast.success("Welcome back!");
+              onClose();
+              return;
+            }
+          }
+        } catch (fetchErr) {
+          console.error("Error fetching user by Firebase UID:", fetchErr);
+        }
+
+        // User doesn't exist yet — redirect to signup
         onClose();
         router.push("/signup");
         return;
@@ -34,6 +58,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
       onClose();
     } catch (err) {
       console.error("Google sign-in error:", err);
+      toast.error("Failed to sign in. Please try again.");
     } finally {
       setLoading(false);
     }

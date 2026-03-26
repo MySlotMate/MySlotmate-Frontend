@@ -141,10 +141,10 @@ export default function Navbar() {
         <div className="h-[3px] w-full bg-[#0094CA]" />
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between site-x">
           {/* Logo */}
-          <div className="flex-shrink-0">
+          <Link href = "/" className="flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/assets/home/logo.png" alt="Myslotmate" className="h-10 w-auto" />
-          </div>
+          </Link>
 
           {/* Desktop right side */}
           <div className="hidden md:flex items-center gap-5">
@@ -397,20 +397,20 @@ export default function Navbar() {
                       {/* More */}
                       <p className="mb-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">More</p>
                       <div className="rounded-xl border border-gray-200 divide-y divide-gray-200">
-                        <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                        <Link href = "/support/terms-conditions" className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
                           <span className="flex items-center gap-3">
                             <LuShield className="h-5 w-5 text-gray-600" />
                             Terms &amp; Conditions
                           </span>
                           <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </button>
-                        <button className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
+                        </Link>
+                        <Link href = "/support/policies" className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
                           <span className="flex items-center gap-3">
                             <LuFileText className="h-5 w-5 text-gray-600" />
                             Privacy Policy
                           </span>
                           <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </button>
+                        </Link>
                       </div>
 
                       {/* Logout */}
@@ -594,20 +594,20 @@ export default function Navbar() {
                 <div className="mb-3">
                   <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">More</p>
                   <div className="space-y-1.5">
-                    <button className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                    <Link href="/support/terms-conditions" className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                       <span className="flex items-center gap-3">
                         <LuShield className="h-5 w-5 text-gray-600" />
                         Terms &amp; Conditions
                       </span>
                       <FiChevronRight className="h-4 w-4 text-gray-400" />
-                    </button>
-                    <button className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
+                    </Link>
+                    <Link href="/support/policies" className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition">
                       <span className="flex items-center gap-3">
                         <LuFileText className="h-5 w-5 text-gray-600" />
                         Privacy Policy
                       </span>
                       <FiChevronRight className="h-4 w-4 text-gray-400" />
-                    </button>
+                    </Link>
                   </div>
                 </div>
 

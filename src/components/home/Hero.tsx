@@ -46,8 +46,8 @@ const Hero: React.FC = () => {
                         className="pointer-events-none absolute inset-[-8rem] -z-0 rounded-lg opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
                         style={{
                             backgroundImage:
-                                "radial-gradient(circle at center, #44000011 0%, rgba(68, 0, 0, 0.05) 34%, rgba(68, 0, 0, 0) 82%), linear-gradient(to right, rgba(255, 255, 255, 0.62) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.62) 1px, transparent 1px)",
-                            backgroundSize: "100% 100%, 26px 26px, 26px 26px",
+                                "radial-gradient(circle at center, rgba(255, 182, 193, 0.15) 0%, rgba(255, 192, 203, 0.08) 34%, rgba(255, 200, 210, 0) 82%), linear-gradient(to right, rgba(240, 200, 210, 0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(240, 200, 210, 0.4) 1px, transparent 1px)",
+                            backgroundSize: "100% 100%, 60px 60px, 60px 60px",
                             backgroundPosition: "center, center, center",
                             maskImage: "radial-gradient(circle at center, rgba(0, 0, 0, 0.95) 14%, rgba(0, 0, 0, 0.55) 52%, rgba(0, 0, 0, 0.2) 72%, rgba(0, 0, 0, 0) 100%)",
                             WebkitMaskImage: "radial-gradient(circle at center, rgba(0, 0, 0, 0.95) 14%, rgba(0, 0, 0, 0.55) 52%, rgba(0, 0, 0, 0.2) 72%, rgba(0, 0, 0, 0) 100%)",

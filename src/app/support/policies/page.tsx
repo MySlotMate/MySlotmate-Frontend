@@ -17,6 +17,7 @@ import {
   MdGroups,
   MdMovieCreation,
   MdOutlineCopyright,
+  MdOutlineDescription,
   MdOutlineWifi,
   MdPets,
   MdPhotoCameraFront,
@@ -83,6 +84,13 @@ const policyCards: PolicyCardData[] = [
       "Rights and responsibilities around photos, descriptions, and user-generated content.",
     icon: MdOutlineCopyright,
     keywords: ["content", "ip", "copyright", "photos"],
+  },
+  {
+    title: "Terms & Conditions",
+    description:
+      "Host agreements, content licensing, guest conduct guidelines, cancellation policies, and safety information.",
+    icon: MdOutlineDescription,
+    keywords: ["terms", "conditions", "agreement", "legal", "host", "guest"],
   },
 ];
 
@@ -168,7 +176,7 @@ function PolicyCard({ card, active }: { card: PolicyCardData; active?: boolean }
               Last-minute host cancellations can lead to a fee or reduced ranking.
             </li>
           </ul>
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
               className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 transition hover:text-slate-600"
@@ -176,12 +184,12 @@ function PolicyCard({ card, active }: { card: PolicyCardData; active?: boolean }
               <FiMaximize2 className="h-3.5 w-3.5" />
               Expand legal details
             </button>
-            <button
-              type="button"
+            <a
+              href="/support/terms-conditions#cancellation"
               className="text-sm font-semibold text-[#0094CA] transition hover:text-[#007dab]"
             >
               View full policy
-            </button>
+            </a>
           </div>
         </div>
       )}

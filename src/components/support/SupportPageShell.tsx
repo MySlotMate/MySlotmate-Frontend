@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import SupportNavbar from "./SupportNavbar";
+import Navbar from "../Navbar";
 
 interface SupportPageShellProps {
   children: ReactNode;
@@ -12,7 +12,7 @@ export default function SupportPageShell({
 }: SupportPageShellProps) {
   return (
     <div className="min-h-screen bg-linear-to-b from-[#ecf9ff] via-[#f7fcff] to-white">
-      <SupportNavbar />
+      <Navbar />
       <main
         className={`mx-auto w-full site-x py-8 sm:py-12 ${contentClassName}`}
       >

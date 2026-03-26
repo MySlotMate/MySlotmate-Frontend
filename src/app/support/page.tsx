@@ -7,6 +7,7 @@ import {
   LuAlertCircle,
   LuBadgeHelp,
   LuFileCheck2,
+  LuFileText,
   LuLifeBuoy,
   LuShieldAlert,
 } from "react-icons/lu";
@@ -53,6 +54,15 @@ const assistCards: AssistCard[] = [
     actionLabel: "View policies",
     icon: <LuFileCheck2 className="h-5 w-5" />,
     accentClassName: "bg-[#f6efff] text-[#A855F7]",
+  },
+  {
+    title: "Terms & Conditions",
+    description:
+      "Read host agreements, content licensing, guest conduct guidelines, cancellation policies, and safety information.",
+    href: "/support/terms-conditions",
+    actionLabel: "View terms",
+    icon: <LuFileText className="h-5 w-5" />,
+    accentClassName: "bg-[#f0f0f0] text-[#6B7280]",
   },
 ];
 

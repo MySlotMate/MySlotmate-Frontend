@@ -12,7 +12,7 @@ const HeroCard=({photo,type,title,description,duration}:CardProps)=>{
     return(
         <>
             <div
-                className="flex flex-row rounded-2xl w-[18rem] h-[8rem] bg-[#ffffff] scale-100 md:scale-105 lg:scale-110 transition-transform duration-300 mt-4"
+                className="flex flex-row rounded-2xl w-[18rem] h-[8rem] bg-[#ffffff] scale-100 md:scale-105 lg:scale-110 transition-all duration-300 mt-4 hover:shadow-2xl"
                 style={{ boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', border: '1px solid var(--Colors-Neutral-500, #A4A4A4)' }}
             >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -22,8 +22,12 @@ const Hero: React.FC = () => {
                         Pick an interest. Meet someone who shares it.
                     </p>
                     <div className="flex flex-row gap-6 justify-start items-center text-semibold">
-                        <button className="w-[45%] lg:w-auto lg:px-6 bg-[#0094CA] text-[#ffffff] text-sm rounded-md mt-2 p-2">Book Time</button>
-                        <button className="w-[45%] lg:w-auto lg:px-6 bg-[#ffffff] text-[#231F20] border border-[#BBBBBB] rounded-md mt-2 text-sm p-2">List Time</button>
+                        <button className="w-[45%] lg:w-auto lg:px-6 bg-[#0094CA] text-[#ffffff] text-sm rounded-md mt-2 p-2 transition-all duration-300 ease-out hover:-translate-y-1 hover:bg-[#007da9]">
+                            Book Time
+                        </button>
+                        <button className="w-[45%] lg:w-auto lg:px-6 bg-[#ffffff] text-[#231F20] border border-[#BBBBBB] rounded-md mt-2 text-sm p-2 transition-all duration-300 ease-out hover:-translate-y-1 hover:bg-[#0094CA] hover:text-[#ffffff] hover:border-[#0094CA]">
+                            List Time
+                        </button>
                     </div>
                     
                     <div className="flex flex-row justify-center items-center lg:justify-start mt-4">

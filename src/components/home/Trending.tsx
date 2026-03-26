@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useListPublicEvents } from "~/hooks/useApi";
 import { getSavedLocation, calculateDistance, type CityLocation } from "../LocationModal";
 import { LuLoader2 } from "react-icons/lu";
+import { normalizeMood, useMood } from "~/context/MoodContext";
 
 interface TrendingCardProps {
   id: string;
@@ -38,6 +39,7 @@ const Trending = () => {
   const [location, setLocation] = useState<CityLocation | null>(null);
   const [mounted, setMounted] = useState(false);
   const { data: events, isLoading } = useListPublicEvents();
+  const { selectedMoodKey } = useMood();
 
   // Load saved location on mount
   useEffect(() => {
@@ -52,23 +54,27 @@ const Trending = () => {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  // Filter events by distance (nearest first)
+  // Filter events by mood and distance (nearest first)
   const filteredEvents = useMemo(() => {
     if (!events) return [];
     
     // Filter out past events
     const now = new Date();
-    const futureEvents = events.filter((event) => {
+    let filtered = events.filter((event) => {
       const eventDate = new Date(event.time);
       return eventDate > now;
     });
+
+    if (selectedMoodKey !== "all") {
+      filtered = filtered.filter((event) => normalizeMood(event.mood) === selectedMoodKey);
+    }
     
     if (!mounted || !location) {
-      return futureEvents.slice(0, 8);
+      return filtered.slice(0, 8);
     }
     
     // Calculate distance for each event
-    const eventsWithDistance = futureEvents.map((event) => {
+    const eventsWithDistance = filtered.map((event) => {
       let distance = Infinity; // Default: very far away
       
       // If event has coordinates, calculate distance
@@ -93,7 +99,7 @@ const Trending = () => {
       .map(({ event }) => event);
     
     return sorted;
-  }, [events, location, mounted]);
+  }, [events, location, mounted, selectedMoodKey]);
 
   // Format price from cents to display string
   const formatPrice = (priceCents: number | null | undefined) => {

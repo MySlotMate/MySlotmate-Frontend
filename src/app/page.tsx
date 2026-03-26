@@ -3,35 +3,56 @@ import * as components from "../components";
 import { useState, useLayoutEffect, useRef, useEffect, type ReactNode } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Star, Compass, PartyPopper, Leaf } from 'lucide-react';
+import {
+  Grid2X2,
+  Mountain,
+  Users,
+  HeartPulse,
+  GraduationCap,
+  Palette,
+  Moon,
+  UtensilsCrossed,
+  Landmark,
+} from "lucide-react";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { MOOD_TABS, MoodProvider, useMood, type MoodTab } from "~/context/MoodContext";
 
 // Register the plugin
 gsap.registerPlugin(ScrollTrigger);
 type FilterTab = {
-  name: string;
+  name: MoodTab;
   icon: ReactNode;
 };
 
-const FILTER_TABS: FilterTab[] = [
-  { name: 'All', icon: <Star className="w-5 h-5" /> },
-  { name: 'Adventure', icon: <Compass className="w-5 h-5" /> },
-  { name: 'Social', icon: <PartyPopper className="w-5 h-5" /> },
-  { name: 'Wellness', icon: <Leaf className="w-5 h-5" /> },
-];
+const FILTER_TAB_ICONS: Record<(typeof MOOD_TABS)[number], ReactNode> = {
+  All: <Grid2X2 className="w-5 h-5" />,
+  Adventurous: <Mountain className="w-5 h-5" />,
+  Social: <Users className="w-5 h-5" />,
+  Wellness: <HeartPulse className="w-5 h-5" />,
+  Educational: <GraduationCap className="w-5 h-5" />,
+  Creative: <Palette className="w-5 h-5" />,
+  Relaxing: <Moon className="w-5 h-5" />,
+  Culinary: <UtensilsCrossed className="w-5 h-5" />,
+  Cultural: <Landmark className="w-5 h-5" />,
+};
+
+const FILTER_TABS: FilterTab[] = MOOD_TABS.map((name) => ({
+  name,
+  icon: FILTER_TAB_ICONS[name],
+}));
 
 const FilterBarDesktop = () => {
-  const [activeTab, setActiveTab] = useState('All');
+  const { selectedMood, setSelectedMood } = useMood();
 
   return (
     <div className="flex items-center gap-2 p-1.5 border border-sky-200 rounded-full w-max" style={{backgroundImage:"linear-gradient(90.49deg, rgba(0, 148, 202, 0.2) 1.01%, rgba(0, 148, 202, 0.1) 103.34%)"}}>
       {FILTER_TABS.map((tab) => {
-        const isActive = activeTab === tab.name;
+        const isActive = selectedMood === tab.name;
 
         return (
           <button
             key={tab.name}
-            onClick={() => setActiveTab(tab.name)}
+            onClick={() => setSelectedMood(tab.name)}
             className={`
               flex items-center gap-2 px-5 py-2 rounded-full font-medium text-sm transition-all duration-300 ease-in-out
               ${isActive
@@ -56,6 +77,7 @@ const FilterBarDesktop = () => {
 
 const FilterBarMobile = () => {
   const [itemWidth, setItemWidth] = useState(0);
+  const { selectedMood, setSelectedMood } = useMood();
   const [centeredIndex, setCenteredIndex] = useState(FILTER_TABS.length);
   const mobileScrollRef = useRef<HTMLDivElement>(null);
   const scrollRafRef = useRef<number | null>(null);
@@ -129,6 +151,12 @@ const FilterBarMobile = () => {
     el.scrollTo({ left: leftIndex * itemWidth, behavior: "smooth" });
   };
 
+  useEffect(() => {
+    const visibleIndex = FILTER_TABS.findIndex((tab) => tab.name === selectedMood);
+    if (visibleIndex < 0) return;
+    setCenteredIndex(FILTER_TABS.length + visibleIndex);
+  }, [selectedMood]);
+
   return (
     <div
       ref={mobileScrollRef}
@@ -139,11 +167,17 @@ const FilterBarMobile = () => {
       <div className="flex">
         {mobileTabs.map((tab, idx) => {
           const isActive = idx === centeredIndex;
+          const normalizedIndex = idx % FILTER_TABS.length;
 
           return (
             <button
               key={`${tab.name}-${idx}`}
-              onClick={() => scrollToTab(idx)}
+              onClick={() => {
+                const selectedTab = FILTER_TABS[normalizedIndex] ?? FILTER_TABS[0];
+                if (!selectedTab) return;
+                setSelectedMood(selectedTab.name);
+                scrollToTab(idx);
+              }}
               className={`snap-center flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-medium transition-all duration-300 ease-in-out [&_svg]:h-3 [&_svg]:w-3 ${isActive ? "text-white shadow-md" : "text-[#9ECADA]"}`}
               aria-pressed={isActive}
               style={{
@@ -204,12 +238,13 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main
-      ref={mainRef}
-      // justify-start keeps the vertical flow, items-center centers horizontally
-      className="overflow-hidden flex min-h-screen flex-col gap-12 items-center justify-start bg-linear-to-b from-[#e4f8ff] to-white text-[#000000] pb-16"
-    >
-      <components.Navbar />
+    <MoodProvider>
+      <main
+        ref={mainRef}
+        // justify-start keeps the vertical flow, items-center centers horizontally
+        className="overflow-hidden flex min-h-screen flex-col gap-12 items-center justify-start bg-linear-to-b from-[#e4f8ff] to-white text-[#000000] pb-16"
+      >
+        <components.Navbar />
 
       {/* Each 'scroll-fade' div is now a flex container 
           with 'items-center' to ensure the component inside is centered 
@@ -237,11 +272,12 @@ export default function HomePage() {
         <components.Home.Banner />
       </div>
 
-      <div className="scroll-fade w-full flex flex-col items-center gap-[5rem]">
-        <components.Home.AllHosts currentHostId={hostId} />
-        <components.Home.Idea />
-        <components.Home.Footer />
-      </div>
-    </main>
+        <div className="scroll-fade w-full flex flex-col items-center gap-[5rem]">
+          <components.Home.AllHosts currentHostId={hostId} />
+          <components.Home.Idea />
+          <components.Home.Footer />
+        </div>
+      </main>
+    </MoodProvider>
   );
 }

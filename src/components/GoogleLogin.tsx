@@ -36,7 +36,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
           );
           if (profileRes.ok) {
             const response = (await profileRes.json()) as { data?: { id?: string } };
-            userId = response.data?.id;
+            userId = response.data?.id ?? null;
             if (userId) {
               // Existing user — save ID and proceed
               localStorage.setItem("msm_user_id", userId);

@@ -9,6 +9,8 @@ import type { BookingDTO } from "~/lib/api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
+export const runtime = "edge";
+
 interface EventFormData {
   title: string;
   hookLine: string;

@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
-import { Navbar, Breadcrumb } from \"~/components\";
+import { Navbar, Breadcrumb } from "~/components";
 import { HostApplicationSubmittedModal } from "~/components/become-host";
 import { Home } from "~/components";
 import { FiArrowRight, FiUploadCloud } from "react-icons/fi";

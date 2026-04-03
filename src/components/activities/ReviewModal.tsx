@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { FiX, FiStar } from "react-icons/fi";
+import { toast } from "sonner";
 import { createReview, type CreateReviewPayload } from "~/lib/api";
+import { useContentModeration } from "~/hooks/useContentModeration";
 
 interface ReviewModalProps {
   eventId: string;
@@ -26,6 +28,7 @@ export default function ReviewModal({
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { checkContentSync } = useContentModeration();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +37,25 @@ export default function ReviewModal({
     if (!description.trim()) {
       setError("Please write a review description");
       return;
+    }
+
+    // Check content moderation
+    const moderationResult = checkContentSync(description);
+
+    if (moderationResult.isBlocked) {
+      setError(
+        `Review blocked: Spam/fraud/safety risk detected (Risk Level: ${moderationResult.score}/10). ${moderationResult.details}`
+      );
+      toast.error(
+        `Review blocked: Spam/fraud/safety risk detected (Risk Level: ${moderationResult.score}/10)`
+      );
+      return;
+    }
+
+    if (moderationResult.score > 5) {
+      toast.warning(
+        `⚠️ High-risk review (Risk Level: ${moderationResult.score}/10): ${moderationResult.details}`
+      );
     }
 
     setLoading(true);

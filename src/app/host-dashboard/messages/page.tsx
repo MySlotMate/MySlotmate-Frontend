@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   useBroadcastMessage,
   useEventMessages,
@@ -10,12 +11,14 @@ import {
   useMarkMessageRead,
   useSendMessage,
 } from "~/hooks/useApi";
+import { useContentModeration } from "~/hooks/useContentModeration";
 import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
 import { createSocket } from "~/lib/socket";
 import type { EventDTO, InboxMessageDTO } from "~/lib/api";
-import { FiSearch, FiSend, FiVolume2 } from "react-icons/fi";
+import { FiSearch, FiSend, FiVolume2, FiAlertTriangle } from "react-icons/fi";
 import { format } from "date-fns";
+import type { ModerationResult } from "~/lib/moderation";
 
 export default function HostMessagesPage() {
   const qc = useQueryClient();
@@ -48,9 +51,11 @@ export default function HostMessagesPage() {
   const sendMessage = useSendMessage();
   const broadcastMessage = useBroadcastMessage();
   const markRead = useMarkMessageRead();
+  const { checkContentSync } = useContentModeration();
 
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
+  const [moderationResult, setModerationResult] = useState<ModerationResult | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const markReadOnceRef = useRef<Set<string>>(new Set());
@@ -100,6 +105,40 @@ export default function HostMessagesPage() {
       markRead.mutate(m.id);
     }
   }, [eventMessages, markRead]);
+
+  /* Handle message sending with moderation check */
+  const handleSendMessage = (messageText: string) => {
+    if (!selectedEventId || !hostId) return;
+    if (!messageText.trim()) return;
+
+    // Check content moderation
+    const result = checkContentSync(messageText);
+    setModerationResult(result);
+
+    if (result.isBlocked) {
+      toast.error(
+        `Message blocked: Spam/fraud/safety risk detected (Risk Level: ${result.score}/10).\n\n${result.details}`
+      );
+      return;
+    }
+
+    if (result.score > 5) {
+      toast.warning(
+        `⚠️ High-risk message (Risk Level: ${result.score}/10): ${result.details}\n\nMessage sent but flagged for review.`
+      );
+    }
+
+    sendMessage.mutate(
+      {
+        event_id: selectedEventId,
+        host_id: hostId,
+        sender_type: "host",
+        sender_id: hostId,
+        message: messageText.trim(),
+      },
+      { onSuccess: () => setInput("") }
+    );
+  };
 
   const eventById = useMemo(() => {
     const map = new Map<string, EventDTO>();
@@ -271,6 +310,24 @@ export default function HostMessagesPage() {
                   if (!selectedEventId) return;
                   const message = window.prompt("Enter your broadcast announcement:");
                   if (!message?.trim()) return;
+
+                  // Check content moderation for broadcast
+                  const result = checkContentSync(message);
+                  setModerationResult(result);
+
+                  if (result.isBlocked) {
+                    toast.error(
+                      `Broadcast blocked: Spam/fraud/safety risk detected (Risk Level: ${result.score}/10).\n\n${result.details}`
+                    );
+                    return;
+                  }
+
+                  if (result.score > 5) {
+                    toast.warning(
+                      `⚠️ High-risk broadcast (Risk Level: ${result.score}/10): ${result.details}\n\nBroadcast sent but flagged for review.`
+                    );
+                  }
+
                   broadcastMessage.mutate(
                     { message: message.trim(), host_id: hostId, event_id: selectedEventId },
                   );
@@ -396,34 +453,14 @@ export default function HostMessagesPage() {
                     if (e.key !== "Enter") return;
                     if (!selectedEventId) return;
                     if (!input.trim()) return;
-                    sendMessage.mutate(
-                      {
-                        event_id: selectedEventId,
-                        host_id: hostId,
-                        sender_type: "host",
-                        sender_id: hostId,
-                        message: input.trim(),
-                      },
-                      { onSuccess: () => setInput("") },
-                    );
+                    handleSendMessage(input);
                   }}
                 />
                 <button
                   disabled={!selectedEventId || !input.trim()}
                   className="rounded-lg bg-[#0094CA] px-5 py-3 font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-50 flex items-center gap-2"
                   onClick={() => {
-                    if (!selectedEventId) return;
-                    if (!input.trim()) return;
-                    sendMessage.mutate(
-                      {
-                        event_id: selectedEventId,
-                        host_id: hostId,
-                        sender_type: "host",
-                        sender_id: hostId,
-                        message: input.trim(),
-                      },
-                      { onSuccess: () => setInput("") },
-                    );
+                    handleSendMessage(input);
                   }}
                 >
                   Send <FiSend className="h-4 w-4" />

@@ -1,13 +1,16 @@
 "use client";
 
-import { use, Suspense } from "react";
+import { use, Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "~/components/Navbar";
 import Breadcrumb from "~/components/Breadcrumb";
-import { useEvent, usePublicHostProfile } from "~/hooks/useApi";
+import { RecommendationPopup } from "~/components/RecommendationPopup";
+import { useEvent, usePublicHostProfile, useListPublicEvents } from "~/hooks/useApi";
 import { FiCheck, FiCalendar, FiMessageCircle } from "react-icons/fi";
 import { format } from "date-fns";
+import { getRecommendedEventSync } from "~/lib/recommendations";
+import type { EventDTO } from "~/lib/api";
 
 export const runtime = "edge";
 
@@ -17,11 +20,29 @@ export const runtime = "edge";
 function ConfirmationContent({ eventId }: { eventId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [showRecommendation, setShowRecommendation] = useState(false);
+  const [recommendedEvent, setRecommendedEvent] = useState<EventDTO | null>(null);
+  const [reason, setReason] = useState("");
+
   // Can use booking ID for additional details if needed
   void searchParams.get("booking");
 
   const { data: event, isLoading: eventLoading } = useEvent(eventId);
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
+  const { data: allEvents } = useListPublicEvents();
+
+  // Get recommendation when event data is loaded
+  useEffect(() => {
+    if (event && allEvents && allEvents.length > 0) {
+      const result = getRecommendedEventSync(event, allEvents);
+      if (result.recommendedEvent) {
+        setRecommendedEvent(result.recommendedEvent);
+        setReason(result.reason);
+        // Show recommendation popup after a delay
+        setTimeout(() => setShowRecommendation(true), 800);
+      }
+    }
+  }, [event, allEvents]);
 
   if (eventLoading) {
     return (
@@ -66,7 +87,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         <div className="bg-white rounded-xl border border-gray-200 p-6 text-left shadow-sm">
           <div className="flex gap-4">
             {/* Image */}
-            <div className="w-28 h-24 rounded-lg overflow-hidden flex-shrink-0">
+            <div className="w-28 h-24 rounded-lg overflow-hidden shrink-0">
               {event.cover_image_url ? (
                 <img
                   src={event.cover_image_url}
@@ -114,7 +135,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
         {/* Chat Unlocked Notice */}
         <div className="mt-6 bg-[#0094CA]/5 border border-[#0094CA]/20 rounded-lg p-4 flex items-start gap-3">
-          <div className="w-8 h-8 bg-[#0094CA] rounded-lg flex items-center justify-center flex-shrink-0">
+          <div className="w-8 h-8 bg-[#0094CA] rounded-lg flex items-center justify-center shrink-0">
             <FiMessageCircle className="text-white" size={16} />
           </div>
           <div className="text-left">
@@ -150,6 +171,14 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           </Link>
         </p>
       </div>
+
+      {/* Recommendation Popup */}
+      <RecommendationPopup
+        isOpen={showRecommendation}
+        onClose={() => setShowRecommendation(false)}
+        event={recommendedEvent}
+        reason={reason}
+      />
     </main>
   );
 }

@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useRef } from "react";
 import { FiX, FiSend } from "react-icons/fi";
+import { toast } from "sonner";
 import { getEventMessages, sendMessage, type InboxMessageDTO } from "~/lib/api";
 import { createSocket } from "~/lib/socket";
+import { useContentModeration } from "~/hooks/useContentModeration";
 
 interface InboxSidebarProps {
   eventId: string;
@@ -27,6 +29,7 @@ export default function InboxSidebar({
   const [messageText, setMessageText] = useState("");
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { checkContentSync } = useContentModeration();
 
   // Initial fetch and Socket.IO real-time updates
   useEffect(() => {
@@ -75,6 +78,22 @@ export default function InboxSidebar({
     e.preventDefault();
     if (!messageText.trim()) return;
 
+    // Check content moderation
+    const moderationResult = checkContentSync(messageText);
+
+    if (moderationResult.isBlocked) {
+      toast.error(
+        `Message blocked: Spam/fraud/safety risk detected (Risk Level: ${moderationResult.score}/10)`
+      );
+      return;
+    }
+
+    if (moderationResult.score > 5) {
+      toast.warning(
+        `⚠️ High-risk message (Risk Level: ${moderationResult.score}/10). Message sent but flagged for review.`
+      );
+    }
+
     setSending(true);
     try {
       const envelope = await sendMessage({
@@ -88,6 +107,7 @@ export default function InboxSidebar({
       setMessageText("");
     } catch (error) {
       console.error("Failed to send message:", error);
+      toast.error("Failed to send message. Please try again.");
     } finally {
       setSending(false);
     }

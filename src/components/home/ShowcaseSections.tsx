@@ -5,8 +5,16 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Camera, Clock3, Mountain, Palette, Star, Users } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useListHosts, useListPublicEvents } from "~/hooks/useApi";
+import {
+  POPULAR_CITIES,
+  calculateDistance,
+  getSavedLocation,
+  type CityLocation,
+} from "../LocationModal";
 
 type FeaturedItem = {
+  id?: string;
   title: string;
   copy: string;
   duration: string;
@@ -18,6 +26,7 @@ type FeaturedItem = {
 };
 
 type StoryItem = {
+  id?: string;
   title: string;
   copy: string;
   statOne: string;
@@ -74,8 +83,9 @@ const WAY_CARDS = [
   },
 ];
 
-const FEATURED_DATA: FeaturedItem[] = [
+const FEATURED_FALLBACK_DATA: FeaturedItem[] = [
   {
+    id: undefined,
     title: "Hidden City Photo Walk",
     copy: "Explore hidden streets and city light with a local photographer who knows where the stories live.",
     duration: "2 Hours",
@@ -87,6 +97,7 @@ const FEATURED_DATA: FeaturedItem[] = [
     overlaySubtitle: "Hosted by Priya",
   },
   {
+    id: undefined,
     title: "Market Spice Tour",
     copy: "Explore vibrant spice markets with a host who knows the stalls, flavors, and food stories behind them.",
     duration: "2.5 Hours",
@@ -98,6 +109,7 @@ const FEATURED_DATA: FeaturedItem[] = [
     overlaySubtitle: "Hosted by Ananya",
   },
   {
+    id: undefined,
     title: "Mindful Clay Workshop",
     copy: "Slow pottery, quiet focus, and a creative session designed to help you make something with intention.",
     duration: "2 Hours",
@@ -110,8 +122,9 @@ const FEATURED_DATA: FeaturedItem[] = [
   },
 ];
 
-const STORY_DATA: StoryItem[] = [
+const STORY_FALLBACK_DATA: StoryItem[] = [
   {
+    id: undefined,
     title: "Meet Priya: The Lens of the City",
     copy: "I grew up exploring these streets. Every corner has a memory, and every shadow tells a story.",
     statOne: "47",
@@ -124,6 +137,7 @@ const STORY_DATA: StoryItem[] = [
     author: "Anuj Yadav",
   },
   {
+    id: undefined,
     title: "Meet Ananya: Stories at the Table",
     copy: "Food is how I remember people, places, and family rituals. Every session is part recipe, part memory.",
     statOne: "83",
@@ -136,6 +150,7 @@ const STORY_DATA: StoryItem[] = [
     author: "Ria Kapoor",
   },
   {
+    id: undefined,
     title: "Meet Rohan: Street Frames After Dark",
     copy: "I host photo walks for people who want to slow down and really notice the city.",
     statOne: "61",
@@ -194,28 +209,151 @@ const ShowcaseSections = () => {
   const [storyIndex, setStoryIndex] = useState(0);
   const [communityIndex, setCommunityIndex] = useState(0);
   const [stats, setStats] = useState([0, 0, 0, 0]);
+  const [location, setLocation] = useState<CityLocation | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const { data: events } = useListPublicEvents();
+  const { data: hosts } = useListHosts();
   const statsRef = useRef<HTMLDivElement>(null);
   const wayVideoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const howSectionRef = useRef<HTMLElement>(null);
   const howProgressRef = useRef<HTMLDivElement>(null);
 
-  const featured = FEATURED_DATA[featuredIndex]!;
-  const story = STORY_DATA[storyIndex]!;
+  const formatPrice = (priceCents: number | null | undefined) => {
+    if (!priceCents) return "Free";
+    return `\u20B9${Math.round(priceCents / 100)} / slot`;
+  };
+
+  useEffect(() => {
+    setLocation(getSavedLocation());
+    setMounted(true);
+
+    const handleStorageChange = () => {
+      setLocation(getSavedLocation());
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  const featuredData = useMemo<FeaturedItem[]>(() => {
+    if (!events) {
+      return FEATURED_FALLBACK_DATA;
+    }
+
+    const now = new Date();
+    const upcoming = events
+      .filter((event) => new Date(event.time) > now)
+      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
+      .slice(0, 3)
+      .map((event) => ({
+        id: event.id,
+        title: event.title,
+        copy:
+          event.hook_line ??
+          event.description ??
+          "Discover a hosted experience near you.",
+        duration: `${event.duration_minutes ?? 0} mins`,
+        price: formatPrice(event.price_cents),
+        rating:
+          event.avg_rating !== null && event.avg_rating !== undefined
+            ? event.avg_rating.toFixed(1)
+            : "New",
+        image: event.cover_image_url ?? "/assets/home/hiking.jpg",
+        overlayTitle: event.title,
+        overlaySubtitle: event.location
+          ? `In ${event.location}`
+          : "Hosted on MySlotMate",
+      }));
+
+    return upcoming.length > 0 ? upcoming : FEATURED_FALLBACK_DATA;
+  }, [events]);
+
+  const storyData = useMemo<StoryItem[]>(() => {
+    if (!hosts) {
+      return STORY_FALLBACK_DATA;
+    }
+
+    const nearbyHosts = !mounted || !location
+      ? hosts.slice(0, 3)
+      : hosts
+          .map((host) => {
+            const hostCity = POPULAR_CITIES.find(
+              (city) => city.city.toLowerCase() === host.city.toLowerCase(),
+            );
+
+            const distance = hostCity
+              ? calculateDistance(location.lat, location.lng, hostCity.lat, hostCity.lng)
+              : Number.POSITIVE_INFINITY;
+
+            return { host, distance };
+          })
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 3)
+          .map(({ host }) => host);
+
+    const mappedStories = nearbyHosts.map((host) => {
+      const fullName = `${host.first_name} ${host.last_name}`.trim();
+      return {
+        id: host.id,
+        title: `Meet ${fullName}`,
+        copy:
+          host.bio ??
+          host.tagline ??
+          `${host.first_name} is hosting meaningful local experiences on MySlotMate.`,
+        statOne: `${host.total_reviews ?? 0}`,
+        statOneLabel: "Reviews",
+        statTwo: (host.avg_rating ?? 4.5).toFixed(1),
+        statTwoLabel: "User Rating",
+        image:
+          host.avatar_url ??
+          "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+        quote:
+          host.tagline ??
+          "Join me for a local experience built around real connection and meaningful time.",
+        author: fullName,
+      };
+    });
+
+    return mappedStories.length > 0 ? mappedStories : STORY_FALLBACK_DATA;
+  }, [hosts, location, mounted]);
+
+  const featured = featuredData[featuredIndex] ?? featuredData[0]!;
+  const story = storyData[storyIndex] ?? storyData[0]!;
   const community = COMMUNITY_SETS[communityIndex]!;
+  const featuredHref = featured.id ? `/experience/${featured.id}` : "/experiences";
+  const storyHref = story.id ? `/host/${story.id}` : "/hosts";
 
   useEffect(() => {
+    if (featuredData.length <= 1) return;
+
     const id = window.setInterval(() => {
-      setFeaturedIndex((prev) => (prev + 1) % FEATURED_DATA.length);
+      setFeaturedIndex((prev) => (prev + 1) % featuredData.length);
     }, 5000);
+
     return () => window.clearInterval(id);
-  }, []);
+  }, [featuredData.length]);
 
   useEffect(() => {
+    setFeaturedIndex((prev) =>
+      featuredData.length === 0 ? 0 : Math.min(prev, featuredData.length - 1),
+    );
+  }, [featuredData.length]);
+
+  useEffect(() => {
+    if (storyData.length <= 1) return;
+
     const id = window.setInterval(() => {
-      setStoryIndex((prev) => (prev + 1) % STORY_DATA.length);
+      setStoryIndex((prev) => (prev + 1) % storyData.length);
     }, 5000);
+
     return () => window.clearInterval(id);
-  }, []);
+  }, [storyData.length]);
+
+  useEffect(() => {
+    setStoryIndex((prev) =>
+      storyData.length === 0 ? 0 : Math.min(prev, storyData.length - 1),
+    );
+  }, [storyData.length]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -448,7 +586,7 @@ const ShowcaseSections = () => {
               </div>
 
               <Link
-                href="/experiences"
+                href={featuredHref}
                 className="mt-5 inline-flex rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
               >
                 Book This Experience
@@ -492,7 +630,7 @@ const ShowcaseSections = () => {
             </div>
 
             <Link
-              href="/experiences"
+              href={storyHref}
               className="inline-flex rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-8 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
             >
               Book Time

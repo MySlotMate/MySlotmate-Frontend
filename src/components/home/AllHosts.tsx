@@ -1,7 +1,8 @@
 ﻿"use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { LuLoader2 } from "react-icons/lu";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useListHosts } from "~/hooks/useApi";
 
 interface HostCardProps {
@@ -17,9 +18,9 @@ const HostCard = ({ id, name, imageUrl, rating, city, isVerified }: HostCardProp
   return (
     <Link
       href={`/host/${id}`}
-      className="shrink-0 snap-start overflow-hidden rounded-3xl border border-[#aeddf89e] bg-white shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
+      className="shrink-0 snap-start overflow-hidden rounded-[28px] border border-[#b8dbf39c] bg-[#f8fcff] shadow-[0_16px_34px_rgba(72,128,173,0.1)] transition hover:-translate-y-1"
     >
-      <div className="relative h-52 w-[236px] overflow-hidden">
+      <div className="relative h-[286px] w-[272px] overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={imageUrl || "/assets/home/people1.png"} alt={name} className="h-full w-full object-cover" />
         {isVerified ? (
@@ -34,10 +35,11 @@ const HostCard = ({ id, name, imageUrl, rating, city, isVerified }: HostCardProp
           </span>
         ) : null}
       </div>
-      <div className="space-y-1 p-4">
-        <h3 className="line-clamp-1 text-[15px] font-bold text-[#16304c]">{name}</h3>
-        <p className="text-xs text-[#6f8daa]">{city}</p>
-        <p className="pt-1 text-xs font-bold uppercase tracking-[0.08em] text-[#4b94c8]">Rating {rating}</p>
+      <div className="space-y-1.5 px-4 pb-5 pt-4">
+        <p className="line-clamp-1 text-[11px] font-extrabold uppercase tracking-[0.09em] text-[#3f89c3]">{city}</p>
+        <h3 className="line-clamp-1 text-4xl font-bold leading-[1] tracking-[-0.03em] text-[#16304c]">{name}</h3>
+        <p className="text-sm text-[#6f8daa]">Find experiences, connect, and spend meaningful time.</p>
+        <p className="pt-0.5 text-xs font-bold uppercase tracking-[0.08em] text-[#4b94c8]">Rating {rating}</p>
       </div>
     </Link>
   );
@@ -45,6 +47,7 @@ const HostCard = ({ id, name, imageUrl, rating, city, isVerified }: HostCardProp
 
 const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
   const [mounted, setMounted] = useState(false);
+  const cardsViewportRef = useRef<HTMLDivElement>(null);
   const { data: hosts, isLoading } = useListHosts();
 
   useEffect(() => {
@@ -56,19 +59,52 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
     return hosts.filter((host) => host.id !== currentHostId).slice(0, 8);
   }, [mounted, hosts, currentHostId]);
 
+  const scrollCards = (direction: "left" | "right") => {
+    const viewport = cardsViewportRef.current;
+    if (!viewport) return;
+
+    viewport.scrollBy({
+      left: direction === "left" ? -300 : 300,
+      behavior: "smooth",
+    });
+  };
+
   return (
-    <section className="w-full site-x">
-      <div className="mx-auto w-full max-w-[1120px]">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <h2 className="font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl">
-            Find People Like You
-          </h2>
-          <Link href="/hosts" className="text-sm font-extrabold text-[#0e8ae0] hover:text-[#0b6eb1]">
-            View All
-          </Link>
+    <section className="w-full border-y border-[#aeddf847] bg-[linear-gradient(180deg,#edf8ff,#f7fcff)] site-x">
+      <div className="mx-auto w-full max-w-[1120px] py-14">
+        <div className="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
+              <span className="inline-block h-2 w-2 rounded-full bg-current" />
+              Community
+            </span>
+            <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
+              Find People Like You
+            </h2>
+            <p className="mt-1.5 text-sm text-[#6f8daa] sm:text-base">Discover hosts with similar interests and styles.</p>
+          </div>
+
+          <div className="hidden items-center gap-3 md:flex">
+            <button
+              type="button"
+              onClick={() => scrollCards("left")}
+              className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+              aria-label="Scroll hosts left"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollCards("right")}
+              className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+              aria-label="Scroll hosts right"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 hide-scrollbar">
+        <div ref={cardsViewportRef} className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 hide-scrollbar">
           {isLoading ? (
             <div className="flex w-full items-center justify-center py-12">
               <LuLoader2 className="h-8 w-8 animate-spin text-[#0094CA]" />
@@ -82,7 +118,7 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
               <HostCard
                 key={host.id}
                 id={host.id}
-                name={host.first_name}
+                name={`${host.first_name} ${host.last_name}`.trim() || host.first_name}
                 imageUrl={host.avatar_url ?? "/assets/home/people1.png"}
                 rating={(host.avg_rating ?? 4.5).toFixed(1)}
                 city={host.city}
@@ -90,6 +126,12 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
               />
             ))
           )}
+        </div>
+
+        <div className="mt-5 md:hidden">
+          <Link href="/hosts" className="text-sm font-extrabold text-[#0e8ae0] hover:text-[#0b6eb1]">
+            View All
+          </Link>
         </div>
       </div>
     </section>

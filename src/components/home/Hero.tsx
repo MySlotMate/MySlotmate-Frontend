@@ -177,30 +177,30 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
           <div className="absolute inset-x-2 bottom-4 top-8 rounded-[38px] border border-[#aeddf899] bg-[linear-gradient(180deg,#e8f6ff,#f8fcff)] shadow-[0_24px_60px_rgba(58,119,172,0.12)]" />
 
           <div className={`absolute inset-x-4 bottom-8 top-12 z-10 overflow-visible md:inset-x-6 md:bottom-10 md:top-14 ${isPageLoaded ? "hero-stack-ready" : ""}`}>
-            <div className="hero-stack-in absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+            <div className="hero-stack-in absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 md:left-[18%] md:top-[2%] md:translate-x-0 md:translate-y-0">
               <div className="hero-stack-drop">
-                <div className="-translate-x-6 -translate-y-10 -rotate-[8deg] md:-translate-x-10 md:-translate-y-12">
+                <div className="-translate-x-3 -translate-y-14 -rotate-[7deg] md:translate-x-0 md:translate-y-0 md:-rotate-[7deg]">
                   <HeroCard {...cardData[0]!} />
                 </div>
               </div>
             </div>
-            <div className="hero-stack-in hero-stack-in-2 absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+            <div className="hero-stack-in hero-stack-in-2 absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 md:left-[49%] md:top-[16%] md:translate-x-0 md:translate-y-0">
               <div className="hero-stack-drop">
-                <div className="translate-y-1 rotate-0 md:translate-y-0">
+                <div className="translate-x-4 -translate-y-2 rotate-[3deg] md:translate-x-0 md:translate-y-0 md:rotate-[3deg]">
                   <HeroCard {...cardData[1]!} />
                 </div>
               </div>
             </div>
-            <div className="hero-stack-in hero-stack-in-3 absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2">
+            <div className="hero-stack-in hero-stack-in-3 absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 md:left-[7%] md:top-[43%] md:translate-x-0 md:translate-y-0">
               <div className="hero-stack-drop">
-                <div className="translate-x-6 translate-y-10 rotate-[9deg] md:translate-x-10 md:translate-y-12">
+                <div className="-translate-x-5 translate-y-10 -rotate-[9deg] md:translate-x-0 md:translate-y-0 md:-rotate-[9deg]">
                   <HeroCard {...cardData[2]!} />
                 </div>
               </div>
             </div>
-            <div className="hero-stack-in hero-stack-in-4 absolute left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2">
+            <div className="hero-stack-in hero-stack-in-4 absolute left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2 md:left-[37%] md:top-[56%] md:translate-x-0 md:translate-y-0">
               <div className="hero-stack-drop">
-                <div className="translate-x-1 -translate-y-14 rotate-[4deg] md:translate-x-2 md:-translate-y-16">
+                <div className="translate-x-6 translate-y-8 rotate-[6deg] md:translate-x-0 md:translate-y-0 md:rotate-[6deg]">
                   <HeroCard {...cardData[3]!} />
                 </div>
               </div>

@@ -48,34 +48,38 @@ const FilterBarDesktop = () => {
   const { selectedMood, setSelectedMood } = useMood();
 
   return (
-    <div
-      className="flex w-max items-center gap-2 rounded-full border border-sky-200 p-1.5"
-      style={{
-        backgroundImage:
-          "linear-gradient(90.49deg, rgba(0, 148, 202, 0.2) 1.01%, rgba(0, 148, 202, 0.1) 103.34%)",
-      }}
-    >
-      {FILTER_TABS.map((tab) => {
-        const isActive = selectedMood === tab.name;
+    <div className="filterbar-fade-mask relative w-full">
+      <div
+        className="hide-scrollbar w-full overflow-x-auto rounded-full border border-sky-200"
+        style={{
+          backgroundImage:
+            "linear-gradient(90.49deg, rgba(0, 148, 202, 0.2) 1.01%, rgba(0, 148, 202, 0.1) 103.34%)",
+        }}
+      >
+        <div className="flex min-w-max items-center gap-2 p-1.5">
+          {FILTER_TABS.map((tab) => {
+            const isActive = selectedMood === tab.name;
 
-        return (
-          <button
-            key={tab.name}
-            onClick={() => setSelectedMood(tab.name)}
-            className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out ${
-              isActive ? "text-white shadow-md" : "text-[#9ECADA] hover:text-[#0094CA]"
-            }`}
-            style={{
-              background: isActive
-                ? "linear-gradient(83.25deg, #0094CA -2.39%, #D5F4FF 148.84%)"
-                : "#FFFFFF66",
-            }}
-          >
-            {tab.icon}
-            <span>{tab.name}</span>
-          </button>
-        );
-      })}
+            return (
+              <button
+                key={tab.name}
+                onClick={() => setSelectedMood(tab.name)}
+                className={`flex shrink-0 items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out ${
+                  isActive ? "text-white shadow-md" : "text-[#9ECADA] hover:text-[#0094CA]"
+                }`}
+                style={{
+                  background: isActive
+                    ? "linear-gradient(83.25deg, #0094CA -2.39%, #D5F4FF 148.84%)"
+                    : "#FFFFFF66",
+                }}
+              >
+                {tab.icon}
+                <span>{tab.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };
@@ -162,45 +166,47 @@ const FilterBarMobile = () => {
   }, [selectedMood]);
 
   return (
-    <div
-      ref={mobileScrollRef}
-      onScroll={handleMobileScroll}
-      className="hide-scrollbar w-full snap-x snap-mandatory overflow-x-auto rounded-full border border-sky-200 p-1.5"
-      style={{
-        backgroundImage:
-          "linear-gradient(90.49deg, rgba(0, 148, 202, 0.2) 1.01%, rgba(0, 148, 202, 0.1) 103.34%)",
-      }}
-    >
-      <div className="flex">
-        {mobileTabs.map((tab, idx) => {
-          const isActive = idx === centeredIndex;
-          const normalizedIndex = idx % FILTER_TABS.length;
+    <div className="filterbar-fade-mask relative w-full">
+      <div
+        ref={mobileScrollRef}
+        onScroll={handleMobileScroll}
+        className="hide-scrollbar w-full snap-x snap-mandatory overflow-x-auto rounded-full border border-sky-200 p-1.5"
+        style={{
+          backgroundImage:
+            "linear-gradient(90.49deg, rgba(0, 148, 202, 0.2) 1.01%, rgba(0, 148, 202, 0.1) 103.34%)",
+        }}
+      >
+        <div className="flex">
+          {mobileTabs.map((tab, idx) => {
+            const isActive = idx === centeredIndex;
+            const normalizedIndex = idx % FILTER_TABS.length;
 
-          return (
-            <button
-              key={`${tab.name}-${idx}`}
-              onClick={() => {
-                const selectedTab = FILTER_TABS[normalizedIndex] ?? FILTER_TABS[0];
-                if (!selectedTab) return;
-                setSelectedMood(selectedTab.name);
-                scrollToTab(idx);
-              }}
-              className={`snap-center flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-medium transition-all duration-300 ease-in-out [&_svg]:h-3 [&_svg]:w-3 ${
-                isActive ? "text-white shadow-md" : "text-[#9ECADA]"
-              }`}
-              aria-pressed={isActive}
-              style={{
-                width: itemWidth > 0 ? `${itemWidth}px` : "33.3333%",
-                background: isActive
-                  ? "linear-gradient(83.25deg, #0094CA -2.39%, #D5F4FF 148.84%)"
-                  : "#FFFFFF66",
-              }}
-            >
-              {tab.icon}
-              <span className="min-w-0 truncate">{tab.name}</span>
-            </button>
-          );
-        })}
+            return (
+              <button
+                key={`${tab.name}-${idx}`}
+                onClick={() => {
+                  const selectedTab = FILTER_TABS[normalizedIndex] ?? FILTER_TABS[0];
+                  if (!selectedTab) return;
+                  setSelectedMood(selectedTab.name);
+                  scrollToTab(idx);
+                }}
+                className={`snap-center flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-medium transition-all duration-300 ease-in-out [&_svg]:h-3 [&_svg]:w-3 ${
+                  isActive ? "text-white shadow-md" : "text-[#9ECADA]"
+                }`}
+                aria-pressed={isActive}
+                style={{
+                  width: itemWidth > 0 ? `${itemWidth}px` : "33.3333%",
+                  background: isActive
+                    ? "linear-gradient(83.25deg, #0094CA -2.39%, #D5F4FF 148.84%)"
+                    : "#FFFFFF66",
+                }}
+              >
+                {tab.icon}
+                <span className="min-w-0 truncate">{tab.name}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -267,7 +273,7 @@ export default function HomePage() {
         </div>
 
         <div ref={filterBarRef} className="scroll-fade w-full site-x">
-          <div className="mx-auto flex w-full max-w-[1120px] justify-center">
+          <div className="mx-auto flex w-full max-w-[1120px] justify-start">
             {mounted ? <FilterBar /> : null}
           </div>
         </div>

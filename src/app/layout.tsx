@@ -3,7 +3,6 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import Providers from "~/components/Providers";
-import AIFormEnhancer from "~/components/AIFormEnhancer";
 import { Toaster } from "sonner";
 
 const appUrl = "https://www.myslotmate.com";
@@ -96,7 +95,7 @@ export const metadata: Metadata = {
   /* Icons */
   icons: {
     icon: [
-      { url: "/assets/home/logo.png", sizes: "any" }
+      { url: "/assets/home/logomyslotmate.jpeg", sizes: "any" }
     ],
     apple: "/apple-touch-icon.png",
     other: [
@@ -155,7 +154,7 @@ export default function RootLayout({
       "@type": "Organization",
       name: "MySlotMate",
       url: appUrl,
-      logo: "/logo.png",
+      logo: "/assets/home/logomyslotmate.jpeg",
       sameAs: [
         "https://www.instagram.com/myslotmate/",
       ],
@@ -201,3 +200,4 @@ export default function RootLayout({
     </html>
   );
 }
+

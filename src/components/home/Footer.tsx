@@ -9,7 +9,7 @@ const Footer = () => {
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
             <div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/assets/home/logo.png" alt="Myslotmate" className="mb-3 h-10 w-auto" />
+              <img src="/assets/home/logomyslotmate.jpeg" alt="Myslotmate" className="mb-3 h-10 w-auto" />
               <p className="text-sm text-[#5e88ab]">A product of Moodverse Pvt Ltd</p>
               <p className="mt-1 text-sm text-[#5e88ab]">support@myslotmate.com</p>
               <a
@@ -56,4 +56,5 @@ const Footer = () => {
 };
 
 export default Footer;
+
 

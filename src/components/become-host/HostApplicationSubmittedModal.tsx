@@ -40,7 +40,7 @@ export default function HostApplicationSubmittedModal({
           <div className="mb-5 flex justify-center">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#0094CA]">{/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/assets/home/logo.png"
+              src="/assets/home/logomyslotmate.jpeg"
               alt="Myslotmate"
               className="h-10 w-10 object-contain"
             />
@@ -125,3 +125,4 @@ export default function HostApplicationSubmittedModal({
     </div>
   );
 }
+

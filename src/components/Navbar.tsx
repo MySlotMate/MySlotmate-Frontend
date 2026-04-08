@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useState, useRef, useEffect, type MouseEvent as ReactMouseEvent } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { signOut } from "firebase/auth";
 import { auth } from "~/utils/firebase";
@@ -7,7 +7,6 @@ import { FiSearch, FiMenu, FiX, FiChevronRight } from "react-icons/fi";
 import { IoLocationSharp } from "react-icons/io5";
 import { LuCalendarDays, LuBookmarkMinus, LuMessageSquare, LuShield, LuFileText, LuLogOut, LuArrowLeft, LuHome, LuHeart } from "react-icons/lu";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import GoogleLogin from "./GoogleLogin";
 import LocationModal, { getSavedLocation, saveLocation, type CityLocation } from "./LocationModal";
 import { BecomeHostModal } from "./become-host";
@@ -27,7 +26,6 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const pathname = usePathname();
 
   const [storedUserId, setStoredUserId] = useState<string | null>(null);
 
@@ -92,7 +90,7 @@ export default function Navbar() {
   const validUserId =
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
 
-  const { data: userProfile } = useMyProfile(validUserId);
+  useMyProfile(validUserId);
   const { data: hostData, isLoading: hostLoading } = useApplicationStatus(validUserId);
 
 
@@ -137,38 +135,6 @@ export default function Navbar() {
     void signOut(auth);
   };
 
-  const handleSectionLinkClick = (
-    e: ReactMouseEvent<HTMLAnchorElement>,
-    sectionId: string,
-    closeMobileDrawer = false,
-  ) => {
-    if (closeMobileDrawer) {
-      setMobileOpen(false);
-    }
-
-    // Keep default hash navigation on non-home routes.
-    if (pathname !== "/") {
-      return;
-    }
-
-    e.preventDefault();
-    const section = document.getElementById(sectionId);
-    if (!section) {
-      return;
-    }
-
-    const navOffset = 76;
-    const sectionTop = section.getBoundingClientRect().top + window.scrollY - navOffset;
-    window.scrollTo({
-      top: Math.max(sectionTop, 0),
-      behavior: "smooth",
-    });
-
-    if (window.location.hash !== `#${sectionId}`) {
-      window.history.replaceState(null, "", `/#${sectionId}`);
-    }
-  };
-
   return (
     <>
       <nav className="sticky top-0 z-40 w-full bg-white shadow-sm">
@@ -177,30 +143,18 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/home/logo.png" alt="Myslotmate" className="h-10 w-auto" />
+            <img src="/assets/home/logomyslotmate.jpeg" alt="Myslotmate" className="h-10 w-auto" />
           </Link>
 
           {/* Desktop center nav (matches reference nav styles) */}
           <div className="hidden flex-1 items-center justify-center gap-[22px] text-[0.92rem] font-bold text-[#6f8daa] lg:flex">
-            <Link
-              href="/#how-it-works"
-              onClick={(e) => handleSectionLinkClick(e, "how-it-works")}
-              className="transition hover:text-[#0e8ae0]"
-            >
+            <Link href="/#how-it-works" className="transition hover:text-[#0e8ae0]">
               How it works
             </Link>
-            <Link
-              href="/#hosts"
-              onClick={(e) => handleSectionLinkClick(e, "hosts")}
-              className="transition hover:text-[#0e8ae0]"
-            >
+            <Link href="/#hosts" className="transition hover:text-[#0e8ae0]">
               Hosts
             </Link>
-            <Link
-              href="/#community"
-              onClick={(e) => handleSectionLinkClick(e, "community")}
-              className="transition hover:text-[#0e8ae0]"
-            >
+            <Link href="/#community" className="transition hover:text-[#0e8ae0]">
               Community
             </Link>
             
@@ -510,21 +464,21 @@ export default function Navbar() {
             <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Link
                 href="/#how-it-works"
-                onClick={(e) => handleSectionLinkClick(e, "how-it-works", true)}
+                onClick={() => setMobileOpen(false)}
                 className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
               >
                 How it works
               </Link>
               <Link
                 href="/#hosts"
-                onClick={(e) => handleSectionLinkClick(e, "hosts", true)}
+                onClick={() => setMobileOpen(false)}
                 className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
               >
                 Hosts
               </Link>
               <Link
                 href="/#community"
-                onClick={(e) => handleSectionLinkClick(e, "community", true)}
+                onClick={() => setMobileOpen(false)}
                 className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
               >
                 Community
@@ -733,3 +687,5 @@ export default function Navbar() {
     </>
   );
 }
+
+

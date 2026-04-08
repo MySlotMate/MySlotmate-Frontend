@@ -1,6 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "~/utils/firebase";
@@ -49,7 +50,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
           onClose();
           return;
         } else {
-          // User doesn't exist yet — redirect to signup
+          // User doesn't exist yet â€” redirect to signup
           onClose();
           router.push("/signup");
           return;
@@ -87,13 +88,14 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
           </svg>
         </button>
 
-        {/* Logo placeholder — replace src with your logo */}
+        {/* Logo placeholder */}
         <div className="mb-6 flex justify-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full">{/* eslint-disable-next-line @next/next/no-img-element */}
-            {/* Replace with your logo image */}
-            <img
-              src="/assets/navbar/roundlogo.png"
+          <div className="flex h-20 w-20 items-center justify-center rounded-full">
+            <Image
+              src="/assets/home/logomyslotmate.jpeg"
               alt="MySlotMate"
+              width={80}
+              height={80}
               className="h-20 w-20 object-contain"
             />
           </div>
@@ -153,3 +155,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
     </div>
   );
 }
+
+
+
+

@@ -1,5 +1,4 @@
 ﻿"use client";
-import { useRouter } from "next/navigation";
 
 interface CardProps {
   photo: string;
@@ -10,15 +9,7 @@ interface CardProps {
   id?: string;
 }
 
-const HeroCard = ({ photo, type, title, description, duration, id }: CardProps) => {
-  const router = useRouter();
-
-  const handleViewDetails = () => {
-    if (id) {
-      router.push(`/experience/${id}`);
-    }
-  };
-
+const HeroCard = ({ photo, type, title, description, duration }: CardProps) => {
   return (
     <article className="w-[236px] rounded-3xl border border-sky-100 bg-white p-3 shadow-[0_20px_44px_rgba(60,121,175,0.14)] sm:w-[264px] md:w-[282px]">
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -40,14 +31,7 @@ const HeroCard = ({ photo, type, title, description, duration, id }: CardProps) 
           <span className="rounded-full bg-[#f1f8ff] px-2.5 py-1 font-semibold text-[#3f7eb1]">
             {duration}
           </span>
-          {id ? (
-            <button
-              onClick={handleViewDetails}
-              className="font-bold text-[#0e8ae0] transition hover:text-[#0b6eb1]"
-            >
-              View Details
-            </button>
-          ) : null}
+          <span className="font-bold text-[#0e8ae0]">Book</span>
         </div>
       </div>
     </article>

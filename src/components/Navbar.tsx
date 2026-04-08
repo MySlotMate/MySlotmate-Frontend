@@ -137,13 +137,13 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-40 w-full bg-white shadow-sm">
+      <nav className="fixed top-0 left-0 z-40 w-full h-[4.5rem] bg-[#ffffff3e] backdrop-blur-2xl shadow-sm">
         <div className="h-[3px] w-full bg-[#0094CA]" />
         <div className="mx-auto flex h-16 max-w-7xl items-center site-x">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/home/logomyslotmate.jpeg" alt="Myslotmate" className="h-10 w-auto" />
+            <img src="/assets/home/logo.png" alt="Myslotmate" className="h-10 w-auto" />
           </Link>
 
           {/* Desktop center nav (matches reference nav styles) */}
@@ -186,9 +186,9 @@ export default function Navbar() {
               </div>
             </button>
 
-            <button aria-label="Search" className="rounded-full p-2 text-[#0094CA] hover:bg-[#e6f8ff] transition">
+            {/* <button aria-label="Search" className="rounded-full p-2 text-[#0094CA] hover:bg-[#e6f8ff] transition">
               <FiSearch className="h-5 w-5" />
-            </button>
+            </button> */}
 
             {user && validUserId && (
               <WalletDisplay

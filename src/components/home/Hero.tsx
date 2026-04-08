@@ -125,7 +125,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
   };
 
   return (
-    <section className="relative z-0 w-full site-x">
+    <section className="relative pt-4 z-0 w-full site-x">
       <div className="mx-auto grid w-full max-w-[1120px] gap-8 py-8 md:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10">
         <div className="space-y-4">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">

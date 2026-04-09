@@ -130,7 +130,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
         <div className="space-y-4">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-            Find Meaningful Time
+            Meaningful Time, Nearby
           </span>
 
           <h1 className="max-w-[560px] font-[Outfit,sans-serif] text-4xl font-extrabold leading-[0.95] tracking-[-0.05em] text-[#16304c] sm:text-5xl lg:text-7xl">
@@ -139,7 +139,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
           </h1>
 
           <p className="max-w-[520px] text-sm leading-7 text-[#6f8daa] sm:text-base">
-            Pick an interest, match with local hosts, and spend your time on experiences that actually feel memorable.
+            Wellness, Adventure, Social, When you need
           </p>
 
           <div className="flex flex-wrap gap-3 pt-1">
@@ -169,7 +169,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
                 +10K
               </div>
             </div>
-            <p className="text-sm text-[#9096a0]">Used by interesting people</p>
+            <p className="text-sm text-[#9096a0]">Where The Curious Connect</p>
           </div>
         </div>
 

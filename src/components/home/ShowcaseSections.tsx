@@ -114,7 +114,7 @@ const WAY_CARDS = [
   {
     title: "Walk the city",
     desc: "Slow walks. Real conversations.",
-    tag: "Walk Together",
+    tag: "ADVENTURE",
     video: "https://res.cloudinary.com/dhry5xscm/video/upload/v1775498006/Adventure_jw6egk.mp4",
     image:
       "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80",
@@ -123,7 +123,7 @@ const WAY_CARDS = [
   {
     title: "Learn something new",
     desc: "Skills shared by real people.",
-    tag: "Learn Together",
+    tag: "SOCIAL",
     video: "https://res.cloudinary.com/dhry5xscm/video/upload/v1775497976/Social_tmueix.mp4",
     image:
       "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=900&q=80",
@@ -132,7 +132,7 @@ const WAY_CARDS = [
   {
     title: "Create something",
     desc: "Art, craft, and creative sessions.",
-    tag: "Create Together",
+    tag: "CREATIVITY",
     video: "https://res.cloudinary.com/dhry5xscm/video/upload/v1775497970/Creativity_jyuajd.mp4",
     image:
       "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80",
@@ -141,7 +141,7 @@ const WAY_CARDS = [
   {
     title: "Simple moments",
     desc: "Tea, music, and mindful time.",
-    tag: "Spend Time Well",
+    tag: "WELLNESS",
     video: "https://res.cloudinary.com/dhry5xscm/video/upload/v1775498035/Wellness_wqkjtt.mov",
     image:
       "https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=900&q=80",

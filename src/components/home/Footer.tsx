@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { FaInstagram } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 // Fixed the import to match the usage below
 import { FiArrowRight } from "react-icons/fi"; 
 
@@ -14,18 +15,7 @@ const Footer = () => {
               <img src="/assets/home/logo.png" alt="Myslotmate" className="mb-3 h-10 w-auto" />
               <p className="text-sm text-[#5e88ab]">A product of Moodverse Pvt Ltd</p>
               <p className="mt-1 text-sm text-[#5e88ab]">support@myslotmate.com</p>
-              <a
-                href="https://www.instagram.com/myslotmate/"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Follow MySlotMate on Instagram"
-                className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#a9daf5] bg-white px-3 py-2 text-xs font-bold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.10)] transition hover:-translate-y-0.5 hover:text-[#0e8ae0]"
-              >
-                <span className="grid h-7 w-7 place-items-center rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] text-white">
-                  <FaInstagram className="h-4 w-4" />
-                </span>
-                @myslotmate
-              </a>
+              
             </div>
 
             <div>
@@ -63,7 +53,14 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="mt-8 border-t border-[#aeddf873] pt-4 text-sm text-[#5e88ab]">
+          <div className="mt-8 flex flex-col md:flex-row justify-between items-center border-t border-[#aeddf873] pt-4 text-sm text-[#5e88ab]">
+            <div className="flex flex-row items-center justify-center gap-3">
+              <a href="https://www.instagram.com/myslotmate/" target="_blank" rel="noopener noreferrer"><FaInstagram className="h-5 w-5"/></a>
+              <a href="https://www.facebook.com/share/1E1dpBwZd3/" target="_blank" rel="noopener noreferrer"><FaFacebook className="h-5 w-5"/></a>
+              <a href="https://www.linkedin.com/company/myslotmate/" target="_blank" rel="noopener noreferrer"><FaLinkedin className="h-5 w-5"/></a>      
+              <a href="https://x.com/myslotmate?s=20" target="_blank" rel="noopener noreferrer"><FaXTwitter className="h-5 w-5"/></a>      
+            </div>
+            <p>A product of Moodverse PVT LTD</p>
             <p>© 2026 Myslotmate. All rights reserved.</p>
           </div>
         </div>

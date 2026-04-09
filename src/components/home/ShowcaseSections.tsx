@@ -831,7 +831,7 @@ const ShowcaseSections = () => {
         </div>
       </section>
 
-      <section className="w-full border-y border-[#aeddf847] bg-[linear-gradient(180deg,#edf8ff,#f7fcff)] site-x">
+      <section className="w-full site-x">
         <div className="mx-auto grid w-full max-w-[1120px] gap-10 py-14 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="relative mx-auto mb-12 w-full max-w-[560px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -876,7 +876,7 @@ const ShowcaseSections = () => {
       </section>
 
       <section className="w-full site-x">
-        <div ref={statsRef} className="mx-auto grid w-full max-w-[1120px] gap-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
+        <div ref={statsRef} className="my-[10rem] border-y-2 border-[#006388] mx-auto grid w-full max-w-[1120px] gap-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { label: "Booked Sessions", suffix: "+" },
             { label: "Active Hosts", suffix: "+" },
@@ -885,13 +885,13 @@ const ShowcaseSections = () => {
           ].map((item, idx) => (
             <article
               key={item.label}
-              className="rounded-3xl border border-[#aeddf89e] bg-white/90 px-4 py-7 text-center shadow-[0_14px_30px_rgba(77,140,190,0.08)]"
+              className="rounded-3xl px-4 py-7 text-center"
             >
-              <p className="font-[Outfit,sans-serif] text-5xl font-bold tracking-[-0.05em] text-[#0e8ae0]">
+              <p className="font-[Outfit,sans-serif] text-5xl font-bold tracking-[-0.05em]  text-[#006388]">
                 {formatStat(stats[idx] ?? 0, STATS_TARGETS[idx] ?? 0)}
                 <span className="text-3xl">{item.suffix}</span>
               </p>
-              <span className="mt-3 block text-sm font-extrabold text-[#6f8daa]">{item.label}</span>
+              <span className="mt-3 block text-sm font-extrabold text-[#64748B]">{item.label}</span>
             </article>
           ))}
         </div>

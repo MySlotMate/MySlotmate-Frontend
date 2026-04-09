@@ -53,15 +53,14 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col md:flex-row justify-between items-center border-t border-[#aeddf873] pt-4 text-sm text-[#5e88ab]">
+          <div className="mt-8 flex flex-col md:flex-row justify-between items-center border-t border-[#aeddf873] pt-4 text-sm text-[#000000]">
+            <p>MADE WITH &#x2764; FOR THE CURIOUS</p>
             <div className="flex flex-row items-center justify-center gap-3">
-              <a href="https://www.instagram.com/myslotmate/" target="_blank" rel="noopener noreferrer"><FaInstagram className="h-5 w-5"/></a>
-              <a href="https://www.facebook.com/share/1E1dpBwZd3/" target="_blank" rel="noopener noreferrer"><FaFacebook className="h-5 w-5"/></a>
-              <a href="https://www.linkedin.com/company/myslotmate/" target="_blank" rel="noopener noreferrer"><FaLinkedin className="h-5 w-5"/></a>      
-              <a href="https://x.com/myslotmate?s=20" target="_blank" rel="noopener noreferrer"><FaXTwitter className="h-5 w-5"/></a>      
+              <a href="https://www.instagram.com/myslotmate/" target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[#7ea4bb73] p-2"><FaInstagram className="h-5 w-5"/></a>
+              <a href="https://www.facebook.com/share/1E1dpBwZd3/" target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[#7ea4bb73] p-2"><FaFacebook className="h-5 w-5"/></a>
+              <a href="https://www.linkedin.com/company/myslotmate/" target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[#7ea4bb73] p-2"><FaLinkedin className="h-5 w-5"/></a>      
+              <a href="https://x.com/myslotmate?s=20" target="_blank" rel="noopener noreferrer" className="rounded-full border-2 border-[#7ea4bb73] p-2"><FaXTwitter className="h-5 w-5"/></a>      
             </div>
-            <p>A product of Moodverse PVT LTD</p>
-            <p>© 2026 Myslotmate. All rights reserved.</p>
           </div>
         </div>
       </div>

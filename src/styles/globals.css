@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+:root {
+  --site-px-mobile: 1rem;
+  --site-px-tablet: 1.5rem;
+  --site-px-desktop: 4rem;
+}
+
+.site-x {
+  padding-left: var(--site-px-mobile);
+  padding-right: var(--site-px-mobile);
+}
+
+@media (min-width: 640px) {
+  .site-x {
+    padding-left: var(--site-px-tablet);
+    padding-right: var(--site-px-tablet);
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-x {
+    padding-left: var(--site-px-desktop);
+    padding-right: var(--site-px-desktop);
+  }
+}
+
+/* Utility to hide scrollbars across browsers */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.filterbar-fade-mask::before,
+.filterbar-fade-mask::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  width: 42px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.filterbar-fade-mask::before {
+  left: 2px;
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+  background: linear-gradient(90deg, rgba(241, 250, 255, 0.98) 5%, rgba(241, 250, 255, 0) 100%);
+}
+
+.filterbar-fade-mask::after {
+  right: 2px;
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+  background: linear-gradient(270deg, rgba(241, 250, 255, 0.98) 5%, rgba(241, 250, 255, 0) 100%);
+}
+
+/* All buttons get pointer cursor */
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/* Ghost text styling for rotating AI autocomplete suggestions */
+.ai-autocomplete-field::placeholder {
+  color: #9ca3af;
+}
+
+/* Hero card load animation (starts after full page load) */
+.hero-stack-in {
+  opacity: 0;
+}
+
+.hero-stack-drop {
+  opacity: 0;
+  transform: scale(0);
+  transform-origin: center;
+}
+
+.hero-stack-ready .hero-stack-in {
+  animation: hero-stack-fade 0.2s ease forwards;
+  animation-delay: 0.1s;
+}
+
+.hero-stack-ready .hero-stack-in-2 {
+  animation-delay: 0.45s;
+}
+
+.hero-stack-ready .hero-stack-in-3 {
+  animation-delay: 0.8s;
+}
+
+.hero-stack-ready .hero-stack-in-4 {
+  animation-delay: 1.15s;
+}
+
+.hero-stack-ready .hero-stack-drop {
+  animation: hero-stack-pop 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  animation-delay: 0.1s;
+}
+
+.hero-stack-ready .hero-stack-in-2 .hero-stack-drop {
+  animation-delay: 0.45s;
+}
+
+.hero-stack-ready .hero-stack-in-3 .hero-stack-drop {
+  animation-delay: 0.8s;
+}
+
+.hero-stack-ready .hero-stack-in-4 .hero-stack-drop {
+  animation-delay: 1.15s;
+}
+
+@keyframes hero-stack-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hero-stack-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-stack-in,
+  .hero-stack-in-2,
+  .hero-stack-in-3,
+  .hero-stack-in-4 {
+    animation: none;
+    opacity: 1;
+  }
+
+  .hero-stack-drop {
+    animation: none;
+    opacity: 1;
+    transform: scale(1);
+  }
+}

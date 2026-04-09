@@ -1,0 +1,1529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="description" content="MySlotMate helps you book meaningful local experiences with thoughtful hosts near you." />
+<title>MySlotMate | Book People's Time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #f6fbff;
+  --surface: #ffffff;
+  --soft: #edf8ff;
+  --line: rgba(120, 181, 221, 0.28);
+  --text: #16304c;
+  --muted: #6f8daa;
+  --brand: #1fa7ff;
+  --brand-deep: #0e8ae0;
+  --brand-soft: #dff3ff;
+  --shadow: 0 24px 60px rgba(58, 119, 172, 0.12);
+  --radius: 24px;
+  --max: 1120px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Manrope", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(31, 167, 255, 0.10), transparent 30%),
+    linear-gradient(180deg, #fbfeff 0%, #f3faff 100%);
+}
+a { color: inherit; text-decoration: none; }
+img, video { display: block; max-width: 100%; }
+button { font: inherit; }
+.wrap { width: min(calc(100% - 24px), var(--max)); margin: 0 auto; }
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.in { opacity: 1; transform: none; }
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 13px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(169, 218, 245, 0.65);
+  color: #4a8ab8;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.kicker::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.btn,
+.ghost,
+.icon-btn,
+.carousel-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.btn:hover,
+.ghost:hover,
+.icon-btn:hover,
+.carousel-btn:hover {
+  transform: translateY(-4px) scale(1.03);
+}
+.btn {
+  padding: 13px 20px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--brand), #63ceff);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 16px 32px rgba(31, 167, 255, 0.24);
+}
+.ghost {
+  padding: 13px 20px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(120, 188, 231, 0.35);
+  color: #336f9b;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(74, 141, 194, 0.08);
+}
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(120, 188, 231, 0.35);
+  color: #3d7eaf;
+  box-shadow: 0 10px 24px rgba(74, 141, 194, 0.08);
+}
+.icon-btn svg,
+.carousel-btn svg,
+.meta-pill svg,
+.card-icon svg,
+.location-pill svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(248, 252, 255, 0.88);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(173, 219, 246, 0.35);
+}
+header .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand img {
+  height: 34px;
+  width: auto;
+}
+nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+nav a.active,
+nav a:hover { color: var(--brand-deep); }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.location-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(120, 188, 231, 0.35);
+  color: #3b79a8;
+  font-size: 0.84rem;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(74, 141, 194, 0.08);
+}
+.hero { padding: 36px 0 56px; }
+.hero-grid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 34px;
+  align-items: center;
+}
+.hero h1 {
+  margin: 18px 0 14px;
+  max-width: 480px;
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(3rem, 5.8vw, 5.1rem);
+  line-height: 0.95;
+  letter-spacing: -0.06em;
+}
+.hero h1 span { color: var(--brand-deep); }
+.hero p {
+  max-width: 490px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 26px 0 22px;
+}
+.proof {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 4px;
+  color: #8a8f99;
+  font-size: 0.94rem;
+  font-weight: 500;
+}
+.avatars {
+  display: flex;
+  align-items: center;
+}
+.avatars img,
+.proof-count {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 4px solid #f7fbff;
+  object-fit: cover;
+  margin-left: -12px;
+  box-shadow: 0 10px 22px rgba(84, 140, 191, 0.08);
+}
+.avatars img:first-child,
+.proof-count:first-child {
+  margin-left: 0;
+}
+.proof-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f3f6;
+  color: #2b2d33;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.proof-text {
+  color: #9096a0;
+  font-size: 0.98rem;
+  font-weight: 500;
+}
+.stage {
+  position: relative;
+  min-height: 520px;
+}
+.stage-bg {
+  position: absolute;
+  inset: 30px 8px 16px 56px;
+  border-radius: 38px;
+  background: linear-gradient(180deg, #e8f6ff, #f8fcff);
+  border: 1px solid rgba(174, 221, 248, 0.6);
+  box-shadow: var(--shadow);
+}
+.stack {
+  --x: 0px;
+  --y: 0px;
+  --r: 0deg;
+  position: absolute;
+  width: min(300px, 80vw);
+  padding: 14px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(174, 221, 248, 0.6);
+  box-shadow: 0 20px 42px rgba(60, 121, 175, 0.14);
+  opacity: 0;
+  transform: translate(130px, 96px) scale(0.86);
+  animation: stack-in 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.stack img {
+  width: 100%;
+  height: 164px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+.stack h3 {
+  margin: 12px 0 6px;
+  font-size: 1rem;
+}
+.stack p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+.chip {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.s1 { --x: 110px; --y: 30px; --r: -5deg; animation-delay: 0.10s; }
+.s2 { --x: 260px; --y: 98px; --r: 4deg; animation-delay: 0.50s; }
+.s3 { --x: 44px; --y: 206px; --r: -8deg; animation-delay: 0.90s; }
+.s4 { --x: 226px; --y: 272px; --r: 6deg; animation-delay: 1.30s; }
+section { padding: 58px 0; }
+.soft {
+  background: linear-gradient(180deg, #edf8ff, #f7fcff);
+  border-block: 1px solid rgba(174, 221, 248, 0.28);
+}
+.head {
+  max-width: 720px;
+  margin: 0 auto 28px;
+  text-align: center;
+}
+.head h2 {
+  margin: 12px 0 10px;
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+.head p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.hover-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.hover-card {
+  position: relative;
+  min-height: 250px;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #dff3ff;
+  border: 1px solid rgba(174, 221, 248, 0.62);
+  box-shadow: 0 14px 32px rgba(77, 140, 190, 0.08);
+}
+.hover-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #dff3ff;
+  transition: opacity 0.32s ease;
+}
+.hover-card > video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+.hover-card.is-on::before { opacity: 0; }
+.hover-card.is-on > video { opacity: 1; }
+.hover-card.is-on .hover-body {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.hover-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px;
+  color: var(--text);
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+.card-icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  margin-bottom: auto;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--brand-deep);
+  box-shadow: 0 10px 18px rgba(56, 116, 169, 0.12);
+}
+.hover-body .pill {
+  align-self: flex-start;
+  margin: 16px 0 10px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #4a8ab8;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hover-body h3 { margin: 0 0 6px; font-size: 0.98rem; }
+.hover-body p { margin: 0; color: #5c84a5; font-size: 0.81rem; line-height: 1.55; }
+.how {
+  position: relative;
+  padding-top: 18px;
+}
+.line {
+  position: absolute;
+  top: 66px;
+  left: 76px;
+  right: 76px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(118, 195, 238, 0.28);
+  overflow: hidden;
+}
+.prog {
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand), #83d9ff);
+  transition: width 1.7s ease;
+}
+.how.show .prog { width: 100%; }
+.steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+.step {
+  text-align: center;
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.how.show .step { opacity: 1; transform: none; }
+.how.show .step:nth-child(1) { transition-delay: 0.2s; }
+.how.show .step:nth-child(2) { transition-delay: 0.6s; }
+.how.show .step:nth-child(3) { transition-delay: 1s; }
+.icon {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(180deg, var(--brand), #63ceff);
+  color: #fff;
+  font-family: "Outfit", sans-serif;
+  font-weight: 800;
+  box-shadow: 0 16px 28px rgba(31, 167, 255, 0.2);
+}
+.step h3 { margin: 0 0 8px; font-size: 1rem; }
+.step p { margin: 0; color: var(--muted); font-size: 0.86rem; line-height: 1.68; }
+.feature-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.03fr) minmax(340px, 0.97fr);
+  gap: 18px;
+  padding: 14px;
+  border-radius: 28px;
+  background: #fff;
+  border: 1px solid rgba(174, 221, 248, 0.52);
+  box-shadow: 0 18px 42px rgba(60, 121, 175, 0.1);
+  align-items: center;
+}
+.feature-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  aspect-ratio: 1 / 1;
+  max-width: 360px;
+  width: 100%;
+  margin: 0 auto;
+}
+.feature-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.overlay {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  max-width: 250px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(18, 51, 79, 0.76);
+  color: #fff;
+  backdrop-filter: blur(10px);
+}
+.overlay strong { display: block; font-size: 0.94rem; }
+.overlay span { display: block; margin-top: 6px; font-size: 0.76rem; color: rgba(255, 255, 255, 0.82); }
+.feature-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px 10px 12px 0;
+}
+.feature-copy h3,
+.story-copy h3,
+.time-card h3 {
+  margin: 16px 0 10px;
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(1.8rem, 3vw, 2.65rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+.feature-copy p,
+.story-copy p,
+.time-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0 24px;
+}
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: #3f7eb1;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.carousel-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.carousel-head h2 {
+  margin: 10px 0 6px;
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(1.9rem, 4vw, 2.85rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+.carousel-head p { margin: 0; color: var(--muted); }
+.carousel-controls {
+  display: flex;
+  gap: 10px;
+}
+.carousel-btn {
+  width: 46px;
+  height: 46px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(120, 188, 231, 0.35);
+  color: #3978a7;
+  box-shadow: 0 10px 24px rgba(74, 141, 194, 0.08);
+}
+.rail {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  cursor: grab;
+  scroll-behavior: smooth;
+}
+.rail::-webkit-scrollbar { display: none; }
+.rail.dragging { cursor: grabbing; }
+.person-card,
+.exp-card,
+.community-shell {
+  overflow: hidden;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid rgba(174, 221, 248, 0.58);
+  box-shadow: 0 14px 32px rgba(77, 140, 190, 0.08);
+}
+.person-card {
+  flex: 0 0 246px;
+}
+.person-card img {
+  width: 100%;
+  height: 228px;
+  object-fit: cover;
+}
+.person-card .copy,
+.exp-card .copy {
+  padding: 15px;
+}
+.role {
+  display: block;
+  margin-bottom: 6px;
+  color: #4b94c8;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.person-card h3,
+.exp-card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+.person-card p,
+.exp-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.58;
+}
+.exp-card {
+  flex: 0 0 250px;
+}
+.exp-card img {
+  width: 100%;
+  height: 168px;
+  object-fit: cover;
+}
+.story-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 44px;
+  align-items: start;
+}
+.story-media {
+  position: relative;
+  border-radius: 32px;
+  box-shadow: 0 18px 42px rgba(60, 123, 177, 0.1);
+  aspect-ratio: 1 / 1;
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto 54px;
+}
+.story-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+.review-card {
+  position: absolute;
+  left: 52%;
+  bottom: -38px;
+  transform: translateX(-50%);
+  width: min(310px, calc(100% - 40px));
+  padding: 24px 28px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 26px 44px rgba(60, 123, 177, 0.18);
+}
+.review-card p {
+  margin: 0;
+  color: #1f7bb6;
+  font-family: "Outfit", sans-serif;
+  font-size: 1rem;
+  font-style: italic;
+  line-height: 1.5;
+}
+.review-author {
+  display: block;
+  margin-top: 16px;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+.story-copy {
+  padding-top: 16px;
+  padding-right: 6px;
+}
+.story-stats {
+  display: flex;
+  gap: 22px;
+  margin: 22px 0 24px;
+  padding: 18px 0;
+  border-block: 1px solid rgba(174, 221, 248, 0.55);
+}
+.story-stats strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-deep);
+  font-family: "Outfit", sans-serif;
+  font-size: 1.75rem;
+  line-height: 1;
+}
+.story-stats span {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.story-stat-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.story-btn {
+  border-radius: 999px;
+  padding-inline: 38px;
+}
+.swap {
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+.is-switching .swap {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.numbers {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+.num {
+  padding: 24px 14px;
+  text-align: center;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(174, 221, 248, 0.58);
+  box-shadow: 0 14px 30px rgba(77, 140, 190, 0.08);
+}
+.num strong {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  color: var(--brand-deep);
+  font-family: "Outfit", sans-serif;
+  font-size: clamp(2.7rem, 6vw, 4rem);
+  line-height: 0.92;
+  letter-spacing: -0.06em;
+}
+.num strong span {
+  display: inline-block;
+  font-size: 1em;
+  font-weight: 800;
+  line-height: 0.92;
+}
+.num strong b {
+  font-size: 0.48em;
+  line-height: 1;
+}
+.num > span {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+.keep-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+}
+.time-card {
+  padding: 32px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #109ae9, #0d85db);
+  color: #fff;
+  box-shadow: 0 22px 48px rgba(18, 132, 214, 0.22);
+}
+.time-card .kicker {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+.time-card p,
+.time-card li { color: rgba(255, 255, 255, 0.84); }
+.time-card h3 {
+  margin: 18px 0 0;
+  max-width: 320px;
+}
+.time-card p {
+  max-width: 360px;
+  margin-top: 18px;
+  line-height: 1.7;
+}
+.time-image {
+  width: 100%;
+  margin: 24px 0 0;
+  border-radius: 22px;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  box-shadow: 0 18px 32px rgba(10, 86, 148, 0.24);
+}
+.time-card .ghost {
+  margin-top: 24px;
+  align-self: flex-start;
+}
+.list {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0 24px;
+  padding: 0;
+  list-style: none;
+}
+.list li {
+  display: flex;
+  gap: 12px;
+  line-height: 1.68;
+}
+.list li::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  margin-top: 9px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.84);
+}
+.community-shell {
+  padding: 18px;
+}
+.community-shell.is-switching .community-grid img,
+.community-shell.is-switching .community-top h3,
+.community-shell.is-switching #community-note,
+.community-shell.is-switching .time-chip {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.community-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.community-top h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.community-top p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.55;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.time-chip {
+  display: inline-flex;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--brand-deep);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.community-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.community-grid img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 16px;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+footer { padding: 40px 0 54px; }
+footer .wrap {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 18px;
+  border-top: 1px solid rgba(174, 221, 248, 0.45);
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+@keyframes stack-in {
+  0% { opacity: 0; transform: translate(130px, 96px) scale(0.86); }
+  100% { opacity: 1; transform: translate(var(--x), var(--y)) rotate(var(--r)); }
+}
+@media (max-width: 1024px) {
+  .hero-grid,
+  .feature-card,
+  .story-grid,
+  .keep-grid { grid-template-columns: 1fr; }
+  .feature-card { min-height: 0; }
+  .hover-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  nav { display: none; }
+  .header-actions { gap: 8px; }
+  .header-actions .btn { display: none; }
+  .hero { padding-top: 24px; }
+  .stage { min-height: 610px; }
+  .stage-bg { inset: 14px 0 0 12px; }
+  .stack { width: min(264px, 82vw); }
+  .s1 { --x: 52px; --y: 18px; }
+  .s2 { --x: 116px; --y: 118px; }
+  .s3 { --x: 18px; --y: 230px; }
+  .s4 { --x: 90px; --y: 336px; }
+  .hover-grid,
+  .steps,
+  .numbers,
+  .community-grid { grid-template-columns: 1fr; }
+  .line { display: none; }
+  .carousel-head { align-items: start; flex-direction: column; }
+  .location-pill span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="brand" href="index.html#top" aria-label="MySlotMate home">
+      <img src="Myslotmate-Logo.png" alt="Myslotmate" />
+    </a>
+    <nav>
+      <a class="active" href="explore.html">Explore</a>
+      <a href="#how-it-works">How It Works</a>
+      <a href="#hosts">Hosts</a>
+      <a href="#community">Community</a>
+    </nav>
+    <div class="header-actions">
+      <a class="btn" href="explore.html">Explore</a>
+      <span class="location-pill">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6-5.2-6-11a6 6 0 1 1 12 0c0 5.8-6 11-6 11Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+        <span>Guwahati, Assam</span>
+      </span>
+      <a class="icon-btn" href="explore.html" aria-label="Profile">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.3"></circle><path d="M5 19c1.9-3.3 4.3-4.9 7-4.9s5.1 1.6 7 4.9"></path></svg>
+      </a>
+    </div>
+  </div>
+</header>
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="reveal">
+          <span class="kicker">Meaningful time, nearby</span>
+          <h1>Book People's <span>Time.</span></h1>
+          <p>Spend time doing things that matter.<br />Walk, learn, create, and explore with thoughtful hosts.</p>
+          <div class="hero-actions">
+            <a class="btn" href="explore.html">Book Time</a>
+            <a class="ghost" href="host-verification.html">List Time</a>
+          </div>
+          <div class="proof">
+            <div class="avatars" aria-hidden="true">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80" alt="Community member" />
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80" alt="Community member" />
+              <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80" alt="Community member" />
+              <span class="proof-count">+10k</span>
+            </div>
+            <span class="proof-text">Used by interesting people</span>
+          </div>
+        </div>
+        <div class="stage" aria-label="Hero cards stacking into place on load">
+          <div class="stage-bg"></div>
+          <article class="stack s1">
+            <img src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=900&q=80" alt="Photo walk" />
+            <h3>Golden Hour Photo Walk</h3>
+            <p>Hidden lanes, light trails, and a local host who knows where the stories live.</p>
+            <span class="chip">2 hours</span>
+          </article>
+          <article class="stack s2">
+            <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80" alt="Food story" />
+            <h3>Street Food Story Map</h3>
+            <p>Market flavors, food history, and small stops curated by a city host.</p>
+            <span class="chip">Food trail</span>
+          </article>
+          <article class="stack s3">
+            <img src="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=900&q=80" alt="Creative session" />
+            <h3>Clay and Color Session</h3>
+            <p>Hands-on making, shared focus, and a calm studio rhythm.</p>
+            <span class="chip">Creative</span>
+          </article>
+          <article class="stack s4">
+            <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" alt="Tea walk" />
+            <h3>Tea and Heritage Walk</h3>
+            <p>Slow city wandering with tea stops and local context along the way.</p>
+            <span class="chip">Hosted route</span>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="soft" id="about">
+    <div class="wrap">
+      <div class="head reveal">
+        <span class="kicker">Explore Experiences</span>
+        <h2>Ways to spend time better</h2>
+        <p>Browse sessions built around walks, learning, creativity, and small shared moments.</p>
+      </div>
+      <div class="hover-grid">
+        <article class="hover-card reveal" data-hover-video tabindex="0">
+          <video muted loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80">
+            <source src="https://www.pexels.com/download/video/5129237/" type="video/mp4" />
+          </video>
+          <div class="hover-body">
+            <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M7 4v8"></path><path d="M17 4v8"></path><path d="M4 10h16"></path><path d="M8 20c2.2-3.6 5.8-3.6 8 0"></path></svg></span>
+            <span class="pill">Walk Together</span>
+            <div>
+              <h3>Walk the city</h3>
+              <p>Slow walks. Real conversations.</p>
+            </div>
+          </div>
+        </article>
+        <article class="hover-card reveal" data-hover-video tabindex="0">
+          <video muted loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=900&q=80">
+            <source src="https://www.pexels.com/download/video/5734828/" type="video/mp4" />
+          </video>
+          <div class="hover-body">
+            <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M4 7h16"></path><path d="M8 4h8v16H8z"></path><path d="M8 12h8"></path></svg></span>
+            <span class="pill">Learn Together</span>
+            <div>
+              <h3>Learn something new</h3>
+              <p>Skills shared by real people.</p>
+            </div>
+          </div>
+        </article>
+        <article class="hover-card reveal" data-hover-video tabindex="0">
+          <video muted loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80">
+            <source src="https://www.pexels.com/download/video/7664439/" type="video/mp4" />
+          </video>
+          <div class="hover-body">
+            <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M5 18l7-12 7 12"></path><path d="M8 14h8"></path></svg></span>
+            <span class="pill">Create Together</span>
+            <div>
+              <h3>Create something</h3>
+              <p>Art, craft, and creative sessions.</p>
+            </div>
+          </div>
+        </article>
+        <article class="hover-card reveal" data-hover-video tabindex="0">
+          <video muted loop playsinline preload="metadata" poster="https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=900&q=80">
+            <source src="https://www.pexels.com/download/video/3135925/" type="video/mp4" />
+          </video>
+          <div class="hover-body">
+            <span class="card-icon"><svg viewBox="0 0 24 24"><path d="M7 7h10"></path><path d="M7 12h6"></path><path d="M7 17h10"></path></svg></span>
+            <span class="pill">Spend Time Well</span>
+            <div>
+              <h3>Simple moments</h3>
+              <p>Tea, music, and mindful time.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section id="how-it-works">
+    <div class="wrap">
+      <div class="head reveal">
+        <span class="kicker">How it works</span>
+        <h2>Simple steps to start an experience.</h2>
+        <p>Find a local host, choose a time, and show up for something meaningful.</p>
+      </div>
+      <div class="how reveal">
+        <div class="line"><div class="prog"></div></div>
+        <div class="steps">
+          <article class="step"><div class="icon">1</div><h3>Find a host</h3><p>Browse experiences near you.</p></article>
+          <article class="step"><div class="icon">2</div><h3>Book a time</h3><p>Choose a slot that works.</p></article>
+          <article class="step"><div class="icon">3</div><h3>Show up</h3><p>Enjoy the experience.</p></article>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="wrap">
+      <div class="feature-card reveal">
+        <div class="feature-media">
+          <img id="featured-image" src="https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=1200&q=80" alt="Featured experience" />
+          <div class="overlay">
+            <strong id="featured-overlay-title">Hidden City Photo Walk</strong>
+            <span id="featured-overlay-subtitle">Hosted by Priya</span>
+          </div>
+        </div>
+        <div class="feature-copy" id="featured-shell">
+          <span class="kicker swap" id="featured-tag">Featured Experience</span>
+          <h3 class="swap" id="featured-title">Hidden City Photo Walk</h3>
+          <p class="swap" id="featured-copy">Explore hidden streets and city light with a local photographer who knows where the stories live.</p>
+          <div class="meta-row">
+            <span class="meta-pill swap" id="featured-duration"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v5l3 2"></path></svg>2 Hours</span>
+            <span class="meta-pill swap" id="featured-price"><svg viewBox="0 0 24 24"><path d="M6 8h12"></path><path d="M6 12h12"></path><path d="M6 16h8"></path></svg>&#8377;1,500 / slot</span>
+            <span class="meta-pill swap" id="featured-rating"><svg viewBox="0 0 24 24"><path d="m12 4 2.3 4.7 5.2.8-3.8 3.7.9 5.3L12 16l-4.6 2.5.9-5.3L4.5 9.5l5.2-.8Z"></path></svg>4.9</span>
+          </div>
+          <a class="btn swap" id="featured-cta" href="explore.html">Book This Experience</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="soft" id="hosts">
+    <div class="wrap">
+      <div class="carousel-head reveal">
+        <div>
+          <span class="kicker">Local hosts</span>
+          <h2>Interesting People Near You</h2>
+          <p>Local hosts creating thoughtful sessions around the city.</p>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-btn" type="button" data-prev="hosts-rail" aria-label="Previous hosts"><svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"></path></svg></button>
+          <button class="carousel-btn" type="button" data-next="hosts-rail" aria-label="Next hosts"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></button>
+        </div>
+      </div>
+      <div class="rail reveal" id="hosts-rail" data-rail>
+        <article class="person-card">
+          <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=900&q=80" alt="Ananya Sharma" />
+          <div class="copy"><span class="role">Home Food Storyteller</span><h3>Ananya Sharma</h3><p>Sharing family recipes and food traditions.</p></div>
+        </article>
+        <article class="person-card">
+          <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=900&q=80" alt="Rohan Verma" />
+          <div class="copy"><span class="role">Street Photographer</span><h3>Rohan Verma</h3><p>Capturing city stories through photography.</p></div>
+        </article>
+        <article class="person-card">
+          <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=900&q=80" alt="Arjun Nair" />
+          <div class="copy"><span class="role">Wildlife Explorer</span><h3>Arjun Nair</h3><p>Guiding mindful nature walks.</p></div>
+        </article>
+        <article class="person-card">
+          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=900&q=80" alt="Priya Patel" />
+          <div class="copy"><span class="role">City Guide</span><h3>Priya Patel</h3><p>Sharing hidden corners of the city.</p></div>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section id="discover">
+    <div class="wrap">
+      <div class="carousel-head reveal">
+        <div>
+          <span class="kicker">Curated sessions</span>
+          <h2>Discover Experiences</h2>
+          <p>Curated activities led by local hosts.</p>
+        </div>
+        <div class="carousel-controls">
+          <button class="carousel-btn" type="button" data-prev="discover-rail" aria-label="Previous experiences"><svg viewBox="0 0 24 24"><path d="M15 6 9 12l6 6"></path></svg></button>
+          <button class="carousel-btn" type="button" data-next="discover-rail" aria-label="Next experiences"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></button>
+        </div>
+      </div>
+      <div class="rail reveal" id="discover-rail" data-rail>
+        <article class="exp-card"><img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80" alt="Market Spice Tour" /><div class="copy"><span class="role">Food</span><h3>Market Spice Tour</h3><p>Explore vibrant spice markets.</p></div></article>
+        <article class="exp-card"><img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" alt="Brahmaputra Sunset Paddling" /><div class="copy"><span class="role">Adventure</span><h3>Brahmaputra Sunset Paddling</h3><p>Paddle across golden river light.</p></div></article>
+        <article class="exp-card"><img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80" alt="Mindful Clay Workshop" /><div class="copy"><span class="role">Creative</span><h3>Mindful Clay Workshop</h3><p>Slow pottery and creative focus.</p></div></article>
+        <article class="exp-card"><img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=900&q=80" alt="Traditional Assamese Kitchen" /><div class="copy"><span class="role">Food</span><h3>Traditional Assamese Kitchen</h3><p>Cook authentic Assamese dishes.</p></div></article>
+        <article class="exp-card"><img src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80" alt="Yoga at Tiger Hill" /><div class="copy"><span class="role">Wellness</span><h3>Yoga at Tiger Hill</h3><p>Morning yoga with hill views.</p></div></article>
+        <article class="exp-card"><img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80" alt="Brahmaputra Riverside Trek" /><div class="copy"><span class="role">Adventure</span><h3>Brahmaputra Riverside Trek</h3><p>Nature walks by the river.</p></div></article>
+      </div>
+    </div>
+  </section>
+  <section class="soft">
+    <div class="wrap">
+      <div class="story-grid reveal">
+        <div class="story-media">
+          <img id="story-image" src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80" alt="Host story" />
+          <div class="review-card" id="review-card">
+            <p class="swap" id="review-quote">"The best way to see a city is through the eyes of someone who loves it."</p>
+            <span class="swap review-author" id="review-author">- Anuj Yadav</span>
+          </div>
+        </div>
+        <div class="story-copy" id="story-shell">
+          <span class="kicker swap" id="story-tag">Host Story</span>
+          <h3 class="swap" id="story-title">Meet Priya:<br />The Lens of the City</h3>
+          <p class="swap" id="story-copy">"I grew up exploring these streets. Every corner has a memory, and every shadow tells a story. On MySlotMate, I don't just host a walk; I share a piece of my world with fellow travelers."</p>
+          <div class="story-stats">
+            <div><strong class="swap" id="story-stat-one">47 <span class="story-stat-icon">&#129309;</span></strong><span>Events Hosted</span></div>
+            <div><strong class="swap" id="story-stat-two">4.9 <span class="story-stat-icon">&#11088;</span></strong><span>User Rating</span></div>
+          </div>
+          <a class="btn story-btn swap" id="story-cta" href="explore.html">Book Time</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="wrap">
+      <div class="numbers reveal">
+        <article class="num"><strong><span data-counter="1000">0</span><b>+</b></strong><span>Booked Sessions</span></article>
+        <article class="num"><strong><span data-counter="200">0</span><b>+</b></strong><span>Active Hosts</span></article>
+        <article class="num"><strong><span data-counter="4.8">0</span></strong><span>Average Rating</span></article>
+        <article class="num"><strong><span data-counter="6">0</span></strong><span>Cities Live</span></article>
+      </div>
+    </div>
+  </section>
+  <section id="community">
+    <div class="wrap">
+      <div class="keep-grid">
+        <article class="time-card reveal">
+          <span class="kicker">List your time</span>
+          <h3>Turn Your Passion Into Experiences</h3>
+          <img class="time-image" src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80" alt="Hosts creating an experience together" />
+          <p>Share a walk, workshop, food story, or creative session with people looking for meaningful ways to spend time.</p>
+          <a class="ghost" href="host-verification.html" style="background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.26); color: #fff;">List Time</a>
+        </article>
+        <article class="community-shell reveal">
+          <div class="community-top">
+            <div>
+              <h3>Community Moments</h3>
+              <p id="community-note">Adventure moments from local hosts and outdoor sessions.</p>
+            </div>
+            <span class="time-chip" id="community-time">Adventure</span>
+          </div>
+          <div class="community-grid">
+            <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=600&q=80" alt="Community moment" data-community-image />
+            <img src="https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=600&q=80" alt="Community moment" data-community-image />
+            <img src="https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=600&q=80" alt="Community moment" data-community-image />
+            <img src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=600&q=80" alt="Community moment" data-community-image />
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>
+  <div class="wrap">
+    <div><img src="Myslotmate-Logo.png" alt="Myslotmate" style="height: 30px; width: auto;" /></div>
+    <div>Curated experiences with local hosts.</div>
+  </div>
+</footer>
+<script>
+const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) entry.target.classList.add("in");
+  });
+}, { threshold: 0.18 });
+document.querySelectorAll(".reveal").forEach((node) => revealObserver.observe(node));
+const how = document.querySelector(".how");
+if (how) {
+  new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) how.classList.add("show");
+    });
+  }, { threshold: 0.35 }).observe(how);
+}
+document.querySelectorAll("[data-hover-video]").forEach((card) => {
+  const video = card.querySelector("video");
+  if (!video) return;
+  const play = () => {
+    card.classList.add("is-on");
+    const action = video.play();
+    if (action && action.catch) action.catch(() => card.classList.remove("is-on"));
+  };
+  const stop = () => {
+    card.classList.remove("is-on");
+    video.pause();
+    video.currentTime = 0;
+  };
+  card.addEventListener("mouseenter", play);
+  card.addEventListener("mouseleave", stop);
+  card.addEventListener("focusin", play);
+  card.addEventListener("focusout", stop);
+  if (reduced) stop();
+});
+const featuredData = [
+  {
+    tag: "Featured Experience",
+    title: "Hidden City Photo Walk",
+    copy: "Explore hidden streets and city light with a local photographer who knows where the stories live.",
+    duration: "2 Hours",
+    price: "&#8377;1,500 / slot",
+    rating: "4.9",
+    cta: { text: "Book This Experience", href: "explore.html" },
+    image: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=1200&q=80",
+    alt: "Photo walk",
+    overlayTitle: "Hidden City Photo Walk",
+    overlaySubtitle: "Hosted by Priya"
+  },
+  {
+    tag: "Featured Experience",
+    title: "Market Spice Tour",
+    copy: "Explore vibrant spice markets with a host who knows the stalls, flavors, and food stories behind them.",
+    duration: "2.5 Hours",
+    price: "&#8377;1,200 / slot",
+    rating: "4.8",
+    cta: { text: "Book This Experience", href: "explore.html" },
+    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
+    alt: "Spice market experience",
+    overlayTitle: "Market Spice Tour",
+    overlaySubtitle: "Hosted by Ananya"
+  },
+  {
+    tag: "Featured Experience",
+    title: "Mindful Clay Workshop",
+    copy: "Slow pottery, quiet focus, and a creative session designed to help you make something with intention.",
+    duration: "2 Hours",
+    price: "&#8377;1,800 / slot",
+    rating: "4.8",
+    cta: { text: "Book This Experience", href: "explore.html" },
+    image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=1200&q=80",
+    alt: "Clay workshop",
+    overlayTitle: "Mindful Clay Workshop",
+    overlaySubtitle: "Hosted by Sneha"
+  }
+];
+const storyData = [
+  {
+    tag: "Host Story",
+    title: "Meet Priya:<br />The Lens of the City",
+    copy: "\"I grew up exploring these streets. Every corner has a memory, and every shadow tells a story. On MySlotMate, I don't just host a walk; I share a piece of my world with fellow travelers.\"",
+    statOne: "47 <span class=\"story-stat-icon\">&#129309;</span>",
+    statTwo: "4.9 <span class=\"story-stat-icon\">&#11088;</span>",
+    cta: { text: "Book Time", href: "explore.html" },
+    image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80",
+    alt: "Priya at a gallery",
+    reviewQuote: "\"The best way to see a city is through the eyes of someone who loves it.\"",
+    reviewAuthor: "- Anuj Yadav"
+  },
+  {
+    tag: "Host Story",
+    title: "Meet Ananya:<br />Stories at the Table",
+    copy: "\"Food is how I remember people, places, and family rituals. Every session I host is part recipe, part memory, and part local story shared over a warm meal.\"",
+    statOne: "83 <span class=\"story-stat-icon\">&#127869;</span>",
+    statTwo: "4.8 <span class=\"story-stat-icon\">&#11088;</span>",
+    cta: { text: "Book Time", href: "explore.html" },
+    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
+    alt: "Ananya hosting a food experience",
+    reviewQuote: "\"The recipes were beautiful, but the family stories made the whole experience unforgettable.\"",
+    reviewAuthor: "- Ria Kapoor"
+  },
+  {
+    tag: "Host Story",
+    title: "Meet Rohan:<br />Street Frames After Dark",
+    copy: "\"I host photo walks for people who want to slow down and really notice the city. Once you pay attention to light and texture, the whole place starts to change.\"",
+    statOne: "61 <span class=\"story-stat-icon\">&#128248;</span>",
+    statTwo: "4.9 <span class=\"story-stat-icon\">&#11088;</span>",
+    cta: { text: "Book Time", href: "explore.html" },
+    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80",
+    alt: "Rohan on a city photo walk",
+    reviewQuote: "\"Rohan helped me notice details I would have walked past. The city felt completely new.\"",
+    reviewAuthor: "- Milan Shah"
+  }
+];
+const communitySets = [
+  {
+    label: "Adventure",
+    note: "Trekking, kayaking, riverside trails, and outdoor sessions with a sense of discovery.",
+    images: [
+      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1454496522488-7a8e488e8606?auto=format&fit=crop&w=600&q=80"
+    ]
+  },
+  {
+    label: "Creative",
+    note: "Pottery, painting, photography, and hands-on workshops built around making.",
+    images: [
+      "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1459908676235-d5f02a50184b?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80"
+    ]
+  },
+  {
+    label: "Food",
+    note: "Cooking, spice markets, tea tastings, kitchens, and food stories worth following.",
+    images: [
+      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1467003909585-2f8a72700288?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1464306076886-debede6f93df?auto=format&fit=crop&w=600&q=80"
+    ]
+  },
+  {
+    label: "Wellness",
+    note: "Yoga, meditation, music sessions, mindful walks, and calm restorative experiences.",
+    images: [
+      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1545389336-cf090694435e?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1508672019048-805c876b67e2?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1470115636492-6d2b56f9146d?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1510894347713-fc3ed6fdf539?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1474418397713-7ede21d49118?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1528715471579-d1bcf0ba5e83?auto=format&fit=crop&w=600&q=80"
+    ]
+  }
+];
+const featuredMap = {
+  tag: document.getElementById("featured-tag"),
+  title: document.getElementById("featured-title"),
+  copy: document.getElementById("featured-copy"),
+  duration: document.getElementById("featured-duration"),
+  price: document.getElementById("featured-price"),
+  rating: document.getElementById("featured-rating"),
+  cta: document.getElementById("featured-cta"),
+  image: document.getElementById("featured-image"),
+  overlayTitle: document.getElementById("featured-overlay-title"),
+  overlaySubtitle: document.getElementById("featured-overlay-subtitle")
+};
+const storyMap = {
+  tag: document.getElementById("story-tag"),
+  title: document.getElementById("story-title"),
+  copy: document.getElementById("story-copy"),
+  statOne: document.getElementById("story-stat-one"),
+  statTwo: document.getElementById("story-stat-two"),
+  cta: document.getElementById("story-cta"),
+  image: document.getElementById("story-image"),
+  reviewQuote: document.getElementById("review-quote"),
+  reviewAuthor: document.getElementById("review-author")
+};
+const swapBlock = (shell, map, data) => {
+  shell.classList.add("is-switching");
+  setTimeout(() => {
+    map.tag.textContent = data.tag;
+    map.title.innerHTML = data.title;
+    map.copy.textContent = data.copy;
+    map.copied = data.copy;
+    if (map.duration) map.duration.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v5l3 2"></path></svg>' + data.duration;
+    if (map.price) map.price.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 8h12"></path><path d="M6 12h12"></path><path d="M6 16h8"></path></svg>' + data.price;
+    if (map.rating) map.rating.innerHTML = '<svg viewBox="0 0 24 24"><path d="m12 4 2.3 4.7 5.2.8-3.8 3.7.9 5.3L12 16l-4.6 2.5.9-5.3L4.5 9.5l5.2-.8Z"></path></svg>' + data.rating;
+    if (map.statOne) map.statOne.innerHTML = data.statOne;
+    if (map.statTwo) map.statTwo.innerHTML = data.statTwo;
+    if (map.cta) {
+      map.cta.textContent = data.cta.text;
+      map.cta.href = data.cta.href;
+    }
+    if (map.image) {
+      map.image.src = data.image;
+      map.image.alt = data.alt;
+    }
+    if (map.overlayTitle) map.overlayTitle.textContent = data.overlayTitle;
+    if (map.overlaySubtitle) map.overlaySubtitle.textContent = data.overlaySubtitle;
+    if (map.reviewQuote) map.reviewQuote.textContent = data.reviewQuote;
+    if (map.reviewAuthor) map.reviewAuthor.textContent = data.reviewAuthor;
+    shell.classList.remove("is-switching");
+  }, 180);
+};
+let featuredIndex = 0;
+let storyIndex = 0;
+let communityIndex = 0;
+const communityImages = [...document.querySelectorAll("[data-community-image]")];
+const communityTime = document.getElementById("community-time");
+const communityNote = document.getElementById("community-note");
+const communityShell = document.querySelector(".community-shell");
+const paintCommunity = (set) => {
+  if (!communityShell) return;
+  communityShell.classList.add("is-switching");
+  setTimeout(() => {
+    communityTime.textContent = set.label;
+    communityNote.textContent = set.note;
+    communityImages.forEach((image, index) => {
+      image.src = set.images[index % set.images.length];
+      image.alt = set.label + " moment " + (index + 1);
+    });
+    communityShell.classList.remove("is-switching");
+  }, reduced ? 1 : 180);
+};
+paintCommunity(communitySets[communityIndex]);
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (!entry.isIntersecting) return;
+    const node = entry.target;
+    const target = Number(node.dataset.counter);
+    const decimal = String(node.dataset.counter).includes(".");
+    const duration = reduced ? 10 : 1600;
+    const start = performance.now();
+    const tick = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const value = target * eased;
+      node.textContent = decimal ? value.toFixed(1) : Math.round(value).toString();
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    counterObserver.unobserve(node);
+  });
+}, { threshold: 0.55 });
+document.querySelectorAll("[data-counter]").forEach((node) => counterObserver.observe(node));
+document.querySelectorAll("[data-rail]").forEach((rail) => {
+  const step = () => {
+    const card = rail.firstElementChild;
+    return (card ? card.getBoundingClientRect().width : 260) + 16;
+  };
+  const prev = document.querySelector(`[data-prev="${rail.id}"]`);
+  const next = document.querySelector(`[data-next="${rail.id}"]`);
+  if (prev) prev.addEventListener("click", () => rail.scrollBy({ left: -step(), behavior: "smooth" }));
+  if (next) next.addEventListener("click", () => rail.scrollBy({ left: step(), behavior: "smooth" }));
+  let down = false;
+  let startX = 0;
+  let startScroll = 0;
+  rail.addEventListener("pointerdown", (event) => {
+    down = true;
+    startX = event.clientX;
+    startScroll = rail.scrollLeft;
+    rail.classList.add("dragging");
+    rail.setPointerCapture(event.pointerId);
+  });
+  rail.addEventListener("pointermove", (event) => {
+    if (!down) return;
+    rail.scrollLeft = startScroll - (event.clientX - startX);
+  });
+  const stopDrag = () => {
+    down = false;
+    rail.classList.remove("dragging");
+  };
+  rail.addEventListener("pointerup", stopDrag);
+  rail.addEventListener("pointercancel", stopDrag);
+  rail.addEventListener("pointerleave", stopDrag);
+});
+if (!reduced && featuredData.length > 1) {
+  setInterval(() => {
+    featuredIndex = (featuredIndex + 1) % featuredData.length;
+    swapBlock(document.getElementById("featured-shell"), featuredMap, featuredData[featuredIndex]);
+  }, 5000);
+}
+if (!reduced && storyData.length > 1) {
+  setInterval(() => {
+    storyIndex = (storyIndex + 1) % storyData.length;
+    swapBlock(document.getElementById("story-shell"), storyMap, storyData[storyIndex]);
+  }, 5000);
+}
+if (!reduced && communitySets.length > 1) {
+  setInterval(() => {
+    communityIndex = (communityIndex + 1) % communitySets.length;
+    paintCommunity(communitySets[communityIndex]);
+  }, 5000);
+}
+</script>
+</body>
+</html>

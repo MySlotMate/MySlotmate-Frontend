@@ -1,0 +1,11 @@
+name = "myslotmate"
+type = "javascript"
+compatibility_date = "2024-12-16"
+
+[build]
+command = "pnpm build && npx @cloudflare/next-on-pages@1"
+cwd = "./"
+watch_paths = ["src/**/*.tsx", "src/**/*.ts"]
+
+[build.upload]
+format = "modules"

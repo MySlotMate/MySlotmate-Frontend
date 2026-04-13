@@ -92,7 +92,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
         <div className="mb-6 flex justify-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-full">
             <Image
-              src="/assets/home/logomyslotmate.jpeg"
+              src="/assets/home/logomyslotmate.png"
               alt="MySlotMate"
               width={80}
               height={80}

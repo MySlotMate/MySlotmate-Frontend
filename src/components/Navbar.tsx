@@ -178,6 +178,7 @@ export default function Navbar() {
             </Link>
             <button
               onClick={() => setLocationOpen(true)}
+              suppressHydrationWarning
               className="flex items-center gap-1.5 text-sm rounded-lg px-2 py-1.5 hover:bg-gray-50 transition cursor-pointer"
             >
               <IoLocationSharp className="h-5 w-5 text-[#0094CA]" />
@@ -214,6 +215,7 @@ export default function Navbar() {
               {user ? (
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
+                  suppressHydrationWarning
                   className="flex cursor-pointer items-center gap-2 rounded-full border-2 border-[#0094CA] p-0.5 transition hover:shadow-md"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -228,6 +230,7 @@ export default function Navbar() {
                 <button
                   onClick={() => setShowLogin(true)}
                   aria-label="Login"
+                  suppressHydrationWarning
                   className="flex cursor-pointer items-center justify-center rounded-full border-2 border-[#0094CA] p-0.5 transition hover:shadow-md"
                 >
                   <svg className="h-8 w-8 text-[#0094CA]" viewBox="0 0 24 24" fill="currentColor">

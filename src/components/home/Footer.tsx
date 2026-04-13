@@ -43,9 +43,10 @@ const Footer = () => {
                 <input 
                   type="text" 
                   placeholder="Get Product Updates" 
+                  suppressHydrationWarning
                   className="w-full rounded-l-2xl border border-r-0 border-[#aeddf873] bg-white px-4 py-2 text-sm text-[#0A142F] outline-none focus:ring-1 focus:ring-[#0094CA]" 
                 />
-                <button className="flex h-[38px] items-center bg-[#0094CA] px-3 rounded-r-2xl transition hover:bg-[#007ba8]">
+                <button suppressHydrationWarning className="flex h-[38px] items-center bg-[#0094CA] px-3 rounded-r-2xl transition hover:bg-[#007ba8]">
                   {/* Added text-white here */}
                   <FiArrowRight className="h-5 w-5 text-white" />
                 </button>

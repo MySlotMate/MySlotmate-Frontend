@@ -43,6 +43,19 @@ interface FormData {
   cancellationPolicy: string;
 }
 
+function getGeneratedDescription(value: unknown): string | null {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("description" in value)
+  ) {
+    return null;
+  }
+
+  const { description } = value;
+  return typeof description === "string" ? description : null;
+}
+
 const MOODS = [
   "Adventurous", "Relaxing", "Creative", "Social", "Educational", "Wellness", "Culinary", "Cultural"
 ];
@@ -747,9 +760,11 @@ export default function CreateExperiencePage() {
                           }),
                         });
 
-                        const data = await res.json();
-                        if (res.ok && data.description) {
-                          handleDescriptionChange(data.description);
+                        const data: unknown = await res.json();
+                        const generatedDescription = getGeneratedDescription(data);
+
+                        if (res.ok && generatedDescription) {
+                          handleDescriptionChange(generatedDescription);
                           toast.success('Description generated');
                         } else {
                           console.error('Generation error', data);

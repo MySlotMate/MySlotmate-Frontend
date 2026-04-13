@@ -145,12 +145,14 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
           <div className="flex flex-wrap gap-3 pt-1">
             <button
               onClick={handleBookTime}
+              suppressHydrationWarning
               className="rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5"
             >
               Book Time
             </button>
             <button
               onClick={handleListTime}
+              suppressHydrationWarning
               className="rounded-lg border border-[#78bce759] bg-white/90 px-5 py-3 text-sm font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5"
             >
               List Time

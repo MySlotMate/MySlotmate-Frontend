@@ -1,6 +1,6 @@
 import "~/styles/globals.css";
 
-import { type Metadata } from "next";
+import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 import Providers from "~/components/Providers";
 import Preloader from "~/components/Preloader";
@@ -71,10 +71,6 @@ export const metadata: Metadata = {
     images: ["/og-image.jpg"],
   },
 
-  /* Additional SEO Meta Tags */
-  viewport: "width=device-width, initial-scale=1, maximum-scale=5",
-  themeColor: "#0094CA",
-  colorScheme: "light",
   robots: {
     index: true,
     follow: true,
@@ -129,6 +125,14 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#0094CA",
+  colorScheme: "light",
+};
+
 const geist = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
@@ -155,7 +159,7 @@ export default function RootLayout({
       "@type": "Organization",
       name: "MySlotMate",
       url: appUrl,
-      logo: "/assets/home/logomyslotmate.jpeg",
+      logo: "/assets/home/logomyslotmate.png",
       sameAs: [
         "https://www.instagram.com/myslotmate/",
       ],

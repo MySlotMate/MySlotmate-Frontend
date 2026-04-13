@@ -121,7 +121,7 @@ export default function SignUpPage() {
           <div className="mb-6 flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/assets/home/logomyslotmate.jpeg"
+              src="/assets/home/logomyslotmate.png"
               alt="MySlotMate"
               className="h-16 w-16 object-contain"
             />

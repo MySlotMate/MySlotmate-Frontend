@@ -23,7 +23,7 @@ export default function HostNavbar() {
         {/* Logo */}
         <Link href="/" className="shrink-0">{/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assets/home/logomyslotmate.jpeg"
+            src="/assets/home/logo.png"
             alt="Myslotmate"
             className="h-9 w-auto"
           />

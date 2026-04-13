@@ -3,7 +3,7 @@ import "~/styles/globals.css";
 import { type Metadata, type Viewport } from "next";
 import { Geist } from "next/font/google";
 import Providers from "~/components/Providers";
-import Preloader from "~/components/Preloader";
+import PreloaderGate from "~/components/PreloaderGate";
 import { Toaster } from "sonner";
 
 const appUrl = "https://www.myslotmate.com";
@@ -200,8 +200,9 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="MySlotMate" />
       </head>
       <body className="overflow-x-hidden max-w-screen">
-        <Preloader />
-        <Providers>{children}</Providers>
+        <Providers>
+          <PreloaderGate>{children}</PreloaderGate>
+        </Providers>
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>

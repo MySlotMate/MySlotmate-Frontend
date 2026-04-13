@@ -8,7 +8,9 @@ import {
   ChevronRight,
   Clock3,
   Mountain,
+  Pause,
   Palette,
+  Play,
   Star,
   Users,
 } from "lucide-react";
@@ -274,7 +276,9 @@ const formatStat = (value: number, target: number) => {
 const ShowcaseSections = () => {
   const [hostId, setHostId] = useState<string | null>(null);
   const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [isFeaturedPlaying, setIsFeaturedPlaying] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
+  const [isStoryPlaying, setIsStoryPlaying] = useState(false);
   const [communityIndex, setCommunityIndex] = useState(0);
   const [stats, setStats] = useState([0, 0, 0, 0]);
   const [location, setLocation] = useState<CityLocation | null>(null);
@@ -431,6 +435,26 @@ const ShowcaseSections = () => {
   const featuredHref = featured.id ? `/experience/${featured.id}` : "/experiences";
   const storyHref = story.id ? `/host/${story.id}` : "/hosts";
 
+  const showPrevFeatured = () => {
+    if (featuredData.length <= 1) return;
+    setFeaturedIndex((prev) => (prev - 1 + featuredData.length) % featuredData.length);
+  };
+
+  const showNextFeatured = () => {
+    if (featuredData.length <= 1) return;
+    setFeaturedIndex((prev) => (prev + 1) % featuredData.length);
+  };
+
+  const showPrevStory = () => {
+    if (storyData.length <= 1) return;
+    setStoryIndex((prev) => (prev - 1 + storyData.length) % storyData.length);
+  };
+
+  const showNextStory = () => {
+    if (storyData.length <= 1) return;
+    setStoryIndex((prev) => (prev + 1) % storyData.length);
+  };
+
   const updateCuratedSessionsScrollState = () => {
     const viewport = curatedSessionsViewportRef.current;
     if (!viewport) return;
@@ -480,13 +504,14 @@ const ShowcaseSections = () => {
 
   useEffect(() => {
     if (featuredData.length <= 1) return;
+    if (!isFeaturedPlaying) return;
 
     const id = window.setInterval(() => {
       setFeaturedIndex((prev) => (prev + 1) % featuredData.length);
     }, 5000);
 
     return () => window.clearInterval(id);
-  }, [featuredData.length]);
+  }, [featuredData.length, isFeaturedPlaying]);
 
   useEffect(() => {
     setFeaturedIndex((prev) =>
@@ -495,19 +520,28 @@ const ShowcaseSections = () => {
   }, [featuredData.length]);
 
   useEffect(() => {
+    if (featuredData.length <= 1) setIsFeaturedPlaying(false);
+  }, [featuredData.length]);
+
+  useEffect(() => {
     if (storyData.length <= 1) return;
+    if (!isStoryPlaying) return;
 
     const id = window.setInterval(() => {
       setStoryIndex((prev) => (prev + 1) % storyData.length);
     }, 5000);
 
     return () => window.clearInterval(id);
-  }, [storyData.length]);
+  }, [storyData.length, isStoryPlaying]);
 
   useEffect(() => {
     setStoryIndex((prev) =>
       storyData.length === 0 ? 0 : Math.min(prev, storyData.length - 1),
     );
+  }, [storyData.length]);
+
+  useEffect(() => {
+    if (storyData.length <= 1) setIsStoryPlaying(false);
   }, [storyData.length]);
 
   useEffect(() => {
@@ -710,124 +744,160 @@ const ShowcaseSections = () => {
       </section>
 
       <section className="w-full site-x">
-        <div className="mx-auto w-full max-w-[1120px] pb-14">
-          <div className="grid gap-5 rounded-[28px] border border-[#aeddf885] bg-white p-4 shadow-[0_18px_42px_rgba(60,121,175,0.10)] md:grid-cols-[1.03fr_0.97fr] md:items-center">
-            <div className="relative mx-auto aspect-square w-full max-w-[460px] overflow-hidden rounded-3xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={featured.image} alt={featured.title} loading="lazy" className="h-full w-full object-cover" />
-              <div className="absolute bottom-4 left-4 rounded-2xl bg-[#12334fc2] px-3 py-2 text-white backdrop-blur-sm">
-                <p className="text-sm font-semibold">{featured.overlayTitle}</p>
-                <p className="text-xs text-white/80">{featured.overlaySubtitle}</p>
-              </div>
-            </div>
-
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                Featured Experience
-              </span>
-              <h3 className="mt-3 font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl">
-                {featured.title}
-              </h3>
-              <p className="mt-2 text-sm text-[#6f8daa]">{featured.copy}</p>
-
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
-                  <Clock3 className="h-4 w-4" />
-                  {featured.duration}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
-                  {featured.price}
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
-                  <Star className="h-4 w-4" />
-                  {featured.rating}
-                </span>
-              </div>
-
-              <Link
-                href={featuredHref}
-                className="mt-5 w-full flex items-center justify-center rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
-              >
-                <span>Book This Experience</span>
-              </Link>
-            </div>
-          </div>
-
-          <div id="hosts" className="w-full">
-            <components.Home.people currentHostId={hostId} />
-          </div>
-        </div>
-      </section>
-
-      <section className="w-full border-y border-[#aeddf847] site-x">
         <div className="mx-auto w-full max-w-[1120px] py-14">
-          <div className="mb-6 flex items-end justify-between gap-4">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
-                <span className="inline-block h-2 w-2 rounded-full bg-current" />
-                Curated Sessions
-              </span>
-              <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
-                Discover Experiences
-              </h2>
-              <p className="mt-1.5 text-sm text-[#6f8daa] sm:text-base">
-                Handpicked sessions you can book in a few taps.
-              </p>
+          <div className="flex w-full flex-col gap-14">
+            <div className="w-full">
+              <div className="grid gap-5 rounded-[28px] border border-[#aeddf885] bg-white p-4 shadow-[0_18px_42px_rgba(60,121,175,0.10)] md:grid-cols-[1.03fr_0.97fr] md:items-center">
+                <div className="relative mx-auto aspect-square w-full max-w-[460px] overflow-hidden rounded-3xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={featured.image} alt={featured.title} loading="lazy" className="h-full w-full object-cover" />
+                  <div className="absolute bottom-4 left-4 rounded-2xl bg-[#12334fc2] px-3 py-2 text-white backdrop-blur-sm">
+                    <p className="text-sm font-semibold">{featured.overlayTitle}</p>
+                    <p className="text-xs text-white/80">{featured.overlaySubtitle}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+                      Featured Experience
+                    </span>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={showPrevFeatured}
+                        className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
+                        aria-label="Previous featured experience"
+                        disabled={featuredData.length <= 1}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsFeaturedPlaying((v) => !v)}
+                        className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
+                        aria-label={isFeaturedPlaying ? "Pause featured experiences" : "Play featured experiences"}
+                        disabled={featuredData.length <= 1}
+                      >
+                        {isFeaturedPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={showNextFeatured}
+                        className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
+                        aria-label="Next featured experience"
+                        disabled={featuredData.length <= 1}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                  <h3 className="mt-3 font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl">
+                    {featured.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-[#6f8daa]">{featured.copy}</p>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
+                      <Clock3 className="h-4 w-4" />
+                      {featured.duration}
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
+                      {featured.price}
+                    </span>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
+                      <Star className="h-4 w-4" />
+                      {featured.rating}
+                    </span>
+                  </div>
+
+                  <Link
+                    href={featuredHref}
+                    className="mt-5 w-full flex items-center justify-center rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
+                  >
+                    <span>Book This Experience</span>
+                  </Link>
+                </div>
+              </div>
             </div>
 
-            {isCuratedOverflowing ? (
-              <div className="hidden items-center gap-3 md:flex">
-                <button
-                  type="button"
-                  onClick={() => scrollCuratedSessions("left")}
-                  className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
-                  aria-label="Scroll curated sessions left"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                {isCuratedAtScrollEnd ? (
-                  <Link
-                    href="/experiences"
-                    className="inline-flex h-14 items-center justify-center gap-2 border border-[#bdddf4] bg-[#f7fcff] px-5 text-sm font-extrabold text-[#2f7eb5] transition hover:bg-white"
-                    aria-label="See more experiences"
-                  >
-                    See more
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => scrollCuratedSessions("right")}
-                    className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
-                    aria-label="Scroll curated sessions right"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </button>
-                )}
+            <div id="hosts" className="w-full">
+              <components.Home.people currentHostId={hostId} />
+            </div>
+
+            <div className="w-full">
+              <div className="mb-6 flex items-end justify-between gap-4">
+                <div>
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
+                    <span className="inline-block h-2 w-2 rounded-full bg-current" />
+                    Curated Sessions
+                  </span>
+                  <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
+                    Discover Experiences
+                  </h2>
+                  <p className="mt-1.5 text-sm text-[#6f8daa] sm:text-base">
+                    Handpicked sessions you can book in a few taps.
+                  </p>
+                </div>
+
+                {isCuratedOverflowing ? (
+                  <div className="hidden items-center gap-3 md:flex">
+                    <button
+                      type="button"
+                      onClick={() => scrollCuratedSessions("left")}
+                      className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+                      aria-label="Scroll curated sessions left"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    {isCuratedAtScrollEnd ? (
+                      <Link
+                        href="/experiences"
+                        className="inline-flex h-14 items-center justify-center gap-2 border border-[#bdddf4] bg-[#f7fcff] px-5 text-sm font-extrabold text-[#2f7eb5] transition hover:bg-white"
+                        aria-label="See more experiences"
+                      >
+                        See more
+                        <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => scrollCuratedSessions("right")}
+                        className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+                        aria-label="Scroll curated sessions right"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
 
-          <div
-            ref={curatedSessionsViewportRef}
-            className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 hide-scrollbar"
-          >
-            {curatedSessions.map((session, idx) => (
-              <CuratedSessionCard
-                key={session.id ?? `${session.title}-${idx}`}
-                {...session}
-              />
-            ))}
-          </div>
+              <div
+                ref={curatedSessionsViewportRef}
+                className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 hide-scrollbar"
+              >
+                {curatedSessions.map((session, idx) => (
+                  <CuratedSessionCard
+                    key={session.id ?? `${session.title}-${idx}`}
+                    {...session}
+                  />
+                ))}
+              </div>
 
-          <div className="mt-5 md:hidden">
-            <Link
-              href="/experiences"
-              className="text-sm font-extrabold text-[#0e8ae0] hover:text-[#0b6eb1]"
-            >
-              View All
-            </Link>
+              <div className="mt-5 md:hidden">
+                <Link
+                  href="/experiences"
+                  className="text-sm font-extrabold text-[#0e8ae0] hover:text-[#0b6eb1]"
+                >
+                  View All
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -836,7 +906,7 @@ const ShowcaseSections = () => {
         <div className="mx-auto grid w-full max-w-[1120px] gap-10 py-14 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="relative mx-auto mb-12 w-full max-w-[560px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={story.image} alt={story.title} loading="lazy" className="aspect-square w-full rounded-[32px] object-cover shadow-[0_18px_42px_rgba(60,123,177,0.1)]" />
+            <img src={story.image} alt={story.title} className="aspect-square w-full rounded-[32px] object-cover shadow-[0_18px_42px_rgba(60,123,177,0.1)]" />
             <div className="absolute bottom-[-34px] left-1/2 w-[min(310px,calc(100%-40px))] -translate-x-1/2 rounded-[26px] bg-white px-6 py-5 shadow-[0_26px_44px_rgba(60,123,177,0.18)]">
               <p className="font-[Outfit,sans-serif] text-[15px] italic text-[#1f7bb6]">
                 &ldquo;{story.quote}&rdquo;
@@ -845,15 +915,49 @@ const ShowcaseSections = () => {
             </div>
           </div>
 
-          <div className="pt-2">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-              Host Story
-            </span>
-            <h3 className="mt-3 font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl">
-              {story.title}
-            </h3>
-            <p className="mt-2 text-sm leading-7 text-[#6f8daa]">{story.copy}</p>
+           <div className="pt-2">
+             <div className="flex flex-wrap items-center justify-between gap-3">
+               <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
+                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
+                 Host Story
+               </span>
+
+               <div className="flex items-center gap-2">
+                 <button
+                   type="button"
+                   onClick={showPrevStory}
+                   className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
+                   aria-label="Previous host story"
+                   disabled={storyData.length <= 1}
+                 >
+                   <ChevronLeft className="h-5 w-5" />
+                 </button>
+
+                 <button
+                   type="button"
+                   onClick={() => setIsStoryPlaying((v) => !v)}
+                   className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
+                   aria-label={isStoryPlaying ? "Pause host stories" : "Play host stories"}
+                   disabled={storyData.length <= 1}
+                 >
+                   {isStoryPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+                 </button>
+
+                 <button
+                   type="button"
+                   onClick={showNextStory}
+                   className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
+                   aria-label="Next host story"
+                   disabled={storyData.length <= 1}
+                 >
+                   <ChevronRight className="h-5 w-5" />
+                 </button>
+               </div>
+             </div>
+             <h3 className="mt-3 font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl">
+               {story.title}
+             </h3>
+             <p className="mt-2 text-sm leading-7 text-[#6f8daa]">{story.copy}</p>
 
             <div className="my-5 flex gap-8 border-y border-[#aeddf88c] py-5">
               <div>
@@ -868,7 +972,7 @@ const ShowcaseSections = () => {
 
             <Link
               href={storyHref}
-              className="inline-flex rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-8 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
+              className="inline-flex rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] mt-5 px-8 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
             >
               Book Time
             </Link>

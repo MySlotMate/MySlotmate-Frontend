@@ -380,6 +380,7 @@ export default function CreateExperiencePage() {
   const publishEvent = usePublishEvent();
   const { checkContentSync } = useContentModeration();
   const [descriptionWarning, setDescriptionWarning] = useState<string | null>(null);
+  const [isSummarizing, setIsSummarizing] = useState(false);
 
   useEffect(() => {
     if (isHydrated && !userId && !hostLoading) {
@@ -725,14 +726,53 @@ export default function CreateExperiencePage() {
 
               {/* Description */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Description <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-start justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        setIsSummarizing(true);
+                        const res = await fetch('/api/generate-description', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            title: form.title,
+                            hookLine: form.hookLine,
+                            mood: form.mood,
+                            location: form.location,
+                            durationMinutes: form.durationMinutes,
+                          }),
+                        });
+
+                        const data = await res.json();
+                        if (res.ok && data.description) {
+                          handleDescriptionChange(data.description);
+                          toast.success('Description generated');
+                        } else {
+                          console.error('Generation error', data);
+                          toast.error('Failed to generate description');
+                        }
+                      } catch (err) {
+                        console.error(err);
+                        toast.error('Failed to generate description');
+                      } finally {
+                        setIsSummarizing(false);
+                      }
+                    }}
+                    disabled={isSummarizing}
+                    className="inline-flex items-center gap-2 px-3 py-2 bg-[#0094CA] text-white rounded-md text-sm hover:bg-[#007ba8] disabled:opacity-60"
+                  >
+                    {isSummarizing ? 'Summarizing...' : 'Summarize'}
+                  </button>
+                </div>
                 <textarea
                   value={form.description}
                   onChange={(e) => {
                     handleDescriptionChange(e.target.value);
-                    void descriptionSuggestions.generateSuggestions(e.target.value, "description", {
+                    void descriptionSuggestions.generateSuggestions(e.target.value, 'description', {
                       title: form.title,
                       hookLine: form.hookLine,
                       mood: form.mood,

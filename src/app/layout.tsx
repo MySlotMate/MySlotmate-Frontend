@@ -3,6 +3,7 @@ import "~/styles/globals.css";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 import Providers from "~/components/Providers";
+import Preloader from "~/components/Preloader";
 import { Toaster } from "sonner";
 
 const appUrl = "https://www.myslotmate.com";
@@ -181,6 +182,7 @@ export default function RootLayout({
         {/* Preconnect for Performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Display font used in hero/preloader (removed) */}
 
         {/* DNS Prefetch */}
         <link rel="dns-prefetch" href="https://analytics.google.com" />
@@ -194,6 +196,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="MySlotMate" />
       </head>
       <body className="overflow-x-hidden max-w-screen">
+        <Preloader />
         <Providers>{children}</Providers>
         <Toaster position="top-right" richColors closeButton />
       </body>

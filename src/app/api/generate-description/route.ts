@@ -7,6 +7,8 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+export const runtime="edge";
+
 const generateDescriptionSchema = z.object({
   title: z.string().trim().max(120).optional().default(""),
   hookLine: z.string().trim().max(240).optional().default(""),

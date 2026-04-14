@@ -16,6 +16,7 @@ import {
   useUploadFiles,
   useApplicationStatus,
 } from "~/hooks/useApi";
+import { setStoredHostId } from "~/lib/auth-storage";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -69,7 +70,8 @@ export default function BecomeHostPage() {
   const { data: userProfile } = useMyProfile(validUserId);
 
   // Fetch application status
-  const { data: applicationStatus, isLoading: statusLoading } = useApplicationStatus(validUserId);
+  const { data: applicationStatus, isLoading: statusLoading } =
+    useApplicationStatus(validUserId);
 
   // Mutation hooks
   const submitMutation = useSubmitHostApplication();
@@ -161,9 +163,7 @@ export default function BecomeHostPage() {
       <>
         <Navbar />
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Become a Host
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Become a Host</h1>
           <p className="max-w-md text-gray-500">
             You must be logged in to apply as a host.
           </p>
@@ -180,14 +180,17 @@ export default function BecomeHostPage() {
   }
 
   /* ---- guard: show status if user has already applied (not in draft) ---- */
-  const hasExistingApplication = applicationStatus?.status?.application_status && applicationStatus.status.application_status !== "draft";
-  
+  const hasExistingApplication =
+    applicationStatus?.status?.application_status &&
+    applicationStatus.status.application_status !== "draft";
+
   if (!statusLoading && hasExistingApplication) {
     const status = applicationStatus.status!.application_status;
     const statusConfig = {
       pending: {
         title: "Your Application is Under Review",
-        description: "We've received your host application and our team is currently reviewing your profile. This typically takes 24-48 hours.",
+        description:
+          "We've received your host application and our team is currently reviewing your profile. This typically takes 24-48 hours.",
         icon: "⏳",
         bgColor: "bg-yellow-50",
         borderColor: "border-yellow-200",
@@ -195,7 +198,8 @@ export default function BecomeHostPage() {
       },
       under_review: {
         title: "Your Application is Under Review",
-        description: "We're carefully reviewing your profile to ensure the best experience for our community. We'll notify you soon with a decision.",
+        description:
+          "We're carefully reviewing your profile to ensure the best experience for our community. We'll notify you soon with a decision.",
         icon: "🔍",
         bgColor: "bg-blue-50",
         borderColor: "border-blue-200",
@@ -203,7 +207,8 @@ export default function BecomeHostPage() {
       },
       approved: {
         title: "🎉 You're Approved!",
-        description: "Congratulations! You've been approved as a host. You can now create and post your first experience. Start hosting amazing moments!",
+        description:
+          "Congratulations! You've been approved as a host. You can now create and post your first experience. Start hosting amazing moments!",
         icon: "✅",
         bgColor: "bg-green-50",
         borderColor: "border-green-200",
@@ -211,7 +216,8 @@ export default function BecomeHostPage() {
       },
       rejected: {
         title: "Application Status",
-        description: "Unfortunately, your application was not approved at this time. Please contact our support team if you'd like more information.",
+        description:
+          "Unfortunately, your application was not approved at this time. Please contact our support team if you'd like more information.",
         icon: "❌",
         bgColor: "bg-red-50",
         borderColor: "border-red-200",
@@ -219,18 +225,23 @@ export default function BecomeHostPage() {
       },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
 
     return (
       <>
         <Navbar />
         <main className="min-h-screen bg-gray-50">
-          <div className="mx-auto max-w-2xl site-x py-20">
-            <div className={`rounded-2xl border-2 ${config.borderColor} ${config.bgColor} p-8 text-center`}>
+          <div className="site-x mx-auto max-w-2xl py-20">
+            <div
+              className={`rounded-2xl border-2 ${config.borderColor} ${config.bgColor} p-8 text-center`}
+            >
               <div className="mb-6 text-6xl">{config.icon}</div>
-              <h1 className="text-3xl font-bold text-gray-900">{config.title}</h1>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {config.title}
+              </h1>
               <p className="mt-4 text-lg text-gray-600">{config.description}</p>
-              
+
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                 <button
                   onClick={() => router.push("/")}
@@ -240,7 +251,9 @@ export default function BecomeHostPage() {
                 </button>
                 {status === "approved" && (
                   <button
-                    onClick={() => router.push("/host-dashboard/experiences/new")}
+                    onClick={() =>
+                      router.push("/host-dashboard/experiences/new")
+                    }
                     className="rounded-full border-2 border-[#0094CA] px-8 py-3 text-sm font-semibold text-[#0094CA] transition hover:bg-[#e6f8ff]"
                   >
                     Create Your First Experience
@@ -254,8 +267,6 @@ export default function BecomeHostPage() {
       </>
     );
   }
-
-
 
   /* ---- submit handlers ---- */
 
@@ -332,7 +343,10 @@ export default function BecomeHostPage() {
         });
         govIdUrl = uploadRes.data[0]?.url;
       } catch (uploadErr) {
-        console.warn("File upload failed (server may not have S3 configured), continuing without:", uploadErr);
+        console.warn(
+          "File upload failed (server may not have S3 configured), continuing without:",
+          uploadErr,
+        );
       }
 
       // 2. Submit host application
@@ -352,10 +366,13 @@ export default function BecomeHostPage() {
       });
 
       // Store host id + status for navbar/other pages
-      localStorage.setItem("msm_host_id", res.data.id);
+      setStoredHostId(res.data.id);
       localStorage.setItem(
         "hostApplicationStatus",
-        JSON.stringify({ status: res.data.application_status, submittedAt: new Date().toISOString() }),
+        JSON.stringify({
+          status: res.data.application_status,
+          submittedAt: new Date().toISOString(),
+        }),
       );
 
       setShowSubmittedModal(true);
@@ -375,9 +392,12 @@ export default function BecomeHostPage() {
     <>
       <Navbar />
 
-      <main className="mx-auto w-full min-h-screen max-w-[1120px] site-x py-8 pt-24">
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Become a Host" }]} className="mb-6" />
-        
+      <main className="site-x mx-auto min-h-screen w-full max-w-[1120px] py-8 pt-24">
+        <Breadcrumb
+          items={[{ label: "Home", href: "/" }, { label: "Become a Host" }]}
+          className="mb-6"
+        />
+
         {/* Header row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -393,7 +413,7 @@ export default function BecomeHostPage() {
 
           {/* Progress bar */}
           <div className="flex flex-col items-end gap-1">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-500">
+            <p className="text-xs font-semibold tracking-widest text-gray-500 uppercase">
               Application Progress
             </p>
             <div className="flex items-center gap-2">
@@ -403,7 +423,9 @@ export default function BecomeHostPage() {
                   style={{ width: `${progress}%` }}
                 />
               </div>
-              <span className="text-sm font-bold text-gray-900">{progress}%</span>
+              <span className="text-sm font-bold text-gray-900">
+                {progress}%
+              </span>
             </div>
           </div>
         </div>
@@ -428,7 +450,7 @@ export default function BecomeHostPage() {
                     value={form.fullName}
                     onChange={(e) => updateField("fullName", e.target.value)}
                     placeholder="e.g. Alex Rivera"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
                   />
                 </div>
                 <div>
@@ -440,7 +462,7 @@ export default function BecomeHostPage() {
                     value={form.city}
                     onChange={(e) => updateField("city", e.target.value)}
                     placeholder="e.g. San Francisco"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
                   />
                 </div>
               </div>
@@ -465,7 +487,7 @@ export default function BecomeHostPage() {
                       updateField("experienceDesc", e.target.value)
                     }
                     placeholder="Write about all the activities you are planning to host"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
                   />
                 </div>
 
@@ -514,7 +536,7 @@ export default function BecomeHostPage() {
                     maxLength={300}
                     rows={5}
                     placeholder="Describe the magic you're thinking of creating..."
-                    className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
                   />
                 </div>
               </div>
@@ -561,7 +583,7 @@ export default function BecomeHostPage() {
                           key={key}
                           type="button"
                           onClick={() => toggleDay(key)}
-                          className={`rounded-full border px-5 py-2.5 text-xs font-semibold uppercase tracking-wide transition ${
+                          className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${
                             selected
                               ? "border-[#0094CA] bg-[#0094CA] text-white"
                               : "border-gray-300 bg-white text-gray-600 hover:border-[#0094CA]"
@@ -705,7 +727,8 @@ export default function BecomeHostPage() {
                 disabled={submitting}
                 className="flex items-center gap-2 rounded-full bg-[#0094CA] px-7 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-50"
               >
-                {submitting ? "Submitting..." : "Submit Host Request"} <FiArrowRight className="h-4 w-4" />
+                {submitting ? "Submitting..." : "Submit Host Request"}{" "}
+                <FiArrowRight className="h-4 w-4" />
               </button>
             </div>
           </div>

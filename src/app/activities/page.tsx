@@ -6,7 +6,7 @@ import { useBookingsByUser, useListPublicEvents } from "~/hooks/useApi";
 import { type BookingDTO, type EventDTO } from "~/lib/api";
 import * as components from "~/components";
 import { InboxSidebar, ReviewModal } from "~/components/activities";
-import { FiCalendar, FiUsers, FiDollarSign, FiXCircle, FiCheck, FiMessageCircle, FiStar } from "react-icons/fi";
+import { FiCalendar, FiUsers, FiXCircle, FiCheck, FiMessageCircle, FiStar } from "react-icons/fi";
 import Breadcrumb from "~/components/Breadcrumb";
 
 interface BookingWithEvent {
@@ -158,7 +158,9 @@ export default function ActivitiesPage() {
                         </div>
 
                         <div className="flex items-center gap-2 text-gray-700">
-                          <FiDollarSign className="h-4 w-4 text-[#0094CA]" />
+                          <span className="inline-flex h-4 w-4 items-center justify-center text-sm font-bold leading-none text-[#0094CA]">
+                            ₹
+                          </span>
                           <div>
                             <p className="text-xs text-gray-500">Amount</p>
                             <p className="text-sm font-medium">{formatPrice(booking.amount_cents)}</p>
@@ -247,6 +249,9 @@ export default function ActivitiesPage() {
           eventTitle={
             bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)?.event.title ?? "Event"
           }
+          participantCount={
+            bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)?.event.total_bookings ?? 0
+          }
           userId={userId}
           isOpen={!!activeInboxEventId}
           onClose={() => setActiveInboxEventId(null)}
@@ -257,6 +262,9 @@ export default function ActivitiesPage() {
       {activeReviewEventId && userId && (
         <ReviewModal
           eventId={activeReviewEventId}
+          hostId={
+            bookingsWithEvents.find((b) => b.event.id === activeReviewEventId)?.event.host_id ?? ""
+          }
           eventTitle={
             bookingsWithEvents.find((b) => b.event.id === activeReviewEventId)?.event.title ?? "Event"
           }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { FiX, FiSearch } from "react-icons/fi";
+import { FiX } from "react-icons/fi";
 import { IoLocationSharp } from "react-icons/io5";
 import { LuLocateFixed } from "react-icons/lu";
 
@@ -139,6 +139,7 @@ export default function LocationModal({
   const [detecting, setDetecting] = useState(false);
   const [searchResults, setSearchResults] = useState<CityLocation[]>([]);
   const [searching, setSearching] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -262,20 +263,22 @@ export default function LocationModal({
   const showSearchResults = search.trim().length >= 2 && searchResults.length > 0;
 
   // Separate featured cities for the top row
-  const FEATURED_NAMES = ["Ahmedabad", "Chennai", "Delhi", "Goa", "Kolkata", "Mumbai", "Hyderabad"];
-  const featuredCities = filteredPopular.filter(c => FEATURED_NAMES.includes(c.city));
+  const FEATURED_NAMES = ["Ahmedabad", "Chennai", "Delhi", "Goa", "Hyderabad", "Kolkata", "Mumbai"];
+  const featuredCities = filteredPopular
+    .filter(c => FEATURED_NAMES.includes(c.city))
+    .sort((a, b) => FEATURED_NAMES.indexOf(a.city) - FEATURED_NAMES.indexOf(b.city));
   const moreCities = filteredPopular.filter(c => !FEATURED_NAMES.includes(c.city)).sort((a, b) => a.city.localeCompare(b.city));
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-all"
+        className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm transition-all"
         onClick={onClose}
       />
 
       {/* Modal Container */}
-      <div className="fixed left-1/2 top-1/2 z-50 w-[95%] max-w-[800px] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[38px] bg-white p-8 shadow-[0_24px_60px_rgba(0,0,0,0.15)]">
+      <div className="fixed left-1/2 top-1/2 z-[10000] w-[95%] max-w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-[38px] bg-white p-8 shadow-[0_24px_60px_rgba(0,0,0,0.15)]">
         
         {/* Header & Close */}
         <div className="flex items-center justify-between">
@@ -288,16 +291,16 @@ export default function LocationModal({
           </button>
         </div>
 
-        <div className="max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="max-h-[75vh] overflow-y-auto px-1 pr-2 custom-scrollbar">
           {/* Search Bar */}
-          <div className="mt-5">
+          <div className="mt-5 px-1">
             <input
               ref={inputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search city, area or locality"
-              className="w-full rounded-xl border border-[#aeddf873] bg-white px-5 py-3 text-sm text-[#16304c] placeholder-[#5e88ab] outline-none transition focus:ring-2 focus:ring-[#0094CA]/20"
+              className="box-border w-full rounded-xl border border-[#aeddf873] bg-white px-5 py-3 text-sm text-[#16304c] placeholder-[#5e88ab] outline-none transition focus:ring-2 focus:ring-[#0094CA]/20"
             />
           </div>
 
@@ -349,13 +352,18 @@ export default function LocationModal({
                         className="group flex flex-col items-center gap-3"
                       >
                         <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[20px] border border-[#aeddf873] bg-[#f8fcff] transition-all group-hover:border-[#0094CA] group-hover:bg-[#f0f9ff] group-hover:shadow-[0_8px_20px_rgba(0,148,202,0.1)]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={`/assets/home/${loc.city.toLowerCase()}.svg`}
-                            alt={loc.city}
-                            loading="lazy"
-                            className="h-10 w-10 object-contain opacity-80 transition-opacity group-hover:opacity-100"
-                          />
+                          {failedImages.has(loc.city) ? (
+                            <IoLocationSharp className="h-10 w-10 opacity-80 text-[#0094CA] transition-opacity group-hover:opacity-100" />
+                          ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={`/assets/home/${loc.city.toLowerCase()}.svg`}
+                              alt={loc.city}
+                              loading="lazy"
+                              onError={() => setFailedImages(prev => new Set(prev).add(loc.city))}
+                              className="h-10 w-10 object-contain opacity-80 transition-opacity group-hover:opacity-100"
+                            />
+                          )}
                         </div>
                         <span className="text-[12px] font-bold text-[#16304c]">{loc.city}</span>
                       </button>

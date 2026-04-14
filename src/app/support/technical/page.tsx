@@ -7,7 +7,6 @@ import type { IconType } from "react-icons";
 import {
   FiAlertCircle,
   FiCalendar,
-  FiDollarSign,
   FiSearch,
   FiVideo,
 } from "react-icons/fi";
@@ -34,6 +33,10 @@ interface CommonTopic {
   icon: IconType;
 }
 
+const RupeeIcon: IconType = ({ className }) => (
+  <span className={className}>₹</span>
+);
+
 const commonTopics: CommonTopic[] = [
   {
     id: 1,
@@ -51,7 +54,7 @@ const commonTopics: CommonTopic[] = [
     id: 3,
     title: "Payment & Payout",
     description: "Withdrawal delays, tax documents, and invoice disputes.",
-    icon: FiDollarSign,
+    icon: RupeeIcon,
   },
   {
     id: 4,

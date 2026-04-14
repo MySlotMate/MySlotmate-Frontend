@@ -7,6 +7,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "~/utils/firebase";
 import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
+import { setStoredUserId } from "~/lib/auth-storage";
 
 interface GoogleLoginProps {
   open: boolean;
@@ -36,7 +37,9 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
             `${process.env.NEXT_PUBLIC_API_URL}/users/by-firebase/${firebaseUser.uid}`,
           );
           if (profileRes.ok) {
-            const response = (await profileRes.json()) as { data?: { id?: string } };
+            const response = (await profileRes.json()) as {
+              data?: { id?: string };
+            };
             userId = response.data?.id ?? null;
           }
         } catch (fetchErr) {
@@ -45,7 +48,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
 
         // If user exists in database, save ID and welcome back
         if (userId) {
-          localStorage.setItem("msm_user_id", userId);
+          setStoredUserId(userId);
           toast.success("Welcome back!");
           onClose();
           return;
@@ -75,7 +78,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition"
+          className="absolute top-4 right-4 text-gray-400 transition hover:text-gray-600"
           aria-label="Close"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -156,7 +159,3 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
     </div>
   );
 }
-
-
-
-

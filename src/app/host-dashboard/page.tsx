@@ -9,7 +9,6 @@ import Breadcrumb from "~/components/Breadcrumb";
 import {
   FiCalendar,
   FiStar,
-  FiDollarSign,
   FiClock,
   FiMapPin,
   FiMoreHorizontal,
@@ -32,6 +31,10 @@ interface AttentionItem {
   description: string;
   linkText: string;
   linkHref: string;
+}
+
+function RupeeIcon({ className }: { className?: string }) {
+  return <span className={className}>₹</span>;
 }
 
 // Helper to format currency
@@ -148,7 +151,7 @@ export default function HostDashboardPage() {
       badgeColor: "bg-green-100 text-green-700",
     },
     {
-      icon: <FiDollarSign className="h-5 w-5 text-[#0094CA]" />,
+      icon: <RupeeIcon className="inline-flex h-5 w-5 items-center justify-center text-[#0094CA]" />,
       label: "Total Earnings",
       value: totalEarnings,
       sub: "",

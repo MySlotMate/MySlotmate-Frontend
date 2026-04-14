@@ -31,7 +31,8 @@ export async function apiFetch<T>(
     const data = axErr.response?.data;
     const msg = data?.error ?? data?.message ?? axErr.message;
     const error = new Error(msg);
-    (error as Error & { status: number; data?: Envelope<T> }).status = axErr.response?.status ?? 500;
+    (error as Error & { status: number; data?: Envelope<T> }).status =
+      axErr.response?.status ?? 500;
     // Preserve response data for error cases (e.g., 409 conflict may still contain user data)
     if (data) {
       (error as Error & { status: number; data?: Envelope<T> }).data = data;
@@ -120,7 +121,10 @@ export interface UserProfileUpdatePayload {
 }
 
 /** PUT /users/me?user_id=<uuid> */
-export function updateUserProfile(userId: string, body: UserProfileUpdatePayload) {
+export function updateUserProfile(
+  userId: string,
+  body: UserProfileUpdatePayload,
+) {
   return apiFetch<UserDTO>("/users/me", {
     method: "PUT",
     params: { user_id: userId },
@@ -138,11 +142,28 @@ export interface UploadResult {
   size: number;
 }
 
+export interface UploadFilesPayload {
+  files: File[];
+  folder?: UploadFolder;
+}
+
+export type UploadFolder =
+  | "general"
+  | "blogs/covers"
+  | "events/covers"
+  | "events/gallery"
+  | "hosts/avatars"
+  | "hosts/government-ids"
+  | "support/evidence";
+
 /**
  * POST /upload/?folder=<prefix>
  * Uploads files to S3. Returns URLs.
  */
-export async function uploadFiles(files: File[], folder = "general") {
+export async function uploadFiles(
+  files: File[],
+  folder: UploadFolder = "general",
+) {
   const formData = new FormData();
   files.forEach((f) => formData.append("files", f));
   try {
@@ -156,9 +177,15 @@ export async function uploadFiles(files: File[], folder = "general") {
     const data = axErr.response?.data;
     const msg = data?.error ?? data?.message ?? axErr.message;
     const error = new Error(msg);
-    (error as Error & { status: number }).status = axErr.response?.status ?? 500;
+    (error as Error & { status: number }).status =
+      axErr.response?.status ?? 500;
     throw error;
   }
+}
+
+export async function uploadBlogCover(file: File) {
+  const response = await uploadFiles([file], "blogs/covers");
+  return response.data[0] ?? null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -176,7 +203,12 @@ export interface HostDTO {
   avatar_url: string | null;
   tagline: string | null;
   bio: string | null;
-  application_status: "draft" | "pending" | "under_review" | "approved" | "rejected";
+  application_status:
+    | "draft"
+    | "pending"
+    | "under_review"
+    | "approved"
+    | "rejected";
   experience_desc: string | null;
   moods: string[];
   description: string | null;
@@ -228,19 +260,29 @@ export function submitHostApplication(body: HostApplicationPayload) {
 
 /** POST /hosts/apply/draft — save host application as draft */
 export function saveHostDraft(body: HostApplicationPayload) {
-  return apiFetch<HostDTO>("/hosts/apply/draft", { method: "POST", data: body });
+  return apiFetch<HostDTO>("/hosts/apply/draft", {
+    method: "POST",
+    data: body,
+  });
 }
 
 export interface ApplicationStatusResponse {
   status?: {
     id: string;
-    application_status: "draft" | "pending" | "under_review" | "approved" | "rejected";
+    application_status:
+      | "draft"
+      | "pending"
+      | "under_review"
+      | "approved"
+      | "rejected";
   };
 }
 
 /** GET /hosts/application-status?user_id=<uuid> */
 export function getApplicationStatus(userId: string) {
-  return apiFetch<ApplicationStatusResponse>("/hosts/application-status", { params: { user_id: userId } });
+  return apiFetch<ApplicationStatusResponse>("/hosts/application-status", {
+    params: { user_id: userId },
+  });
 }
 
 /** GET /hosts/me?user_id=<uuid> */
@@ -392,7 +434,10 @@ export interface PlatformAddPayoutMethodPayload {
 }
 
 /** POST /admin/platform/payout-methods — add a payout method for platform account */
-export function addPlatformPayoutMethod(body: PlatformAddPayoutMethodPayload, idToken: string) {
+export function addPlatformPayoutMethod(
+  body: PlatformAddPayoutMethodPayload,
+  idToken: string,
+) {
   return apiFetch<PayoutMethodDTO>("/admin/platform/payout-methods", {
     method: "POST",
     headers: getAuthHeader(idToken),
@@ -401,30 +446,153 @@ export function addPlatformPayoutMethod(body: PlatformAddPayoutMethodPayload, id
 }
 
 /** PUT /admin/platform/payout-methods/{methodID}/primary — set primary for platform */
-export function setPlatformPrimaryPayoutMethod(methodId: string, idToken: string) {
-  return apiFetch<{ message: string }>(`/admin/platform/payout-methods/${methodId}/primary`, {
-    method: "PUT",
-    headers: getAuthHeader(idToken),
-  });
+export function setPlatformPrimaryPayoutMethod(
+  methodId: string,
+  idToken: string,
+) {
+  return apiFetch<{ message: string }>(
+    `/admin/platform/payout-methods/${methodId}/primary`,
+    {
+      method: "PUT",
+      headers: getAuthHeader(idToken),
+    },
+  );
 }
 
 /** DELETE /admin/platform/payout-methods/{methodID} — delete payout method from platform */
 export function deletePlatformPayoutMethod(methodId: string, idToken: string) {
-  return apiFetch<{ message: string }>(`/admin/platform/payout-methods/${methodId}`, {
+  return apiFetch<{ message: string }>(
+    `/admin/platform/payout-methods/${methodId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeader(idToken),
+    },
+  );
+}
+
+/** POST /admin/platform/withdraw — withdraw platform fees to admin's bank/UPI */
+export function withdrawPlatformFees(
+  body: {
+    amount_cents: number;
+    idempotency_key?: string;
+  },
+  idToken: string,
+) {
+  return apiFetch<PaymentDTO>("/admin/platform/withdraw", {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: body,
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Blogs                                                              */
+/* ------------------------------------------------------------------ */
+
+export interface BlogDTO {
+  id: string;
+  title: string | null;
+  description: string | null;
+  category: string | null;
+  content: string | null;
+  cover_image_url: string | null;
+  author_id: string | null;
+  author_name: string | null;
+  read_time_minutes: number | null;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BlogPaginationParams {
+  limit?: number;
+  offset?: number;
+}
+
+export interface BlogCreatePayload {
+  title: string;
+  description: string;
+  category: string;
+  content: string;
+  cover_image_url?: string | null;
+  read_time_minutes: number;
+}
+
+export interface BlogUpdatePayload {
+  title?: string;
+  description?: string;
+  category?: string;
+  content?: string;
+  cover_image_url?: string | null;
+  read_time_minutes?: number;
+}
+
+/** GET /blogs — list all published blogs */
+export function listBlogs(pagination?: BlogPaginationParams) {
+  return apiFetch<BlogDTO[]>("/blogs", { params: pagination });
+}
+
+/** GET /blogs/{blogID} — get a single blog by ID */
+export function getBlog(blogId: string) {
+  return apiFetch<BlogDTO>(`/blogs/${blogId}`);
+}
+
+/** GET /blogs/category/{category} — get published blogs filtered by category */
+export function listBlogsByCategory(
+  category: string,
+  pagination?: BlogPaginationParams,
+) {
+  return apiFetch<BlogDTO[]>(
+    `/blogs/category/${encodeURIComponent(category)}`,
+    {
+      params: pagination,
+    },
+  );
+}
+
+/** POST /blogs — create a new blog post (admin only) */
+export function createBlog(body: BlogCreatePayload, idToken: string) {
+  return apiFetch<BlogDTO>("/blogs", {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: body,
+  });
+}
+
+/** PUT /blogs/{blogID} — update a blog post (admin only) */
+export function updateBlog(
+  blogId: string,
+  body: BlogUpdatePayload,
+  idToken: string,
+) {
+  return apiFetch<BlogDTO>(`/blogs/${blogId}`, {
+    method: "PUT",
+    headers: getAuthHeader(idToken),
+    data: body,
+  });
+}
+
+/** DELETE /blogs/{blogID} — delete a blog post (admin only) */
+export function deleteBlog(blogId: string, idToken: string) {
+  return apiFetch<{ message: string }>(`/blogs/${blogId}`, {
     method: "DELETE",
     headers: getAuthHeader(idToken),
   });
 }
 
-/** POST /admin/platform/withdraw — withdraw platform fees to admin's bank/UPI */
-export function withdrawPlatformFees(body: {
-  amount_cents: number;
-  idempotency_key?: string;
-}, idToken: string) {
-  return apiFetch<PaymentDTO>("/admin/platform/withdraw", {
+/** POST /blogs/{blogID}/publish — publish a blog post (admin only) */
+export function publishBlog(blogId: string, idToken: string) {
+  return apiFetch<BlogDTO>(`/blogs/${blogId}/publish`, {
     method: "POST",
     headers: getAuthHeader(idToken),
-    data: body,
+  });
+}
+
+/** POST /blogs/{blogID}/unpublish — unpublish a blog post (admin only) */
+export function unpublishBlog(blogId: string, idToken: string) {
+  return apiFetch<BlogDTO>(`/blogs/${blogId}/unpublish`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
   });
 }
 
@@ -454,7 +622,9 @@ export interface HostDashboardDTO {
 
 /** GET /hosts/dashboard?host_id=<uuid>&user_id=<uuid> */
 export function getHostDashboard(hostId: string, userId: string) {
-  return apiFetch<HostDashboardDTO>("/hosts/dashboard", { params: { host_id: hostId, user_id: userId } });
+  return apiFetch<HostDashboardDTO>("/hosts/dashboard", {
+    params: { host_id: hostId, user_id: userId },
+  });
 }
 
 export interface AttentionItemDTO {
@@ -474,7 +644,9 @@ export interface HostAttentionItemsDTO {
 
 /** GET /hosts/attention-items?host_id=<uuid> — get items needing attention */
 export function getHostAttentionItems(hostId: string) {
-  return apiFetch<HostAttentionItemsDTO>("/hosts/attention-items", { params: { host_id: hostId } });
+  return apiFetch<HostAttentionItemsDTO>("/hosts/attention-items", {
+    params: { host_id: hostId },
+  });
 }
 
 /** GET /events/today/{hostID} — get today's schedule for a host */
@@ -521,7 +693,6 @@ export interface EventDTO {
   total_reviews: number;
   created_at: string;
   updated_at: string;
-  
 }
 
 /** GET /events/host/{hostID} */
@@ -605,9 +776,12 @@ export function unsaveExperience(eventId: string, userId: string) {
 
 /** GET /users/saved-experiences/{eventID}/check?user_id=<uuid> */
 export function isExperienceSaved(eventId: string, userId: string) {
-  return apiFetch<{ saved: boolean }>(`/users/saved-experiences/${eventId}/check`, {
-    params: { user_id: userId },
-  });
+  return apiFetch<{ saved: boolean }>(
+    `/users/saved-experiences/${eventId}/check`,
+    {
+      params: { user_id: userId },
+    },
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -676,7 +850,10 @@ export function createEvent(body: EventCreatePayload) {
 
 /** PUT /events/{eventID} — update an event */
 export function updateEvent(eventId: string, body: EventUpdatePayload) {
-  return apiFetch<EventDTO>(`/events/${eventId}`, { method: "PUT", data: body });
+  return apiFetch<EventDTO>(`/events/${eventId}`, {
+    method: "PUT",
+    data: body,
+  });
 }
 
 /** GET /events/host/{hostID}/filtered */
@@ -1000,7 +1177,10 @@ export interface CreateSupportTicketPayload {
 
 /** POST /support/ — create a support ticket */
 export function createSupportTicket(body: CreateSupportTicketPayload) {
-  return apiFetch<SupportTicketDTO>("/support/", { method: "POST", data: body });
+  return apiFetch<SupportTicketDTO>("/support/", {
+    method: "POST",
+    data: body,
+  });
 }
 
 /** GET /support/{ticketID} — get a support ticket by ID */

@@ -78,10 +78,6 @@ export default function HostProfilePage({
     experiencesRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleWriteReview = () => {
-    setShowReviewModal(true);
-  };
-
   const handleReadAllReviews = () => {
     setShowAllReviewsModal(true);
   };
@@ -172,6 +168,7 @@ export default function HostProfilePage({
           isOpen={showReviewModal}
           onClose={() => setShowReviewModal(false)}
           eventId={events[0]!.id}
+          hostId={events[0]!.host_id}
           eventTitle={events[0]!.title}
           userId={user.uid}
         />

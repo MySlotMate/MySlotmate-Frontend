@@ -7,6 +7,7 @@ import { auth } from "~/utils/firebase";
 import { useSignUp } from "~/hooks/useApi";
 import { toast } from "sonner";
 import { FiPhone, FiUser, FiMail, FiArrowRight } from "react-icons/fi";
+import { setStoredUserId } from "~/lib/auth-storage";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function SignUpPage() {
         avatar_url: user.photoURL,
       });
       // Save user id for future API calls
-      localStorage.setItem("msm_user_id", res.data.id);
+      setStoredUserId(res.data.id);
       toast.success("Account created successfully!");
       router.replace("/");
     } catch (err: unknown) {
@@ -77,10 +78,12 @@ export default function SignUpPage() {
             `${process.env.NEXT_PUBLIC_API_URL}/users/by-firebase/${user.uid}`,
           );
           if (profileRes.ok) {
-            const response = (await profileRes.json()) as { data?: { id?: string } };
+            const response = (await profileRes.json()) as {
+              data?: { id?: string };
+            };
             const userId = response.data?.id;
             if (userId) {
-              localStorage.setItem("msm_user_id", userId);
+              setStoredUserId(userId);
               toast.info("Welcome back!");
               router.replace("/");
               return;
@@ -113,7 +116,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#e4f8ff] via-white to-[#d5f4ff] site-x">
+    <div className="site-x flex min-h-screen items-center justify-center bg-gradient-to-br from-[#e4f8ff] via-white to-[#d5f4ff]">
       <div className="w-full max-w-md">
         {/* Card */}
         <div className="rounded-2xl bg-white p-8 shadow-xl ring-1 ring-gray-100">
@@ -157,48 +160,48 @@ export default function SignUpPage() {
           <form onSubmit={handleSubmit} className="mt-6 space-y-5">
             {/* Name */}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 Full Name
               </label>
               <div className="relative">
-                <FiUser className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <FiUser className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Ankit Sharma"
-                  className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                  className="w-full rounded-lg border border-gray-300 py-3 pr-4 pl-10 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
                 />
               </div>
             </div>
 
             {/* Email (read-only) */}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 Email
               </label>
               <div className="relative">
-                <FiMail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <FiMail className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   value={user.email ?? ""}
                   readOnly
-                  className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 py-3 pl-10 pr-4 text-sm text-gray-500 outline-none"
+                  className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 py-3 pr-4 pl-10 text-sm text-gray-500 outline-none"
                 />
               </div>
             </div>
 
             {/* Phone */}
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 Phone Number
               </label>
               <div className="relative">
-                <FiPhone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <FiPhone className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+91 98765 43210"
                   type="tel"
-                  className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                  className="w-full rounded-lg border border-gray-300 py-3 pr-4 pl-10 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
                 />
               </div>
               <p className="mt-1 text-xs text-gray-400">
@@ -252,4 +255,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-

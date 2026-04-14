@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
+  Heart,
   Mountain,
   Pause,
   Palette,
@@ -16,7 +17,17 @@ import {
 } from "lucide-react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useListHosts, useListPublicEvents } from "~/hooks/useApi";
+import { toast } from "sonner";
+import { BecomeHostModal } from "~/components/become-host";
+import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { useStoredAuth } from "~/hooks/useStoredAuth";
+import {
+  useListHosts,
+  useListPublicEvents,
+  useIsExperienceSaved,
+  useSaveExperience,
+  useUnsaveExperience,
+} from "~/hooks/useApi";
 import {
   POPULAR_CITIES,
   calculateDistance,
@@ -75,7 +86,43 @@ const CuratedSessionCard = ({
   rating,
   price,
 }: CuratedSessionItem) => {
+  const [userId, setUserId] = useState<string | null>(null);
   const href = id ? `/experience/${id}` : "/experiences";
+
+  const { data: savedStatus } = useIsExperienceSaved(id ?? null, userId);
+  const saveExperience = useSaveExperience();
+  const unsaveExperience = useUnsaveExperience();
+
+  const isSaved = savedStatus?.saved ?? false;
+
+  useEffect(() => {
+    const id = localStorage.getItem("msm_user_id");
+    if (id) {
+      setUserId(id);
+    }
+  }, []);
+
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!id || !userId) {
+      if (!userId) toast.error("Please login to save experiences");
+      return;
+    }
+
+    if (isSaved) {
+      unsaveExperience.mutate(
+        { eventId: id, userId },
+        { onSuccess: () => toast.success("Removed from saved") },
+      );
+    } else {
+      saveExperience.mutate(
+        { user_id: userId, event_id: id },
+        { onSuccess: () => toast.success("Saved to your list") },
+      );
+    }
+  };
 
   return (
     <Link
@@ -90,6 +137,23 @@ const CuratedSessionCard = ({
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
+
+        {/* Save button */}
+        {id && (
+          <button
+            onClick={handleSave}
+            disabled={saveExperience.isPending || unsaveExperience.isPending}
+            className="absolute top-3 right-3 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-blue-50 hover:shadow-lg disabled:opacity-50"
+            aria-label={isSaved ? "Remove from saved" : "Save experience"}
+          >
+            <Heart
+              className="h-6 w-6 transition"
+              fill={isSaved ? "#0094CA" : "none"}
+              stroke="#0094CA"
+              strokeWidth={2}
+            />
+          </button>
+        )}
       </div>
 
       <div className="space-y-1.5 px-5 pt-4 pb-6">
@@ -287,8 +351,8 @@ const formatStat = (value: number, target: number) => {
 };
 
 const ShowcaseSections = () => {
-  const [hostId, setHostId] = useState<string | null>(null);
   const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [featuredId, setFeaturedId] = useState<string | null>(null);
   const [isFeaturedPlaying, setIsFeaturedPlaying] = useState(false);
   const [storyIndex, setStoryIndex] = useState(0);
   const [isStoryPlaying, setIsStoryPlaying] = useState(false);
@@ -298,8 +362,17 @@ const ShowcaseSections = () => {
   const [mounted, setMounted] = useState(false);
   const [isCuratedOverflowing, setIsCuratedOverflowing] = useState(false);
   const [isCuratedAtScrollEnd, setIsCuratedAtScrollEnd] = useState(false);
+  const { hostId, userId } = useStoredAuth();
+  const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
+    useListTimeAction();
   const { data: events } = useListPublicEvents();
   const { data: hosts } = useListHosts();
+  const { data: featuredSavedStatus } = useIsExperienceSaved(
+    featuredId,
+    userId,
+  );
+  const saveExperience = useSaveExperience();
+  const unsaveExperience = useUnsaveExperience();
   const curatedSessionsViewportRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
   const wayVideoRefs = useRef<Array<HTMLVideoElement | null>>([]);
@@ -315,7 +388,6 @@ const ShowcaseSections = () => {
   useEffect(() => {
     setLocation(getSavedLocation());
     setMounted(true);
-    setHostId(localStorage.getItem("msm_host_id"));
 
     const handleStorageChange = () => {
       setLocation(getSavedLocation());
@@ -459,6 +531,36 @@ const ShowcaseSections = () => {
     ? `/experience/${featured.id}`
     : "/experiences";
   const storyHref = story.id ? `/host/${story.id}` : "/hosts";
+
+  const isFeaturedSaved = featuredSavedStatus?.saved ?? false;
+
+  const handleFeaturedSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!featured.id || !userId) {
+      if (!userId) toast.error("Please login to save experiences");
+      return;
+    }
+
+    if (isFeaturedSaved) {
+      unsaveExperience.mutate(
+        { eventId: featured.id, userId },
+        { onSuccess: () => toast.success("Removed from saved") },
+      );
+    } else {
+      saveExperience.mutate(
+        { user_id: userId, event_id: featured.id },
+        { onSuccess: () => toast.success("Saved to your list") },
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (featured.id) {
+      setFeaturedId(featured.id);
+    }
+  }, [featured.id]);
 
   const showPrevFeatured = () => {
     if (featuredData.length <= 1) return;
@@ -964,6 +1066,30 @@ const ShowcaseSections = () => {
                     loading="lazy"
                     className="h-full w-full object-cover"
                   />
+
+                  {/* Save button */}
+                  {featured.id && (
+                    <button
+                      onClick={handleFeaturedSave}
+                      disabled={
+                        saveExperience.isPending || unsaveExperience.isPending
+                      }
+                      className="absolute top-3 right-3 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-blue-50 hover:shadow-lg disabled:opacity-50"
+                      aria-label={
+                        isFeaturedSaved
+                          ? "Remove from saved"
+                          : "Save experience"
+                      }
+                    >
+                      <Heart
+                        className="h-6 w-6 transition"
+                        fill={isFeaturedSaved ? "#0094CA" : "none"}
+                        stroke="#0094CA"
+                        strokeWidth={2}
+                      />
+                    </button>
+                  )}
+
                   <div className="absolute bottom-4 left-4 rounded-2xl bg-[#12334fc2] px-3 py-2 text-white backdrop-blur-sm">
                     <p className="text-sm font-semibold">
                       {featured.overlayTitle}
@@ -1277,12 +1403,13 @@ const ShowcaseSections = () => {
               Share a walk, workshop, food story, or creative session with
               people looking for meaningful ways to spend time.
             </p>
-            <Link
-              href="/become-host"
+            <button
+              type="button"
+              onClick={handleListTimeClick}
               className="mt-5 inline-flex -translate-y-0 scale-100 rounded-[0.5rem] border border-white/30 bg-white/15 px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-1 hover:scale-105"
             >
               List Time
-            </Link>
+            </button>
           </article>
 
           <article className="rounded-3xl border border-[#aeddf89e] bg-white p-5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
@@ -1313,6 +1440,10 @@ const ShowcaseSections = () => {
           </article>
         </div>
       </section>
+      <BecomeHostModal
+        open={showBecomeHostModal}
+        onClose={closeBecomeHostModal}
+      />
       <style jsx>{`
         .how-it-works-mobile-flow {
           animation: howItWorksMobileFlow 2.8s linear infinite;

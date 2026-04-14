@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    /* Base Options: */
     "esModuleInterop": true,
     "skipLibCheck": true,
     "target": "es2022",
@@ -9,16 +8,9 @@
     "moduleDetection": "force",
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-
-    /* Strictness */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    
-    /* FIX 1: Change checkJs to false. 
-       This stops TS from trying to validate the internal JS of your libraries. */
-    "checkJs": false, 
-
-    /* Bundled projects */
+    "checkJs": false,
     "lib": ["dom", "dom.iterable", "ES2022"],
     "noEmit": true,
     "module": "ESNext",
@@ -26,9 +18,6 @@
     "jsx": "preserve",
     "plugins": [{ "name": "next" }],
     "incremental": true,
-
-    /* Path Aliases */
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     }
@@ -39,7 +28,7 @@
     "**/*.tsx",
     "**/*.cjs",
     "**/*.js",
-    "gsap.d.ts", // Ensure your custom declaration file is explicitly included
+    "gsap.d.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": ["node_modules", "generated", ".next"]

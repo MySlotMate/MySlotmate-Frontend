@@ -6,15 +6,31 @@ import { signOut } from "firebase/auth";
 import { auth } from "~/utils/firebase";
 import { FiSearch, FiMenu, FiX, FiChevronRight } from "react-icons/fi";
 import { IoLocationSharp } from "react-icons/io5";
-import { LuCalendarDays, LuBookmarkMinus, LuMessageSquare, LuShield, LuFileText, LuLogOut, LuArrowLeft, LuHome, LuHeart } from "react-icons/lu";
+import {
+  LuCalendarDays,
+  LuBookmarkMinus,
+  LuMessageSquare,
+  LuShield,
+  LuFileText,
+  LuLogOut,
+  LuArrowLeft,
+  LuHome,
+  LuHeart,
+} from "react-icons/lu";
 import Link from "next/link";
 import GoogleLogin from "./GoogleLogin";
-import LocationModal, { getSavedLocation, saveLocation, type CityLocation } from "./LocationModal";
+import LocationModal, {
+  getSavedLocation,
+  saveLocation,
+  type CityLocation,
+} from "./LocationModal";
 import { BecomeHostModal } from "./become-host";
 import { WalletDisplay } from "./wallet";
 import { useMyProfile, useApplicationStatus } from "~/hooks/useApi";
+import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { env } from "~/env";
+import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
 
 export default function Navbar() {
   const [user] = useAuthState(auth);
@@ -28,23 +44,8 @@ export default function Navbar() {
   const profileRef = useRef<HTMLDivElement>(null);
   const profilePanelRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-
-  const [storedUserId, setStoredUserId] = useState<string | null>(null);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
-
-  // Read localStorage on mount and when user auth state changes
-  useEffect(() => {
-    const readStoredId = () => {
-      const id = localStorage.getItem("msm_user_id");
-      setStoredUserId(id);
-    };
-
-    readStoredId();
-
-    // Also listen for storage changes (handles updates from other tabs)
-    window.addEventListener("storage", readStoredId);
-    return () => window.removeEventListener("storage", readStoredId);
-  }, [user]);
+  const { userId: storedUserId } = useStoredAuth();
 
   useEffect(() => {
     const saved = getSavedLocation();
@@ -62,11 +63,24 @@ export default function Navbar() {
                 { headers: { "User-Agent": "MySlotMate/1.0" } },
               );
               const data = (await res.json()) as {
-                address?: { city?: string; town?: string; village?: string; state_district?: string; county?: string; state?: string };
+                address?: {
+                  city?: string;
+                  town?: string;
+                  village?: string;
+                  state_district?: string;
+                  county?: string;
+                  state?: string;
+                };
               };
               const addr = data.address;
               if (addr) {
-                const city = addr.city ?? addr.town ?? addr.village ?? addr.state_district ?? addr.county ?? "Unknown";
+                const city =
+                  addr.city ??
+                  addr.town ??
+                  addr.village ??
+                  addr.state_district ??
+                  addr.county ??
+                  "Unknown";
                 const loc: CityLocation = {
                   city,
                   state: addr.state ?? "",
@@ -76,10 +90,18 @@ export default function Navbar() {
                 saveLocation(loc);
                 setLocation(loc);
               }
-            } catch { /* silently fail */ }
+            } catch {
+
+              /* silently fail */
+
+            }
           })();
         },
-        () => { /* permission denied */ },
+        () => {
+
+          /* permission denied */
+
+        },
         { enableHighAccuracy: false, timeout: 10_000 },
       );
     }
@@ -95,30 +117,30 @@ export default function Navbar() {
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
 
   useMyProfile(validUserId);
-  const { data: hostData, isLoading: hostLoading } = useApplicationStatus(validUserId);
-
+  const { data: hostData, isLoading: hostLoading } =
+    useApplicationStatus(validUserId);
 
   const hostStatus = hostData?.status?.application_status ?? null;
 
   const isAdminUser =
     !!user?.email &&
-    user.email.toLowerCase() === String(env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").toLowerCase();
+    user.email.toLowerCase() ===
+
+    String(env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").toLowerCase();
 
   const showBecomeHostButton = !hostLoading && !!validUserId && !hostStatus;
 
   useEffect(() => {
     if (hostData?.status?.id) {
-      localStorage.setItem("msm_host_id", hostData.status.id);
+      setStoredHostId(hostData.status.id);
     }
   }, [hostData?.status?.id]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
-      const clickedTrigger =
-        profileRef.current?.contains(target) ?? false;
-      const clickedPanel =
-        profilePanelRef.current?.contains(target) ?? false;
+      const clickedTrigger = profileRef.current?.contains(target) ?? false;
+      const clickedPanel = profilePanelRef.current?.contains(target) ?? false;
 
       if (!clickedTrigger && !clickedPanel) {
         setProfileOpen(false);
@@ -129,9 +151,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = async () => {
-    // Clear localStorage
-    localStorage.removeItem("msm_user_id");
-    localStorage.removeItem("msm_host_id");
+    clearStoredAuth();
     localStorage.removeItem("msm_location");
 
     // Clear query cache
@@ -149,44 +169,65 @@ export default function Navbar() {
     <>
       <nav className="fixed top-0 left-0 z-[200] w-full h-[4.5rem] bg-[#ffffff3e] backdrop-blur-2xl shadow-sm">
         <div className="h-[3px] w-full bg-[#0094CA]" />
-        <div className="mx-auto flex h-16 w-full max-w-[77rem] items-center site-x">
+        <div className="site-x mx-auto flex h-16 w-full max-w-[77rem] items-center">
           {/* Logo */}
           <Link href="/" className="flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/assets/home/logo.png" alt="Myslotmate" loading="lazy" className="h-10 w-auto" />
+            <img
+
+              src="/assets/home/logo.png"
+
+              alt="Myslotmate"
+
+              loading="lazy"
+
+              className="h-10 w-auto"
+
+            />
           </Link>
 
           {/* Desktop center nav (matches reference nav styles) */}
           <div className="hidden flex-1 items-center justify-center gap-[22px] text-[0.92rem] font-bold text-[#6f8daa] lg:flex">
-            <Link href="/#how-it-works" className="transition hover:text-[#0e8ae0]">
+            <Link
+              href="/#how-it-works"
+              className="transition hover:text-[#0e8ae0]"
+            >
               How it works
             </Link>
             <Link href="/#hosts" className="transition hover:text-[#0e8ae0]">
               Hosts
             </Link>
-            <Link href="/#community" className="transition hover:text-[#0e8ae0]">
+            <Link
+              href="/#community"
+              className="transition hover:text-[#0e8ae0]"
+            >
               Community
             </Link>
-            
-            
           </div>
 
           {/* Desktop right side */}
           <div className="ml-auto hidden items-center gap-5 lg:flex">
-            <Link href="/explore" className="bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] text-[#ffffff] hover:-translate-y-0.5 transition rounded-[8px] py-[13px] px-[20px] shadow-[0_16px_32px_rgba(31,167,255,0.24)] font-bold">
+            <Link
+              href="/explore"
+              className="rounded-[8px] bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-[20px] py-[13px] font-bold text-[#ffffff] shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5"
+            >
               Explore
             </Link>
             <button
               onClick={() => setLocationOpen(true)}
               suppressHydrationWarning
-              className="flex items-center gap-1.5 text-sm rounded-lg px-2 py-1.5 hover:bg-gray-50 transition cursor-pointer"
+              className="flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition hover:bg-gray-50"
             >
               <IoLocationSharp className="h-5 w-5 text-[#0094CA]" />
-              <div className="leading-tight text-left">
+              <div className="text-left leading-tight">
                 {mounted ? (
                   <>
-                    <p className="font-semibold text-gray-900">{location?.city ?? "Select City"}</p>
-                    <p className="text-xs text-gray-500">{location?.state ?? "Tap to detect"}</p>
+                    <p className="font-semibold text-gray-900">
+                      {location?.city ?? "Select City"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {location?.state ?? "Tap to detect"}
+                    </p>
                   </>
                 ) : (
                   <>
@@ -234,7 +275,11 @@ export default function Navbar() {
                   suppressHydrationWarning
                   className="flex cursor-pointer items-center justify-center rounded-full border-2 border-[#0094CA] p-0.5 transition hover:shadow-md"
                 >
-                  <svg className="h-8 w-8 text-[#0094CA]" viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    className="h-8 w-8 text-[#0094CA]"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
                   </svg>
                 </button>
@@ -242,235 +287,293 @@ export default function Navbar() {
 
               {profileOpen && user && portalTarget
                 ? createPortal(
-                    <>
-                      <div
-                        className="fixed inset-0 z-[1000] bg-black/30"
-                        onClick={() => setProfileOpen(false)}
-                      />
-                      <div
-                        ref={profilePanelRef}
-                        className="fixed right-0 top-0 z-[1010] flex h-full w-full max-w-sm flex-col bg-white shadow-2xl"
-                      >
-                    {/* Header */}
-                    <div className="flex items-center gap-3 border-b px-5 py-4">
-                      <button onClick={() => setProfileOpen(false)} className="rounded-lg p-1 hover:bg-gray-100 transition">
-                        <LuArrowLeft className="h-5 w-5 text-gray-800" />
-                      </button>
-                      <h2 className="text-lg font-bold text-gray-900">Profile</h2>
-                    </div>
-
-                    {/* User info */}
-                    <div className="flex items-center gap-4 px-5 py-5">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
-                        alt=""
-                        loading="lazy"
-                        className="h-14 w-14 rounded-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="overflow-hidden flex-1">
-                        <p className="truncate text-base font-bold text-gray-900">{user.displayName}</p>
-                        <p className="truncate text-sm text-gray-500">{user.phoneNumber ?? user.email}</p>
+                  <>
+                    <div
+                      className="fixed inset-0 z-[1000] bg-black/30"
+                      onClick={() => setProfileOpen(false)}
+                    />
+                    <div
+                      ref={profilePanelRef}
+                      className="fixed top-0 right-0 z-[1010] flex h-full w-full max-w-sm flex-col bg-white shadow-2xl"
+                    >
+                      {/* Header */}
+                      <div className="flex items-center gap-3 border-b px-5 py-4">
+                        <button
+                          onClick={() => setProfileOpen(false)}
+                          className="rounded-lg p-1 transition hover:bg-gray-100"
+                        >
+                          <LuArrowLeft className="h-5 w-5 text-gray-800" />
+                        </button>
+                        <h2 className="text-lg font-bold text-gray-900">
+                          Profile
+                        </h2>
                       </div>
-                      {hostStatus === "pending" || hostStatus === "under_review" ? (
-                        <span className="ml-auto flex-shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
-                          Under Review
-                        </span>
-                      ) : hostStatus === "approved" ? (
-                        <span className="ml-auto flex-shrink-0 rounded-full bg-[#e6f8ff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#0094CA]">
-                          Verified Host
-                        </span>
-                      ) : null}
-                    </div>
 
-                    {/* Wallet */}
-                    {validUserId && (
-                      <div className="mx-5 mb-3">
-                        <WalletDisplay
-                          userId={validUserId}
-                          userName={user.displayName ?? undefined}
-                          userEmail={user.email ?? undefined}
-                          userPhone={user.phoneNumber ?? undefined}
-                          variant="sidebar"
+                      {/* User info */}
+                      <div className="flex items-center gap-4 px-5 py-5">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={
+                            user.photoURL ??
+                            "/assets/home/avatar-placeholder.png"
+                          }
+                          alt=""
+                          loading="lazy"
+                          className="h-14 w-14 rounded-full object-cover"
+                          referrerPolicy="no-referrer"
                         />
+                        <div className="flex-1 overflow-hidden">
+                          <p className="truncate text-base font-bold text-gray-900">
+                            {user.displayName}
+                          </p>
+                          <p className="truncate text-sm text-gray-500">
+                            {user.phoneNumber ?? user.email}
+                          </p>
+                        </div>
+                        {hostStatus === "pending" ||
+                          hostStatus === "under_review" ? (
+                          <span className="ml-auto flex-shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold tracking-wide text-amber-700 uppercase">
+                            Under Review
+                          </span>
+                        ) : hostStatus === "approved" ? (
+                          <span className="ml-auto flex-shrink-0 rounded-full bg-[#e6f8ff] px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#0094CA] uppercase">
+                            Verified Host
+                          </span>
+                        ) : null}
                       </div>
-                    )}
 
-                    <div className="flex-1 overflow-y-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                      {/* Host Dashboard card - Approved hosts */}
-                      {hostStatus === "approved" && (
-                        <div className="mb-4 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
-                          <div>
-                            <p className="text-sm font-bold text-gray-900">Host Dashboard</p>
-                            <p className="text-xs text-gray-500">Manage your experiences</p>
-                          </div>
-                          <Link
-                            href="/host-dashboard"
-                            onClick={() => setProfileOpen(false)}
-                            className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
-                          >
-                            Go Now
-                          </Link>
+                      {/* Wallet */}
+                      {validUserId && (
+                        <div className="mx-5 mb-3">
+                          <WalletDisplay
+                            userId={validUserId}
+                            userName={user.displayName ?? undefined}
+                            userEmail={user.email ?? undefined}
+                            userPhone={user.phoneNumber ?? undefined}
+                            variant="sidebar"
+                          />
                         </div>
                       )}
 
-                      {/* Become a Host card - Non-hosts */}
-                      {showBecomeHostButton && (
-                        <div className="z-[10000] mb-4 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
-                          <div>
-                            <p className="text-sm font-bold text-gray-900">Become a Host</p>
-                            <p className="text-xs text-gray-500">Start hosting experiences</p>
-                          </div>
-                          <button
-                            onClick={() => { setShowBecomeHost(true); setProfileOpen(false); }}
-                            className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
-                          >
-                            Get Started
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Host dashboard items */}
-                      {hostStatus === "approved" && (
-                        <div className="mb-4 rounded-xl border border-gray-200 divide-y divide-gray-200">
-                          <Link
-                            href="/host-dashboard"
-                            onClick={() => setProfileOpen(false)}
-                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
-                          >
-                            <span className="flex items-center gap-3">
-                              <LuHome className="h-5 w-5 text-gray-600" />
-                              Host dashboard
-                            </span>
-                            <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </Link>
-                          <Link
-                            href="/activities"
-                            onClick={() => setProfileOpen(false)}
-                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
-                          >
-                            <span className="flex items-center gap-3">
-                              <LuCalendarDays className="h-5 w-5 text-gray-600" />
-                              View all bookings
-                            </span>
-                            <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </Link>
-                          <Link
-                            href="/saved-experiences"
-                            onClick={() => setProfileOpen(false)}
-                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
-                          >
-                            <span className="flex items-center gap-3">
-                              <LuHeart className="h-5 w-5 text-gray-600" />
-                              Saved experiences
-                            </span>
-                            <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </Link>
-                        </div>
-                      )}
-
-                      {/* Regular user items */}
-                      {hostStatus !== "approved" && (
-                        <div className="rounded-xl border border-gray-200 divide-y divide-gray-200">
-                          <Link
-                            href="/activities"
-                            onClick={() => setProfileOpen(false)}
-                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
-                          >
-                            <span className="flex items-center gap-3">
-                              <LuCalendarDays className="h-5 w-5 text-gray-600" />
-                              View all bookings
-                            </span>
-                            <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </Link>
-                          <Link
-                            href="/saved-experiences"
-                            onClick={() => setProfileOpen(false)}
-                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
-                          >
-                            <span className="flex items-center gap-3">
-                              <LuBookmarkMinus className="h-5 w-5 text-gray-600" />
-                              Saved experiences
-                            </span>
-                            <FiChevronRight className="h-4 w-4 text-gray-400" />
-                          </Link>
-                        </div>
-                      )}
-
-                      {/* Admin */}
-                      {isAdminUser && (
-                        <>
-                          <p className="mb-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">Admin</p>
-                          <div className="rounded-xl border border-gray-200">
+                      <div className="flex-1 overflow-y-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        {/* Host Dashboard card - Approved hosts */}
+                        {hostStatus === "approved" && (
+                          <div className="mb-4 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
+                            <div>
+                              <p className="text-sm font-bold text-gray-900">
+                                Host Dashboard
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Manage your experiences
+                              </p>
+                            </div>
                             <Link
-                              href="/admin"
+                              href="/host-dashboard"
                               onClick={() => setProfileOpen(false)}
-                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
+                              className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+                            >
+                              Go Now
+                            </Link>
+                          </div>
+                        )}
+
+                        {/* Become a Host card - Non-hosts */}
+                        {showBecomeHostButton && (
+                          <div className="z-[10000] mb-4 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
+                            <div>
+                              <p className="text-sm font-bold text-gray-900">
+                                Become a Host
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Start hosting experiences
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setShowBecomeHost(true);
+                                setProfileOpen(false);
+                              }}
+                              className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+                            >
+                              Get Started
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Host dashboard items */}
+                        {hostStatus === "approved" && (
+                          <div className="mb-4 divide-y divide-gray-200 rounded-xl border border-gray-200">
+                            <Link
+                              href="/host-dashboard"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
                             >
                               <span className="flex items-center gap-3">
-                                <LuShield className="h-5 w-5 text-gray-600" />
-                                View Admin Dashboard
+                                <LuHome className="h-5 w-5 text-gray-600" />
+                                Host dashboard
+                              </span>
+                              <FiChevronRight className="h-4 w-4 text-gray-400" />
+                            </Link>
+                            <Link
+                              href="/activities"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                            >
+                              <span className="flex items-center gap-3">
+                                <LuCalendarDays className="h-5 w-5 text-gray-600" />
+                                View all bookings
+                              </span>
+                              <FiChevronRight className="h-4 w-4 text-gray-400" />
+                            </Link>
+                            <Link
+                              href="/saved-experiences"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                            >
+                              <span className="flex items-center gap-3">
+                                <LuHeart className="h-5 w-5 text-gray-600" />
+                                Saved experiences
                               </span>
                               <FiChevronRight className="h-4 w-4 text-gray-400" />
                             </Link>
                           </div>
-                        </>
-                      )}
+                        )}
 
-                      {/* Support */}
-                      <p className="mb-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">Support</p>
-                      <div className="rounded-xl border border-gray-200">
-                        <Link
-                          href="/support"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition"
-                        >
-                          <span className="flex items-center gap-3">
-                            <LuMessageSquare className="h-5 w-5 text-gray-600" />
-                            Support &amp; Safety
-                          </span>
-                          <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </Link>
-                      </div>
+                        {/* Regular user items */}
+                        {hostStatus !== "approved" && (
+                          <div className="divide-y divide-gray-200 rounded-xl border border-gray-200">
+                            <Link
+                              href="/activities"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                            >
+                              <span className="flex items-center gap-3">
+                                <LuCalendarDays className="h-5 w-5 text-gray-600" />
+                                View all bookings
+                              </span>
+                              <FiChevronRight className="h-4 w-4 text-gray-400" />
+                            </Link>
+                            <Link
+                              href="/saved-experiences"
+                              onClick={() => setProfileOpen(false)}
+                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                            >
+                              <span className="flex items-center gap-3">
+                                <LuBookmarkMinus className="h-5 w-5 text-gray-600" />
+                                Saved experiences
+                              </span>
+                              <FiChevronRight className="h-4 w-4 text-gray-400" />
+                            </Link>
+                          </div>
+                        )}
 
-                      {/* More */}
-                      <p className="mb-1 mt-5 text-xs font-semibold uppercase tracking-wide text-gray-500">More</p>
-                      <div className="rounded-xl border border-gray-200 divide-y divide-gray-200">
-                        <Link href="/support/terms-conditions" className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
-                          <span className="flex items-center gap-3">
-                            <LuShield className="h-5 w-5 text-gray-600" />
-                            Terms &amp; Conditions
-                          </span>
-                          <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </Link>
-                        <Link href="/support/policies" className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 hover:bg-gray-50 transition">
-                          <span className="flex items-center gap-3">
-                            <LuFileText className="h-5 w-5 text-gray-600" />
-                            Privacy Policy
-                          </span>
-                          <FiChevronRight className="h-4 w-4 text-gray-400" />
-                        </Link>
-                      </div>
+                        {/* Admin */}
+                        {isAdminUser && (
+                          <>
+                            <p className="mt-5 mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                              Admin
+                            </p>
+                            <div className="rounded-xl border border-gray-200">
+                              <Link
+                                href="/admin"
+                                onClick={() => setProfileOpen(false)}
+                                className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                              >
+                                <span className="flex items-center gap-3">
+                                  <LuShield className="h-5 w-5 text-gray-600" />
+                                  View Admin Dashboard
+                                </span>
+                                <FiChevronRight className="h-4 w-4 text-gray-400" />
+                              </Link>
+                            </div>
+                          </>
+                        )}
 
-                      {/* Logout */}
-                      <div className="mt-5 mb-6 rounded-xl border border-gray-200">
-                        <button
-                          onClick={handleLogout}
-                          className="flex w-full items-center gap-3 px-4 py-3.5 text-sm text-gray-800 hover:bg-red-50 transition"
-                        >
-                          <LuLogOut className="h-5 w-5 text-gray-600" />
-                          Logout
-                        </button>
+                        {/* Support */}
+                        <p className="mt-5 mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                          Support
+                        </p>
+                        <div className="rounded-xl border border-gray-200">
+                          <Link
+                            href="/support"
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                          >
+                            <span className="flex items-center gap-3">
+                              <LuMessageSquare className="h-5 w-5 text-gray-600" />
+                              Support &amp; Safety
+                            </span>
+                            <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          </Link>
+                        </div>
+
+                        {/* More */}
+                        <p className="mt-5 mb-1 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                          More
+                        </p>
+                        <div className="divide-y divide-gray-200 rounded-xl border border-gray-200">
+                          <Link
+                            href="/support/terms-conditions"
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                          >
+                            <span className="flex items-center gap-3">
+                              <LuShield className="h-5 w-5 text-gray-600" />
+                              Terms &amp; Conditions
+                            </span>
+                            <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          </Link>
+                          <Link
+                            href="/support/policies"
+                            className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                          >
+                            <span className="flex items-center gap-3">
+                              <LuFileText className="h-5 w-5 text-gray-600" />
+                              Privacy Policy
+                            </span>
+                            <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          </Link>
+                        </div>
+
+                        {/* Logout */}
+                        <div className="mt-5 mb-6 rounded-xl border border-gray-200">
+                          <button
+                            onClick={handleLogout}
+                            className="flex w-full items-center gap-3 px-4 py-3.5 text-sm text-gray-800 transition hover:bg-red-50"
+                          >
+                            <LuLogOut className="h-5 w-5 text-gray-600" />
+                            Logout
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                    </>,
-                    portalTarget,
-                  )
+                  </>,
+                  portalTarget,
+                )
                 : null}
             </div>
           </div>
+
+          {/* Location button — mobile and tablet */}
+          <button
+            onClick={() => setLocationOpen(true)}
+            suppressHydrationWarning
+            className="mr-3 flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition hover:bg-gray-50 lg:hidden"
+          >
+            <IoLocationSharp className="h-4 w-4 text-[#0094CA]" />
+            <div className="hidden text-left text-xs leading-tight sm:block">
+              {mounted ? (
+                <>
+                  <p className="font-semibold text-gray-900">
+                    {location?.city ?? "City"}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold text-gray-900">City</p>
+                </>
+              )}
+            </div>
+          </button>
 
           {/* Hamburger — mobile */}
           <button
@@ -478,37 +581,25 @@ export default function Navbar() {
             className="ml-auto rounded-lg p-2 text-gray-700 transition hover:bg-gray-100 lg:hidden"
             aria-label="Toggle menu"
           >
-            {mobileOpen ? <FiX className="h-6 w-6" /> : <FiMenu className="h-6 w-6" />}
+            {mobileOpen ? (
+              <FiX className="h-6 w-6" />
+            ) : (
+              <FiMenu className="h-6 w-6" />
+            )}
           </button>
         </div>
+
+        {/* Mobile drawer backdrop */}
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 z-[150] bg-black/20 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
 
         {/* Mobile drawer */}
         {mobileOpen && (
           <div className="border-t border-gray-100 bg-white site-x pb-4 pt-2 shadow-lg max-h-[80vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
-            <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <Link
-                href="/#how-it-works"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
-              >
-                How it works
-              </Link>
-              <Link
-                href="/#hosts"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
-              >
-                Hosts
-              </Link>
-              <Link
-                href="/#community"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
-              >
-                Community
-              </Link>
-            </div>
-
             <button
               onClick={() => { setLocationOpen(true); setMobileOpen(false); }}
               className="flex items-center gap-2 py-3 w-full rounded-lg hover:bg-gray-50 transition"
@@ -528,12 +619,29 @@ export default function Navbar() {
                 )}
               </div>
             </button>
-
-            <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition">
-              <FiSearch className="h-5 w-5 text-[#0094CA]" />
-              Search
-            </button>
-            <hr className="my-2" />
+            <div className="mb-2 grid gap-4 grid-cols-3">
+              <Link
+                href="/#how-it-works"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 sm:py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+              >
+                How it works
+              </Link>
+              <Link
+                href="/#hosts"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+              >
+                Hosts
+              </Link>
+              <Link
+                href="/#community"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+              >
+                Community
+              </Link>
+            </div>
 
             {user ? (
               <>
@@ -708,9 +816,10 @@ export default function Navbar() {
         onSelect={(loc) => setLocation(loc)}
         current={location}
       />
-      <BecomeHostModal open={showBecomeHost} onClose={() => setShowBecomeHost(false)} />
+      <BecomeHostModal
+        open={showBecomeHost}
+        onClose={() => setShowBecomeHost(false)}
+      />
     </>
   );
 }
-
-

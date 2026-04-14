@@ -1,6 +1,12 @@
 ﻿"use client";
 import * as components from "../components";
-import { useState, useLayoutEffect, useRef, useEffect, type ReactNode } from "react";
+import {
+  useState,
+  useLayoutEffect,
+  useRef,
+  useEffect,
+  type ReactNode,
+} from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
@@ -15,7 +21,12 @@ import {
   Landmark,
 } from "lucide-react";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { MOOD_TABS, MoodProvider, useMood, type MoodTab } from "~/context/MoodContext";
+import {
+  MOOD_TABS,
+  MoodProvider,
+  useMood,
+  type MoodTab,
+} from "~/context/MoodContext";
 
 // Register the plugin
 if (typeof window !== "undefined") {
@@ -64,8 +75,11 @@ const FilterBarDesktop = () => {
               <button
                 key={tab.name}
                 onClick={() => setSelectedMood(tab.name)}
-                className={`flex shrink-0 items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out ${isActive ? "text-white shadow-md" : "text-[#9ECADA] hover:text-[#0094CA]"
-                  }`}
+                className={`flex shrink-0 items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out ${
+                  isActive
+                    ? "text-white shadow-md"
+                    : "text-[#9ECADA] hover:text-[#0094CA]"
+                }`}
                 style={{
                   background: isActive
                     ? "linear-gradient(83.25deg, #0094CA -2.39%, #D5F4FF 148.84%)"
@@ -133,13 +147,16 @@ const FilterBarMobile = () => {
       if (itemWidth <= 0) return;
 
       const center = el.scrollLeft + el.clientWidth / 2;
-      const nextCenteredIndex = Math.round((center - itemWidth / 2) / itemWidth);
+      const nextCenteredIndex = Math.round(
+        (center - itemWidth / 2) / itemWidth,
+      );
       const tabCount = FILTER_TABS.length;
       const minMiddle = tabCount;
       const maxMiddle = tabCount * 2 - 1;
 
       if (nextCenteredIndex < minMiddle || nextCenteredIndex > maxMiddle) {
-        const normalizedIndex = ((nextCenteredIndex % tabCount) + tabCount) % tabCount;
+        const normalizedIndex =
+          ((nextCenteredIndex % tabCount) + tabCount) % tabCount;
         const recenteredIndex = tabCount + normalizedIndex;
         el.scrollLeft = (recenteredIndex - 1) * itemWidth;
         setCenteredIndex(recenteredIndex);
@@ -159,7 +176,9 @@ const FilterBarMobile = () => {
   };
 
   useEffect(() => {
-    const visibleIndex = FILTER_TABS.findIndex((tab) => tab.name === selectedMood);
+    const visibleIndex = FILTER_TABS.findIndex(
+      (tab) => tab.name === selectedMood,
+    );
     if (visibleIndex < 0) return;
     setCenteredIndex(FILTER_TABS.length + visibleIndex);
   }, [selectedMood]);
@@ -184,13 +203,15 @@ const FilterBarMobile = () => {
               <button
                 key={`${tab.name}-${idx}`}
                 onClick={() => {
-                  const selectedTab = FILTER_TABS[normalizedIndex] ?? FILTER_TABS[0];
+                  const selectedTab =
+                    FILTER_TABS[normalizedIndex] ?? FILTER_TABS[0];
                   if (!selectedTab) return;
                   setSelectedMood(selectedTab.name);
                   scrollToTab(idx);
                 }}
-                className={`snap-center flex h-8 shrink-0 items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-medium transition-all duration-300 ease-in-out [&_svg]:h-3 [&_svg]:w-3 ${isActive ? "text-white shadow-md" : "text-[#9ECADA]"
-                  }`}
+                className={`flex h-8 shrink-0 snap-center items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-medium transition-all duration-300 ease-in-out [&_svg]:h-3 [&_svg]:w-3 ${
+                  isActive ? "text-white shadow-md" : "text-[#9ECADA]"
+                }`}
                 aria-pressed={isActive}
                 style={{
                   width: itemWidth > 0 ? `${itemWidth}px` : "33.3333%",
@@ -254,9 +275,18 @@ export default function HomePage() {
     <MoodProvider>
       <main
         ref={mainRef}
-        className="flex min-h-screen flex-col items-center gap-14 overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(31,167,255,0.10),transparent_30%),linear-gradient(180deg,#fbfeff_0%,#f3faff_100%)] pb-16 text-[#16304c]"
+        className="flex min-h-screen flex-col items-center gap-14 overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(31,167,255,0.10),transparent_30%),linear-gradient(180deg,#fbfeff_0%,#f3faff_100%)] text-[#16304c]"
       >
         <components.Navbar />
+
+        {/* <div className="site-x w-full pt-4">
+          <div className="mx-auto w-full max-w-[1120px]">
+            <components.Breadcrumb
+              items={[{ label: "Home" }]}
+              className="mb-0"
+            />
+          </div>
+        </div> */}
 
         <div className="scroll-fade w-full">
           <components.Home.Hero filterBarRef={filterBarRef} />
@@ -278,8 +308,6 @@ export default function HomePage() {
         </div>
 
         <div className="scroll-fade flex w-full flex-col gap-14">
-
-
           <components.Home.Footer />
         </div>
       </main>

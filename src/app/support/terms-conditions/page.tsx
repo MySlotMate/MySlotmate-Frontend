@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
-import { SupportPageShell } from "~/components/support";
+import { SupportBreadcrumb, SupportPageShell } from "~/components/support";
 
 interface TermSection {
   id: string;
@@ -17,20 +17,22 @@ const sections: TermSection[] = [
     content: (
       <div className="space-y-6">
         <p className="text-gray-700">
-          This Host Terms of Engagement (&quot;Agreement&quot;) is a legally binding
-          contract between Myslotmate Private Limited (&quot;Company,&quot; &quot;we,&quot; &quot;our&quot;)
-          and you, the individual or entity accepting these terms (&quot;Host&quot; or
-          &quot;you&quot;). By clicking &quot;I Agree&quot; or using the Myslotmate platform as a
-          host, you acknowledge that you have read, understood, and agree to be
-          bound by the terms of this Agreement.
+          This Host Terms of Engagement (&quot;Agreement&quot;) is a legally
+          binding contract between Myslotmate Private Limited
+          (&quot;Company,&quot; &quot;we,&quot; &quot;our&quot;) and you, the
+          individual or entity accepting these terms (&quot;Host&quot; or
+          &quot;you&quot;). By clicking &quot;I Agree&quot; or using the
+          Myslotmate platform as a host, you acknowledge that you have read,
+          understood, and agree to be bound by the terms of this Agreement.
         </p>
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">1. Definitions</h4>
-          <ul className="space-y-3 ml-4">
+          <ul className="ml-4 space-y-3">
             <li className="text-gray-700">
-              <strong>&quot;Platform&quot;</strong> means the Myslotmate website, mobile
-              application, and any related services provided by the Company.
+              <strong>&quot;Platform&quot;</strong> means the Myslotmate
+              website, mobile application, and any related services provided by
+              the Company.
             </li>
             <li className="text-gray-700">
               <strong>&quot;Host Services&quot;</strong> refers to the platonic
@@ -39,17 +41,17 @@ const sections: TermSection[] = [
               guided tours, workshops, and adventures.
             </li>
             <li className="text-gray-700">
-              <strong>&quot;User&quot;</strong> means any individual who books Host
-              Services via the Platform.
+              <strong>&quot;User&quot;</strong> means any individual who books
+              Host Services via the Platform.
             </li>
             <li className="text-gray-700">
-              <strong>&quot;Booking&quot;</strong> means a confirmed reservation for Host
-              Services made by a User through the Platform.
+              <strong>&quot;Booking&quot;</strong> means a confirmed reservation
+              for Host Services made by a User through the Platform.
             </li>
             <li className="text-gray-700">
-              <strong>&quot;Booking Value&quot;</strong> refers to the total amount paid
-              by the User for the Host Services, excluding applicable taxes and
-              fees.
+              <strong>&quot;Booking Value&quot;</strong> refers to the total
+              amount paid by the User for the Host Services, excluding
+              applicable taxes and fees.
             </li>
           </ul>
         </div>
@@ -58,12 +60,12 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             2. Eligibility and Registration
           </h4>
-          <div className="space-y-3 ml-4">
+          <div className="ml-4 space-y-3">
             <div>
-              <p className="font-medium text-gray-900 mb-2">
+              <p className="mb-2 font-medium text-gray-900">
                 2.1 Eligibility Requirements
               </p>
-              <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
+              <ul className="ml-2 list-inside list-disc space-y-1 text-gray-700">
                 <li>Be at least 21 years of age.</li>
                 <li>
                   Have the legal capacity to enter into this Agreement and
@@ -72,10 +74,10 @@ const sections: TermSection[] = [
               </ul>
             </div>
             <div>
-              <p className="font-medium text-gray-900 mb-2">
+              <p className="mb-2 font-medium text-gray-900">
                 2.2 Verification Process
               </p>
-              <ul className="list-disc list-inside space-y-1 text-gray-700 ml-2">
+              <ul className="ml-2 list-inside list-disc space-y-1 text-gray-700">
                 <li>
                   <strong>Identity Verification:</strong> Complete Aadhaar-based
                   e-KYC or submit other government-issued ID.
@@ -91,14 +93,14 @@ const sections: TermSection[] = [
               </ul>
             </div>
             <div>
-              <p className="font-medium text-gray-900 mb-2">
+              <p className="mb-2 font-medium text-gray-900">
                 2.3 Accurate Information
               </p>
-              <p className="text-gray-700 ml-2">
+              <p className="ml-2 text-gray-700">
                 You agree to provide accurate and complete information during
-                registration and maintain an up-to-date profile. Providing
-                false or misleading information will result in termination of
-                your participation and potential legal action.
+                registration and maintain an up-to-date profile. Providing false
+                or misleading information will result in termination of your
+                participation and potential legal action.
               </p>
             </div>
           </div>
@@ -108,7 +110,7 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             3. Independent Contractor Status
           </h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>3.1 Independent Contractor:</strong> You are an
               independent contractor and not an employee, agent, or partner of
@@ -120,7 +122,7 @@ const sections: TermSection[] = [
               <strong>3.2 Taxes and Legal Compliance:</strong> You are solely
               responsible for:
             </p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
+            <ul className="ml-2 list-inside list-disc space-y-1">
               <li>Determining any taxes applicable to your earnings.</li>
               <li>
                 Reporting your income to the relevant tax authorities and
@@ -134,7 +136,7 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             4. Host Obligations and Responsibilities
           </h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>4.1 Professional Conduct:</strong> You must provide Host
               Services in a professional, respectful, and timely manner. Your
@@ -165,12 +167,12 @@ const sections: TermSection[] = [
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">5. Financial Terms</h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <div>
-              <p className="font-medium text-gray-900 mb-2">
+              <p className="mb-2 font-medium text-gray-900">
                 5.1 Fees and Payment
               </p>
-              <ul className="space-y-1 ml-2">
+              <ul className="ml-2 space-y-1">
                 <li>
                   The Company retains 30% of the Booking Value as a platform
                   fee.
@@ -183,9 +185,9 @@ const sections: TermSection[] = [
             </div>
             <p>
               <strong>5.2 Payment Processing:</strong> Payments for Host
-              Services will be processed through the Platform&apos;s payment gateway,
-              and will be transferred to your bank account within 7 business
-              days after the service is successfully completed.
+              Services will be processed through the Platform&apos;s payment
+              gateway, and will be transferred to your bank account within 7
+              business days after the service is successfully completed.
             </p>
             <p>
               <strong>5.3 GST Compliance:</strong> If you are registered for
@@ -200,7 +202,7 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             6. Intellectual Property
           </h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>6.1 License Grant:</strong> By agreeing to this Agreement,
               you grant the Company a limited, non-exclusive, royalty-free
@@ -223,7 +225,7 @@ const sections: TermSection[] = [
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">7. Confidentiality</h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>7.1 Confidential Information:</strong> You agree to keep
               any non-public information about the Company, Users, or other
@@ -242,12 +244,12 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             8. Limitation of Liability and Indemnification
           </h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>8.1 Limitation of Liability:</strong> The Company&apos;s
-              liability to you is limited to the total amount of fees you&apos;ve
-              earned in the last three months prior to the event giving rise to
-              the claim.
+              liability to you is limited to the total amount of fees
+              you&apos;ve earned in the last three months prior to the event
+              giving rise to the claim.
             </p>
             <p>
               <strong>8.2 Indemnification:</strong> You agree to indemnify and
@@ -260,21 +262,21 @@ const sections: TermSection[] = [
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">9. Termination</h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>9.1 Termination by Host:</strong> You may terminate your
               participation in the Platform at any time by deactivating your
               account.
             </p>
             <div>
-              <p className="font-medium text-gray-900 mb-2">
+              <p className="mb-2 font-medium text-gray-900">
                 9.2 Termination by Company
               </p>
               <p className="mb-2">
                 The Company may terminate this Agreement immediately by written
                 notice if you:
               </p>
-              <ul className="list-disc list-inside space-y-1 ml-2">
+              <ul className="ml-2 list-inside list-disc space-y-1">
                 <li>
                   Materially breach any term of this Agreement, including the
                   strictly platonic requirement, and fail to remedy such breach
@@ -301,28 +303,28 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             10. Governing Law and Dispute Resolution
           </h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>10.1 Governing Law:</strong> This Agreement will be
               governed by the laws of India.
             </p>
             <p>
               <strong>10.2 Dispute Resolution:</strong> Any disputes arising
-              under this Agreement will first be attempted to be resolved through
-              mediation. If mediation fails, the dispute will be resolved through
-              binding arbitration under the Arbitration and Conciliation Act,
-              1996, in Guwahati, Assam.
+              under this Agreement will first be attempted to be resolved
+              through mediation. If mediation fails, the dispute will be
+              resolved through binding arbitration under the Arbitration and
+              Conciliation Act, 1996, in Guwahati, Assam.
             </p>
           </div>
         </div>
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">11. Miscellaneous</h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>11.1 Entire Agreement:</strong> This Agreement represents
-              the entire understanding between you and the Company regarding your
-              participation on the Platform.
+              the entire understanding between you and the Company regarding
+              your participation on the Platform.
             </p>
             <p>
               <strong>11.2 Amendment:</strong> The Company may update or modify
@@ -352,15 +354,16 @@ const sections: TermSection[] = [
     content: (
       <div className="space-y-6">
         <p className="text-gray-700">
-          This Content Licensing Agreement (&quot;Agreement&quot;) is entered into by and
-          between [Creator Name](&quot;Creator&quot;) and Myslotmate Private Limited
-          (&quot;Company,&quot; &quot;we,&quot; &quot;our&quot;), effective as of the date the Creator submits
-          content (&quot;Effective Date&quot;).
+          This Content Licensing Agreement (&quot;Agreement&quot;) is entered
+          into by and between [Creator Name](&quot;Creator&quot;) and Myslotmate
+          Private Limited (&quot;Company,&quot; &quot;we,&quot;
+          &quot;our&quot;), effective as of the date the Creator submits content
+          (&quot;Effective Date&quot;).
         </p>
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">1. Definitions</h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>1.1 Content:</strong> All materials created and submitted
               by the Creator to the Company, including but not limited to
@@ -376,7 +379,7 @@ const sections: TermSection[] = [
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">2. Grant of License</h4>
-          <div className="space-y-3 ml-4 text-gray-700">
+          <div className="ml-4 space-y-3 text-gray-700">
             <p>
               <strong>2.1</strong> The Creator hereby grants the Company a
               non-exclusive, worldwide, royalty-free, sublicensable, and
@@ -397,7 +400,7 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             3. Ownership and Rights
           </h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>3.1</strong> The Creator retains all ownership rights to
               the Content.
@@ -414,11 +417,11 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             4. Representations and Warranties
           </h4>
-          <div className="space-y-3 ml-4">
+          <div className="ml-4 space-y-3">
             <p className="font-medium text-gray-900">
               4.1 The Creator represents and warrants that:
             </p>
-            <ul className="space-y-1 ml-4 text-gray-700">
+            <ul className="ml-4 space-y-1 text-gray-700">
               <li>
                 They are the sole owner or have necessary rights and permissions
                 to grant the license.
@@ -437,7 +440,7 @@ const sections: TermSection[] = [
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">5. Compensation</h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>5.1</strong> Unless otherwise agreed in writing, the
               Creator grants this license without monetary compensation.
@@ -453,10 +456,11 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             6. Term and Termination
           </h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>6.1</strong> This Agreement remains in effect unless
-              terminated by either party with 30 days&apos; prior written notice.
+              terminated by either party with 30 days&apos; prior written
+              notice.
             </p>
             <p>
               <strong>6.2</strong> Upon termination, the Company will cease
@@ -481,15 +485,15 @@ const sections: TermSection[] = [
             8. Limitation of Liability
           </h4>
           <p className="ml-4 text-gray-700">
-            The Company&apos;s liability relating to the use of Content is limited to
-            direct damages and will not include indirect, incidental, or
-            consequential damages.
+            The Company&apos;s liability relating to the use of Content is
+            limited to direct damages and will not include indirect, incidental,
+            or consequential damages.
           </p>
         </div>
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">9. Miscellaneous</h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>9.1</strong> This Agreement constitutes the entire
               agreement between the parties regarding the Content license and
@@ -525,12 +529,12 @@ const sections: TermSection[] = [
           </h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               All Host services are strictly platonic. Refrain from romantic,
               sexual, or inappropriate behavior during any engagement.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Respect your Host&apos;s personal boundaries at all times.
             </li>
           </ul>
@@ -542,17 +546,17 @@ const sections: TermSection[] = [
           </h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Use respectful language in all communications with Hosts and
               Myslotmate staff.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Provide clear details about your booking and any special
               requirements in advance.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Be punctual and notify your Host promptly if plans change.
             </li>
           </ul>
@@ -562,12 +566,12 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">3. Safety and Privacy</h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Respect the privacy of your Host and do not share their personal
               information outside of the Platform without consent.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Follow any safety guidelines or instructions provided by your
               Host.
             </li>
@@ -580,12 +584,12 @@ const sections: TermSection[] = [
           </h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Make bookings only through the Myslotmate Platform. Avoid
               off-platform transactions to ensure safety and compliance.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Pay promptly via the Platform as agreed to confirm your booking.
             </li>
           </ul>
@@ -597,11 +601,11 @@ const sections: TermSection[] = [
           </h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Maintain professional and courteous behavior.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Do not engage in illegal activities or behavior that may cause
               harm or discomfort.
             </li>
@@ -614,12 +618,12 @@ const sections: TermSection[] = [
           </h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Provide honest and constructive feedback after your experience to
               help improve the platform.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Report any inappropriate behavior, safety concerns, or violations
               of these guidelines to Myslotmate immediately through the
               Platform&apos;s reporting tools.
@@ -638,7 +642,7 @@ const sections: TermSection[] = [
           </p>
         </div>
 
-        <div className="mt-8 rounded-lg bg-blue-50 border border-blue-200 p-4">
+        <div className="mt-8 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-gray-900">
             Thank you for helping us maintain a safe and welcoming community! If
             you have questions or need support, contact Myslotmate support
@@ -656,39 +660,42 @@ const sections: TermSection[] = [
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">1. Overview</h4>
           <p className="ml-4 text-gray-700">
-            This policy outlines the terms and conditions regarding cancellations
-            and refunds for bookings made through the Myslotmate Platform.
+            This policy outlines the terms and conditions regarding
+            cancellations and refunds for bookings made through the Myslotmate
+            Platform.
           </p>
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-semibold text-gray-900">2. Cancellation by Guest</h4>
-          <div className="space-y-3 ml-4">
+          <h4 className="font-semibold text-gray-900">
+            2. Cancellation by Guest
+          </h4>
+          <div className="ml-4 space-y-3">
             <p className="text-gray-700">
               <strong>2.1</strong> Guests may cancel a confirmed booking via the
               Platform prior to the scheduled session.
             </p>
             <div>
-              <p className="font-medium text-gray-900 mb-2">
+              <p className="mb-2 font-medium text-gray-900">
                 2.2 Refund eligibility
               </p>
               <div className="space-y-2 text-gray-700">
-                <div className="flex gap-3 bg-gray-50 rounded p-3">
-                  <span className="text-green-600 font-bold">✓</span>
+                <div className="flex gap-3 rounded bg-gray-50 p-3">
+                  <span className="font-bold text-green-600">✓</span>
                   <div>
                     <p className="font-medium">More than 48 hours before:</p>
                     <p>Full refund (minus any payment gateway fees)</p>
                   </div>
                 </div>
-                <div className="flex gap-3 bg-gray-50 rounded p-3">
-                  <span className="text-orange-600 font-bold">50%</span>
+                <div className="flex gap-3 rounded bg-gray-50 p-3">
+                  <span className="font-bold text-orange-600">50%</span>
                   <div>
                     <p className="font-medium">24 to 48 hours before:</p>
                     <p>50% refund of the Booking Value</p>
                   </div>
                 </div>
-                <div className="flex gap-3 bg-red-50 rounded p-3">
-                  <span className="text-red-600 font-bold">✗</span>
+                <div className="flex gap-3 rounded bg-red-50 p-3">
+                  <span className="font-bold text-red-600">✗</span>
                   <div>
                     <p className="font-medium">Less than 24 hours before:</p>
                     <p>No refund</p>
@@ -697,16 +704,18 @@ const sections: TermSection[] = [
               </div>
             </div>
             <p className="text-gray-700">
-              <strong>2.3</strong> Refunds, if applicable, will be processed back
-              to the original payment method within 7-10 business days after
-              cancellation confirmation.
+              <strong>2.3</strong> Refunds, if applicable, will be processed
+              back to the original payment method within 7-10 business days
+              after cancellation confirmation.
             </p>
           </div>
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-semibold text-gray-900">3. Cancellation by Host</h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <h4 className="font-semibold text-gray-900">
+            3. Cancellation by Host
+          </h4>
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>3.1</strong> Hosts may cancel a confirmed booking only in
               exceptional circumstances (e.g., illness, emergency).
@@ -714,7 +723,7 @@ const sections: TermSection[] = [
             <p>
               <strong>3.2</strong> If a Host cancels:
             </p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
+            <ul className="ml-2 list-inside list-disc space-y-1">
               <li>Guests will receive a full refund.</li>
               <li>
                 Myslotmate may assist in rebooking with another Host, if
@@ -726,14 +735,14 @@ const sections: TermSection[] = [
 
         <div className="space-y-4">
           <h4 className="font-semibold text-gray-900">4. No-Shows</h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>4.1</strong> If a Guest does not show up without prior
               cancellation, no refund will be issued.
             </p>
             <p>
-              <strong>4.2</strong> If a Host fails to attend a scheduled session,
-              the Guest will receive a full refund.
+              <strong>4.2</strong> If a Host fails to attend a scheduled
+              session, the Guest will receive a full refund.
             </p>
           </div>
         </div>
@@ -742,7 +751,7 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             5. Refund Requests and Disputes
           </h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>5.1</strong> All refund requests must be submitted through
               the Platform&apos;s official channels.
@@ -762,7 +771,7 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">
             6. Modifications to Bookings
           </h4>
-          <div className="space-y-2 ml-4 text-gray-700">
+          <div className="ml-4 space-y-2 text-gray-700">
             <p>
               <strong>6.1</strong> Guests may request changes to session date or
               time subject to Host availability.
@@ -801,38 +810,39 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">1. Before the Session</h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Verify Profiles:</strong> Take time to review your
-                Host&apos;s or Guest&apos;s profile, including ratings and reviews. Trust
-                verified profiles with completed checks.
+                Host&apos;s or Guest&apos;s profile, including ratings and
+                reviews. Trust verified profiles with completed checks.
               </span>
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Communicate Within the Platform:</strong> Use
-                Myslotmate&apos;s messaging system for all conversations and bookings
-                to ensure security and transparency.
+                Myslotmate&apos;s messaging system for all conversations and
+                bookings to ensure security and transparency.
               </span>
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Plan for Public Meetings:</strong> For initial meetings,
                 choose well-populated, public places to ensure safety.
               </span>
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Share Your Plans:</strong> Let a trusted person know
                 your schedule, location, and whom you&apos;re meeting. Consider
-                sharing your live location using the Platform&apos;s SOS feature.
+                sharing your live location using the Platform&apos;s SOS
+                feature.
               </span>
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Set Clear Expectations:</strong> Clearly discuss the
                 details of the engagement ahead of time (time, place, nature of
@@ -846,7 +856,7 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">2. During the Session</h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Trust Your Instincts:</strong> If anything feels off or
                 uncomfortable, prioritize your safety by ending the session or
@@ -854,21 +864,21 @@ const sections: TermSection[] = [
               </span>
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Maintain Privacy:</strong> Avoid sharing sensitive
                 personal information such as home address or financial details.
               </span>
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Stay Sober and Alert:</strong> Avoid using substances
                 that could impair your ability to make safe decisions.
               </span>
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <span>
                 <strong>Respect Boundaries:</strong> Keep all interactions
                 professional and strictly platonic as per platform rules.
@@ -881,24 +891,26 @@ const sections: TermSection[] = [
           <h4 className="font-semibold text-gray-900">3. After the Session</h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               <strong>Provide Feedback:</strong> Help the community by leaving
               honest reviews and ratings.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
-              <strong>Report Concerns:</strong> Use the Platform&apos;s reporting
-              tools immediately to flag any inappropriate behavior or safety
-              issues.
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
+              <strong>Report Concerns:</strong> Use the Platform&apos;s
+              reporting tools immediately to flag any inappropriate behavior or
+              safety issues.
             </li>
           </ul>
         </div>
 
         <div className="space-y-4">
-          <h4 className="font-semibold text-gray-900">4. Myslotmate Help Tools</h4>
+          <h4 className="font-semibold text-gray-900">
+            4. Myslotmate Help Tools
+          </h4>
           <div className="ml-4 space-y-3">
-            <div className="flex gap-3 bg-blue-50 rounded-lg p-4">
-              <div className="shrink-0 flex items-center">
+            <div className="flex gap-3 rounded-lg bg-blue-50 p-4">
+              <div className="flex shrink-0 items-center">
                 <FiCheck className="h-5 w-5 text-blue-600" />
               </div>
               <div>
@@ -909,12 +921,14 @@ const sections: TermSection[] = [
                 </p>
               </div>
             </div>
-            <div className="flex gap-3 bg-blue-50 rounded-lg p-4">
-              <div className="shrink-0 flex items-center">
+            <div className="flex gap-3 rounded-lg bg-blue-50 p-4">
+              <div className="flex shrink-0 items-center">
                 <FiCheck className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="font-medium text-gray-900">SOS Emergency Button</p>
+                <p className="font-medium text-gray-900">
+                  SOS Emergency Button
+                </p>
                 <p className="text-sm text-gray-700">
                   Use the in-app SOS feature to instantly alert emergency
                   contacts and Myslotmate support with your live location,
@@ -922,8 +936,8 @@ const sections: TermSection[] = [
                 </p>
               </div>
             </div>
-            <div className="flex gap-3 bg-blue-50 rounded-lg p-4">
-              <div className="shrink-0 flex items-center">
+            <div className="flex gap-3 rounded-lg bg-blue-50 p-4">
+              <div className="flex shrink-0 items-center">
                 <FiCheck className="h-5 w-5 text-blue-600" />
               </div>
               <div>
@@ -936,8 +950,8 @@ const sections: TermSection[] = [
                 </p>
               </div>
             </div>
-            <div className="flex gap-3 bg-blue-50 rounded-lg p-4">
-              <div className="shrink-0 flex items-center">
+            <div className="flex gap-3 rounded-lg bg-blue-50 p-4">
+              <div className="flex shrink-0 items-center">
                 <FiCheck className="h-5 w-5 text-blue-600" />
               </div>
               <div>
@@ -957,22 +971,22 @@ const sections: TermSection[] = [
           </h4>
           <ul className="ml-4 space-y-2 text-gray-700">
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Keep your phone charged and accessible at all times.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Arrange your own transportation to and from sessions.
             </li>
             <li className="flex gap-2">
-              <FiCheck className="mt-0.5 h-5 w-5 text-green-500 shrink-0" />
+              <FiCheck className="mt-0.5 h-5 w-5 shrink-0 text-green-500" />
               Consider meeting during daytime hours, especially for the first
               few bookings.
             </li>
           </ul>
         </div>
 
-        <div className="mt-8 rounded-lg bg-green-50 border border-green-200 p-4">
+        <div className="mt-8 rounded-lg border border-green-200 bg-green-50 p-4">
           <p className="text-gray-900">
             Stay safe and enjoy your Myslotmate experience! For safety support
             or to report issues, contact Myslotmate Support anytime.
@@ -987,20 +1001,20 @@ function CollapsibleSection({ section }: { section: TermSection }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition">
+    <div className="overflow-hidden rounded-lg border border-gray-200 transition hover:border-gray-300">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 text-left font-semibold text-gray-900 hover:bg-gray-50 transition flex items-center justify-between"
+        className="flex w-full items-center justify-between px-6 py-4 text-left font-semibold text-gray-900 transition hover:bg-gray-50"
       >
         <span>{section.title}</span>
         <FiChevronDown
           className={`h-5 w-5 text-gray-600 transition-transform ${
-            isOpen ? "transform rotate-180" : ""
+            isOpen ? "rotate-180 transform" : ""
           }`}
         />
       </button>
       {isOpen && (
-        <div className="border-t border-gray-200 px-6 py-4 bg-white text-gray-700">
+        <div className="border-t border-gray-200 bg-white px-6 py-4 text-gray-700">
           {section.content}
         </div>
       )}
@@ -1013,16 +1027,21 @@ export default function TermsAndConditionsPage() {
 
   return (
     <SupportPageShell>
+      <SupportBreadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: "Support & Safety", href: "/support" },
+          { label: "Terms & Conditions" },
+        ]}
+      />
       <div className="space-y-8">
         {/* Header Section */}
         <div className="space-y-4">
           <h1 className="text-4xl font-bold text-gray-900">
             Terms & Conditions
           </h1>
-          <p className="text-lg text-gray-600">
-            Last Updated: March 26, 2026
-          </p>
-          <p className="text-gray-700 max-w-2xl">
+          <p className="text-lg text-gray-600">Last Updated: March 26, 2026</p>
+          <p className="max-w-2xl text-gray-700">
             Please review our comprehensive terms and conditions, privacy
             policies, and usage guidelines. These documents outline the rights,
             responsibilities, and expectations for all Myslotmate users.
@@ -1030,22 +1049,22 @@ export default function TermsAndConditionsPage() {
         </div>
 
         {/* Quick Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
-            <h3 className="font-semibold text-blue-900 mb-2">For Hosts</h3>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <h3 className="mb-2 font-semibold text-blue-900">For Hosts</h3>
             <p className="text-sm text-blue-700">
               Review host obligations, payment terms, and engagement policies.
             </p>
           </div>
-          <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-4">
-            <h3 className="font-semibold text-emerald-900 mb-2">For Guests</h3>
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+            <h3 className="mb-2 font-semibold text-emerald-900">For Guests</h3>
             <p className="text-sm text-emerald-700">
               Understand conduct guidelines, cancellation policies, and booking
               terms.
             </p>
           </div>
-          <div className="rounded-lg bg-purple-50 border border-purple-200 p-4">
-            <h3 className="font-semibold text-purple-900 mb-2">Safety First</h3>
+          <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
+            <h3 className="mb-2 font-semibold text-purple-900">Safety First</h3>
             <p className="text-sm text-purple-700">
               Learn about our safety features and best practices for all users.
             </p>
@@ -1060,7 +1079,7 @@ export default function TermsAndConditionsPage() {
             </h2>
             <button
               onClick={() => setExpandAll(!expandAll)}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition"
+              className="text-sm font-medium text-blue-600 transition hover:text-blue-700"
             >
               {expandAll ? "Collapse All" : "Expand All"}
             </button>
@@ -1074,23 +1093,23 @@ export default function TermsAndConditionsPage() {
         </div>
 
         {/* Footer Info */}
-        <div className="rounded-lg bg-gray-50 border border-gray-200 p-6 mt-8">
-          <h3 className="font-semibold text-gray-900 mb-3">Need Help?</h3>
-          <p className="text-gray-700 mb-4">
+        <div className="mt-8 rounded-lg border border-gray-200 bg-gray-50 p-6">
+          <h3 className="mb-3 font-semibold text-gray-900">Need Help?</h3>
+          <p className="mb-4 text-gray-700">
             If you have questions about these terms and conditions or need
-            clarification on any policy, please don&apos;t hesitate to contact our
-            support team.
+            clarification on any policy, please don&apos;t hesitate to contact
+            our support team.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
             <a
               href="/support"
-              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-2 font-medium text-white hover:bg-blue-700 transition"
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-2 font-medium text-white transition hover:bg-blue-700"
             >
               Contact Support
             </a>
             <a
               href="/support/technical"
-              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 hover:bg-gray-50 transition"
+              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-6 py-2 font-medium text-gray-700 transition hover:bg-gray-50"
             >
               Technical Help
             </a>
@@ -1098,9 +1117,9 @@ export default function TermsAndConditionsPage() {
         </div>
 
         {/* Acknowledgement Section */}
-        <div className="rounded-lg bg-amber-50 border border-amber-200 p-6">
-          <h3 className="font-semibold text-amber-900 mb-2">Acknowledgement</h3>
-          <p className="text-amber-700 text-sm">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
+          <h3 className="mb-2 font-semibold text-amber-900">Acknowledgement</h3>
+          <p className="text-sm text-amber-700">
             By using Myslotmate, you acknowledge that you have read and
             understood these terms and conditions, and agree to be bound by
             their provisions. The Company reserves the right to update these

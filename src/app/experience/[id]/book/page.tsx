@@ -14,8 +14,8 @@ import {
   useCreateTopupOrder,
   useVerifyTopupPayment,
 } from "~/hooks/useApi";
-import { FiCalendar, FiUsers, FiClock, FiShield, FiAlertCircle } from "react-icons/fi";
-import { LuWallet, LuPlus, LuLoader2 } from "react-icons/lu";
+import { FiCalendar, FiUsers, FiClock, FiShield } from "react-icons/fi";
+import { LuWallet, LuLoader2 } from "react-icons/lu";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
@@ -59,6 +59,17 @@ interface RazorpayInstance {
   open: () => void;
   close: () => void;
 }
+
+interface BookingRequestDetails {
+  quantity: number;
+  totalPriceCents: number;
+  paymentSource: "wallet" | "topup";
+}
+
+const wait = (ms: number) =>
+  new Promise<void>((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
 
 /* ------------------------------------------------------------------ */
 /*  Experience Summary Card                                            */
@@ -185,12 +196,7 @@ function BookingContent({ eventId }: { eventId: string }) {
   const [userPhone, setUserPhone] = useState<string | undefined>();
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showTopUp, setShowTopUp] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [pendingBookingData, setPendingBookingData] = useState<{
-    quantityForBooking: number;
-    totalPriceCentsForBooking: number;
-  } | null>(null);
 
   const date = decodeURIComponent(searchParams.get("date") ?? "");
   const guests = parseInt(searchParams.get("guests") ?? "1");
@@ -215,7 +221,11 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   const { data: event, isLoading: eventLoading } = useEvent(eventId);
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
-  const { data: wallet, isLoading: walletLoading } = useWalletBalance(userId);
+  const {
+    data: wallet,
+    isLoading: walletLoading,
+    refetch: refetchWallet,
+  } = useWalletBalance(userId);
 
   const createBooking = useCreateBooking();
   const confirmBooking = useConfirmBooking();
@@ -229,6 +239,27 @@ function BookingContent({ eventId }: { eventId: string }) {
   const hasInsufficientBalance = !event?.is_free && totalPriceCents > 0 && walletBalance < totalPriceCents;
   const shortfall = totalPriceCents - walletBalance;
 
+  const waitForWalletBalance = async (
+    requiredBalanceCents: number,
+    currentBalanceCents: number,
+  ) => {
+    if (currentBalanceCents >= requiredBalanceCents) {
+      return currentBalanceCents;
+    }
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await wait(800);
+      const refreshedWallet = await refetchWallet();
+      const refreshedBalance = refreshedWallet.data?.balance_cents ?? 0;
+
+      if (refreshedBalance >= requiredBalanceCents) {
+        return refreshedBalance;
+      }
+    }
+
+    throw new Error("Wallet balance did not refresh in time");
+  };
+
   const handleConfirmBooking = async () => {
     if (!userId) {
       toast.error("Please login to complete booking");
@@ -240,25 +271,39 @@ function BookingContent({ eventId }: { eventId: string }) {
       return;
     }
 
+    const bookingDetails: BookingRequestDetails = {
+      quantity: guests,
+      totalPriceCents,
+      paymentSource: "wallet",
+    };
+
     // Check wallet balance for paid events
     if (!event.is_free && totalPriceCents > 0) {
       if (walletBalance < totalPriceCents) {
         // Insufficient balance - initiate direct payment for the shortfall
         const shortfallCents = totalPriceCents - walletBalance;
-        setPendingBookingData({
-          quantityForBooking: guests,
-          totalPriceCentsForBooking: totalPriceCents,
+        await handleDirectPayment({
+          paymentAmountCents: shortfallCents,
+          bookingDetails: {
+            ...bookingDetails,
+            paymentSource: "topup",
+          },
         });
-        await handleDirectPayment(shortfallCents);
         return;
       }
     }
 
     // Sufficient balance - proceed with booking debit from wallet
-    await completeBooking(guests, totalPriceCents);
+    await completeBooking(bookingDetails);
   };
 
-  const handleDirectPayment = async (paymentAmountCents: number) => {
+  const handleDirectPayment = async ({
+    paymentAmountCents,
+    bookingDetails,
+  }: {
+    paymentAmountCents: number;
+    bookingDetails: BookingRequestDetails;
+  }) => {
     if (!userId) return;
 
     setIsProcessingPayment(true);
@@ -272,6 +317,7 @@ function BookingContent({ eventId }: { eventId: string }) {
       });
 
       const orderData = orderRes.data;
+      let paymentCompleted = false;
 
       // Open Razorpay Checkout
       const options: RazorpayOptions = {
@@ -282,27 +328,38 @@ function BookingContent({ eventId }: { eventId: string }) {
         description: `Booking: ${event?.title}`,
         order_id: orderData.order_id,
         handler: (response: RazorpayResponse) => {
-          // Verify payment and complete booking
+          paymentCompleted = true;
+
+          // Verify payment, wait for the wallet credit to sync, then auto-book.
           void (async () => {
+            let verifiedBalance = 0;
+
             try {
-              await verifyPayment.mutateAsync({
+              const verifyRes = await verifyPayment.mutateAsync({
                 user_id: userId,
                 razorpay_order_id: response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
               });
-
-              // Payment verified - now complete the booking
-              if (pendingBookingData) {
-                await completeBooking(
-                  pendingBookingData.quantityForBooking,
-                  pendingBookingData.totalPriceCentsForBooking,
-                );
-              }
+              verifiedBalance = verifyRes.data.balance_cents;
             } catch (err) {
               console.error("Payment verification failed:", err);
               toast.error("Payment verification failed. Please contact support.");
-              setPendingBookingData(null);
+              setIsProcessingPayment(false);
+              return;
+            }
+
+            try {
+              await waitForWalletBalance(
+                bookingDetails.totalPriceCents,
+                verifiedBalance,
+              );
+              await completeBooking(bookingDetails);
+            } catch (err) {
+              console.error("Wallet sync failed after top-up:", err);
+              toast.error(
+                "Payment was successful, but your wallet is still syncing. Please wait a moment and try again.",
+              );
             }
             setIsProcessingPayment(false);
           })();
@@ -317,8 +374,8 @@ function BookingContent({ eventId }: { eventId: string }) {
         },
         modal: {
           ondismiss: () => {
+            if (paymentCompleted) return;
             setIsProcessingPayment(false);
-            setPendingBookingData(null);
           },
         },
       };
@@ -329,40 +386,61 @@ function BookingContent({ eventId }: { eventId: string }) {
       console.error("Failed to create payment order:", err);
       toast.error("Failed to initiate payment. Please try again.");
       setIsProcessingPayment(false);
-      setPendingBookingData(null);
     }
   };
 
-  const completeBooking = async (quantity: number, totalCents: number) => {
+  const completeBooking = async ({
+    quantity,
+    totalPriceCents: totalCents,
+    paymentSource,
+  }: BookingRequestDetails) => {
     if (!userId || !event) return;
 
     setIsSubmitting(true);
 
     try {
-      // Generate idempotency key
       const idempotencyKey = `${userId}-${eventId}-${Date.now()}`;
+      const maxAttempts = paymentSource === "topup" ? 3 : 1;
 
-      // Create booking (this will auto-debit wallet for paid events)
-      const bookingRes = await createBooking.mutateAsync({
-        user_id: userId,
-        event_id: eventId,
-        quantity: quantity,
-        idempotency_key: idempotencyKey,
-      });
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+          const bookingRes = await createBooking.mutateAsync({
+            user_id: userId,
+            event_id: eventId,
+            quantity: quantity,
+            idempotency_key: idempotencyKey,
+          });
 
-      // Confirm the booking
-      await confirmBooking.mutateAsync(bookingRes.data.id);
+          await confirmBooking.mutateAsync(bookingRes.data.id);
 
-      toast.success(
-        event.is_free || totalCents === 0
-          ? "Booking confirmed!"
-          : "Payment successful! Booking confirmed.",
-      );
+          toast.success(
+            event.is_free || totalCents === 0
+              ? "Booking confirmed!"
+              : "Payment successful! Booking confirmed.",
+          );
 
-      router.push(`/experience/${eventId}/confirmation?booking=${bookingRes.data.id}`);
+          router.push(`/experience/${eventId}/confirmation?booking=${bookingRes.data.id}`);
+          return;
+        } catch (err) {
+          const shouldRetryTopupBooking =
+            paymentSource === "topup" && attempt < maxAttempts;
+
+          if (!shouldRetryTopupBooking) {
+            throw err;
+          }
+
+          console.error(`Booking attempt ${attempt} failed after top-up:`, err);
+          await wait(800 * attempt);
+          await refetchWallet();
+        }
+      }
     } catch (err) {
       console.error("Booking failed:", err);
-      toast.error("Failed to complete booking. Please try again.");
+      toast.error(
+        paymentSource === "topup"
+          ? "Payment reached your wallet, but booking could not be completed. Please try again."
+          : "Failed to complete booking. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }

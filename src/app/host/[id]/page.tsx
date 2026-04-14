@@ -78,10 +78,6 @@ export default function HostProfilePage({
     experiencesRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleWriteReview = () => {
-    setShowReviewModal(true);
-  };
-
   const handleReadAllReviews = () => {
     setShowAllReviewsModal(true);
   };
@@ -103,19 +99,19 @@ export default function HostProfilePage({
     <main className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="mx-auto w-full max-w-[1120px] site-x py-8 pt-24">
-        <Breadcrumb 
+      <div className="site-x mx-auto w-full max-w-[1120px] py-8">
+        <Breadcrumb
           items={[
-            { label: "Home", href: "/" }, 
+            { label: "Home", href: "/" },
             { label: "Hosts", href: "/hosts" },
-            { label: fullName }
-          ]} 
-          className="mb-6" 
+            { label: fullName },
+          ]}
+          className="mb-6"
         />
 
         {/* Profile Header */}
-        <ProfileHeader 
-          host={host} 
+        <ProfileHeader
+          host={host}
           onViewExperiences={handleViewExperiences}
           // onWriteReview={handleWriteReview}
         />
@@ -172,6 +168,7 @@ export default function HostProfilePage({
           isOpen={showReviewModal}
           onClose={() => setShowReviewModal(false)}
           eventId={events[0]!.id}
+          hostId={events[0]!.host_id}
           eventTitle={events[0]!.title}
           userId={user.uid}
         />

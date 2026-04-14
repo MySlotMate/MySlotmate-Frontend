@@ -2,7 +2,10 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useListPublicEvents } from "~/hooks/useApi";
-import { getSavedLocation, type CityLocation } from "~/components/LocationModal";
+import {
+  getSavedLocation,
+  type CityLocation,
+} from "~/components/LocationModal";
 import { LuLoader2 } from "react-icons/lu";
 import * as components from "~/components";
 import Breadcrumb from "~/components/Breadcrumb";
@@ -40,7 +43,7 @@ const ExperienceCard = ({
           className="h-[190px] w-full object-cover"
         />
         {mood ? (
-          <span className="absolute left-3 top-3 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#0e8ae0]">
+          <span className="absolute top-3 left-3 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
             {mood}
           </span>
         ) : null}
@@ -50,7 +53,9 @@ const ExperienceCard = ({
         <h3 className="line-clamp-1 text-[14px] font-bold text-[#16304c]">
           {title}
         </h3>
-        <p className="mt-1 line-clamp-2 text-xs text-[#6f8daa]">{description}</p>
+        <p className="mt-1 line-clamp-2 text-xs text-[#6f8daa]">
+          {description}
+        </p>
         <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-extrabold text-[#5e88ab]">
           <span>{duration}</span>
           <span>{pricing}</span>
@@ -85,22 +90,24 @@ export default function ExperiencesPage() {
 
   const filteredEvents = useMemo(() => {
     if (!events) return [];
-    
+
     let filtered = events;
-    
+
     // Filter out past events
     const now = new Date();
     filtered = filtered.filter((event) => {
       const eventDate = new Date(event.time);
       return eventDate > now;
     });
-    
+
     // Filter by location
     if (filterByLocation && location) {
       const cityLower = location.city.toLowerCase();
       const locationFiltered = filtered.filter((event) => {
         const eventLocation = event.location?.toLowerCase() ?? "";
-        return eventLocation.includes(cityLower) || cityLower.includes(eventLocation);
+        return (
+          eventLocation.includes(cityLower) || cityLower.includes(eventLocation)
+        );
       });
       if (locationFiltered.length > 0) {
         filtered = locationFiltered;
@@ -109,8 +116,8 @@ export default function ExperiencesPage() {
 
     // Filter by mood
     if (moodFilter !== "all") {
-      filtered = filtered.filter((event) => 
-        event.mood?.toLowerCase() === moodFilter.toLowerCase()
+      filtered = filtered.filter(
+        (event) => event.mood?.toLowerCase() === moodFilter.toLowerCase(),
       );
     }
 
@@ -122,19 +129,22 @@ export default function ExperiencesPage() {
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fafeff,#f2faff)] text-[#16304c]">
       <components.Navbar />
-      
-      <div className="mx-auto w-full max-w-[77rem] site-x py-8 pt-24">
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Experiences" }]} className="mb-6" />
-        <div className="flex flex-col gap-4 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+      <div className="site-x mx-auto w-full max-w-[77rem] py-8">
+        <Breadcrumb
+          items={[{ label: "Home", href: "/" }, { label: "Experiences" }]}
+          className="mb-6"
+        />
+        <div className="mb-8 flex flex-col gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.05em] sm:text-5xl">
               Trending Now
             </h1>
-            
+
             {location && (
               <button
                 onClick={() => setFilterByLocation(!filterByLocation)}
-                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
+                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
                   filterByLocation
                     ? "bg-[#dff3ff] text-[#0e8ae0]"
                     : "bg-white/90 text-[#5a88ac] hover:bg-white"
@@ -146,12 +156,12 @@ export default function ExperiencesPage() {
           </div>
 
           {/* Mood Filters */}
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex flex-wrap gap-2">
             {moods.map((mood) => (
               <button
                 key={mood}
                 onClick={() => setMoodFilter(mood)}
-                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
+                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
                   moodFilter === mood
                     ? "bg-[#dff3ff] text-[#0e8ae0]"
                     : "bg-white/90 text-[#5a88ac] hover:bg-white"

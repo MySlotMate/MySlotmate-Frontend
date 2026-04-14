@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { FiX, FiSend } from "react-icons/fi";
+import { FiUsers, FiX, FiSend, FiMessageCircle } from "react-icons/fi";
 import { toast } from "sonner";
 import { getEventMessages, sendMessage, type InboxMessageDTO } from "~/lib/api";
 import { createSocket } from "~/lib/socket";
 import { useContentModeration } from "~/hooks/useContentModeration";
+import { usePublicHostProfile } from "~/hooks/useApi";
 
 interface InboxSidebarProps {
   eventId: string;
   hostId: string;
   eventTitle: string;
+  participantCount: number;
   userId: string;
   isOpen: boolean;
   onClose: () => void;
@@ -20,6 +22,7 @@ export default function InboxSidebar({
   eventId,
   hostId,
   eventTitle,
+  participantCount,
   userId,
   isOpen,
   onClose,
@@ -30,6 +33,13 @@ export default function InboxSidebar({
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { checkContentSync } = useContentModeration();
+  const { data: host } = usePublicHostProfile(hostId);
+  const hostName = host
+    ? `${host.first_name} ${host.last_name}`.trim()
+    : "your host";
+  const participantLabel = `${participantCount} ${
+    participantCount === 1 ? "participant" : "participants"
+  }`;
 
   // Initial fetch and Socket.IO real-time updates
   useEffect(() => {
@@ -116,41 +126,74 @@ export default function InboxSidebar({
   if (!isOpen) return null;
 
   return (
-    <>
-      {/* Overlay - covers left side only */}
-      <div
-        className="fixed top-0 left-0 bottom-0 bg-transparent bg-opacity-30 z-40 transition-opacity"
+    <div className="fixed inset-0 z-[320]">
+      <button
+        type="button"
+        aria-label="Close inbox"
+        className="absolute inset-0 bg-slate-950/18 backdrop-blur-sm transition-opacity"
         onClick={onClose}
-        style={{
-          width: "calc(100% - 24rem)",
-        }}
       />
 
       {/* Sidebar */}
-      <div className="fixed top-0 right-0 w-96 h-screen z-50 bg-white shadow-lg flex flex-col transform transition-transform duration-300">
+      <div className="absolute right-0 top-0 z-[330] flex h-screen w-full max-w-96 flex-col overflow-hidden bg-white shadow-2xl transform transition-transform duration-300">
         {/* Header */}
-        <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Event Inbox</h2>
-            <p className="text-sm text-gray-600">{eventTitle}</p>
-          </div>
+        <div className="relative overflow-hidden border-b border-[#d7e8f2] bg-gradient-to-br from-[#f7fbff] via-white to-[#e8f7ff] px-6 pb-5 pt-6">
+          <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#0094CA]/12 blur-2xl" />
+          <div className="pointer-events-none absolute bottom-0 left-0 h-24 w-24 rounded-full bg-[#00c2a8]/10 blur-2xl" />
+
           <button
+            type="button"
+            aria-label="Close inbox"
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded transition"
+            className="absolute right-4 top-4 z-20 rounded-full border border-white/80 bg-white/85 p-2 text-slate-600 shadow-sm backdrop-blur transition hover:bg-white hover:text-slate-900"
           >
-            <FiX className="h-6 w-6" />
+            <FiX className="h-5 w-5" />
           </button>
+
+          <div className="relative flex items-start gap-4 pr-14">
+            <div className="min-w-0 flex-1">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#bfe6f4] bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#0076a3] shadow-sm backdrop-blur">
+                <FiMessageCircle className="h-3.5 w-3.5" />
+                Event Inbox
+              </div>
+
+              <h2 className="text-2xl font-bold leading-tight text-slate-900">
+                {eventTitle}
+              </h2>
+
+              <p className="mt-2 text-sm text-slate-600 italic">
+                ~ Hosted by {hostName}
+              </p>
+
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-[#0094CA]/25">
+                  <FiUsers className="h-3.5 w-3.5" />
+                  {participantLabel}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-gray-50">
+        <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 space-y-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {loading && messages.length === 0 ? (
             <div className="flex items-center justify-center h-full">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
             </div>
           ) : messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-center">
-              <p className="text-gray-500">No messages yet. Start the conversation!</p>
+            <div className="flex h-full items-center justify-center text-center">
+              <div className="max-w-xs rounded-3xl border border-[#dceef7] bg-white px-6 py-8 shadow-[0_18px_45px_-30px_rgba(0,148,202,0.55)]">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0094CA] to-[#00bfa5] text-white shadow-lg shadow-[#0094CA]/25">
+                  <FiMessageCircle className="h-6 w-6" />
+                </div>
+                <h3 className="mt-4 text-lg font-semibold text-slate-900">
+                  Start the conversation
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  Ask the host about the plan, the meeting point, or anything you want to know before the event.
+                </p>
+              </div>
             </div>
           ) : (
             messages.map((msg) => (
@@ -209,6 +252,6 @@ export default function InboxSidebar({
           </form>
         </div>
       </div>
-    </>
+    </div>
   );
 }

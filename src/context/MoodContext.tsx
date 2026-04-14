@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { normalizeMood } from "~/lib/moods";
 
 export const MOOD_TABS = [
   "All",
@@ -20,27 +21,6 @@ type MoodContextValue = {
   selectedMood: MoodTab;
   setSelectedMood: (mood: MoodTab) => void;
   selectedMoodKey: string;
-};
-
-const moodAliasMap: Record<string, string> = {
-  all: "all",
-  adventurous: "adventure",
-  adventure: "adventure",
-  social: "social",
-  wellness: "wellness",
-  educational: "educational",
-  education: "educational",
-  creative: "creative",
-  relaxing: "chill",
-  chill: "chill",
-  culinary: "culinary",
-  culture: "cultural",
-  cultural: "cultural",
-};
-
-export const normalizeMood = (mood: string | null | undefined): string => {
-  const cleaned = (mood ?? "").trim().toLowerCase();
-  return moodAliasMap[cleaned] ?? cleaned;
 };
 
 const MoodContext = createContext<MoodContextValue | null>(null);
@@ -67,3 +47,5 @@ export const useMood = () => {
   }
   return context;
 };
+
+export { normalizeMood } from "~/lib/moods";

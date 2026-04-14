@@ -6,7 +6,7 @@ import { useBookingsByUser, useListPublicEvents } from "~/hooks/useApi";
 import { type BookingDTO, type EventDTO } from "~/lib/api";
 import * as components from "~/components";
 import { InboxSidebar, ReviewModal } from "~/components/activities";
-import { FiCalendar, FiUsers, FiDollarSign, FiXCircle, FiCheck, FiMessageCircle, FiStar } from "react-icons/fi";
+import { FiCalendar, FiUsers, FiXCircle, FiCheck, FiMessageCircle, FiStar } from "react-icons/fi";
 import Breadcrumb from "~/components/Breadcrumb";
 
 interface BookingWithEvent {
@@ -17,17 +17,24 @@ interface BookingWithEvent {
 export default function ActivitiesPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [activeInboxEventId, setActiveInboxEventId] = useState<string | null>(null);
-  const [activeReviewEventId, setActiveReviewEventId] = useState<string | null>(null);
+  const [activeInboxEventId, setActiveInboxEventId] = useState<string | null>(
+    null,
+  );
+  const [activeReviewEventId, setActiveReviewEventId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("msm_user_id");
-    setUserId(storedUserId && storedUserId !== "existing" ? storedUserId : null);
+    setUserId(
+      storedUserId && storedUserId !== "existing" ? storedUserId : null,
+    );
     setIsHydrated(true);
   }, []);
 
   // Fetch user's bookings
-  const { data: bookings, isLoading: bookingsLoading } = useBookingsByUser(userId);
+  const { data: bookings, isLoading: bookingsLoading } =
+    useBookingsByUser(userId);
 
   // Fetch all public events to get event details
   const { data: allEvents } = useListPublicEvents();
@@ -85,16 +92,20 @@ export default function ActivitiesPage() {
   };
 
   return (
-      <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white">
       <components.Navbar />
 
-      <div className="mx-auto w-full max-w-[1120px] site-x py-8 pt-24">
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "My Bookings" }]} className="mb-6" />
+      <div className="site-x mx-auto w-full max-w-[1120px] py-8">
+        <Breadcrumb
+          items={[{ label: "Home", href: "/" }, { label: "My Bookings" }]}
+          className="mb-6"
+        />
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
-          <p className="text-gray-600 mt-2">
-            {bookingsWithEvents.length} {bookingsWithEvents.length === 1 ? "booking" : "bookings"}
+          <p className="mt-2 text-gray-600">
+            {bookingsWithEvents.length}{" "}
+            {bookingsWithEvents.length === 1 ? "booking" : "bookings"}
           </p>
         </div>
 
@@ -108,44 +119,54 @@ export default function ActivitiesPage() {
             {bookingsWithEvents.map(({ booking, event }) => (
               <div
                 key={booking.id}
-                className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                className="overflow-hidden rounded-lg border border-gray-200 transition-shadow hover:shadow-md"
               >
-                <div className="flex flex-col md:flex-row gap-6 p-6">
+                <div className="flex flex-col gap-6 p-6 md:flex-row">
                   {/* Event Image */}
-                  <div className="md:w-48 shrink-0">
+                  <div className="shrink-0 md:w-48">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={event.cover_image_url ?? "/assets/home/placeholder.jpg"}
+                      src={
+                        event.cover_image_url ?? "/assets/home/placeholder.jpg"
+                      }
                       alt={event.title}
                       loading="lazy"
-                      className="w-full h-40 object-cover rounded-lg"
+                      className="h-40 w-full rounded-lg object-cover"
                     />
                   </div>
 
                   {/* Booking Details */}
-                  <div className="flex-1 flex flex-col justify-between">
+                  <div className="flex flex-1 flex-col justify-between">
                     <div>
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="mb-3 flex items-start justify-between">
                         <Link href={`/experience/${event.id}`}>
-                          <h3 className="text-lg font-semibold text-gray-900 hover:text-[#0094CA] transition">
+                          <h3 className="text-lg font-semibold text-gray-900 transition hover:text-[#0094CA]">
                             {event.title}
                           </h3>
                         </Link>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${getStatusColor(booking.status)}`}>
+                        <span
+                          className={`flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(booking.status)}`}
+                        >
                           {getStatusIcon(booking.status)}
-                          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                          {booking.status.charAt(0).toUpperCase() +
+                            booking.status.slice(1)}
                         </span>
                       </div>
 
-                      <p className="text-gray-600 mb-4">{event.hook_line ?? event.description?.substring(0, 100)}</p>
+                      <p className="mb-4 text-gray-600">
+                        {event.hook_line ??
+                          event.description?.substring(0, 100)}
+                      </p>
 
                       {/* Info Grid */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div className="mb-4 grid grid-cols-2 gap-4 md:grid-cols-4">
                         <div className="flex items-center gap-2 text-gray-700">
                           <FiCalendar className="h-4 w-4 text-[#0094CA]" />
                           <div>
                             <p className="text-xs text-gray-500">Date</p>
-                            <p className="text-sm font-medium">{formatDate(event.time)}</p>
+                            <p className="text-sm font-medium">
+                              {formatDate(event.time)}
+                            </p>
                           </div>
                         </div>
 
@@ -153,15 +174,22 @@ export default function ActivitiesPage() {
                           <FiUsers className="h-4 w-4 text-[#0094CA]" />
                           <div>
                             <p className="text-xs text-gray-500">Guests</p>
-                            <p className="text-sm font-medium">{booking.quantity} {booking.quantity === 1 ? "person" : "people"}</p>
+                            <p className="text-sm font-medium">
+                              {booking.quantity}{" "}
+                              {booking.quantity === 1 ? "person" : "people"}
+                            </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2 text-gray-700">
-                          <FiDollarSign className="h-4 w-4 text-[#0094CA]" />
+                          <span className="inline-flex h-4 w-4 items-center justify-center text-sm font-bold leading-none text-[#0094CA]">
+                            ₹
+                          </span>
                           <div>
                             <p className="text-xs text-gray-500">Amount</p>
-                            <p className="text-sm font-medium">{formatPrice(booking.amount_cents)}</p>
+                            <p className="text-sm font-medium">
+                              {formatPrice(booking.amount_cents)}
+                            </p>
                           </div>
                         </div>
 
@@ -173,7 +201,7 @@ export default function ActivitiesPage() {
                                 href={event.meeting_link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm font-medium text-[#0094CA] hover:text-[#007ba8] underline transition"
+                                className="text-sm font-medium text-[#0094CA] underline transition hover:text-[#007ba8]"
                               >
                                 Join Meeting
                               </a>
@@ -185,12 +213,14 @@ export default function ActivitiesPage() {
                               href={event.google_maps_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-sm font-medium text-[#0094CA] hover:text-[#007ba8] underline transition"
+                              className="text-sm font-medium text-[#0094CA] underline transition hover:text-[#007ba8]"
                             >
                               View on Maps
                             </a>
                           ) : (
-                            <p className="text-sm font-medium">{event.location ?? "Location TBD"}</p>
+                            <p className="text-sm font-medium">
+                              {event.location ?? "Location TBD"}
+                            </p>
                           )}
                         </div>
                       </div>
@@ -200,14 +230,14 @@ export default function ActivitiesPage() {
                     <div className="flex gap-3">
                       <button
                         onClick={() => setActiveInboxEventId(event.id)}
-                        className="inline-flex items-center gap-2 px-4 py-2 border border-[#0094CA] text-[#0094CA] rounded-lg hover:bg-[#f0faff] transition font-medium text-sm"
+                        className="inline-flex items-center gap-2 rounded-lg border border-[#0094CA] px-4 py-2 text-sm font-medium text-[#0094CA] transition hover:bg-[#f0faff]"
                       >
                         <FiMessageCircle className="h-4 w-4" />
                         View Inbox
                       </button>
                       <button
                         onClick={() => setActiveReviewEventId(event.id)}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-[#0094CA] text-white rounded-lg hover:bg-[#0076a3] transition font-medium text-sm"
+                        className="inline-flex items-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0076a3]"
                       >
                         <FiStar className="h-4 w-4" />
                         Add Review
@@ -221,15 +251,16 @@ export default function ActivitiesPage() {
         ) : isHydrated ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="mb-4">
-              <FiCalendar className="h-12 w-12 text-gray-300 mx-auto" />
+              <FiCalendar className="mx-auto h-12 w-12 text-gray-300" />
             </div>
-            <p className="text-lg text-gray-600 mb-4">No bookings yet</p>
-            <p className="text-gray-500 mb-6 max-w-sm">
-              You haven`&apos;t made any bookings. Explore experiences and book your first adventure!
+            <p className="mb-4 text-lg text-gray-600">No bookings yet</p>
+            <p className="mb-6 max-w-sm text-gray-500">
+              You haven`&apos;t made any bookings. Explore experiences and book
+              your first adventure!
             </p>
             <Link
               href="/experiences"
-              className="px-6 py-2 bg-[#0094CA] text-white rounded-lg hover:bg-[#0076a3] transition font-medium"
+              className="rounded-lg bg-[#0094CA] px-6 py-2 font-medium text-white transition hover:bg-[#0076a3]"
             >
               Browse Experiences
             </Link>
@@ -242,10 +273,14 @@ export default function ActivitiesPage() {
         <InboxSidebar
           eventId={activeInboxEventId}
           hostId={
-            bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)?.event.host_id ?? ""
+            bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)
+              ?.event.host_id ?? ""
           }
           eventTitle={
             bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)?.event.title ?? "Event"
+          }
+          participantCount={
+            bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)?.event.total_bookings ?? 0
           }
           userId={userId}
           isOpen={!!activeInboxEventId}
@@ -257,8 +292,12 @@ export default function ActivitiesPage() {
       {activeReviewEventId && userId && (
         <ReviewModal
           eventId={activeReviewEventId}
+          hostId={
+            bookingsWithEvents.find((b) => b.event.id === activeReviewEventId)?.event.host_id ?? ""
+          }
           eventTitle={
-            bookingsWithEvents.find((b) => b.event.id === activeReviewEventId)?.event.title ?? "Event"
+            bookingsWithEvents.find((b) => b.event.id === activeReviewEventId)
+              ?.event.title ?? "Event"
           }
           userId={userId}
           isOpen={!!activeReviewEventId}

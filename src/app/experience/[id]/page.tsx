@@ -24,6 +24,7 @@ import {
   FiStar,
   FiCalendar,
   FiGrid,
+  FiChevronDown,
 } from "react-icons/fi";
 import { LuLanguages, LuBadgeCheck, LuSparkles } from "react-icons/lu";
 import { format } from "date-fns";
@@ -43,12 +44,14 @@ function PhotoGallery({
   gallery: string[] | null;
   onShowAll: () => void;
 }) {
-  const images = coverImage ? [coverImage, ...(gallery ?? [])] : (gallery ?? []);
+  const images = coverImage
+    ? [coverImage, ...(gallery ?? [])]
+    : (gallery ?? []);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (images.length === 0) {
     return (
-      <div className="bg-gray-200 h-96 rounded-xl flex items-center justify-center">
+      <div className="flex h-96 items-center justify-center rounded-xl bg-gray-200">
         <span className="text-gray-500">No photos available</span>
       </div>
     );
@@ -63,14 +66,14 @@ function PhotoGallery({
   };
 
   return (
-    <div className="relative group">
-      <div className="relative h-96 rounded-xl overflow-hidden bg-gray-100">
+    <div className="group relative">
+      <div className="relative h-96 overflow-hidden rounded-xl bg-gray-100">
         {/* Main Image */}
         <img
           src={images[currentImageIndex]}
           alt={`Experience gallery ${currentImageIndex + 1}`}
           loading="lazy"
-          className="w-full h-full object-cover transition-opacity duration-300"
+          className="h-full w-full object-cover transition-opacity duration-300"
         />
 
         {/* Navigation Arrows */}
@@ -79,27 +82,47 @@ function PhotoGallery({
             {/* Left Arrow */}
             <button
               onClick={handlePrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-3 rounded-full shadow-lg transition opacity-0 group-hover:opacity-100 z-10"
+              className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-3 opacity-0 shadow-lg transition group-hover:opacity-100 hover:bg-white"
               aria-label="Previous image"
             >
-              <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                className="h-5 w-5 text-gray-800"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
 
             {/* Right Arrow */}
             <button
               onClick={handleNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-3 rounded-full shadow-lg transition opacity-0 group-hover:opacity-100 z-10"
+              className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-3 opacity-0 shadow-lg transition group-hover:opacity-100 hover:bg-white"
               aria-label="Next image"
             >
-              <svg className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg
+                className="h-5 w-5 text-gray-800"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
 
             {/* Image Counter */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium opacity-0 group-hover:opacity-100 transition">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm font-medium text-white opacity-0 transition group-hover:opacity-100">
               {currentImageIndex + 1} / {images.length}
             </div>
           </>
@@ -110,7 +133,7 @@ function PhotoGallery({
       {images.length > 1 && (
         <button
           onClick={onShowAll}
-          className="absolute bottom-4 right-4 bg-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-lg hover:shadow-xl transition"
+          className="absolute right-4 bottom-4 flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow-lg transition hover:shadow-xl"
         >
           <FiGrid size={16} />
           Show all photos
@@ -142,18 +165,20 @@ function InfoPills({
   };
 
   return (
-    <div className="flex flex-wrap gap-6 py-6 px-4 md:px-6 border-b border-gray-100 bg-gradient-to-r from-blue-50/30 to-transparent rounded-lg mb-6">
+    <div className="mb-6 flex flex-wrap gap-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-blue-50/30 to-transparent px-4 py-6 md:px-6">
       <div className="flex items-center gap-2">
-        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
           <FiClock className="text-[#0094CA]" size={18} />
         </div>
         <div>
           <p className="text-xs text-gray-500">Duration</p>
-          <p className="text-sm font-semibold">{duration ? formatDuration(duration) : "N/A"}</p>
+          <p className="text-sm font-semibold">
+            {duration ? formatDuration(duration) : "N/A"}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
           <FiUsers className="text-[#0094CA]" size={18} />
         </div>
         <div>
@@ -164,7 +189,7 @@ function InfoPills({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
           <LuLanguages className="text-[#0094CA]" size={18} />
         </div>
         <div>
@@ -173,12 +198,14 @@ function InfoPills({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
           <LuSparkles className="text-[#0094CA]" size={18} />
         </div>
         <div>
           <p className="text-xs text-gray-500">Level</p>
-          <p className="text-sm font-semibold">{level ?? "Beginner Friendly"}</p>
+          <p className="text-sm font-semibold">
+            {level ?? "Beginner Friendly"}
+          </p>
         </div>
       </div>
     </div>
@@ -211,73 +238,99 @@ function BookingWidget({
 }) {
   const [guests, setGuests] = useState(1);
   const spotsLeft = capacity - totalBookings;
+  const maxGuests = Math.max(0, Math.min(spotsLeft, 10));
+  const guestOptions = Array.from({ length: maxGuests }, (_, i) => i + 1);
 
-  const formattedPrice = isFree ? "Free" : `₹${((price ?? 0) / 100).toFixed(0)}`;
+  const formattedPrice = isFree
+    ? "Free"
+    : `₹${((price ?? 0) / 100).toFixed(0)}`;
 
   // Check if event date has passed
   const eventHasPassed = _eventDate ? new Date(_eventDate) < new Date() : false;
 
+  useEffect(() => {
+    if (guestOptions.length === 0) return;
+    if (!guestOptions.includes(guests)) {
+      setGuests(guestOptions[0] ?? 1);
+    }
+  }, [guestOptions, guests]);
+
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm sticky top-20 h-max">
+    <div className="sticky top-20 h-max rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       {/* Price and Rating */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <span className="text-2xl font-bold">{formattedPrice}</span>
-          {!isFree && <span className="text-gray-500 text-sm">/person</span>}
+          {!isFree && <span className="text-sm text-gray-500">/person</span>}
         </div>
         {rating && (
           <div className="flex items-center gap-1">
-            <FiStar className="text-yellow-400 fill-yellow-400" size={16} />
+            <FiStar className="fill-yellow-400 text-yellow-400" size={16} />
             <span className="font-semibold">{rating.toFixed(1)}</span>
-            <span className="text-gray-500 text-sm">({totalReviews})</span>
+            <span className="text-sm text-gray-500">({totalReviews})</span>
           </div>
         )}
       </div>
 
       {/* Date Display */}
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-1">DATE & TIME</label>
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          DATE & TIME
+        </label>
         <div className="relative">
-          <div className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 flex items-center gap-2 text-gray-700">
+          <div className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700">
             <FiCalendar size={18} className="text-[#0094CA]" />
             <span className="font-medium">
-              {_eventDate 
-                ? new Date(_eventDate).toLocaleDateString('en-US', { 
-                    weekday: 'short', 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
+              {_eventDate
+                ? new Date(_eventDate).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })
                 : "Date TBD"}
             </span>
           </div>
         </div>
-        <p className="text-xs text-gray-500 mt-1">This event is scheduled on the date and time shown above</p>
+        <p className="mt-1 text-xs text-gray-500">
+          This event is scheduled on the date and time shown above
+        </p>
       </div>
 
       {/* Guests Selector */}
       {!eventHasPassed && (
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-1">GUESTS</label>
-          <select
-            value={guests}
-            onChange={(e) => setGuests(parseInt(e.target.value))}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none appearance-none bg-white"
-          >
-            {Array.from({ length: Math.min(spotsLeft, 10) }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>
-                {n} Guest{n > 1 ? "s" : ""}
-              </option>
-            ))}
-          </select>
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            GUESTS
+          </label>
+          {guestOptions.length > 0 ? (
+            <div className="relative">
+              <select
+                value={guests}
+                onChange={(e) => setGuests(Number(e.target.value))}
+                className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-3 pr-11 text-base text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-4 focus:ring-[#0094CA]/15"
+              >
+                {guestOptions.map((n) => (
+                  <option key={n} value={n}>
+                    {n} Guest{n > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+              <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-gray-500" />
+            </div>
+          ) : (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-500">
+              No guest slots available
+            </div>
+          )}
         </div>
       )}
 
       {/* Event Status */}
       {eventHasPassed ? (
-        <div className="p-3 bg-gray-100 text-gray-700 rounded-lg text-center font-medium">
+        <div className="rounded-lg bg-gray-100 p-3 text-center font-medium text-gray-700">
           Event has passed
         </div>
       ) : (
@@ -286,24 +339,28 @@ function BookingWidget({
           <button
             onClick={() => onBook(_eventDate, guests)}
             disabled={!_eventDate || spotsLeft <= 0}
-            className="w-full py-3 bg-[#0094CA] hover:bg-[#007ba8] text-white rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Continue
           </button>
 
-          <p className="text-center text-sm text-gray-500 mt-2">You won&apos;t be charged yet</p>
+          <p className="mt-2 text-center text-sm text-gray-500">
+            You won&apos;t be charged yet
+          </p>
         </>
       )}
 
       {/* Rare Find Badge */}
       {!eventHasPassed && spotsLeft <= 3 && spotsLeft > 0 && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg flex items-start gap-2">
-          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-100 bg-red-50 p-3">
+          <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-500">
             <LuSparkles className="text-white" size={12} />
           </div>
           <div>
             <p className="text-sm font-semibold text-red-600">Rare find</p>
-            <p className="text-xs text-red-500">Only {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} left!</p>
+            <p className="text-xs text-red-500">
+              Only {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} left!
+            </p>
           </div>
         </div>
       )}
@@ -324,21 +381,23 @@ function ThePlan({ items }: { items: PlanItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="py-6 border-b border-gray-100">
-      <h2 className="text-xl font-bold mb-4">The Plan</h2>
+    <div className="border-b border-gray-100 py-6">
+      <h2 className="mb-4 text-xl font-bold">The Plan</h2>
       <div className="space-y-4">
         {items.map((item, i) => (
           <div key={i} className="flex gap-4">
             <div className="flex flex-col items-center">
-              <div className="w-3 h-3 bg-[#0094CA] rounded-full" />
-              {i < items.length - 1 && <div className="w-0.5 h-full bg-[#0094CA]/30 flex-1 mt-1" />}
+              <div className="h-3 w-3 rounded-full bg-[#0094CA]" />
+              {i < items.length - 1 && (
+                <div className="mt-1 h-full w-0.5 flex-1 bg-[#0094CA]/30" />
+              )}
             </div>
             <div className="flex-1 pb-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold">{item.title}</h3>
                 <span className="text-sm text-[#0094CA]">{item.duration}</span>
               </div>
-              <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+              <p className="mt-1 text-sm text-gray-600">{item.description}</p>
             </div>
           </div>
         ))}
@@ -370,25 +429,27 @@ function MeetYourHost({
   if (!host) return null;
 
   return (
-    <div className="py-8 px-4 md:px-6 border-b border-gray-100 rounded-lg bg-gradient-to-r from-blue-50/20 to-transparent mb-6">
-      <h2 className="text-2xl font-bold mb-6">Meet your host</h2>
+    <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-blue-50/20 to-transparent px-4 py-8 md:px-6">
+      <h2 className="mb-6 text-2xl font-bold">Meet your host</h2>
       <div className="flex gap-4">
         <div className="flex-shrink-0">
           {host.avatar_url ? (
             <img
               src={host.avatar_url}
               alt={host.first_name}
-              className="w-16 h-16 rounded-full object-cover"
+              className="h-16 w-16 rounded-full object-cover"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-[#0094CA] flex items-center justify-center text-white text-xl font-bold">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#0094CA] text-xl font-bold text-white">
               {host.first_name[0]}
             </div>
           )}
-          <div className="text-center mt-1">
-            <p className="font-semibold text-sm">{host.first_name} {host.last_name?.[0]}.</p>
+          <div className="mt-1 text-center">
+            <p className="text-sm font-semibold">
+              {host.first_name} {host.last_name?.[0]}.
+            </p>
             {host.is_identity_verified && (
-              <p className="text-xs text-green-600 flex items-center justify-center gap-0.5">
+              <p className="flex items-center justify-center gap-0.5 text-xs text-green-600">
                 <LuBadgeCheck size={12} />
                 Verified Host
               </p>
@@ -396,19 +457,20 @@ function MeetYourHost({
           </div>
         </div>
         <div className="flex-1">
-          <p className="text-sm text-gray-600 mb-3">
-            {host.bio ?? `Hi, I'm ${host.first_name}! I'm excited to share this experience with you.`}
+          <p className="mb-3 text-sm text-gray-600">
+            {host.bio ??
+              `Hi, I'm ${host.first_name}! I'm excited to share this experience with you.`}
           </p>
           <div className="flex gap-2">
             <button
               onClick={onContact}
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium transition hover:bg-gray-50"
             >
               Contact Host
             </button>
             <button
               onClick={onViewProfile}
-              className="px-4 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition"
+              className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium transition hover:bg-gray-50"
             >
               View Profile
             </button>
@@ -422,22 +484,34 @@ function MeetYourHost({
 /* ------------------------------------------------------------------ */
 /*  Where We'll Meet Component                                         */
 /* ------------------------------------------------------------------ */
-function WhereWellMeet({ location, isOnline, meetingLink, googleMapsUrl }: { location: string | null; isOnline: boolean; meetingLink?: string | null; googleMapsUrl?: string | null }) {
+function WhereWellMeet({
+  location,
+  isOnline,
+  meetingLink,
+  googleMapsUrl,
+}: {
+  location: string | null;
+  isOnline: boolean;
+  meetingLink?: string | null;
+  googleMapsUrl?: string | null;
+}) {
   if (isOnline) {
     return (
-      <div className="py-8 px-4 md:px-6 border-b border-gray-100 rounded-lg bg-gradient-to-r from-blue-50/20 to-transparent mb-6">
-        <h2 className="text-2xl font-bold mb-6">Where we&apos;ll meet</h2>
-        <div className="bg-gray-100 rounded-xl p-6 flex items-center justify-center">
+      <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-blue-50/20 to-transparent px-4 py-8 md:px-6">
+        <h2 className="mb-6 text-2xl font-bold">Where we&apos;ll meet</h2>
+        <div className="flex items-center justify-center rounded-xl bg-gray-100 p-6">
           <div className="text-center">
-            <div className="text-4xl mb-2">🌐</div>
+            <div className="mb-2 text-4xl">🌐</div>
             <p className="font-semibold">Online Experience</p>
-            <p className="text-sm text-gray-500">Join from anywhere via video call</p>
+            <p className="text-sm text-gray-500">
+              Join from anywhere via video call
+            </p>
             {meetingLink && (
               <a
                 href={meetingLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block mt-3 px-4 py-2 bg-[#0094CA] text-white rounded-lg text-sm font-medium hover:bg-[#007ba8] transition"
+                className="mt-3 inline-block rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#007ba8]"
               >
                 Join Meeting
               </a>
@@ -449,13 +523,13 @@ function WhereWellMeet({ location, isOnline, meetingLink, googleMapsUrl }: { loc
   }
 
   return (
-    <div className="py-8 px-4 md:px-6 border-b border-gray-100 rounded-lg bg-gradient-to-r from-transparent to-blue-50/20 mb-6">
-      <h2 className="text-2xl font-bold mb-6">Where we&apos;ll meet</h2>
-      <div className="bg-gray-200 rounded-xl h-48 flex items-center justify-center relative overflow-hidden">
+    <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-transparent to-blue-50/20 px-4 py-8 md:px-6">
+      <h2 className="mb-6 text-2xl font-bold">Where we&apos;ll meet</h2>
+      <div className="relative flex h-48 items-center justify-center overflow-hidden rounded-xl bg-gray-200">
         {/* Placeholder map */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-green-100" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="w-8 h-8 bg-[#0094CA] rounded-full flex items-center justify-center">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0094CA]">
             <FiMapPin className="text-white" size={16} />
           </div>
         </div>
@@ -469,7 +543,7 @@ function WhereWellMeet({ location, isOnline, meetingLink, googleMapsUrl }: { loc
             href={googleMapsUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-medium text-[#0094CA] hover:text-[#007ba8] transition flex items-center gap-1"
+            className="flex items-center gap-1 text-sm font-medium text-[#0094CA] transition hover:text-[#007ba8]"
           >
             View on Maps
             <FiMapPin size={14} />
@@ -512,19 +586,23 @@ function GuestReviews({
   ];
 
   return (
-    <div className="py-8 px-4 md:px-6 rounded-lg bg-gradient-to-r from-blue-50/20 to-transparent">
-      <h2 className="text-2xl font-bold mb-6">Guest Reviews</h2>
+    <div className="rounded-lg bg-gradient-to-r from-blue-50/20 to-transparent px-4 py-8 md:px-6">
+      <h2 className="mb-6 text-2xl font-bold">Guest Reviews</h2>
 
       {/* Rating Summary */}
-      <div className="flex gap-8 mb-6">
+      <div className="mb-6 flex gap-8">
         <div className="text-center">
           <p className="text-4xl font-bold">{rating?.toFixed(1) ?? "N/A"}</p>
-          <div className="flex justify-center gap-0.5 my-1">
+          <div className="my-1 flex justify-center gap-0.5">
             {[1, 2, 3, 4, 5].map((star) => (
               <FiStar
                 key={star}
                 size={14}
-                className={star <= (rating ?? 0) ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
+                className={
+                  star <= (rating ?? 0)
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "text-gray-300"
+                }
               />
             ))}
           </div>
@@ -535,10 +613,10 @@ function GuestReviews({
         <div className="flex-1 space-y-1">
           {distribution.map(({ stars, percent }) => (
             <div key={stars} className="flex items-center gap-2">
-              <span className="text-sm w-3">{stars}</span>
-              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <span className="w-3 text-sm">{stars}</span>
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
                 <div
-                  className="h-full bg-[#0094CA] rounded-full"
+                  className="h-full rounded-full bg-[#0094CA]"
                   style={{ width: `${percent}%` }}
                 />
               </div>
@@ -550,9 +628,12 @@ function GuestReviews({
       {/* Individual Reviews */}
       <div className="space-y-4">
         {reviews.slice(0, 3).map((review) => (
-          <div key={review.id} className="pb-4 border-b border-gray-100 last:border-0">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-sm font-semibold">
+          <div
+            key={review.id}
+            className="border-b border-gray-100 pb-4 last:border-0"
+          >
+            <div className="mb-2 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold">
                 {review.name?.[0] ?? "G"}
               </div>
               <div>
@@ -562,7 +643,9 @@ function GuestReviews({
                 </p>
               </div>
             </div>
-            <p className="text-sm text-gray-600">&quot;{review.description}&quot;</p>
+            <p className="text-sm text-gray-600">
+              &quot;{review.description}&quot;
+            </p>
           </div>
         ))}
       </div>
@@ -570,7 +653,7 @@ function GuestReviews({
       {totalReviews > 3 && (
         <button
           onClick={onShowAll}
-          className="text-[#0094CA] text-sm font-medium mt-4 hover:underline"
+          className="mt-4 text-sm font-medium text-[#0094CA] hover:underline"
         >
           Show all {totalReviews} reviews
         </button>
@@ -594,24 +677,24 @@ function AllPhotosModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 z-50 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[1120px] site-x py-8 pt-24">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white text-xl font-bold">All photos</h2>
+    <div className="fixed inset-0 z-[250] overflow-y-auto bg-black/90">
+      <div className="site-x mx-auto w-full max-w-[1120px] py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-white">All photos</h2>
           <button
             onClick={onClose}
-            className="text-white hover:text-gray-300 text-2xl"
+            className="text-2xl text-white hover:text-gray-300"
           >
             ×
           </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {images.map((img, i) => (
             <img
               key={i}
               src={img}
               alt={`Photo ${i + 1}`}
-              className="w-full h-64 object-cover rounded-lg"
+              className="h-64 w-full rounded-lg object-cover"
             />
           ))}
         </div>
@@ -656,12 +739,12 @@ export default function ExperienceDetailPage({
     if (isSaved) {
       unsaveExperience.mutate(
         { eventId: resolvedParams.id, userId },
-        { onSuccess: () => toast.success("Removed from saved") }
+        { onSuccess: () => toast.success("Removed from saved") },
       );
     } else {
       saveExperience.mutate(
         { user_id: userId, event_id: resolvedParams.id },
-        { onSuccess: () => toast.success("Saved to your list") }
+        { onSuccess: () => toast.success("Saved to your list") },
       );
     }
   };
@@ -686,30 +769,44 @@ export default function ExperienceDetailPage({
       return;
     }
     const encodedDate = encodeURIComponent(date);
-    router.push(`/experience/${resolvedParams.id}/book?date=${encodedDate}&guests=${guests}`);
+    router.push(
+      `/experience/${resolvedParams.id}/book?date=${encodedDate}&guests=${guests}`,
+    );
   };
 
   // Parse description for "The Plan" section (simple implementation)
   const planItems: PlanItem[] = event?.description
     ? [
-        { title: "Introduction & Welcome", description: "Meet the host and fellow guests", duration: "15 mins" },
-        { title: "Main Activity", description: event.description.slice(0, 150) + "...", duration: "1 hour 30 mins" },
-        { title: "Wrap Up & Q&A", description: "Final thoughts and questions", duration: "15 mins" },
+        {
+          title: "Introduction & Welcome",
+          description: "Meet the host and fellow guests",
+          duration: "15 mins",
+        },
+        {
+          title: "Main Activity",
+          description: event.description.slice(0, 150) + "...",
+          duration: "1 hour 30 mins",
+        },
+        {
+          title: "Wrap Up & Q&A",
+          description: "Final thoughts and questions",
+          duration: "15 mins",
+        },
       ]
     : [];
 
   if (eventLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0094CA]" />
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-        <p className="text-xl text-gray-600 mb-4">Experience not found</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-white">
+        <p className="mb-4 text-xl text-gray-600">Experience not found</p>
         <Link href="/" className="text-[#0094CA] hover:underline">
           Go back home
         </Link>
@@ -725,23 +822,25 @@ export default function ExperienceDetailPage({
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-white pt-24">
-        <div className="mx-auto w-full max-w-[1120px] site-x py-8 px-4 md:px-6 lg:px-8">
+      <main className="min-h-screen bg-white">
+        <div className="site-x mx-auto w-full max-w-[1120px] px-4 py-8 md:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <Breadcrumb 
+          <Breadcrumb
             items={[
-              { label: "Home", href: "/" }, 
+              { label: "Home", href: "/" },
               { label: "Experiences", href: "/experiences" },
-              { label: event.title ?? "Experience" }
-            ]} 
-            className="mb-6" 
+              { label: event.title ?? "Experience" },
+            ]}
+            className="mb-6"
           />
 
           {/* Title and Actions */}
-          <div className="flex items-start justify-between mb-6 mt-6">
+          <div className="mt-6 mb-6 flex items-start justify-between">
             <div>
-              <h1 className="text-2xl md:text-4xl font-bold text-gray-900 mb-3">{event.title}</h1>
-              <div className="flex items-center gap-4 mt-3 text-sm flex-wrap">
+              <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-4xl">
+                {event.title}
+              </h1>
+              <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
                 <span className="flex items-center gap-1 text-gray-600">
                   <FiMapPin size={14} />
                   {event.is_online ? (
@@ -751,19 +850,26 @@ export default function ExperienceDetailPage({
                       href={event.google_maps_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#0094CA] hover:text-[#007ba8] underline transition"
+                      className="text-[#0094CA] underline transition hover:text-[#007ba8]"
                     >
                       View on Maps
                     </a>
                   ) : (
-                    event.location ?? "Location TBD"
+                    (event.location ?? "Location TBD")
                   )}
                 </span>
                 {ratingData && (
                   <span className="flex items-center gap-1">
-                    <FiStar className="text-yellow-400 fill-yellow-400" size={14} />
-                    <span className="font-semibold">{ratingData.avg_rating?.toFixed(1)}</span>
-                    <span className="text-gray-500">({ratingData.total_reviews} reviews)</span>
+                    <FiStar
+                      className="fill-yellow-400 text-yellow-400"
+                      size={14}
+                    />
+                    <span className="font-semibold">
+                      {ratingData.avg_rating?.toFixed(1)}
+                    </span>
+                    <span className="text-gray-500">
+                      ({ratingData.total_reviews} reviews)
+                    </span>
                   </span>
                 )}
               </div>
@@ -771,15 +877,20 @@ export default function ExperienceDetailPage({
             <div className="flex items-center gap-2">
               <button
                 onClick={handleSave}
-                className={`p-2 rounded-lg border transition ${
-                  isSaved ? "border-[#0094CA] text-[#0094CA] bg-[#0094CA]/5" : "border-gray-200 hover:bg-gray-50"
+                className={`rounded-lg border p-2 transition ${
+                  isSaved
+                    ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA]"
+                    : "border-gray-200 hover:bg-gray-50"
                 }`}
               >
-                <FiBookmark size={20} className={isSaved ? "fill-current" : ""} />
+                <FiBookmark
+                  size={20}
+                  className={isSaved ? "fill-current" : ""}
+                />
               </button>
               <button
                 onClick={handleShare}
-                className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition"
+                className="rounded-lg border border-gray-200 p-2 transition hover:bg-gray-50"
               >
                 <FiShare2 size={20} />
               </button>
@@ -794,22 +905,27 @@ export default function ExperienceDetailPage({
           />
 
           {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-3 gap-8 mt-10">
+          <div className="mt-10 grid gap-8 lg:grid-cols-3">
             {/* Left Column - Details */}
             <div className="lg:col-span-2">
               <InfoPills
                 duration={event.duration_minutes}
-                groupSize={{ min: event.min_group_size, max: event.max_group_size }}
+                groupSize={{
+                  min: event.min_group_size,
+                  max: event.max_group_size,
+                }}
               />
 
               {/* About the Experience */}
-              <div className="py-8 px-4 md:px-6 border-b border-gray-100 bg-gradient-to-r from-transparent to-blue-50/20 rounded-lg mb-6">
-                <h2 className="text-2xl font-bold mb-4">About the experience</h2>
-                <p className="text-gray-600 whitespace-pre-line">
+              <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-transparent to-blue-50/20 px-4 py-8 md:px-6">
+                <h2 className="mb-4 text-2xl font-bold">
+                  About the experience
+                </h2>
+                <p className="whitespace-pre-line text-gray-600">
                   {event.description ?? "No description available."}
                 </p>
                 {event.hook_line && (
-                  <p className="text-gray-600 mt-4 italic">{event.hook_line}</p>
+                  <p className="mt-4 text-gray-600 italic">{event.hook_line}</p>
                 )}
               </div>
 
@@ -824,7 +940,12 @@ export default function ExperienceDetailPage({
               />
 
               {/* Where We'll Meet */}
-              <WhereWellMeet location={event.location} isOnline={event.is_online} meetingLink={event.meeting_link} googleMapsUrl={event.google_maps_url} />
+              <WhereWellMeet
+                location={event.location}
+                isOnline={event.is_online}
+                meetingLink={event.meeting_link}
+                googleMapsUrl={event.google_maps_url}
+              />
 
               {/* Guest Reviews */}
               <GuestReviews

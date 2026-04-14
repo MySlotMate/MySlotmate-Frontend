@@ -2,8 +2,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { LuLoader2 } from "react-icons/lu";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useListPublicEvents } from "~/hooks/useApi";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { toast } from "sonner";
+import { useListPublicEvents, useIsExperienceSaved, useSaveExperience, useUnsaveExperience } from "~/hooks/useApi";
 import { normalizeMood, useMood } from "~/context/MoodContext";
 import { calculateDistance, getSavedLocation, type CityLocation } from "../LocationModal";
 
@@ -15,7 +16,44 @@ interface TrendingCardProps {
   duration: string;
   mood: string;
 }
+
 const TrendingCard = ({ id, title, imageUrl, pricing, duration, mood }: TrendingCardProps) => {
+  const [userId, setUserId] = useState<string | null>(null);
+  
+  const { data: savedStatus } = useIsExperienceSaved(id, userId);
+  const saveExperience = useSaveExperience();
+  const unsaveExperience = useUnsaveExperience();
+  
+  const isSaved = savedStatus?.saved ?? false;
+  
+  useEffect(() => {
+    const id = localStorage.getItem("msm_user_id");
+    if (id) {
+      setUserId(id);
+    }
+  }, []);
+  
+  const handleSave = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!userId) {
+      toast.error("Please login to save experiences");
+      return;
+    }
+    
+    if (isSaved) {
+      unsaveExperience.mutate(
+        { eventId: id, userId },
+        { onSuccess: () => toast.success("Removed from saved") }
+      );
+    } else {
+      saveExperience.mutate(
+        { user_id: userId, event_id: id },
+        { onSuccess: () => toast.success("Saved to your list") }
+      );
+    }
+  };
   return (
     <Link
       href={`/experience/${id}`}
@@ -34,6 +72,21 @@ const TrendingCard = ({ id, title, imageUrl, pricing, duration, mood }: Trending
         <span className="absolute left-3 top-3 z-10 rounded-full bg-[#f5fbff]/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#0e8ae0] shadow-sm">
           {mood}
         </span>
+        
+        {/* Save button */}
+        <button
+          onClick={handleSave}
+          disabled={saveExperience.isPending || unsaveExperience.isPending}
+          className="absolute right-3 top-3 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-blue-50 hover:shadow-lg disabled:opacity-50"
+          aria-label={isSaved ? "Remove from saved" : "Save experience"}
+        >
+          <Heart
+            className="h-6 w-6 transition"
+            fill={isSaved ? "#0094CA" : "none"}
+            stroke="#0094CA"
+            strokeWidth={2}
+          />
+        </button>
       </div>
 
       {/* Adjusted padding and spacing for better balance in a square layout */}

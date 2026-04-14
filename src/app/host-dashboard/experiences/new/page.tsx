@@ -9,7 +9,7 @@ import { useMyHost, useCreateEvent, useUploadFiles, usePublishEvent } from "~/ho
 import { useContentModeration } from "~/hooks/useContentModeration";
 import { useSuggestions } from "~/hooks/useSuggestions";
 import { SuggestionChips } from "~/components/SuggestionChips";
-import { FiArrowLeft, FiArrowRight, FiUpload, FiX, FiCheck, FiMapPin, FiClock, FiUsers, FiCalendar, FiDollarSign, FiShare2, FiExternalLink, FiAlertTriangle } from "react-icons/fi";
+import { FiArrowLeft, FiArrowRight, FiUpload, FiX, FiCheck, FiMapPin, FiClock, FiUsers, FiCalendar, FiShare2, FiExternalLink, FiAlertTriangle } from "react-icons/fi";
 import { toast } from "sonner";
 
 /* ------------------------------------------------------------------ */
@@ -1002,7 +1002,7 @@ export default function CreateExperiencePage() {
                 {/* Pricing Section */}
                 <div className="space-y-4">
                   <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                    <FiDollarSign /> Pricing
+                    <span className="inline-flex h-4 w-4 items-center justify-center text-sm font-bold leading-none">₹</span> Pricing
                   </h3>
 
                   {/* Free/Paid Toggle */}

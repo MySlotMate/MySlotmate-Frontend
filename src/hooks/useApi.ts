@@ -1,17 +1,23 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient, type UseQueryResult, type UseMutationResult } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+  type UseMutationResult,
+} from "@tanstack/react-query";
 import * as api from "~/lib/api";
 
 /* ═══ Query Keys ═══════════════════════════════════════════════ */
 
 export const queryKeys = {
   myProfile: (userId: string) => ["myProfile", userId] as const,
-  applicationStatus: (userId: string) =>
-    ["applicationStatus", userId] as const,
+  applicationStatus: (userId: string) => ["applicationStatus", userId] as const,
   myHost: (userId: string) => ["myHost", userId] as const,
   hostDashboard: (hostId: string) => ["hostDashboard", hostId] as const,
-  hostAttentionItems: (hostId: string) => ["hostAttentionItems", hostId] as const,
+  hostAttentionItems: (hostId: string) =>
+    ["hostAttentionItems", hostId] as const,
   todaySchedule: (hostId: string) => ["todaySchedule", hostId] as const,
   eventsByHost: (hostId: string) => ["eventsByHost", hostId] as const,
   calendarEvents: (hostId: string) => ["calendarEvents", hostId] as const,
@@ -21,8 +27,7 @@ export const queryKeys = {
   eventAttendees: (eventId: string) => ["eventAttendees", eventId] as const,
   reviewsByEvent: (eventId: string) => ["reviewsByEvent", eventId] as const,
   eventRating: (eventId: string) => ["eventRating", eventId] as const,
-  savedExperiences: (userId: string) =>
-    ["savedExperiences", userId] as const,
+  savedExperiences: (userId: string) => ["savedExperiences", userId] as const,
   isExperienceSaved: (eventId: string, userId: string) =>
     ["isExperienceSaved", eventId, userId] as const,
   bookingsByUser: (userId: string) => ["bookingsByUser", userId] as const,
@@ -37,6 +42,9 @@ export const queryKeys = {
   userTickets: (userId: string) => ["userTickets", userId] as const,
   listHosts: ["listHosts"] as const,
   listPublicEvents: ["listPublicEvents"] as const,
+  blogs: ["blogs"] as const,
+  blog: (blogId: string) => ["blog", blogId] as const,
+  blogsByCategory: (category: string) => ["blogsByCategory", category] as const,
   publicHostProfile: (hostId: string) => ["publicHostProfile", hostId] as const,
   pendingHostApplications: ["pendingHostApplications"] as const,
   userProfile: (userId: string) => ["userProfile", userId] as const,
@@ -64,7 +72,9 @@ export function useUserProfile(userId: string | null) {
   });
 }
 
-export function useApplicationStatus(userId: string | null): UseQueryResult<api.ApplicationStatusResponse> {
+export function useApplicationStatus(
+  userId: string | null,
+): UseQueryResult<api.ApplicationStatusResponse> {
   return useQuery({
     queryKey: queryKeys.applicationStatus(userId ?? ""),
     queryFn: async () => {
@@ -75,7 +85,7 @@ export function useApplicationStatus(userId: string | null): UseQueryResult<api.
         const error = err as Error & { status?: number };
         const errorMsg = error?.message ?? "";
         const status = error?.status;
-        
+
         // If it's a 404 (not found), it means no application exists yet
         if (status === 404) {
           return {
@@ -84,21 +94,24 @@ export function useApplicationStatus(userId: string | null): UseQueryResult<api.
             error: "No application found",
           } as api.Envelope<api.ApplicationStatusResponse>;
         }
-        
-        // For any other error, if it contains "application" or "already", 
+
+        // For any other error, if it contains "application" or "already",
         // it might mean application exists but there's an issue fetching it
-        if (errorMsg.toLowerCase().includes("application") || errorMsg.toLowerCase().includes("already")) {
+        if (
+          errorMsg.toLowerCase().includes("application") ||
+          errorMsg.toLowerCase().includes("already")
+        ) {
           return {
             success: true,
             data: {
               status: {
                 id: userId ?? "",
                 application_status: "pending" as const,
-              }
+              },
             },
           } as api.Envelope<api.ApplicationStatusResponse>;
         }
-        
+
         // Re-throw other errors
         throw err;
       }
@@ -120,7 +133,6 @@ export function useMyHost(userId: string | null) {
     enabled: !!userId,
     staleTime: 2 * 60 * 1000,
     select: (res) => res.data,
-   
   });
 }
 
@@ -137,6 +149,41 @@ export function useListPublicEvents() {
   return useQuery({
     queryKey: queryKeys.listPublicEvents,
     queryFn: () => api.listPublicEvents(),
+    staleTime: 5 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useListBlogs(pagination?: { limit?: number; offset?: number }) {
+  return useQuery({
+    queryKey: [...queryKeys.blogs, pagination] as const,
+    queryFn: () => api.listBlogs(pagination),
+    staleTime: 5 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useBlog(blogId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.blog(blogId ?? ""),
+    queryFn: () => api.getBlog(blogId!),
+    enabled: !!blogId,
+    staleTime: 2 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useBlogsByCategory(
+  category: string | null,
+  pagination?: { limit?: number; offset?: number },
+) {
+  return useQuery({
+    queryKey: [
+      ...queryKeys.blogsByCategory(category ?? ""),
+      pagination,
+    ] as const,
+    queryFn: () => api.listBlogsByCategory(category!, pagination),
+    enabled: !!category,
     staleTime: 5 * 60 * 1000,
     select: (res) => res.data,
   });
@@ -456,7 +503,9 @@ export function useApproveHostApplication() {
     mutationFn: ({ hostId, idToken }: { hostId: string; idToken: string }) =>
       api.approveHostApplication(hostId, idToken),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.pendingHostApplications });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.pendingHostApplications,
+      });
     },
   });
 }
@@ -474,7 +523,9 @@ export function useRejectHostApplication() {
       reason?: string;
     }) => api.rejectHostApplication(hostId, idToken, reason),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: queryKeys.pendingHostApplications });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.pendingHostApplications,
+      });
     },
   });
 }
@@ -482,49 +533,183 @@ export function useRejectHostApplication() {
 export function useAddPlatformPayoutMethod() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ body, idToken }: { body: api.PlatformAddPayoutMethodPayload; idToken: string }) =>
+    mutationFn: ({
+      body,
+      idToken,
+    }: {
+      body: api.PlatformAddPayoutMethodPayload;
+      idToken: string;
+    }) =>
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       api.addPlatformPayoutMethod(body, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
     },
-  }) as UseMutationResult<api.Envelope<api.PayoutMethodDTO>, unknown, { body: api.PlatformAddPayoutMethodPayload; idToken: string }>;
+  }) as UseMutationResult<
+    api.Envelope<api.PayoutMethodDTO>,
+    unknown,
+    { body: api.PlatformAddPayoutMethodPayload; idToken: string }
+  >;
 }
 
 export function useSetPlatformPrimaryPayoutMethod() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ methodId, idToken }: { methodId: string; idToken: string }) =>
+    mutationFn: ({
+      methodId,
+      idToken,
+    }: {
+      methodId: string;
+      idToken: string;
+    }) =>
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       api.setPlatformPrimaryPayoutMethod(methodId, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
     },
-  }) as UseMutationResult<api.Envelope<{ message: string }>, unknown, { methodId: string; idToken: string }>;
+  }) as UseMutationResult<
+    api.Envelope<{ message: string }>,
+    unknown,
+    { methodId: string; idToken: string }
+  >;
 }
 
 export function useDeletePlatformPayoutMethod() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ methodId, idToken }: { methodId: string; idToken: string }) =>
+    mutationFn: ({
+      methodId,
+      idToken,
+    }: {
+      methodId: string;
+      idToken: string;
+    }) =>
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       api.deletePlatformPayoutMethod(methodId, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
     },
-  }) as UseMutationResult<api.Envelope<{ message: string }>, unknown, { methodId: string; idToken: string }>;
+  }) as UseMutationResult<
+    api.Envelope<{ message: string }>,
+    unknown,
+    { methodId: string; idToken: string }
+  >;
 }
 
 export function useWithdrawPlatformFees() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ body, idToken }: { body: { amount_cents: number; idempotency_key?: string }; idToken: string }) =>
+    mutationFn: ({
+      body,
+      idToken,
+    }: {
+      body: { amount_cents: number; idempotency_key?: string };
+      idToken: string;
+    }) =>
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       api.withdrawPlatformFees(body, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformBalance });
     },
-  }) as UseMutationResult<api.Envelope<api.PaymentDTO>, unknown, { body: { amount_cents: number; idempotency_key?: string }; idToken: string }>;
+  }) as UseMutationResult<
+    api.Envelope<api.PaymentDTO>,
+    unknown,
+    {
+      body: { amount_cents: number; idempotency_key?: string };
+      idToken: string;
+    }
+  >;
+}
+
+export function useCreateBlog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      body,
+      idToken,
+    }: {
+      body: api.BlogCreatePayload;
+      idToken: string;
+    }) => api.createBlog(body, idToken),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: queryKeys.blogs });
+    },
+  }) as UseMutationResult<
+    api.Envelope<api.BlogDTO>,
+    unknown,
+    { body: api.BlogCreatePayload; idToken: string }
+  >;
+}
+
+export function useUpdateBlog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      blogId,
+      body,
+      idToken,
+    }: {
+      blogId: string;
+      body: api.BlogUpdatePayload;
+      idToken: string;
+    }) => api.updateBlog(blogId, body, idToken),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.blogs });
+      void qc.invalidateQueries({ queryKey: queryKeys.blog(variables.blogId) });
+    },
+  }) as UseMutationResult<
+    api.Envelope<api.BlogDTO>,
+    unknown,
+    { blogId: string; body: api.BlogUpdatePayload; idToken: string }
+  >;
+}
+
+export function useDeleteBlog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ blogId, idToken }: { blogId: string; idToken: string }) =>
+      api.deleteBlog(blogId, idToken),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.blogs });
+      qc.removeQueries({ queryKey: queryKeys.blog(variables.blogId) });
+    },
+  }) as UseMutationResult<
+    api.Envelope<{ message: string }>,
+    unknown,
+    { blogId: string; idToken: string }
+  >;
+}
+
+export function usePublishBlog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ blogId, idToken }: { blogId: string; idToken: string }) =>
+      api.publishBlog(blogId, idToken),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.blogs });
+      void qc.invalidateQueries({ queryKey: queryKeys.blog(variables.blogId) });
+    },
+  }) as UseMutationResult<
+    api.Envelope<api.BlogDTO>,
+    unknown,
+    { blogId: string; idToken: string }
+  >;
+}
+
+export function useUnpublishBlog() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ blogId, idToken }: { blogId: string; idToken: string }) =>
+      api.unpublishBlog(blogId, idToken),
+    onSuccess: (_data, variables) => {
+      void qc.invalidateQueries({ queryKey: queryKeys.blogs });
+      void qc.invalidateQueries({ queryKey: queryKeys.blog(variables.blogId) });
+    },
+  }) as UseMutationResult<
+    api.Envelope<api.BlogDTO>,
+    unknown,
+    { blogId: string; idToken: string }
+  >;
 }
 
 export function useUpdateHostProfile() {
@@ -580,8 +765,14 @@ export function useDisconnectSocialMedia() {
 
 export function useUploadFiles() {
   return useMutation({
-    mutationFn: ({ files, folder }: { files: File[]; folder?: string }) =>
+    mutationFn: ({ files, folder }: api.UploadFilesPayload) =>
       api.uploadFiles(files, folder),
+  });
+}
+
+export function useUploadBlogCover() {
+  return useMutation({
+    mutationFn: (file: File) => api.uploadBlogCover(file),
   });
 }
 
@@ -595,6 +786,12 @@ export function useSaveExperience() {
       void qc.invalidateQueries({
         queryKey: queryKeys.savedExperiences(variables.user_id),
       });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.isExperienceSaved(
+          variables.event_id,
+          variables.user_id,
+        ),
+      });
     },
   });
 }
@@ -604,9 +801,14 @@ export function useUnsaveExperience() {
   return useMutation({
     mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
       api.unsaveExperience(eventId, userId),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       void qc.invalidateQueries({ queryKey: ["savedExperiences"] });
-      void qc.invalidateQueries({ queryKey: ["isExperienceSaved"] });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.isExperienceSaved(
+          variables.eventId,
+          variables.userId,
+        ),
+      });
     },
   });
 }
@@ -651,9 +853,15 @@ export function usePublishEvent() {
     mutationFn: ({ eventId, hostId }: { eventId: string; hostId: string }) =>
       api.publishEvent(eventId, hostId),
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: queryKeys.eventsByHost(variables.hostId) });
-      void qc.invalidateQueries({ queryKey: queryKeys.calendarEvents(variables.hostId) });
-      void qc.invalidateQueries({ queryKey: queryKeys.event(variables.eventId) });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.eventsByHost(variables.hostId),
+      });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.calendarEvents(variables.hostId),
+      });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.event(variables.eventId),
+      });
     },
   });
 }
@@ -664,9 +872,15 @@ export function usePauseEvent() {
     mutationFn: ({ eventId, hostId }: { eventId: string; hostId: string }) =>
       api.pauseEvent(eventId, hostId),
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: queryKeys.eventsByHost(variables.hostId) });
-      void qc.invalidateQueries({ queryKey: queryKeys.calendarEvents(variables.hostId) });
-      void qc.invalidateQueries({ queryKey: queryKeys.event(variables.eventId) });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.eventsByHost(variables.hostId),
+      });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.calendarEvents(variables.hostId),
+      });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.event(variables.eventId),
+      });
     },
   });
 }
@@ -677,9 +891,15 @@ export function useResumeEvent() {
     mutationFn: ({ eventId, hostId }: { eventId: string; hostId: string }) =>
       api.resumeEvent(eventId, hostId),
     onSuccess: (_data, variables) => {
-      void qc.invalidateQueries({ queryKey: queryKeys.eventsByHost(variables.hostId) });
-      void qc.invalidateQueries({ queryKey: queryKeys.calendarEvents(variables.hostId) });
-      void qc.invalidateQueries({ queryKey: queryKeys.event(variables.eventId) });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.eventsByHost(variables.hostId),
+      });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.calendarEvents(variables.hostId),
+      });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.event(variables.eventId),
+      });
     },
   });
 }
@@ -692,12 +912,18 @@ export function useCreateBooking() {
     mutationFn: api.createBooking,
     onSuccess: (data, variables) => {
       console.log("[useCreateBooking] Booking created:", data.data);
-      console.log("[useCreateBooking] Invalidating queries for bookingsByUser:", variables.user_id);
+      console.log(
+        "[useCreateBooking] Invalidating queries for bookingsByUser:",
+        variables.user_id,
+      );
       void qc.invalidateQueries({
         queryKey: queryKeys.bookingsByUser(variables.user_id),
       });
       // Invalidate event queries since booking count changed
-      console.log("[useCreateBooking] Invalidating event query:", data.data.event_id);
+      console.log(
+        "[useCreateBooking] Invalidating event query:",
+        data.data.event_id,
+      );
       void qc.invalidateQueries({
         queryKey: queryKeys.event(data.data.event_id),
       });
@@ -779,13 +1005,8 @@ export function useAddPayoutMethod() {
 export function useSetPrimaryPayoutMethod() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      methodId,
-      hostId,
-    }: {
-      methodId: string;
-      hostId: string;
-    }) => api.setPrimaryPayoutMethod(methodId, hostId),
+    mutationFn: ({ methodId, hostId }: { methodId: string; hostId: string }) =>
+      api.setPrimaryPayoutMethod(methodId, hostId),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["payoutMethods"] });
     },
@@ -795,13 +1016,8 @@ export function useSetPrimaryPayoutMethod() {
 export function useDeletePayoutMethod() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      methodId,
-      hostId,
-    }: {
-      methodId: string;
-      hostId: string;
-    }) => api.deletePayoutMethod(methodId, hostId),
+    mutationFn: ({ methodId, hostId }: { methodId: string; hostId: string }) =>
+      api.deletePayoutMethod(methodId, hostId),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["payoutMethods"] });
     },
@@ -843,8 +1059,15 @@ export function useCreateReview() {
 export function useAddReplyToReview() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ reviewId, reply, eventId }: { reviewId: string; reply: string; eventId: string }) =>
-      api.addReplyToReview(reviewId, { reply }),
+    mutationFn: ({
+      reviewId,
+      reply,
+      eventId,
+    }: {
+      reviewId: string;
+      reply: string;
+      eventId: string;
+    }) => api.addReplyToReview(reviewId, { reply }),
     onSuccess: (_data, variables) => {
       // Invalidate the specific event's reviews query with the eventId
       void qc.invalidateQueries({
@@ -974,14 +1197,16 @@ export function useWalletBalance(userId: string | null) {
 
 export function useCreateTopupOrder() {
   return useMutation({
-    mutationFn: (payload: api.CreateTopupPayload) => api.createTopupOrder(payload),
+    mutationFn: (payload: api.CreateTopupPayload) =>
+      api.createTopupOrder(payload),
   });
 }
 
 export function useVerifyTopupPayment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: api.TopupVerifyPayload) => api.verifyTopupPayment(payload),
+    mutationFn: (payload: api.TopupVerifyPayload) =>
+      api.verifyTopupPayment(payload),
     onSuccess: (_data, variables) => {
       void qc.invalidateQueries({
         queryKey: walletKeys.balance(variables.user_id),

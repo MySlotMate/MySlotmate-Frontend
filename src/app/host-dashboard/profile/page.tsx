@@ -239,9 +239,18 @@ export default function HostProfileEditPage() {
               Manage your public persona and build trust with your guests.
             </p>
           </div>
-          <button className="shrink-0 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50">
-            Preview Public Profile
-          </button>
+          {hostId ? (
+            <Link
+              href={`/host/${hostId}`}
+              className="shrink-0 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
+            >
+              Preview Public Profile
+            </Link>
+          ) : (
+            <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-400">
+              Preview Public Profile
+            </span>
+          )}
         </div>
 
         {/* ── Profile completion bar ── */}

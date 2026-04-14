@@ -133,9 +133,9 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
   };
 
   return (
-    <section className="site-x relative z-0 w-full pt-4 pb-20">
-      <div className="mx-auto grid w-full max-w-[1120px] gap-8 py-8 md:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10">
-        <div className="space-y-4">
+    <section className="site-x relative z-0 w-full pt-[calc(var(--navbar-height)+1rem)] pb-20">
+      <div className="mx-auto grid w-full max-w-[1120px] gap-8 pt-4 pb-8 md:pt-8 md:pb-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10">
+        <div className="space-y-6 sm:space-y-7">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
             Meaningful Time, Nearby
@@ -150,7 +150,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
             Wellness, Adventure, Social, When you need
           </p>
 
-          <div className="flex flex-wrap gap-3 pt-1">
+          <div className="flex flex-wrap gap-4 pt-2">
             <button
               onClick={handleBookTime}
               suppressHydrationWarning
@@ -167,7 +167,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
             </button>
           </div>
 
-          <div className="flex items-center gap-3 pt-1">
+          <div className="flex items-center gap-4 pt-2">
             <div className="flex -space-x-3">
               {[
                 "/assets/home/profile1.png",

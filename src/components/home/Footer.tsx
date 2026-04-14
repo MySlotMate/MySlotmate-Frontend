@@ -12,11 +12,11 @@ const Footer = () => {
     useListTimeAction();
 
   return (
-    <footer className="mt-4 w-full border-t border-[#aeddf873] bg-[linear-gradient(180deg,#dff2ff,#f4fbff)]">
+    <footer className="mt-4 w-full border-t border-[#aeddf873] bg-[linear-gradient(180deg,#dff2ff,#f4fbff)] pb-[env(safe-area-inset-bottom)]">
       <div className="site-x">
         <div className="mx-auto w-full max-w-[1120px] py-10">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
-            <div>
+            <div className="flex flex-col items-center text-center md:items-start md:text-left">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/assets/home/logo.png"
@@ -32,53 +32,66 @@ const Footer = () => {
               </p>
             </div>
 
-            <div>
-              <h4 className="text-sm font-bold text-[#16304c]">Quick Links</h4>
-              <div className="mt-3 space-y-2 text-sm text-[#5e88ab]">
-                <Link href="/support" className="block hover:text-[#0e8ae0]">
-                  Safety
-                </Link>
-                <Link
-                  href="/support/terms-conditions"
-                  className="block hover:text-[#0e8ae0]"
-                >
-                  Guidelines
-                </Link>
-                <Link href="/hosts" className="block hover:text-[#0e8ae0]">
-                  Community
-                </Link>
-                <Link href="/blogs" className="block hover:text-[#0e8ae0]">
-                  Blog & Stories
-                </Link>
+            <div className="grid grid-cols-2 gap-8 md:col-span-2 md:grid-cols-2">
+              <div className="flex w-full flex-col items-center text-center md:w-auto md:items-start md:text-left">
+                <h4 className="text-sm font-bold text-[#16304c]">
+                  Quick Links
+                </h4>
+                <div className="mt-3 space-y-2 text-sm text-[#5e88ab]">
+                  <Link
+                    href="/support"
+                    className="block hover:text-[#0e8ae0]"
+                  >
+                    Safety
+                  </Link>
+                  <Link
+                    href="/support/terms-conditions"
+                    className="block hover:text-[#0e8ae0]"
+                  >
+                    Guidelines
+                  </Link>
+                  <Link
+                    href="/hosts"
+                    className="block hover:text-[#0e8ae0]"
+                  >
+                    Community
+                  </Link>
+                  <Link
+                    href="/blogs"
+                    className="block hover:text-[#0e8ae0]"
+                  >
+                    Blog & Stories
+                  </Link>
+                </div>
+              </div>
+
+              <div className="flex w-full flex-col items-center text-center md:w-auto md:items-start md:text-left">
+                <h4 className="text-sm font-bold text-[#16304c]">For Hosts</h4>
+                <div className="mt-3 space-y-2 text-sm text-[#5e88ab]">
+                  <button
+                    type="button"
+                    onClick={handleListTimeClick}
+                    className="block w-full text-center transition hover:text-[#0e8ae0] md:w-auto md:text-left"
+                  >
+                    List Your Time
+                  </button>
+                  <Link
+                    href="/host-dashboard"
+                    className="block hover:text-[#0e8ae0]"
+                  >
+                    Host Corner
+                  </Link>
+                  <Link
+                    href="/experiences"
+                    className="block hover:text-[#0e8ae0]"
+                  >
+                    Stories
+                  </Link>
+                </div>
               </div>
             </div>
 
-            <div>
-              <h4 className="text-sm font-bold text-[#16304c]">For Hosts</h4>
-              <div className="mt-3 space-y-2 text-sm text-[#5e88ab]">
-                <button
-                  type="button"
-                  onClick={handleListTimeClick}
-                  className="block text-left transition hover:text-[#0e8ae0]"
-                >
-                  List Your Time
-                </button>
-                <Link
-                  href="/host-dashboard"
-                  className="block hover:text-[#0e8ae0]"
-                >
-                  Host Corner
-                </Link>
-                <Link
-                  href="/experiences"
-                  className="block hover:text-[#0e8ae0]"
-                >
-                  Stories
-                </Link>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-start justify-start">
+            <div className="flex flex-col items-center justify-start text-center md:items-start md:text-left">
               <h4 className="text-sm font-bold text-[#16304c]">Subscribe</h4>
               <div className="mt-3 flex w-full flex-row items-center">
                 <input
@@ -97,9 +110,9 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col items-center justify-between border-t border-[#aeddf873] pt-4 text-sm text-[#000000] md:flex-row">
+          <div className="mt-8 flex flex-col items-center justify-between border-t border-[#aeddf873] pt-4 text-center text-sm text-[#000000] md:flex-row md:text-left">
             <p>MADE WITH &#x2764; FOR THE CURIOUS</p>
-            <div className="flex flex-row items-center justify-center gap-3">
+            <div className="mt-3 flex flex-row items-center justify-center gap-3 md:mt-0">
               <a
                 href="https://www.instagram.com/myslotmate/"
                 target="_blank"

@@ -1394,7 +1394,7 @@ const ShowcaseSections = () => {
               src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80"
               alt="Hosts creating an experience together"
               loading="lazy"
-              className="mt-5 aspect-[16/10] w-full rounded-3xl object-cover shadow-[0_18px_32px_rgba(10,86,148,0.24)]"
+              className="mb-8 aspect-[3/1] w-full rounded-3xl object-cover shadow-[0_18px_32px_rgba(10,86,148,0.24)]"
             />
             <p className="mt-4 text-sm leading-7 text-white/85">
               Share a walk, workshop, food story, or creative session with
@@ -1409,8 +1409,8 @@ const ShowcaseSections = () => {
             </button>
           </article>
 
-          <article className="rounded-3xl border border-[#aeddf89e] bg-white p-5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
-            <div className="mb-4 flex items-start justify-between gap-4">
+          <article className="rounded-3xl border border-[#aeddf89e] bg-white p-3.5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
+            <div className="mb-2 flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-bold text-[#16304c]">
                   Community Moments
@@ -1422,7 +1422,7 @@ const ShowcaseSections = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {community.images.slice(0, 4).map((img, idx) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -1430,7 +1430,7 @@ const ShowcaseSections = () => {
                   src={img}
                   alt={`${community.label} moment ${idx + 1}`}
                   loading="lazy"
-                  className="aspect-square w-full rounded-2xl object-cover"
+                  className="aspect-[4/3] w-full rounded-2xl object-cover"
                 />
               ))}
             </div>

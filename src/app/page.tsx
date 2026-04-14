@@ -275,7 +275,7 @@ export default function HomePage() {
     <MoodProvider>
       <main
         ref={mainRef}
-        className="flex min-h-screen flex-col items-center gap-14 overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(31,167,255,0.10),transparent_30%),linear-gradient(180deg,#fbfeff_0%,#f3faff_100%)] pb-16 text-[#16304c]"
+        className="flex min-h-screen flex-col items-center gap-14 overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(31,167,255,0.10),transparent_30%),linear-gradient(180deg,#fbfeff_0%,#f3faff_100%)] text-[#16304c]"
       >
         <components.Navbar />
 

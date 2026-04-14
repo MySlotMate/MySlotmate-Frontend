@@ -1,4 +1,4 @@
-﻿"use client";
+﻿﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -862,7 +862,7 @@ const ShowcaseSections = () => {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {WAY_CARDS.map((card, idx) => {
               const Icon = card.icon;
               return (
@@ -1366,7 +1366,7 @@ const ShowcaseSections = () => {
       <section className="site-x w-full">
         <div
           ref={statsRef}
-          className="mx-auto my-[10rem] grid w-full max-w-[1120px] gap-4 border-y-2 border-[#006388] py-14 sm:grid-cols-2 lg:grid-cols-4"
+          className="mx-auto my-[10rem] grid w-full max-w-[1120px] gap-4 border-y-2 border-[#006388] py-14 grid-cols-2 lg:grid-cols-4"
         >
           {[
             { label: "Booked Sessions", suffix: "+" },
@@ -1374,10 +1374,7 @@ const ShowcaseSections = () => {
             { label: "Average Rating", suffix: "" },
             { label: "Cities Live", suffix: "" },
           ].map((item, idx) => (
-            <article
-              key={item.label}
-              className="rounded-3xl px-4 py-7 text-center"
-            >
+            <article key={item.label} className="rounded-3xl px-4 py-7 text-center">
               <p className="font-[Outfit,sans-serif] text-5xl font-bold tracking-[-0.05em] text-[#006388]">
                 {formatStat(stats[idx] ?? 0, STATS_TARGETS[idx] ?? 0)}
                 <span className="text-3xl">{item.suffix}</span>

@@ -1366,7 +1366,7 @@ const ShowcaseSections = () => {
       <section className="site-x w-full">
         <div
           ref={statsRef}
-          className="mx-auto my-[10rem] grid w-full max-w-[1120px] gap-4 border-y-2 border-[#006388] py-14 grid-cols-2 lg:grid-cols-4"
+          className="mx-auto my-16 grid w-full max-w-[1120px] grid-cols-2 gap-4 border-y-2 border-[#006388] py-14 sm:my-[10rem] lg:grid-cols-4"
         >
           {[
             { label: "Booked Sessions", suffix: "+" },

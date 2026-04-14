@@ -74,8 +74,8 @@ export default function AadharVerificationModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
-      <div className="relative mx-4 w-full max-w-sm rounded-2xl bg-white px-8 py-8 shadow-xl">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+      <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-white px-6 py-7 shadow-xl sm:px-8 sm:py-8">
         {/* Close */}
         <button
           onClick={onClose}

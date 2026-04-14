@@ -186,7 +186,7 @@ export default function TopUpModal({
       />
 
       {/* Modal */}
-      <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-2xl">
+      <div className="fixed left-1/2 top-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6 max-h-[90vh]">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -211,7 +211,7 @@ export default function TopUpModal({
         {/* Preset amounts */}
         <div className="mb-4">
           <p className="mb-2 text-sm font-medium text-gray-700">Quick Select</p>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-2">
             {PRESET_AMOUNTS.map((preset) => (
               <button
                 key={preset}

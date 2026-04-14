@@ -277,7 +277,7 @@ export default function LocationModal({
       />
 
       {/* Modal Container */}
-      <div className="fixed left-1/2 top-1/2 z-[10000] w-[95%] max-w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-[38px] bg-white p-8 shadow-[0_24px_60px_rgba(0,0,0,0.15)]">
+      <div className="fixed left-1/2 top-1/2 z-[10000] w-[95%] max-w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-[38px] bg-white p-5 shadow-[0_24px_60px_rgba(0,0,0,0.15)] sm:p-8">
         
         {/* Header & Close */}
         <div className="flex items-center justify-between">
@@ -343,16 +343,16 @@ export default function LocationModal({
               {featuredCities.length > 0 && (
                 <div className="mt-8">
                   <h3 className="text-sm font-bold text-[#16304c]">Popular Cities</h3>
-                  <div className="mt-5 grid grid-cols-4 gap-4 sm:grid-cols-7">
+                  <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-5 sm:gap-4 md:grid-cols-7">
                     {featuredCities.map((loc) => (
                       <button
                         key={loc.city}
                         onClick={() => handleSelect(loc)}
                         className="group flex flex-col items-center gap-3"
                       >
-                        <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[20px] border border-[#aeddf873] bg-[#f8fcff] transition-all group-hover:border-[#0094CA] group-hover:bg-[#f0f9ff] group-hover:shadow-[0_8px_20px_rgba(0,148,202,0.1)]">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#aeddf873] bg-[#f8fcff] transition-all group-hover:border-[#0094CA] group-hover:bg-[#f0f9ff] group-hover:shadow-[0_8px_20px_rgba(0,148,202,0.1)] sm:h-[72px] sm:w-[72px]">
                           {failedImages.has(loc.city) ? (
-                            <IoLocationSharp className="h-10 w-10 opacity-80 text-[#0094CA] transition-opacity group-hover:opacity-100" />
+                            <IoLocationSharp className="h-9 w-9 opacity-80 text-[#0094CA] transition-opacity group-hover:opacity-100 sm:h-10 sm:w-10" />
                           ) : (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -360,7 +360,7 @@ export default function LocationModal({
                               alt={loc.city}
                               loading="lazy"
                               onError={() => setFailedImages(prev => new Set(prev).add(loc.city))}
-                              className="h-10 w-10 object-contain opacity-80 transition-opacity group-hover:opacity-100"
+                              className="h-9 w-9 object-contain opacity-80 transition-opacity group-hover:opacity-100 sm:h-10 sm:w-10"
                             />
                           )}
                         </div>

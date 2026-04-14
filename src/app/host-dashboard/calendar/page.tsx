@@ -163,76 +163,83 @@ export default function HostCalendarPage() {
                 </div>
               </div>
 
-              {/* Weekday header - Start with Sunday */}
-              <div className="grid grid-cols-7 border-b border-gray-100">
-                {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
-                  <div key={d} className="px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                    {d}
-                  </div>
-                ))}
-              </div>
-
-              {/* Day cells */}
-              <div className="grid grid-cols-7">
-                {gridDays.map((day, idx) => {
-                  const inMonth = isSameMonth(day, cursorMonth);
-                  const isSelected = isSameDay(day, selectedDay);
-                  const dayKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-                  const dayEvents = eventsByDayKey.get(dayKey) ?? [];
-                  const isLastRow = idx >= gridDays.length - 7;
-
-                  return (
-                    <button
-                      key={dayKey}
-                      onClick={() => {
-                        setSelectedDay(day);
-                        if (dayEvents.length > 0) {
-                          setSelectedEvent(dayEvents[0]!);
-                        } else {
-                          setSelectedEvent(null);
-                        }
-                      }}
-                      className={`relative min-h-25 border-b border-r border-gray-100 p-2 text-left transition hover:bg-gray-50 ${
-                        isSelected ? "bg-[#e6f8ff]" : ""
-                      } ${inMonth ? "" : "bg-gray-50/50"} ${isLastRow ? "border-b-0" : ""}`}
-                    >
-                      <span className={`text-sm font-medium ${inMonth ? "text-gray-900" : "text-gray-400"}`}>
-                        {format(day, "d")}
-                      </span>
-
-                      {/* Event pills */}
-                      <div className="mt-1 space-y-1">
-                        {dayEvents.slice(0, 2).map((ev) => {
-                          const time = format(new Date(ev.time), "h:mm a");
-                          const bgColor =
-                            ev.status === "live"
-                              ? "bg-[#e6f8ff] text-[#0094CA]"
-                              : ev.status === "paused"
-                                ? "bg-amber-50 text-amber-700"
-                                : "bg-purple-50 text-purple-700";
-                          return (
-                            <div
-                              key={ev.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedEvent(ev);
-                                setSelectedDay(day);
-                              }}
-                              className={`truncate rounded px-1.5 py-0.5 text-[10px] font-medium cursor-pointer ${bgColor}`}
-                            >
-                              {time} {ev.title}
-                            </div>
-                          );
-                        })}
-                        {dayEvents.length > 2 && (
-                          <div className="text-[10px] text-gray-400 px-1">
-                            +{dayEvents.length - 2} more
-                          </div>
-                        )}
+              <div className="hide-scrollbar overflow-x-auto">
+                <div className="min-w-[720px] md:min-w-0">
+                  {/* Weekday header - Start with Sunday */}
+                  <div className="grid grid-cols-7 border-b border-gray-100">
+                    {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d) => (
+                      <div
+                        key={d}
+                        className="px-2 py-3 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-400"
+                      >
+                        {d}
                       </div>
-                    </button>
-                  );
-                })}
+                    ))}
+                  </div>
+
+                  {/* Day cells */}
+                  <div className="grid grid-cols-7">
+                    {gridDays.map((day, idx) => {
+                      const inMonth = isSameMonth(day, cursorMonth);
+                      const isSelected = isSameDay(day, selectedDay);
+                      const dayKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+                      const dayEvents = eventsByDayKey.get(dayKey) ?? [];
+                      const isLastRow = idx >= gridDays.length - 7;
+
+                      return (
+                        <button
+                          key={dayKey}
+                          onClick={() => {
+                            setSelectedDay(day);
+                            if (dayEvents.length > 0) {
+                              setSelectedEvent(dayEvents[0]!);
+                            } else {
+                              setSelectedEvent(null);
+                            }
+                          }}
+                          className={`relative min-h-25 border-b border-r border-gray-100 p-2 text-left transition hover:bg-gray-50 ${
+                            isSelected ? "bg-[#e6f8ff]" : ""
+                          } ${inMonth ? "" : "bg-gray-50/50"} ${isLastRow ? "border-b-0" : ""}`}
+                        >
+                          <span className={`text-sm font-medium ${inMonth ? "text-gray-900" : "text-gray-400"}`}>
+                            {format(day, "d")}
+                          </span>
+
+                          {/* Event pills */}
+                          <div className="mt-1 space-y-1">
+                            {dayEvents.slice(0, 2).map((ev) => {
+                              const time = format(new Date(ev.time), "h:mm a");
+                              const bgColor =
+                                ev.status === "live"
+                                  ? "bg-[#e6f8ff] text-[#0094CA]"
+                                  : ev.status === "paused"
+                                    ? "bg-amber-50 text-amber-700"
+                                    : "bg-purple-50 text-purple-700";
+                              return (
+                                <div
+                                  key={ev.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedEvent(ev);
+                                    setSelectedDay(day);
+                                  }}
+                                  className={`truncate rounded px-1.5 py-0.5 text-[10px] font-medium cursor-pointer ${bgColor}`}
+                                >
+                                  {time} {ev.title}
+                                </div>
+                              );
+                            })}
+                            {dayEvents.length > 2 && (
+                              <div className="px-1 text-[10px] text-gray-400">
+                                +{dayEvents.length - 2} more
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
 

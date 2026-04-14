@@ -981,7 +981,7 @@ const ShowcaseSections = () => {
       </section>
 
       <section className="w-full site-x">
-        <div ref={statsRef} className="my-[10rem] border-y-2 border-[#006388] mx-auto grid w-full max-w-[1120px] gap-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
+        <div ref={statsRef} className="my-[2rem] border-y-2 border-[#006388] mx-auto grid w-full max-w-[1120px] gap-4 py-14 sm:grid-cols-2 lg:grid-cols-4">
           {[
             { label: "Booked Sessions", suffix: "+" },
             { label: "Active Hosts", suffix: "+" },
@@ -992,7 +992,7 @@ const ShowcaseSections = () => {
               key={item.label}
               className="rounded-3xl px-4 py-7 text-center"
             >
-              <p className="font-[Outfit,sans-serif] text-5xl font-bold tracking-[-0.05em]  text-[#006388]">
+              <p className="font-[Outfit,sans-serif] text-5xl font-bold tracking-[-0.05em]  text-[#0e8ae0]">
                 {formatStat(stats[idx] ?? 0, STATS_TARGETS[idx] ?? 0)}
                 <span className="text-3xl">{item.suffix}</span>
               </p>
@@ -1003,12 +1003,12 @@ const ShowcaseSections = () => {
       </section>
 
       <section id="community" className="w-full site-x">
-        <div className="mx-auto grid w-full max-w-[1120px] gap-5 pb-14 lg:grid-cols-[0.9fr_1.1fr]">
-          <article className="rounded-[26px] bg-[linear-gradient(135deg,#109ae9,#0d85db)] p-7 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/20 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em]">
+        <div className="mx-auto grid w-full max-w-[1120px] gap-2.5 py-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <article className="rounded-[26px] bg-[linear-gradient(135deg,#109ae9,#0d85db)] p-4 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
+            <span className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/20 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em]">
               List your time
             </span>
-            <h3 className="mt-4 font-[Outfit,sans-serif] text-3xl font-bold leading-tight tracking-[-0.04em] sm:text-4xl">
+            <h3 className="mb-8 font-[Outfit,sans-serif] text-2xl font-bold leading-tight tracking-[-0.04em] sm:text-3xl">
               Turn Your Passion Into Experiences
             </h3>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1016,31 +1016,31 @@ const ShowcaseSections = () => {
               src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80"
               alt="Hosts creating an experience together"
               loading="lazy"
-              className="mt-5 aspect-[16/10] w-full rounded-3xl object-cover shadow-[0_18px_32px_rgba(10,86,148,0.24)]"
+              className="mb-8 aspect-[3/1] w-full rounded-3xl object-cover shadow-[0_18px_32px_rgba(10,86,148,0.24)]"
             />
-            <p className="mt-4 text-sm leading-7 text-white/85">
+            <p className="mb-8 text-[13px] leading-5 text-white/85">
               Share a walk, workshop, food story, or creative session with people looking for meaningful ways to spend time.
             </p>
             <Link
               href="/become-host"
-              className="mt-5 inline-flex rounded-[0.5rem] border border-white/30 bg-white/15 px-5 py-2.5 text-sm font-bold text-white transition scale-100 -translate-y-0 hover:-translate-y-1 hover:scale-105"
+              className="inline-flex rounded-[0.5rem] border border-white/30 bg-white/15 px-4 py-2 text-sm font-bold text-white transition scale-100 -translate-y-0 hover:-translate-y-1 hover:scale-105"
             >
               List Time
             </Link>
           </article>
 
-          <article className="rounded-3xl border border-[#aeddf89e] bg-white p-5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
-            <div className="mb-4 flex items-start justify-between gap-4">
+          <article className="rounded-3xl border border-[#aeddf89e] bg-white p-3.5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
+            <div className="mb-2 flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-lg font-bold text-[#16304c]">Community Moments</h3>
-                <p className="mt-1 text-sm text-[#6f8daa]">{community.note}</p>
+                <h3 className="text-base font-bold text-[#16304c]">Community Moments</h3>
+                <p className="mt-1 line-clamp-2 text-sm leading-5 text-[#6f8daa] w-[80%]">{community.note}</p>
               </div>
               <span className="rounded-full bg-[#dff3ff] px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#0e8ae0]">
                 {community.label}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {community.images.slice(0, 4).map((img, idx) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -1048,7 +1048,7 @@ const ShowcaseSections = () => {
                   src={img}
                   alt={`${community.label} moment ${idx + 1}`}
                   loading="lazy"
-                  className="aspect-square w-full rounded-2xl object-cover"
+                  className="aspect-[4/3] w-full rounded-2xl object-cover"
                 />
               ))}
             </div>

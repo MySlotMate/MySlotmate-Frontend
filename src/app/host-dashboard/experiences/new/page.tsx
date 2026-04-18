@@ -413,6 +413,35 @@ export default function CreateExperiencePage() {
   const [descriptionWarning, setDescriptionWarning] = useState<string | null>(null);
   const [isSummarizing, setIsSummarizing] = useState(false);
 
+  // Fetch exact location coordinates from Google Maps API
+  const fetchExactLocation = async (locationName: string) => {
+    try {
+      // Call our own API endpoint (which calls Nominatim server-side to avoid CORS issues)
+      const response = await fetch(
+        `/api/get-location-coordinates?q=${encodeURIComponent(locationName)}`
+      );
+
+      const data = await response.json();
+
+      if (response.ok && data.mapsUrl) {
+        updateForm("googleMapsUrl", data.mapsUrl);
+        toast.success(`Location pinned: ${data.display_name}`);
+      } else if (data.fallback) {
+        // Fallback to search URL if exact location not found
+        const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(locationName)}`;
+        updateForm("googleMapsUrl", mapsUrl);
+        toast.info("Using search-based location link");
+      } else {
+        throw new Error(data.error || "Failed to fetch location");
+      }
+    } catch (error) {
+      console.error("Location lookup error:", error);
+      // Fallback to search URL on error
+      const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(locationName)}`;
+      updateForm("googleMapsUrl", mapsUrl);
+    }
+  };
+
   useEffect(() => {
     if (isHydrated && !userId && !hostLoading) {
       router.push("/");
@@ -841,10 +870,15 @@ export default function CreateExperiencePage() {
                         const newLocation = e.target.value;
                         updateForm("location", newLocation);
                         
-                        // Auto-generate Google Maps URL
+                        // Auto-generate exact Google Maps URL with coordinates
                         if (newLocation.trim()) {
-                          const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(newLocation)}`;
-                          updateForm("googleMapsUrl", mapsUrl);
+                          fetchExactLocation(newLocation);
+                        }
+                      }}
+                      onBlur={() => {
+                        // If location exists but no maps URL, generate one
+                        if (form.location.trim() && !form.googleMapsUrl) {
+                          fetchExactLocation(form.location);
                         }
                       }}
                       placeholder="Enter the meeting location"
@@ -861,10 +895,11 @@ export default function CreateExperiencePage() {
                       type="url"
                       value={form.googleMapsUrl}
                       onChange={(e) => updateForm("googleMapsUrl", e.target.value)}
-                      placeholder="Auto-generated from location"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                      placeholder="Auto-generated with exact coordinates"
+                      readOnly
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none cursor-not-allowed"
                     />
-                    <p className="text-xs text-gray-500">Auto-generated from location • Edit if you want to use a specific pin location</p>
+                    <p className="text-xs text-gray-500">Auto-filled with exact location coordinates from Google Maps</p>
                   </div>
                 )}
 

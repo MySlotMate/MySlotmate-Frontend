@@ -421,18 +421,25 @@ export default function CreateExperiencePage() {
         `/api/get-location-coordinates?q=${encodeURIComponent(locationName)}`
       );
 
-      const data = await response.json();
+      interface LocationResponse {
+        mapsUrl?: string;
+        display_name?: string;
+        fallback?: boolean;
+        error?: string;
+      }
+
+      const data = (await response.json()) as LocationResponse;
 
       if (response.ok && data.mapsUrl) {
         updateForm("googleMapsUrl", data.mapsUrl);
-        toast.success(`Location pinned: ${data.display_name}`);
+        toast.success(`Location pinned: ${data.display_name ?? "Location"}`);
       } else if (data.fallback) {
         // Fallback to search URL if exact location not found
         const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(locationName)}`;
         updateForm("googleMapsUrl", mapsUrl);
         toast.info("Using search-based location link");
       } else {
-        throw new Error(data.error || "Failed to fetch location");
+        throw new Error(data.error ?? "Failed to fetch location");
       }
     } catch (error) {
       console.error("Location lookup error:", error);
@@ -872,13 +879,13 @@ export default function CreateExperiencePage() {
                         
                         // Auto-generate exact Google Maps URL with coordinates
                         if (newLocation.trim()) {
-                          fetchExactLocation(newLocation);
+                          void fetchExactLocation(newLocation);
                         }
                       }}
                       onBlur={() => {
                         // If location exists but no maps URL, generate one
                         if (form.location.trim() && !form.googleMapsUrl) {
-                          fetchExactLocation(form.location);
+                          void fetchExactLocation(form.location);
                         }
                       }}
                       placeholder="Enter the meeting location"

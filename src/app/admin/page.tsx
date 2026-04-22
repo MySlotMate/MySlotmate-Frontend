@@ -418,6 +418,9 @@ export default function AdminPage() {
                           {app.moods && app.moods.length > 0 && (
                             <p>🎯 Moods: {app.moods.map((m) => m.charAt(0).toUpperCase() + m.slice(1)).join(", ")}</p>
                           )}
+                          {(app.social_instagram || app.social_linkedin || app.social_website) && (
+                            <p>🔗 Social links included</p>
+                          )}
                         </div>
                       </div>
                       <span
@@ -660,6 +663,55 @@ export default function AdminPage() {
                   <div>
                     <h3 className="mb-3 font-semibold text-gray-900">About</h3>
                     <p className="text-sm text-gray-600">{selectedApp.description}</p>
+                  </div>
+                )}
+
+                {(selectedApp.social_instagram ||
+                  selectedApp.social_linkedin ||
+                  selectedApp.social_website) && (
+                  <div>
+                    <h3 className="mb-3 font-semibold text-gray-900">Social Links</h3>
+                    <div className="space-y-3 text-sm text-gray-600">
+                      {selectedApp.social_instagram && (
+                        <p>
+                          <span className="font-medium text-gray-900">Instagram:</span>{" "}
+                          <a
+                            href={selectedApp.social_instagram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#0094CA] hover:underline break-all"
+                          >
+                            {selectedApp.social_instagram}
+                          </a>
+                        </p>
+                      )}
+                      {selectedApp.social_linkedin && (
+                        <p>
+                          <span className="font-medium text-gray-900">LinkedIn:</span>{" "}
+                          <a
+                            href={selectedApp.social_linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#0094CA] hover:underline break-all"
+                          >
+                            {selectedApp.social_linkedin}
+                          </a>
+                        </p>
+                      )}
+                      {selectedApp.social_website && (
+                        <p>
+                          <span className="font-medium text-gray-900">Website:</span>{" "}
+                          <a
+                            href={selectedApp.social_website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#0094CA] hover:underline break-all"
+                          >
+                            {selectedApp.social_website}
+                          </a>
+                        </p>
+                      )}
+                    </div>
                   </div>
                 )}
 

@@ -29,6 +29,9 @@ interface HostFormData {
   experienceDesc: string;
   moods: string[];
   description: string;
+  socialInstagram: string;
+  socialLinkedin: string;
+  socialWebsite: string;
   // Step 2
   preferredDays: string[];
   groupSize: number;
@@ -89,6 +92,9 @@ export default function BecomeHostPage() {
     experienceDesc: "",
     moods: [],
     description: "",
+    socialInstagram: "",
+    socialLinkedin: "",
+    socialWebsite: "",
     preferredDays: [],
     groupSize: 5,
     governmentIdFile: null,
@@ -289,6 +295,9 @@ export default function BecomeHostPage() {
         description: form.description || undefined,
         preferred_days: form.preferredDays.map((d) => d.toLowerCase()),
         group_size: form.groupSize || undefined,
+        social_instagram: form.socialInstagram.trim() || null,
+        social_linkedin: form.socialLinkedin.trim() || null,
+        social_website: form.socialWebsite.trim() || null,
       });
       toast.success("Application saved as draft.");
     } catch (err) {
@@ -363,6 +372,9 @@ export default function BecomeHostPage() {
         preferred_days: form.preferredDays.map((d) => d.toLowerCase()),
         group_size: form.groupSize,
         government_id_url: govIdUrl,
+        social_instagram: form.socialInstagram.trim() || null,
+        social_linkedin: form.socialLinkedin.trim() || null,
+        social_website: form.socialWebsite.trim() || null,
       });
 
       // Store host id + status for navbar/other pages
@@ -538,6 +550,61 @@ export default function BecomeHostPage() {
                     placeholder="Describe the magic you're thinking of creating..."
                     className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
                   />
+                </div>
+
+                <div>
+                  <div className="mb-3">
+                    <label className="block text-sm font-semibold text-gray-900">
+                      Social Links
+                    </label>
+                    <p className="mt-1 text-xs text-gray-500">
+                      Optional links that help us review your public presence.
+                    </p>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Instagram
+                      </label>
+                      <input
+                        type="url"
+                        value={form.socialInstagram}
+                        onChange={(e) =>
+                          updateField("socialInstagram", e.target.value)
+                        }
+                        placeholder="https://instagram.com/yourprofile"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                        LinkedIn
+                      </label>
+                      <input
+                        type="url"
+                        value={form.socialLinkedin}
+                        onChange={(e) =>
+                          updateField("socialLinkedin", e.target.value)
+                        }
+                        placeholder="https://linkedin.com/in/yourprofile"
+                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Website
+                    </label>
+                    <input
+                      type="url"
+                      value={form.socialWebsite}
+                      onChange={(e) =>
+                        updateField("socialWebsite", e.target.value)
+                      }
+                      placeholder="https://yourwebsite.com"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    />
+                  </div>
                 </div>
               </div>
             </section>

@@ -30,6 +30,7 @@ import {
   useUploadFiles,
 } from "~/hooks/useApi";
 import type { BlogCreatePayload, BlogDTO } from "~/lib/api";
+import { getStoredUserId, setStoredUserId } from "~/lib/auth-storage";
 import { auth } from "~/utils/firebase";
 import { env } from "~/env";
 
@@ -100,6 +101,25 @@ function getBlogValue(value: string | null | undefined, fallback = "") {
   return value?.trim() ?? fallback;
 }
 
+function isLikelyNetworkError(message: string) {
+  const normalized = message.trim().toLowerCase();
+  return (
+    normalized.includes("network") ||
+    normalized.includes("failed to fetch") ||
+    normalized.includes("load failed") ||
+    normalized.includes("timeout") ||
+    normalized.includes("socket") ||
+    normalized === "error"
+  );
+}
+
+function textBlockToSections(content: string) {
+  return content
+    .split(/\n\s*\n/g)
+    .map((section) => section.trim())
+    .filter(Boolean);
+}
+
 // Extract table of contents from blocks
 type TOCItem = { id: string; level: number; text: string };
 
@@ -159,27 +179,36 @@ function mapBlogToFormState(blog: BlogDTO): BlogFormState {
 
 function BlockRenderer({ blocks, showHeadings = false }: { blocks: BlogBlock[]; showHeadings?: boolean }) {
   const headingSizes: Record<number, string> = {
-    1: "text-2xl font-bold",
-    2: "text-xl font-bold",
-    3: "text-lg font-bold",
-    4: "text-base font-bold",
-    5: "text-sm font-bold",
-    6: "text-xs font-bold",
+    1: "text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl",
+    2: "text-2xl font-bold tracking-[-0.03em] text-[#16304c] sm:text-[2rem]",
+    3: "text-xl font-bold text-[#1d3f60] sm:text-2xl",
+    4: "text-lg font-bold text-[#1d3f60]",
+    5: "text-base font-bold text-[#1d3f60]",
+    6: "text-sm font-bold uppercase tracking-[0.08em] text-[#4a6a86]",
   };
 
   const headingTags = ["h1", "h2", "h3", "h4", "h5", "h6"] as const;
   let headingCounter = 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {blocks.map((block) => {
         if (block.type === "text") {
-          const lines = block.content.split("\n");
+          const sections = textBlockToSections(block.content);
           return (
-            <div key={block.id}>
-              {lines.map((line, lineIndex) => {
+            <div key={block.id} className="space-y-6">
+              {sections.map((section, sectionIndex) => {
+                const normalizedLines = section
+                  .split("\n")
+                  .map((line) => line.trim())
+                  .filter(Boolean);
+                const normalizedText = normalizedLines.join(" ");
                 const headingRegex = /^(#{1,6})\s+(.+)$/;
-                const headingMatch = headingRegex.exec(line);
+                const headingMatch =
+                  normalizedLines.length === 1
+                    ? headingRegex.exec(normalizedLines[0] ?? "")
+                    : null;
+
                 if (headingMatch && showHeadings) {
                   const level = (headingMatch[1] ?? "").length;
                   const text = (headingMatch[2] ?? "").trim();
@@ -191,39 +220,37 @@ function BlockRenderer({ blocks, showHeadings = false }: { blocks: BlogBlock[]; 
                     return React.createElement(
                       HeadingTag,
                       {
-                        key: `${block.id}-${lineIndex}`,
+                        key: `${block.id}-${sectionIndex}`,
                         id: headingId,
-                        className: `${sizeClass} text-[#16304c] scroll-mt-20`,
+                        className: `${sizeClass} scroll-mt-20`,
                       },
                       text
                     );
                   }
                 }
 
-                return line ? (
-                  <div
-                    key={`${block.id}-${lineIndex}`}
-                    className="prose prose-slate max-w-none whitespace-pre-wrap text-[15px] leading-8 text-[#29465f]"
+                return normalizedText ? (
+                  <p
+                    key={`${block.id}-${sectionIndex}`}
+                    className="text-[17px] leading-8 text-[#29465f] sm:text-[18px]"
                   >
-                    {line}
-                  </div>
-                ) : (
-                  <div key={`${block.id}-${lineIndex}`} className="h-2" />
-                );
+                    {normalizedText}
+                  </p>
+                ) : null;
               })}
             </div>
           );
         } else {
           return (
-            <figure key={block.id} className="space-y-2">
+            <figure key={block.id} className="space-y-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={block.url}
                 alt={block.caption || "Blog image"}
-                className="w-full rounded-xl"
+                className="w-full rounded-[28px] object-cover shadow-[0_24px_50px_rgba(26,77,116,0.16)]"
               />
               {block.caption && (
-                <figcaption className="text-center text-sm text-gray-600 italic">
+                <figcaption className="text-center text-sm leading-6 text-[#6f8daa] italic">
                   {block.caption}
                 </figcaption>
               )}
@@ -537,81 +564,94 @@ function BlogCard({
   onOpen: (blogId: string) => void;
 }) {
   const displayDate = formatBlogDate(blog.published_at ?? blog.created_at);
+  const title = getBlogValue(blog.title, "Untitled blog");
+  const authorName = getBlogValue(blog.author_name, "MySlotmate Team");
+  const excerpt = getBlogExcerpt(blog);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
-      <div className="h-52 overflow-hidden bg-slate-100">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[32px] border border-[#dbeaf5] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] shadow-[0_18px_45px_rgba(46,96,145,0.10)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_28px_60px_rgba(46,96,145,0.18)]">
+      <div className="relative h-64 overflow-hidden bg-slate-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={blog.cover_image_url ?? FALLBACK_BLOG_IMAGE}
-          alt={getBlogValue(blog.title, "Blog cover")}
+          alt={title}
           loading="lazy"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
         />
-      </div>
-
-      <div className="p-5">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,38,60,0.00)_20%,rgba(10,38,60,0.18)_100%)]" />
+        <div className="absolute left-5 top-5 flex flex-wrap items-center gap-2">
           <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${getCategoryColor(blog.category)}`}
+            className={`rounded-full px-3 py-1.5 text-[11px] font-bold shadow-sm backdrop-blur-sm ${getCategoryColor(blog.category)}`}
           >
             {getBlogValue(blog.category, "General")}
           </span>
-          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/88 px-3 py-1.5 text-[11px] font-semibold text-[#3d5874] shadow-sm backdrop-blur-sm">
             <FiClock className="h-3.5 w-3.5" />
             {blog.read_time_minutes ?? 5} min read
           </span>
         </div>
+      </div>
 
-        <h3 className="line-clamp-2 text-xl font-bold text-[#16304c]">
-          {getBlogValue(blog.title, "Untitled blog")}
-        </h3>
-        <p className="mt-2 line-clamp-3 min-h-18 text-sm leading-6 text-[#6f8daa]">
-          {getBlogExcerpt(blog)}
-        </p>
+      <div className="flex flex-1 flex-col p-6">
+        <div className="mb-5">
+          <h3 className="line-clamp-2 text-[1.9rem] leading-tight font-bold tracking-[-0.04em] text-[#16304c]">
+            {title}
+          </h3>
+          <p className="mt-3 line-clamp-4 min-h-24 text-[15px] leading-7 text-[#6f8daa]">
+            {excerpt}
+          </p>
+        </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-gray-100 pt-4">
-          <div className="space-y-1 text-xs text-gray-500">
-            <p className="flex items-center gap-1.5">
-              <LuUser className="h-3.5 w-3.5" />
-              {getBlogValue(blog.author_name, "MySlotmate Team")}
-            </p>
-            <p className="flex items-center gap-1.5">
-              <LuCalendar className="h-3.5 w-3.5" />
-              {displayDate}
-            </p>
-          </div>
+        <div className="mt-auto rounded-[24px] border border-[#e5eef6] bg-white/90 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.65)]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0 space-y-2 text-sm text-[#58748f]">
+              <p className="flex items-center gap-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eff7fd] text-[#0094CA]">
+                  <LuUser className="h-4 w-4" />
+                </span>
+                <span className="min-w-0 truncate font-medium text-[#284760]">
+                  {authorName}
+                </span>
+              </p>
+              <p className="flex items-center gap-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f5f9fc] text-[#5f7e9a]">
+                  <LuCalendar className="h-4 w-4" />
+                </span>
+                <span>{displayDate}</span>
+              </p>
+            </div>
 
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => onEdit(blog)}
-                  className="rounded-lg border border-[#cceeff] bg-[#f0faff] p-2 text-[#0094CA] transition hover:bg-[#e6f6ff]"
-                  aria-label={`Edit ${getBlogValue(blog.title, "blog")}`}
-                >
-                  <FiEdit2 className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDelete(blog)}
-                  className="rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 transition hover:bg-red-100"
-                  aria-label={`Delete ${getBlogValue(blog.title, "blog")}`}
-                >
-                  <FiTrash2 className="h-4 w-4" />
-                </button>
-              </>
-            )}
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              {isAdmin && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(blog)}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#b8e4ff] bg-[#ebf8ff] text-[#0094CA] transition hover:bg-[#dcf2ff]"
+                    aria-label={`Edit ${title}`}
+                  >
+                    <FiEdit2 className="h-4.5 w-4.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(blog)}
+                    className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
+                    aria-label={`Delete ${title}`}
+                  >
+                    <FiTrash2 className="h-4.5 w-4.5" />
+                  </button>
+                </>
+              )}
 
-            <button
-              type="button"
-              onClick={() => onOpen(blog.id)}
-              className="inline-flex items-center gap-2 rounded-lg bg-[#0094CA] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
-            >
-              Read
-              <LuArrowRight className="h-4 w-4" />
-            </button>
+              <button
+                type="button"
+                onClick={() => onOpen(blog.id)}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[linear-gradient(135deg,#0094CA,#13b5ea)] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(0,148,202,0.24)] transition hover:translate-y-[-1px] hover:shadow-[0_20px_32px_rgba(0,148,202,0.30)]"
+              >
+                Read Story
+                <LuArrowRight className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -658,6 +698,19 @@ function BlogDetailModal({
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+    };
+  }, []);
+
   const scrollToHeading = (headingId: string) => {
     const element = contentRef.current?.querySelector(`#${headingId}`);
     if (element && modalContentRef.current) {
@@ -680,7 +733,7 @@ function BlogDetailModal({
 
       <div
         ref={modalContentRef}
-        className="relative max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+        className="relative max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
       >
         <button
           type="button"
@@ -738,7 +791,7 @@ function BlogDetailModal({
 
             {/* Main Content */}
             <div ref={contentRef} className="flex-1 p-6 sm:p-8">
-              <div className="h-72 -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-3xl bg-slate-100 sm:-mx-8 sm:mb-8">
+              <div className="h-48 -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-3xl bg-slate-100 sm:-mx-8 sm:mb-8 sm:h-56 lg:h-64">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={blog.cover_image_url ?? FALLBACK_BLOG_IMAGE}
@@ -821,6 +874,7 @@ export default function BlogsPage() {
   const [user] = useAuthState(auth);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
+  const [backendUserId, setBackendUserId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedBlogId, setSelectedBlogId] = useState<string | null>(null);
@@ -853,6 +907,55 @@ export default function BlogsPage() {
       active = false;
     };
   }, [user]);
+
+  useEffect(() => {
+    let active = true;
+
+    const syncBackendUserId = async () => {
+      const storedUserId = getStoredUserId();
+      if (storedUserId) {
+        if (active) setBackendUserId(storedUserId);
+        return;
+      }
+
+      if (!user?.uid) {
+        if (active) setBackendUserId(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${env.NEXT_PUBLIC_API_URL}/users/by-firebase/${user.uid}`,
+        );
+
+        if (!response.ok) {
+          if (active) setBackendUserId(null);
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          data?: { id?: string };
+        };
+        const resolvedUserId = payload.data?.id ?? null;
+
+        if (!resolvedUserId) {
+          if (active) setBackendUserId(null);
+          return;
+        }
+
+        setStoredUserId(resolvedUserId);
+        if (active) setBackendUserId(resolvedUserId);
+      } catch {
+        if (active) setBackendUserId(null);
+      }
+    };
+
+    void syncBackendUserId();
+
+    return () => {
+      active = false;
+    };
+  }, [user?.uid]);
 
   const { data: blogs = [], error, isLoading } = useListBlogs();
   const selectedBlogPreview = useMemo(
@@ -1035,6 +1138,12 @@ export default function BlogsPage() {
       toast.error("Only admins can manage blogs.");
       return;
     }
+    if (!backendUserId) {
+      toast.error(
+        "This admin account is not linked to a MySlotmate user profile yet. Complete signup once with the admin email, then try again.",
+      );
+      return;
+    }
 
     const readTime = Number.parseInt(formState.read_time_minutes, 10);
     if (!formState.title.trim() || !formState.category.trim()) {
@@ -1076,13 +1185,37 @@ export default function BlogsPage() {
         toast.success(`Blog ${action} and published.`);
         resetForm();
       } catch (publishError) {
-        setEditingBlog(blog);
-        setFormState(mapBlogToFormState(blog));
         const message =
           publishError instanceof Error
             ? publishError.message
             : "Automatic publishing failed.";
-        toast.error(`Blog ${action}, but publishing failed. ${message}`);
+
+        if (isLikelyNetworkError(message)) {
+          try {
+            await publishBlogMutation.mutateAsync({
+              blogId: blog.id,
+              idToken,
+            });
+            toast.success(`Blog ${action} and published.`);
+            resetForm();
+            return;
+          } catch (retryError) {
+            const retryMessage =
+              retryError instanceof Error
+                ? retryError.message
+                : "Automatic publishing failed.";
+            setEditingBlog(blog);
+            setFormState(mapBlogToFormState(blog));
+            toast.error(
+              `Blog ${action} as a draft, but publishing still failed. ${retryMessage}`,
+            );
+            return;
+          }
+        }
+
+        setEditingBlog(blog);
+        setFormState(mapBlogToFormState(blog));
+        toast.error(`Blog ${action} as a draft, but publishing failed. ${message}`);
       }
     };
 
@@ -1090,6 +1223,10 @@ export default function BlogsPage() {
       let coverImageUrl = formState.cover_image_url.trim() || undefined;
 
       if (formState.coverImageFile) {
+        const previousPreviewUrl =
+          formState.cover_image_url.startsWith("blob:")
+            ? formState.cover_image_url
+            : null;
         const uploadedCover = await uploadBlogCoverMutation.mutateAsync(
           formState.coverImageFile,
         );
@@ -1099,6 +1236,15 @@ export default function BlogsPage() {
         }
 
         coverImageUrl = uploadedCover.url;
+        setFormState((current) => ({
+          ...current,
+          coverImageFile: null,
+          cover_image_url: uploadedCover.url,
+        }));
+
+        if (previousPreviewUrl) {
+          URL.revokeObjectURL(previousPreviewUrl);
+        }
       }
 
       payload.cover_image_url = coverImageUrl;
@@ -1122,6 +1268,12 @@ export default function BlogsPage() {
         submitError instanceof Error
           ? submitError.message
           : "Failed to save the blog.";
+      if (message.includes("blogs_author_id_fkey")) {
+        toast.error(
+          "Blog creation failed because the admin account is authenticated but its app user record is out of sync. Sign in with the admin email and finish signup once, then retry.",
+        );
+        return;
+      }
       toast.error(message);
     }
   };

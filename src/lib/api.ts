@@ -251,6 +251,9 @@ export interface HostApplicationPayload {
   avatar_url?: string;
   tagline?: string;
   bio?: string;
+  social_instagram?: string | null;
+  social_linkedin?: string | null;
+  social_website?: string | null;
 }
 
 /** POST /hosts/apply — submit host application (status → pending) */

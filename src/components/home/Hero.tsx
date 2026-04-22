@@ -3,6 +3,7 @@ import React, { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeroCard from "./HeroCard";
 import { BecomeHostModal } from "~/components/become-host";
+import Breadcrumb from "~/components/Breadcrumb";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 import { useListPublicEvents } from "~/hooks/useApi";
 import { type EventDTO } from "~/lib/api";
@@ -134,6 +135,9 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
 
   return (
     <section className="site-x relative z-0 w-full pt-[calc(var(--navbar-height)+1rem)] pb-20">
+      <div className="mx-auto w-full max-w-[1120px]">
+        <Breadcrumb items={[{ label: "Home" }]} className="mb-0" />
+      </div>
       <div className="mx-auto grid w-full max-w-[1120px] gap-8 pt-4 pb-8 md:pt-8 md:pb-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10">
         <div className="space-y-6 sm:space-y-7">
           <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">

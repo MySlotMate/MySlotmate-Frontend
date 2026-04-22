@@ -253,6 +253,8 @@ export default function SupportPage() {
         </div>
       </section>
 
+      {/* Knowledge Base (temporarily disabled) */}
+      {/*
       <section className="mt-14 text-center">
         <div className="mx-auto max-w-2xl">
           <h2 className="text-2xl font-bold text-slate-900">Knowledge Base</h2>
@@ -291,6 +293,7 @@ export default function SupportPage() {
           </p>
         )}
       </section>
+      */}
 
       {/* Tickets Modal */}
       {isTicketsOpen && (

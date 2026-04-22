@@ -279,15 +279,6 @@ export default function HomePage() {
       >
         <components.Navbar />
 
-        {/* <div className="site-x w-full pt-4">
-          <div className="mx-auto w-full max-w-[1120px]">
-            <components.Breadcrumb
-              items={[{ label: "Home" }]}
-              className="mb-0"
-            />
-          </div>
-        </div> */}
-
         <div className="scroll-fade w-full">
           <components.Home.Hero filterBarRef={filterBarRef} />
         </div>

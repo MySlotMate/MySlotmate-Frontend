@@ -725,9 +725,18 @@ const ShowcaseSections = () => {
 
   const stepItems = useMemo(
     () => [
-      { title: "Find a host", desc: "Browse experiences near you." },
-      { title: "Book a time", desc: "Choose a slot that works." },
-      { title: "Show up", desc: "Enjoy the experience." },
+      {
+        title: "Discover People",
+        desc: "Not profiles — real humans with stories, skills, and energy.",
+      },
+      {
+        title: "Book a Moment",
+        desc: "Coffee, walk, learning, or something unexpected.",
+      },
+      {
+        title: "Show Up",
+        desc: "Conversations. Connection. Experiences you remember.",
+      },
     ],
     [],
   );
@@ -849,10 +858,10 @@ const ShowcaseSections = () => {
       <section className="site-x w-full border-y border-[#aeddf847] bg-[linear-gradient(180deg,#edf8ff,#f7fcff)]">
         <div className="mx-auto w-full max-w-[1120px] py-14">
           <div className="mx-auto mb-8 max-w-[760px] text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
+            {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
               Explore Experiences
-            </span>
+            </span> */}
             <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
               Experiences built around real people
             </h2>
@@ -860,9 +869,6 @@ const ShowcaseSections = () => {
               From deep conversations to creative sessions —discover experiences
               hosted by people around you.
             </p>
-            {/* <p className="mt-6 text-[10px] font-black tracking-[0.2em] text-[#4a8ab8]/80 uppercase italic sm:text-[11px]">
-              No plans? No people? No problem.
-            </p> */}
           </div>
 
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -924,16 +930,15 @@ const ShowcaseSections = () => {
       >
         <div className="mx-auto w-full max-w-[1120px] py-14">
           <div className="mx-auto mb-8 max-w-[760px] text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
+            {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
               How it works
-            </span>
+            </span> */}
             <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
-              Simple steps to start an experience.
+              Turn your mood into a real experience
             </h2>
             <p className="mt-2 text-sm text-[#6f8daa] sm:text-base">
-              Find a local host, choose a time, and show up for something
-              meaningful.
+              Discover someone. Book a moment. Experience something real.
             </p>
           </div>
 
@@ -1194,10 +1199,10 @@ const ShowcaseSections = () => {
             <div className="w-full">
               <div className="mb-6 flex items-end justify-between gap-4">
                 <div>
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
+                  {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
                     <span className="inline-block h-2 w-2 rounded-full bg-current" />
                     Curated Sessions
-                  </span>
+                  </span> */}
                   <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
                     Discover Experiences
                   </h2>
@@ -1359,12 +1364,12 @@ const ShowcaseSections = () => {
               </div>
             </div>
 
-            <Link
+            {/* <Link
               href={storyHref}
               className="mt-5 inline-flex rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-8 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
             >
               Explore Experiences
-            </Link>
+            </Link> */}
           </div>
         </div>
       </section>

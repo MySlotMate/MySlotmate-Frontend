@@ -140,7 +140,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
         <div className="space-y-6 sm:space-y-7">
 
 
-          <h1 className="max-w-[700px] font-[Outfit,sans-serif] text-3xl leading-[0.95] font-extrabold tracking-[-0.05em] text-[#16304c] sm:text-4xl lg:text-6xl">
+          <h1 className="max-w-[700px] font-[Outfit,sans-serif] text-2xl leading-[0.95] font-extrabold tracking-[-0.05em] text-[#16304c] sm:text-4xl lg:text-6xl">
             Access People.
             <br />
             <span className="text-[#0e8ae0]">Experience Moments.</span>
@@ -191,7 +191,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
                 +10K
               </div>
             </div>
-            <p className="text-sm text-[#9096a0]">Join 10,000+ Trusted by people exploring life beyond screens</p>
+            <p className="text-sm text-[#9096a0]">`Trusted by people exploring life beyond screens</p>
           </div>
         </div>
 

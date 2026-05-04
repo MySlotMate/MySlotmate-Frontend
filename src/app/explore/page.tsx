@@ -518,7 +518,7 @@ export default function ExplorePage() {
         <section className="mt-7">
           <div className="mb-4 flex items-end justify-between gap-4">
             <h2 className="font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.05em] sm:text-5xl">
-              Interesting People Near You
+              Find Your Kind of People
             </h2>
             <Link
               href="/hosts"
@@ -580,7 +580,7 @@ export default function ExplorePage() {
                           {fullName}
                         </h3>
                         <span className="rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
-                          {(host.avg_rating ?? 4.8).toFixed(1)}
+                          {host.avg_rating && host.avg_rating > 0 ? host.avg_rating.toFixed(1) : "New"}
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-[#6f8daa]">

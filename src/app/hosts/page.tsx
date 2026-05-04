@@ -49,7 +49,7 @@ const HostCard = ({
           className="h-[214px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <span className="absolute top-3 right-3 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
-          {rating}
+          {rating === "0" ? "New" : rating}
         </span>
         {isVerified ? (
           <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[#0094CA] p-1.5 text-white shadow-sm">
@@ -158,7 +158,7 @@ export default function HostsPage() {
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.05em] sm:text-5xl">
-              Interesting People Near You
+              Find Your Kind of People
             </h1>
             
             {location && (
@@ -222,7 +222,7 @@ export default function HostsPage() {
                   host.first_name
                 }
                 imageUrl={host.avatar_url ?? "/assets/home/people1.png"}
-                rating={(host.avg_rating ?? 4.5).toFixed(1)}
+                rating={host.avg_rating && host.avg_rating > 0 ? host.avg_rating.toFixed(1) : "0"}
                 headline={host.tagline ?? "Local Host"}
                 description={
                   host.bio ?? "Hosting thoughtful sessions around the city."

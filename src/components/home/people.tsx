@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { LuLoader2 } from "react-icons/lu";
@@ -69,7 +69,7 @@ const PeopleCard = ({
         </p>
         <div className="flex items-center justify-between pt-1">
           <span className="text-[11px] font-bold text-[#5e88ab]">
-            Rating {rating}
+            {rating === "0" ? "New Host" : `Rating ${rating}`}
           </span>
         </div>
       </div>
@@ -187,10 +187,10 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
               Local Hosts
             </span> */}
             <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
-              Interesting People Near You
+              Find Your Kind of People
             </h2>
             <p className="mt-1.5 text-sm text-[#6f8daa] sm:text-base">
-              Local hosts creating thoughtful sessions around the city.
+              From creators to thinkers — find people for real-world experiences
             </p>
           </div>
 
@@ -247,7 +247,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
                 id={host.id}
                 name={`${host.first_name} ${host.last_name}`.trim() || host.first_name}
                 imageUrl={host.avatar_url ?? "/assets/home/people1.png"}
-                rating={(host.avg_rating ?? 4.5).toFixed(1)}
+                rating={host.avg_rating && host.avg_rating > 0 ? host.avg_rating.toFixed(1) : "0"}
                 headline={(host.tagline ?? "Local Host").toUpperCase()}
                 description={
                   host.bio ??

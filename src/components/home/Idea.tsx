@@ -40,7 +40,7 @@ const Idea = () => {
             The Idea Behind MySlotMate
           </h3>
           <p className="mt-1 text-sm text-[#6f8daa]">
-            Explore experiences with interesting people near you.
+            Find your kind of people for real-world experiences.
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">

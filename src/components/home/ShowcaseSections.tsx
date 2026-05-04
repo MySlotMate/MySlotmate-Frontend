@@ -1,4 +1,4 @@
-﻿﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -179,8 +179,8 @@ const CuratedSessionCard = ({
 
 const WAY_CARDS = [
   {
-    title: "Walk the city",
-    desc: "Slow walks. Real conversations.",
+    title: "Walk & Talk With a Stranger",
+    desc: "Discover conversations on every walk",
     tag: "ADVENTURE",
     video:
       "https://res.cloudinary.com/dhry5xscm/video/upload/v1775498006/Adventure_jw6egk.mp4",
@@ -189,8 +189,8 @@ const WAY_CARDS = [
     icon: Mountain,
   },
   {
-    title: "Learn something new",
-    desc: "Skills shared by real people.",
+    title: "Coffee & Real Conversations",
+    desc: "No small talk. Just honest connection",
     tag: "SOCIAL",
     video:
       "https://res.cloudinary.com/dhry5xscm/video/upload/v1775497976/Social_tmueix.mp4",
@@ -199,8 +199,8 @@ const WAY_CARDS = [
     icon: Users,
   },
   {
-    title: "Create something",
-    desc: "Art, craft, and creative sessions.",
+    title: "Paint, Write, or Build Together",
+    desc: "Learn by doing with real people",
     tag: "CREATIVITY",
     video:
       "https://res.cloudinary.com/dhry5xscm/video/upload/v1775497970/Creativity_jyuajd.mp4",
@@ -209,8 +209,8 @@ const WAY_CARDS = [
     icon: Palette,
   },
   {
-    title: "Simple moments",
-    desc: "Tea, music, and mindful time.",
+    title: "Slow Down With Someone",
+    desc: "Tea, music, mindful time",
     tag: "WELLNESS",
     video:
       "https://res.cloudinary.com/dhry5xscm/video/upload/v1775762349/WhatsApp_Video_2026-04-10_at_12.47.41_AM_rqlq4f.mp4",
@@ -478,25 +478,25 @@ const ShowcaseSections = () => {
       !mounted || !location
         ? hosts.slice(0, 3)
         : hosts
-            .map((host) => {
-              const hostCity = POPULAR_CITIES.find(
-                (city) => city.city.toLowerCase() === host.city.toLowerCase(),
-              );
+          .map((host) => {
+            const hostCity = POPULAR_CITIES.find(
+              (city) => city.city.toLowerCase() === host.city.toLowerCase(),
+            );
 
-              const distance = hostCity
-                ? calculateDistance(
-                    location.lat,
-                    location.lng,
-                    hostCity.lat,
-                    hostCity.lng,
-                  )
-                : Number.POSITIVE_INFINITY;
+            const distance = hostCity
+              ? calculateDistance(
+                location.lat,
+                location.lng,
+                hostCity.lat,
+                hostCity.lng,
+              )
+              : Number.POSITIVE_INFINITY;
 
-              return { host, distance };
-            })
-            .sort((a, b) => a.distance - b.distance)
-            .slice(0, 3)
-            .map(({ host }) => host);
+            return { host, distance };
+          })
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 3)
+          .map(({ host }) => host);
 
     const mappedStories = nearbyHosts.map((host) => {
       const fullName = `${host.first_name} ${host.last_name}`.trim();
@@ -854,12 +854,15 @@ const ShowcaseSections = () => {
               Explore Experiences
             </span>
             <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
-              Ways to spend better time
+              Experiences built around real people
             </h2>
             <p className="mt-2 text-sm text-[#6f8daa] sm:text-base">
-              Browse sessions built around walks, learning, creativity, and
-              shared local moments.
+              From deep conversations to creative sessions —discover experiences
+              hosted by people around you.
             </p>
+            {/* <p className="mt-6 text-[10px] font-black tracking-[0.2em] text-[#4a8ab8]/80 uppercase italic sm:text-[11px]">
+              No plans? No people? No problem.
+            </p> */}
           </div>
 
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -1360,7 +1363,7 @@ const ShowcaseSections = () => {
               href={storyHref}
               className="mt-5 inline-flex rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-8 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
             >
-              Book Time
+              Explore Experiences
             </Link>
           </div>
         </div>
@@ -1418,7 +1421,7 @@ const ShowcaseSections = () => {
               onClick={handleListTimeClick}
               className="mt-5 inline-flex -translate-y-0 scale-100 rounded-[0.5rem] border border-white/30 bg-white/15 px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-1 hover:scale-105"
             >
-              List Time
+              Become a Host
             </button>
           </article>
 

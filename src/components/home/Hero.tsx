@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeroCard from "./HeroCard";
@@ -43,79 +43,79 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
   const cardData = [
     upcomingEvents[0]
       ? {
-          id: upcomingEvents[0].id,
-          photo:
-            upcomingEvents[0].cover_image_url ?? "/assets/home/heropic1.png",
-          type: upcomingEvents[0].mood ?? "Adventure",
-          title: upcomingEvents[0].title,
-          description:
-            upcomingEvents[0].hook_line ??
-            "Discover a hosted experience near you.",
-          duration: `${upcomingEvents[0].duration_minutes ?? 0} mins`,
-        }
+        id: upcomingEvents[0].id,
+        photo:
+          upcomingEvents[0].cover_image_url ?? "/assets/home/heropic1.png",
+        type: upcomingEvents[0].mood ?? "Adventure",
+        title: upcomingEvents[0].title,
+        description:
+          upcomingEvents[0].hook_line ??
+          "Discover a hosted experience near you.",
+        duration: `${upcomingEvents[0].duration_minutes ?? 0} mins`,
+      }
       : {
-          photo: "/assets/home/heropic1.png",
-          type: "Adventure",
-          title: "Mountain Trekking",
-          description: "Sunrise hikes with local experts.",
-          duration: "120 mins",
-        },
+        photo: "/assets/home/heropic1.png",
+        type: "Adventure",
+        title: "Mountain Trekking",
+        description: "Sunrise hikes with local experts.",
+        duration: "120 mins",
+      },
     upcomingEvents[1]
       ? {
-          id: upcomingEvents[1].id,
-          photo:
-            upcomingEvents[1].cover_image_url ?? "/assets/home/heropic2.png",
-          type: upcomingEvents[1].mood ?? "Social",
-          title: upcomingEvents[1].title,
-          description:
-            upcomingEvents[1].hook_line ??
-            "Meet people through shared interests.",
-          duration: `${upcomingEvents[1].duration_minutes ?? 0} mins`,
-        }
+        id: upcomingEvents[1].id,
+        photo:
+          upcomingEvents[1].cover_image_url ?? "/assets/home/heropic2.png",
+        type: upcomingEvents[1].mood ?? "Social",
+        title: upcomingEvents[1].title,
+        description:
+          upcomingEvents[1].hook_line ??
+          "Meet people through shared interests.",
+        duration: `${upcomingEvents[1].duration_minutes ?? 0} mins`,
+      }
       : {
-          photo: "/assets/home/heropic2.png",
-          type: "Creative",
-          title: "Scuba Diving",
-          description: "Dive into curated local adventures.",
-          duration: "90 mins",
-        },
+        photo: "/assets/home/heropic2.png",
+        type: "Creative",
+        title: "Scuba Diving",
+        description: "Dive into curated local adventures.",
+        duration: "90 mins",
+      },
     upcomingEvents[2]
       ? {
-          id: upcomingEvents[2].id,
-          photo:
-            upcomingEvents[2].cover_image_url ?? "/assets/home/heropic3.png",
-          type: upcomingEvents[2].mood ?? "Relaxing",
-          title: upcomingEvents[2].title,
-          description:
-            upcomingEvents[2].hook_line ?? "Try something new this weekend.",
-          duration: `${upcomingEvents[2].duration_minutes ?? 0} mins`,
-        }
+        id: upcomingEvents[2].id,
+        photo:
+          upcomingEvents[2].cover_image_url ?? "/assets/home/heropic3.png",
+        type: upcomingEvents[2].mood ?? "Relaxing",
+        title: upcomingEvents[2].title,
+        description:
+          upcomingEvents[2].hook_line ?? "Try something new this weekend.",
+        duration: `${upcomingEvents[2].duration_minutes ?? 0} mins`,
+      }
       : {
-          photo: "/assets/home/heropic3.png",
-          type: "Wellness",
-          title: "Urban Photography Walk",
-          description: "Capture city stories with a host.",
-          duration: "180 mins",
-        },
+        photo: "/assets/home/heropic3.png",
+        type: "Wellness",
+        title: "Urban Photography Walk",
+        description: "Capture city stories with a host.",
+        duration: "180 mins",
+      },
     upcomingEvents[3]
       ? {
-          id: upcomingEvents[3].id,
-          photo:
-            upcomingEvents[3].cover_image_url ?? "/assets/home/heropic4.png",
-          type: upcomingEvents[3].mood ?? "Cultural",
-          title: upcomingEvents[3].title,
-          description:
-            upcomingEvents[3].hook_line ??
-            "Explore stories with local experts.",
-          duration: `${upcomingEvents[3].duration_minutes ?? 0} mins`,
-        }
+        id: upcomingEvents[3].id,
+        photo:
+          upcomingEvents[3].cover_image_url ?? "/assets/home/heropic4.png",
+        type: upcomingEvents[3].mood ?? "Cultural",
+        title: upcomingEvents[3].title,
+        description:
+          upcomingEvents[3].hook_line ??
+          "Explore stories with local experts.",
+        duration: `${upcomingEvents[3].duration_minutes ?? 0} mins`,
+      }
       : {
-          photo: "/assets/home/heropic1.png",
-          type: "Cultural",
-          title: "Heritage Walk",
-          description: "Uncover hidden stories around your city.",
-          duration: "150 mins",
-        },
+        photo: "/assets/home/heropic1.png",
+        type: "Cultural",
+        title: "Heritage Walk",
+        description: "Uncover hidden stories around your city.",
+        duration: "150 mins",
+      },
   ];
 
   const handleBookTime = () => {
@@ -135,23 +135,19 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
 
   return (
     <section className="site-x relative z-0 w-full pt-[calc(var(--navbar-height)+1rem)] pb-20">
-      <div className="mx-auto w-full max-w-[1120px]">
-        <Breadcrumb items={[{ label: "Home" }]} className="mb-0" />
-      </div>
+
       <div className="mx-auto grid w-full max-w-[1120px] gap-8 pt-4 pb-8 md:pt-8 md:pb-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10">
         <div className="space-y-6 sm:space-y-7">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-            Meaningful Time, Nearby
-          </span>
 
-          <h1 className="max-w-[560px] font-[Outfit,sans-serif] text-4xl leading-[0.95] font-extrabold tracking-[-0.05em] text-[#16304c] sm:text-5xl lg:text-7xl">
-            Book People&apos;s
-            <span className="text-[#0e8ae0]"> Time.</span>
+
+          <h1 className="max-w-[700px] font-[Outfit,sans-serif] text-3xl leading-[0.95] font-extrabold tracking-[-0.05em] text-[#16304c] sm:text-4xl lg:text-6xl">
+            Access People.
+            <br />
+            <span className="text-[#0e8ae0]">Experience Moments.</span>
           </h1>
 
-          <p className="max-w-[520px] text-sm leading-7 text-[#6f8daa] sm:text-base">
-            Wellness, Adventure, Social, When you need
+          <p className="max-w-[560px] text-sm leading-7 text-[#6f8daa] sm:text-base">
+            From coffee chats to travel experiences —book people for real-life moments, anytime.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-2">
@@ -160,14 +156,14 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
               suppressHydrationWarning
               className="rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5"
             >
-              Book Time
+              Explore Experiences
             </button>
             <button
               onClick={handleListTime}
               suppressHydrationWarning
               className="rounded-lg border border-[#78bce759] bg-white/90 px-5 py-3 text-sm font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5"
             >
-              List Time
+              Become a Host
             </button>
           </div>
 
@@ -195,7 +191,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
                 +10K
               </div>
             </div>
-            <p className="text-sm text-[#9096a0]">Where The Curious Connect</p>
+            <p className="text-sm text-[#9096a0]">Join 10,000+ Trusted by people exploring life beyond screens</p>
           </div>
         </div>
 

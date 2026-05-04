@@ -11,7 +11,7 @@ const appUrl = "https://www.myslotmate.com";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "MySlotMate - Book People's Time",
+    default: "MySlotMate - Access People. Experience Moments.",
     template: "%s | MySlotMate",
   },
   description:

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 
@@ -31,7 +31,7 @@ const Idea = () => {
             onClick={handleListTimeClick}
             className="mt-6 rounded-full border border-white/30 bg-white/15 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/25"
           >
-            List Time
+            Become a Host
           </button>
         </article>
 
@@ -40,7 +40,7 @@ const Idea = () => {
             The Idea Behind MySlotMate
           </h3>
           <p className="mt-1 text-sm text-[#6f8daa]">
-            Book time with interesting people near you.
+            Explore experiences with interesting people near you.
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">

@@ -888,12 +888,13 @@ const ShowcaseSections = () => {
                     ref={(el) => {
                       wayVideoRefs.current[idx] = el;
                     }}
+                    autoPlay
                     muted
                     loop
                     playsInline
-                    preload="metadata"
+                    preload="auto"
                     poster={card.image}
-                    className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-300 group-focus-within:opacity-100 group-hover:opacity-100"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500"
                   >
                     <source
                       src={card.video}
@@ -904,17 +905,22 @@ const ShowcaseSections = () => {
                       }
                     />
                   </video>
-                  <div className="relative z-10 flex h-full flex-col p-4 transition duration-300 group-focus-within:translate-y-2 group-focus-within:opacity-0 group-hover:translate-y-2 group-hover:opacity-0">
-                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/85 text-[#0e8ae0] shadow-[0_10px_18px_rgba(56,116,169,0.12)]">
+                  {/* Overlay for legibility */}
+                  <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.1)_40%,rgba(0,0,0,0.6)_100%)]" />
+
+                  <div className="relative z-10 flex h-full flex-col p-4 transition duration-300">
+                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/85 text-[#0e8ae0] shadow-[0_10px_18px_rgba(56,116,169,0.12)] transition-transform group-hover:scale-110">
                       <Icon className="h-5 w-5" />
                     </span>
-                    <span className="mt-auto inline-flex w-max rounded-full bg-white/75 px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
-                      {card.tag}
-                    </span>
-                    <h3 className="mt-2 text-[15px] font-bold text-[#16304c]">
-                      {card.title}
-                    </h3>
-                    <p className="text-xs text-[#5c84a5]">{card.desc}</p>
+                    <div className="mt-auto">
+                      <span className="inline-flex rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase shadow-sm">
+                        {card.tag}
+                      </span>
+                      <h3 className="mt-2 text-[15px] font-bold text-white drop-shadow-md">
+                        {card.title}
+                      </h3>
+                      <p className="text-xs text-white/90 drop-shadow-sm">{card.desc}</p>
+                    </div>
                   </div>
                 </article>
               );
@@ -943,7 +949,7 @@ const ShowcaseSections = () => {
           </div>
 
           <div className="relative">
-            <div className="pointer-events-none absolute top-8 right-20 left-20 z-0 hidden h-1 lg:block">
+            <div className="pointer-events-none absolute top-8 right-20 left-20 z-0 hidden h-[2px] lg:block">
               <div
                 ref={howProgressRef}
                 className="h-full w-full origin-left scale-x-0 rounded-full bg-[linear-gradient(90deg,#1fa7ff,#83d9ff)] opacity-0"
@@ -978,7 +984,7 @@ const ShowcaseSections = () => {
                     d={HOW_IT_WORKS_MOBILE_PATH}
                     vectorEffect="non-scaling-stroke"
                     stroke="#d7eefb"
-                    strokeWidth="4"
+                    strokeWidth="2"
                     strokeLinecap="round"
                   />
                   <path
@@ -987,7 +993,7 @@ const ShowcaseSections = () => {
                     pathLength={1}
                     vectorEffect="non-scaling-stroke"
                     stroke="url(#how-it-works-mobile-gradient)"
-                    strokeWidth="4"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     style={{
                       strokeDasharray: 1,
@@ -1001,7 +1007,7 @@ const ShowcaseSections = () => {
                     pathLength={1}
                     vectorEffect="non-scaling-stroke"
                     stroke="#9ee9ff"
-                    strokeWidth="8"
+                    strokeWidth="4"
                     strokeLinecap="round"
                     style={{
                       strokeDasharray: "0.16 0.84",

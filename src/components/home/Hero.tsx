@@ -136,11 +136,11 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
   return (
     <section className="site-x relative z-0 w-full pt-[calc(var(--navbar-height)+1rem)] pb-20">
 
-      <div className="mx-auto grid w-full max-w-[1120px] gap-8 pt-4 pb-8 md:pt-8 md:pb-12 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10">
+      <div className="mx-auto grid w-full max-w-[1120px] gap-8 pt-4 pb-8 md:pt-3 md:pb-4 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10">
         <div className="space-y-6 sm:space-y-7">
 
 
-          <h1 className="max-w-[700px] font-[Outfit,sans-serif] text-2xl leading-[0.95] font-extrabold tracking-[-0.05em] text-[#16304c] sm:text-4xl lg:text-6xl">
+          <h1 className="max-w-[700px] font-[Outfit,sans-serif] text-2xl leading-[1.2] font-extrabold tracking-[-0.05em] text-[#16304c] sm:text-4xl lg:text-6xl">
             Access People.
             <br />
             <span className="text-[#0e8ae0]">Experience Moments.</span>
@@ -154,14 +154,14 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
             <button
               onClick={handleBookTime}
               suppressHydrationWarning
-              className="rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5"
+              className="w-full rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5 sm:w-auto sm:min-w-[180px]"
             >
               Explore Experiences
             </button>
             <button
               onClick={handleListTime}
               suppressHydrationWarning
-              className="rounded-lg border border-[#78bce759] bg-white/90 px-5 py-3 text-sm font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5"
+              className="w-full rounded-lg border border-[#78bce759] bg-white/90 px-5 py-3 text-sm font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5 sm:w-auto sm:min-w-[180px]"
             >
               Become a Host
             </button>

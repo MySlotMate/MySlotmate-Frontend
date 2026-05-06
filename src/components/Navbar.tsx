@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -557,7 +557,7 @@ export default function Navbar() {
           <button
             onClick={() => setLocationOpen(true)}
             suppressHydrationWarning
-            className="mr-3 flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition hover:bg-gray-50 lg:hidden"
+            className="ml-auto flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition hover:bg-gray-50 lg:hidden"
           >
             <IoLocationSharp className="h-4 w-4 text-[#0094CA]" />
             <div className="hidden text-left text-xs leading-tight sm:block">
@@ -578,7 +578,7 @@ export default function Navbar() {
           {/* Hamburger — mobile */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="ml-auto rounded-lg p-2 text-gray-700 transition hover:bg-gray-100 lg:hidden"
+            className="rounded-lg p-2 text-gray-700 transition hover:bg-gray-100 lg:hidden"
             aria-label="Toggle menu"
           >
             {mobileOpen ? (
@@ -600,25 +600,6 @@ export default function Navbar() {
         {/* Mobile drawer */}
         {mobileOpen && (
           <div className="border-t border-gray-100 bg-white site-x pb-4 pt-2 shadow-lg max-h-[80vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
-            <button
-              onClick={() => { setLocationOpen(true); setMobileOpen(false); }}
-              className="flex items-center gap-2 py-3 w-full rounded-lg hover:bg-gray-50 transition"
-            >
-              <IoLocationSharp className="h-5 w-5 text-[#0094CA]" />
-              <div className="text-left">
-                {mounted ? (
-                  <>
-                    <p className="text-sm font-semibold text-gray-900">{location?.city ?? "Select City"}</p>
-                    <p className="text-xs text-gray-500">{location?.state ?? "Tap to detect"}</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-semibold text-gray-900">Select City</p>
-                    <p className="text-xs text-gray-500">Tap to detect</p>
-                  </>
-                )}
-              </div>
-            </button>
             <div className="mb-2 grid gap-4 grid-cols-3">
               <Link
                 href="/#how-it-works"

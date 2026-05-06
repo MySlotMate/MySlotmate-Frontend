@@ -386,6 +386,8 @@ const ShowcaseSections = () => {
   const howProgressRef = useRef<HTMLDivElement>(null);
   const howMobileProgressRef = useRef<SVGPathElement>(null);
   const howMobileFlowRef = useRef<SVGPathElement>(null);
+  const featuredContainerRef = useRef<HTMLDivElement>(null);
+  const storyContainerRef = useRef<HTMLDivElement>(null);
   const formatPrice = (priceCents: number | null | undefined) => {
     if (!priceCents) return "Free";
     return `\u20B9${Math.round(priceCents / 100)} / slot`;
@@ -646,16 +648,6 @@ const ShowcaseSections = () => {
     };
   }, [curatedSessions.length]);
 
-  useEffect(() => {
-    if (featuredData.length <= 1) return;
-    if (!isFeaturedPlaying) return;
-
-    const id = window.setInterval(() => {
-      setFeaturedIndex((prev) => (prev + 1) % featuredData.length);
-    }, 5000);
-
-    return () => window.clearInterval(id);
-  }, [featuredData.length, isFeaturedPlaying]);
 
   useEffect(() => {
     setFeaturedIndex((prev) =>
@@ -667,16 +659,6 @@ const ShowcaseSections = () => {
     if (featuredData.length <= 1) setIsFeaturedPlaying(false);
   }, [featuredData.length]);
 
-  useEffect(() => {
-    if (storyData.length <= 1) return;
-    if (!isStoryPlaying) return;
-
-    const id = window.setInterval(() => {
-      setStoryIndex((prev) => (prev + 1) % storyData.length);
-    }, 5000);
-
-    return () => window.clearInterval(id);
-  }, [storyData.length, isStoryPlaying]);
 
   useEffect(() => {
     setStoryIndex((prev) =>
@@ -684,9 +666,61 @@ const ShowcaseSections = () => {
     );
   }, [storyData.length]);
 
+  const animateIndexTransition = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    setter: (val: number | ((prev: number) => number)) => void,
+    total: number,
+  ) => {
+    if (!ref.current) {
+      setter((prev) => (prev + 1) % total);
+      return;
+    }
+
+    gsap.to(ref.current, {
+      opacity: 0,
+      y: 8,
+      duration: 0.25,
+      ease: "power2.in",
+      onComplete: () => {
+        setter((prev) => (prev + 1) % total);
+        gsap.to(ref.current, {
+          opacity: 1,
+          y: 0,
+          duration: 0.35,
+          ease: "power2.out",
+          delay: 0.05,
+        });
+      },
+    });
+  };
+
   useEffect(() => {
     if (storyData.length <= 1) setIsStoryPlaying(false);
   }, [storyData.length]);
+
+  useEffect(() => {
+    if (!isFeaturedPlaying || featuredData.length <= 1) return;
+    const id = window.setInterval(() => {
+      animateIndexTransition(
+        featuredContainerRef,
+        setFeaturedIndex,
+        featuredData.length,
+      );
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [isFeaturedPlaying, featuredData.length]);
+
+  useEffect(() => {
+    if (!isStoryPlaying || storyData.length <= 1) return;
+    const id = window.setInterval(() => {
+      animateIndexTransition(
+        storyContainerRef,
+        setStoryIndex,
+        storyData.length,
+      );
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [isStoryPlaying, storyData.length]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -1081,7 +1115,10 @@ const ShowcaseSections = () => {
         <div className="mx-auto w-full max-w-[1120px] py-14">
           <div className="flex w-full flex-col gap-14">
             <div className="w-full">
-              <div className="group/card grid gap-6 rounded-[28px] border border-[#aeddf840] bg-white p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[0.85fr_1.15fr] md:items-center">
+              <div
+                ref={featuredContainerRef}
+                className="group/card grid gap-6 rounded-[28px] border border-[#aeddf840] bg-white p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[0.85fr_1.15fr] md:items-center"
+              >
                 <div className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-[20px] shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -1305,50 +1342,9 @@ const ShowcaseSections = () => {
             </div>
           </Link>
 
-          <div className="pt-2">
+          <div ref={storyContainerRef} className="pt-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                Host Story
-              </span>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={showPrevStory}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
-                  aria-label="Previous host story"
-                  disabled={storyData.length <= 1}
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setIsStoryPlaying((v) => !v)}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
-                  aria-label={
-                    isStoryPlaying ? "Pause host stories" : "Play host stories"
-                  }
-                  disabled={storyData.length <= 1}
-                >
-                  {isStoryPlaying ? (
-                    <Pause className="h-5 w-5" />
-                  ) : (
-                    <Play className="h-5 w-5" />
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={showNextStory}
-                  className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
-                  aria-label="Next host story"
-                  disabled={storyData.length <= 1}
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
+              {/* Auto-rotation active */}
             </div>
 
             <h3 className="mt-3 font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl">
@@ -1390,7 +1386,7 @@ const ShowcaseSections = () => {
       <section className="site-x w-full">
         <div
           ref={statsRef}
-          className="mx-auto my-16 grid w-full max-w-[1120px] grid-cols-2 gap-4 border-y-2 border-[#006388] py-14 sm:my-[10rem] lg:grid-cols-4"
+          className="mx-auto my-10 grid w-full max-w-[1120px] grid-cols-2 gap-4 border-y border-[#aeddf880] py-14 sm:my-[120px] lg:grid-cols-4 lg:gap-6"
         >
           {[
             { label: "Booked Sessions", suffix: "+" },
@@ -1398,12 +1394,19 @@ const ShowcaseSections = () => {
             { label: "Average Rating", suffix: "" },
             { label: "Cities Live", suffix: "" },
           ].map((item, idx) => (
-            <article key={item.label} className="rounded-3xl px-4 py-7 text-center">
-              <p className="font-[Outfit,sans-serif] text-5xl font-bold tracking-[-0.05em] text-[#006388]">
+            <article
+              key={item.label}
+              className="flex flex-col items-center justify-center rounded-[22px] border border-[#aeddf859] bg-white px-4 py-8 text-center shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
+            >
+              <strong className="relative inline-block font-outfit text-[clamp(2rem,3.5vw,2.8rem)] font-extrabold leading-none tracking-[-0.05em] text-[#0e8ae0]">
                 {formatStat(stats[idx] ?? 0, STATS_TARGETS[idx] ?? 0)}
-                <span className="text-3xl">{item.suffix}</span>
-              </p>
-              <span className="mt-3 block text-sm font-extrabold text-[#64748B]">
+                {item.suffix && (
+                  <span className="absolute top-1 ml-0.5 text-[0.45em] font-medium">
+                    {item.suffix}
+                  </span>
+                )}
+              </strong>
+              <span className="mt-3 block text-[0.72rem] font-bold tracking-[0.04em] text-[#8a8f99] uppercase">
                 {item.label}
               </span>
             </article>

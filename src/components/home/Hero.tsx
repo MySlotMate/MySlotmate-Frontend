@@ -139,15 +139,13 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
       <div className="mx-auto grid w-full max-w-[1120px] gap-8 pt-4 pb-8 md:pt-3 md:pb-4 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10">
         <div className="space-y-6 sm:space-y-7">
 
-
-          <h1 className="max-w-[700px] font-[Outfit,sans-serif] text-2xl leading-[1.2] font-extrabold tracking-[-0.05em] text-[#16304c] sm:text-4xl lg:text-6xl">
-            Access People.
-            <br />
-            <span className="text-[#0e8ae0]">Experience Moments.</span>
+          <h1 className="mt-[18px] mb-[14px] max-w-full font-outfit text-[clamp(3rem,5.8vw,5.1rem)] font-extrabold leading-[0.95] tracking-[-0.06em] text-[#16304c]">
+            Book People&apos;s
+            <span className="text-[#0e8ae0]"> Time.</span>
           </h1>
 
-          <p className="max-w-[560px] text-sm leading-7 text-[#6f8daa] sm:text-base">
-            From coffee chats to travel experiences —book people for real-life moments, anytime.
+          <p className="max-w-[490px] font-manrope text-[1rem] leading-[1.65] text-[#6f8daa]">
+            Spend time doing things that matter.<br />Walk, learn, create, and explore with thoughtful hosts.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-2">
@@ -167,7 +165,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
             </button>
           </div>
 
-          <div className="flex items-center gap-4 pt-2">
+          <div className="mt-1 flex items-center gap-4">
             <div className="flex -space-x-3">
               {[
                 "/assets/home/profile1.png",
@@ -176,7 +174,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
               ].map((img, idx) => (
                 <div
                   key={img}
-                  className="h-11 w-11 overflow-hidden rounded-full border-4 border-[#f7fbff] shadow-[0_10px_22px_rgba(84,140,191,0.08)]"
+                  className="h-14 w-14 overflow-hidden rounded-full border-4 border-[#f7fbff] shadow-[0_10px_22px_rgba(84,140,191,0.08)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -187,16 +185,16 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
                   />
                 </div>
               ))}
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#f7fbff] bg-[#f1f3f6] text-[10px] font-bold text-[#2b2d33] shadow-[0_10px_22px_rgba(84,140,191,0.08)]">
-                +10K
+              <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 border-[#f7fbff] bg-[#f1f3f6] text-[0.82rem] font-bold text-[#2b2d33] shadow-[0_10px_22px_rgba(84,140,191,0.08)]">
+                +10k
               </div>
             </div>
-            <p className="text-sm text-[#9096a0]">`Trusted by people exploring life beyond screens</p>
+            <p className="text-[0.98rem] font-medium text-[#9096a0]">Used by interesting people</p>
           </div>
         </div>
 
         <div className="relative min-h-[420px] overflow-visible rounded-[38px] md:min-h-[520px]">
-          <div className="absolute inset-x-2 top-8 bottom-4 rounded-[38px] border border-[#aeddf899] bg-[linear-gradient(180deg,#e8f6ff,#f8fcff)] shadow-[0_24px_60px_rgba(58,119,172,0.12)]" />
+          <div className="absolute top-[30px] right-[8px] bottom-[16px] left-[56px] rounded-[38px] border border-[#aeddf899] bg-[linear-gradient(180deg,#e8f6ff,#f8fcff)] shadow-[0_24px_60px_rgba(58,119,172,0.12)]" />
 
           <div
             className={`absolute inset-x-1 top-12 bottom-8 z-10 overflow-visible md:inset-x-6 md:top-14 md:bottom-10 ${isPageLoaded ? "hero-stack-ready" : ""}`}

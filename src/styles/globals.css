@@ -4,6 +4,8 @@
   --font-sans:
     var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-manrope: var(--font-manrope), "Manrope", sans-serif;
+  --font-outfit: var(--font-outfit), "Outfit", sans-serif;
 }
 
 :root {

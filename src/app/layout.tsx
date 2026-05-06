@@ -1,7 +1,7 @@
 import "../styles/globals.css";
 
 import { type Metadata, type Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Geist, Manrope, Outfit } from "next/font/google";
 import Providers from "~/components/Providers";
 import PreloaderGate from "~/components/PreloaderGate";
 import { Toaster } from "sonner";
@@ -11,7 +11,7 @@ const appUrl = "https://www.myslotmate.com";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "MySlotMate - Access People. Experience Moments.",
+    default: "MySlotMate - Book People's Time.",
     template: "%s | MySlotMate",
   },
   description:
@@ -138,6 +138,16 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -175,7 +185,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className={`${geist.variable} overflow-x-hidden max-w-screen`} suppressHydrationWarning>
+    <html lang="en" className={`${geist.variable} ${manrope.variable} ${outfit.variable} overflow-x-hidden max-w-screen`} suppressHydrationWarning>
       <head>
         {/* JSON-LD Schema Markup */}
         <script

@@ -182,10 +182,14 @@ export default function RatingsSection({
       {/* Overall */}
       <div className="mt-4 flex items-end gap-2">
         <span className="text-3xl font-bold text-[#0094CA]">
-          {avg_rating}
+          {avg_rating > 0 ? avg_rating : "NEW"}
         </span>
-        <span className="mb-1 text-sm text-gray-500">/ 5.0</span>
-        <StarRating rating={avg_rating} />
+        {avg_rating > 0 && (
+          <>
+            <span className="mb-1 text-sm text-gray-500">/ 5.0</span>
+            <StarRating rating={avg_rating} />
+          </>
+        )}
       </div>
 
       {/* Reviews list - Show only first 4 reviews */}
@@ -196,12 +200,14 @@ export default function RatingsSection({
       </div>
 
       {/* Read All */}
-      <button 
-        onClick={onReadAllReviews}
-        className="mt-4 w-full rounded-full border border-gray-300 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA]"
-      >
-        Read all {total_reviews} reviews
-      </button>
+      {total_reviews > 0 && (
+        <button 
+          onClick={onReadAllReviews}
+          className="mt-4 w-full rounded-full border border-gray-300 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA]"
+        >
+          Read all {total_reviews} reviews
+        </button>
+      )}
     </div>
   );
 }

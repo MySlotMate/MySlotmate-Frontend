@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import * as components from "../components";
 import {
   useState,
@@ -75,11 +75,10 @@ const FilterBarDesktop = () => {
               <button
                 key={tab.name}
                 onClick={() => setSelectedMood(tab.name)}
-                className={`flex shrink-0 items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out ${
-                  isActive
+                className={`flex shrink-0 items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all duration-300 ease-in-out ${isActive
                     ? "text-white shadow-md"
                     : "text-[#9ECADA] hover:text-[#0094CA]"
-                }`}
+                  }`}
                 style={{
                   background: isActive
                     ? "linear-gradient(83.25deg, #0094CA -2.39%, #D5F4FF 148.84%)"
@@ -209,9 +208,8 @@ const FilterBarMobile = () => {
                   setSelectedMood(selectedTab.name);
                   scrollToTab(idx);
                 }}
-                className={`flex h-8 shrink-0 snap-center items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-medium transition-all duration-300 ease-in-out [&_svg]:h-3 [&_svg]:w-3 ${
-                  isActive ? "text-white shadow-md" : "text-[#9ECADA]"
-                }`}
+                className={`flex h-8 shrink-0 snap-center items-center justify-center gap-1 rounded-full px-1.5 text-[10px] font-medium transition-all duration-300 ease-in-out [&_svg]:h-3 [&_svg]:w-3 ${isActive ? "text-white shadow-md" : "text-[#9ECADA]"
+                  }`}
                 aria-pressed={isActive}
                 style={{
                   width: itemWidth > 0 ? `${itemWidth}px` : "33.3333%",

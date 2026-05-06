@@ -176,27 +176,27 @@ export default function ExplorePage() {
 
     const searched = normalizedQuery
       ? list.filter((host) =>
-          matchesNormalizedQuery(normalizedQuery, [
-            host.first_name,
-            host.last_name,
-            host.city,
-            host.tagline,
-            host.bio,
-            ...(host.expertise_tags ?? []),
-          ]),
-        )
+        matchesNormalizedQuery(normalizedQuery, [
+          host.first_name,
+          host.last_name,
+          host.city,
+          host.tagline,
+          host.bio,
+          ...(host.expertise_tags ?? []),
+        ]),
+      )
       : list;
 
     const pillFiltered =
       pill === "All"
         ? searched
         : searched.filter((host) =>
-            matchesExplorePill(pill, [
-              host.tagline,
-              host.bio,
-              ...(host.expertise_tags ?? []),
-            ]),
-          );
+          matchesExplorePill(pill, [
+            host.tagline,
+            host.bio,
+            ...(host.expertise_tags ?? []),
+          ]),
+        );
 
     const moodFiltered = pillFiltered.filter((host) =>
       hostMatchesMood(host.id, hostMoodFilter, hostMoodMap),
@@ -443,11 +443,10 @@ export default function ExplorePage() {
                   key={item}
                   type="button"
                   onClick={() => setPill(item)}
-                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${
-                    isActive
-                      ? "bg-[#dff3ff] text-[#0e8ae0]"
-                      : "bg-white/90 text-[#5a88ac]"
-                  }`}
+                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${isActive
+                    ? "bg-[#dff3ff] text-[#0e8ae0]"
+                    : "bg-white/90 text-[#5a88ac]"
+                    }`}
                 >
                   {item}
                 </button>
@@ -536,11 +535,10 @@ export default function ExplorePage() {
                   key={mood}
                   type="button"
                   onClick={() => setHostMoodFilter(mood)}
-                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${
-                    hostMoodFilter === mood
-                      ? "bg-[#dff3ff] text-[#0e8ae0]"
-                      : "bg-white/90 text-[#5a88ac]"
-                  }`}
+                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${hostMoodFilter === mood
+                    ? "bg-[#dff3ff] text-[#0e8ae0]"
+                    : "bg-white/90 text-[#5a88ac]"
+                    }`}
                 >
                   {getMoodDisplayLabel(mood)}
                 </button>
@@ -580,7 +578,7 @@ export default function ExplorePage() {
                           {fullName}
                         </h3>
                         <span className="rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
-                          {host.avg_rating && host.avg_rating > 0 ? host.avg_rating.toFixed(1) : "New"}
+                          {host.avg_rating && host.avg_rating > 0 ? host.avg_rating.toFixed(1) : "NEW"}
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-[#6f8daa]">
@@ -613,7 +611,7 @@ export default function ExplorePage() {
         </section>
 
         {/* Experiences section */}
-        <section className="mt-10">
+        <section className="mt-7">
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <h2 className="font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.05em] sm:text-5xl">

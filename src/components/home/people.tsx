@@ -180,7 +180,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
   return (
     <section className="w-full border-y border-[#aeddf847]">
       <div className="mx-auto w-full max-w-[1120px] py-14">
-        <div className="mb-6 flex items-end justify-between gap-4">
+        <div className="mb-14 flex items-end justify-between gap-4">
           <div>
             {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
               <span className="inline-block h-2 w-2 rounded-full bg-current" />
@@ -189,7 +189,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
             <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
               Find Your Kind of People
             </h2>
-            <p className="mt-1.5 text-sm text-[#6f8daa] sm:text-base">
+            <p className="mt-5 text-sm text-[#6f8daa] sm:text-base">
               From creators to thinkers — find people for real-world experiences
             </p>
           </div>

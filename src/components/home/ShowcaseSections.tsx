@@ -172,7 +172,7 @@ const CuratedSessionCard = ({
             <span className="text-[10px] font-bold text-[#a0aec0]">/ session</span>
           </div>
           <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 ring-1 ring-amber-100">
-            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            {rating !== "New" && <Star className="h-3 w-3 fill-amber-400 text-amber-400" />}
             <span className="text-[11px] font-black text-amber-700">
               {rating}
             </span>
@@ -386,6 +386,7 @@ const ShowcaseSections = () => {
   const howProgressRef = useRef<HTMLDivElement>(null);
   const howMobileProgressRef = useRef<SVGPathElement>(null);
   const howMobileFlowRef = useRef<SVGPathElement>(null);
+  const howStepRefs = useRef<Array<HTMLElement | null>>([]);
   const featuredContainerRef = useRef<HTMLDivElement>(null);
   const storyContainerRef = useRef<HTMLDivElement>(null);
   const formatPrice = (priceCents: number | null | undefined) => {
@@ -419,15 +420,15 @@ const ShowcaseSections = () => {
         id: event.id,
         title: event.title,
         copy:
-          event.hook_line ??
           event.description ??
+          event.hook_line ??
           "Discover a hosted experience near you.",
         duration: `${event.duration_minutes ?? 0} mins`,
         price: formatPrice(event.price_cents),
         rating:
-          event.avg_rating !== null && event.avg_rating !== undefined
+          event.avg_rating !== null && event.avg_rating !== undefined && event.avg_rating !== 0
             ? event.avg_rating.toFixed(1)
-            : "New",
+            : "NEW",
         image: event.cover_image_url ?? "/assets/home/hiking.jpg",
         overlayTitle: event.title,
         overlaySubtitle: event.location
@@ -468,9 +469,9 @@ const ShowcaseSections = () => {
           "Discover a hosted experience near you.",
         imageUrl: event.cover_image_url ?? "/assets/home/hiking.jpg",
         rating:
-          event.avg_rating !== null && event.avg_rating !== undefined
+          event.avg_rating !== null && event.avg_rating !== undefined && event.avg_rating !== 0
             ? event.avg_rating.toFixed(1)
-            : "New",
+            : "NEW",
         price: formatPrice(event.price_cents),
       }));
 
@@ -517,7 +518,7 @@ const ShowcaseSections = () => {
           `${host.first_name} is hosting meaningful local experiences on MySlotMate.`,
         statOne: `${host.total_reviews ?? 0}`,
         statOneLabel: "Reviews",
-        statTwo: (host.avg_rating ?? 4.5).toFixed(1),
+        statTwo: host.avg_rating && host.avg_rating !== 0 ? host.avg_rating.toFixed(1) : "NEW",
         statTwoLabel: "User Rating",
         image:
           host.avatar_url ??
@@ -889,6 +890,38 @@ const ShowcaseSections = () => {
           0.45,
         );
       }
+
+      // Step animations
+      const steps = howStepRefs.current.filter(Boolean);
+      if (steps.length > 0) {
+        timeline.fromTo(
+          steps,
+          { opacity: 0, x: -30 },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 1.2,
+            stagger: 0.35,
+            ease: "power2.out",
+          },
+          0.3,
+        );
+
+        // Icon popping effect
+        const icons = steps.map((s) => s?.querySelector(".step-icon-container"));
+        timeline.fromTo(
+          icons,
+          { scale: 0, opacity: 0 },
+          {
+            scale: 1,
+            opacity: 1,
+            duration: 1,
+            stagger: 0.35,
+            ease: "back.out(1.7)",
+          },
+          0.15,
+        );
+      }
     }, section);
 
     return () => ctx.revert();
@@ -896,8 +929,8 @@ const ShowcaseSections = () => {
   return (
     <>
       <section className="site-x w-full border-y border-[#aeddf847] bg-[linear-gradient(180deg,#edf8ff,#f7fcff)]">
-        <div className="mx-auto w-full max-w-[1120px] py-14">
-          <div className="mx-auto mb-8 max-w-[760px] text-center">
+        <div className="mx-auto w-full max-w-[1120px] pt-14 pb-20">
+          <div className="mx-auto mb-14 max-w-[760px] text-center">
             {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
               Explore Experiences
@@ -905,7 +938,7 @@ const ShowcaseSections = () => {
             <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
               Experiences built around real people
             </h2>
-            <p className="mt-2 text-sm text-[#6f8daa] sm:text-base">
+            <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
               From deep conversations to creative sessions —discover experiences
               hosted by people around you.
             </p>
@@ -928,7 +961,6 @@ const ShowcaseSections = () => {
                     ref={(el) => {
                       wayVideoRefs.current[idx] = el;
                     }}
-                    autoPlay
                     muted
                     loop
                     playsInline
@@ -945,10 +977,10 @@ const ShowcaseSections = () => {
                       }
                     />
                   </video>
-                  {/* Overlay for legibility */}
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(0,0,0,0.1)_40%,rgba(0,0,0,0.6)_100%)]" />
+                  {/* Branded light blue gradient overlay for legibility */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(31,167,255,0.05)_40%,rgba(31,167,255,0.8)_100%)] transition-opacity duration-500 group-hover:opacity-0" />
 
-                  <div className="relative z-10 flex h-full flex-col p-4 transition duration-300">
+                  <div className="relative z-10 flex h-full flex-col p-4 transition-all duration-500 group-hover:opacity-0">
                     <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/85 text-[#0e8ae0] shadow-[0_10px_18px_rgba(56,116,169,0.12)] transition-transform group-hover:scale-110">
                       <Icon className="h-5 w-5" />
                     </span>
@@ -975,7 +1007,7 @@ const ShowcaseSections = () => {
         className="site-x w-full scroll-mt-[calc(var(--navbar-height)+3rem)]"
       >
         <div className="mx-auto w-full max-w-[1120px] py-14">
-          <div className="mx-auto mb-8 max-w-[760px] text-center">
+          <div className="mx-auto mb-14 max-w-[760px] text-center">
             {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
               How it works
@@ -983,7 +1015,7 @@ const ShowcaseSections = () => {
             <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
               Turn your mood into a real experience
             </h2>
-            <p className="mt-2 text-sm text-[#6f8daa] sm:text-base">
+            <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
               Discover someone. Book a moment. Experience something real.
             </p>
           </div>
@@ -1088,9 +1120,12 @@ const ShowcaseSections = () => {
               {stepItems.map((step, idx) => (
                 <article
                   key={`${step.title}-desktop`}
+                  ref={(el) => {
+                    howStepRefs.current[idx] = el;
+                  }}
                   className="relative z-10 text-center"
                 >
-                  <div className="relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#0094CA] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
+                  <div className="step-icon-container relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#0094CA] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
                     <img
                       src={STEPS_ICONS[idx]}
                       alt={step.title}
@@ -1207,7 +1242,7 @@ const ShowcaseSections = () => {
                     <h3 className="font-[Outfit,sans-serif] text-2xl font-black tracking-tight text-[#16304c] lg:text-3xl">
                       {featured.title}
                     </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-[#5c84a5] line-clamp-2">
+                    <p className="mt-2 text-sm leading-relaxed text-[#5c84a5]">
                       {featured.copy}
                     </p>
                   </div>
@@ -1223,7 +1258,7 @@ const ShowcaseSections = () => {
                         <span className="text-xs font-bold text-[#16304c]">{featured.price}</span>
                       </div>
                       <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
-                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        {featured.rating !== "New" && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
                         <span className="text-xs font-bold text-[#16304c]">{featured.rating}</span>
                       </div>
                     </div>
@@ -1250,9 +1285,6 @@ const ShowcaseSections = () => {
             <div className="w-full">
               <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
                 <div className="max-w-[640px]">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-[#eef8ff] px-4 py-1.5 text-[10px] font-black tracking-[0.1em] text-[#0e8ae0] uppercase">
-                    Curated For You
-                  </span>
                   <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-black tracking-tight text-[#16304c] sm:text-5xl">
                     Discover Experiences
                   </h2>
@@ -1320,10 +1352,10 @@ const ShowcaseSections = () => {
       </section>
 
       <section className="site-x w-full">
-        <div className="mx-auto grid w-full max-w-[1120px] gap-10 py-14 lg:grid-cols-[0.92fr_1.08fr]">
+        <div className="mx-auto grid w-full max-w-[1120px] items-center gap-10 py-14 lg:grid-cols-[0.92fr_1.08fr]">
           <Link
             href={storyHref}
-            className="relative mx-auto mb-12 w-full max-w-[560px] block"
+            className="relative mx-auto mb-12 w-full max-w-[410px] block"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -1342,7 +1374,7 @@ const ShowcaseSections = () => {
             </div>
           </Link>
 
-          <div ref={storyContainerRef} className="pt-2">
+          <div ref={storyContainerRef} className="">
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* Auto-rotation active */}
             </div>
@@ -1386,7 +1418,7 @@ const ShowcaseSections = () => {
       <section className="site-x w-full">
         <div
           ref={statsRef}
-          className="mx-auto my-10 grid w-full max-w-[1120px] grid-cols-2 gap-4 border-y border-[#aeddf880] py-14 sm:my-[120px] lg:grid-cols-4 lg:gap-6"
+          className="mx-auto grid w-full max-w-[1120px] grid-cols-2 gap-4 border-y border-[#aeddf880] py-14 lg:grid-cols-4 lg:gap-6"
         >
           {[
             { label: "Booked Sessions", suffix: "+" },
@@ -1418,12 +1450,12 @@ const ShowcaseSections = () => {
         id="community"
         className="site-x w-full scroll-mt-[calc(var(--navbar-height)+3rem)]"
       >
-        <div className="mx-auto grid w-full max-w-[1120px] gap-5 pb-14 lg:grid-cols-[0.9fr_1.1fr]">
-          <article className="rounded-[26px] bg-[linear-gradient(135deg,#109ae9,#0d85db)] p-7 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/20 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase">
-              List your time
+        <div className="mx-auto grid w-full max-w-[1120px] gap-[18px] py-14 lg:grid-cols-[0.9fr_1.1fr]">
+          <article className="flex flex-col rounded-[26px] bg-[linear-gradient(135deg,#109ae9,#0d85db)] p-6 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
+            <span className="inline-flex self-start items-center gap-2 rounded-full border border-white/20 bg-white/20 px-3 py-1.5 text-[10px] font-extrabold tracking-[0.08em] uppercase">
+              Host Corner
             </span>
-            <h3 className="mt-4 font-[Outfit,sans-serif] text-3xl leading-tight font-bold tracking-[-0.04em] sm:text-4xl">
+            <h3 className="mt-3 max-w-[400px] font-[Outfit,sans-serif] text-2xl leading-tight font-bold tracking-[-0.04em] sm:text-3xl">
               Turn Your Passion Into Experiences
             </h3>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1431,35 +1463,37 @@ const ShowcaseSections = () => {
               src="https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=1200&q=80"
               alt="Hosts creating an experience together"
               loading="lazy"
-              className="mb-8 aspect-[3/1] w-full rounded-3xl object-cover shadow-[0_18px_32px_rgba(10,86,148,0.24)]"
+              className="mt-4 aspect-[2/1] w-full rounded-[20px] object-cover shadow-[0_18px_32px_rgba(10,86,148,0.24)]"
             />
-            <p className="mt-4 text-sm leading-7 text-white/85">
+            <p className="mt-3 max-w-[420px] text-[13px] leading-relaxed text-white/85">
               Share a walk, workshop, food story, or creative session with
               people looking for meaningful ways to spend time.
             </p>
             <button
               type="button"
               onClick={handleListTimeClick}
-              className="mt-5 inline-flex -translate-y-0 scale-100 rounded-[0.5rem] border border-white/30 bg-white/15 px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-1 hover:scale-105"
+              className="mt-6 inline-flex self-start rounded-[0.5rem] border border-white/30 bg-white/16 px-5 py-2.5 text-sm font-bold text-white transition hover:-translate-y-1 hover:scale-105"
             >
               Become a Host
             </button>
           </article>
 
-          <article className="rounded-3xl border border-[#aeddf89e] bg-white p-3.5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
-            <div className="mb-2 flex items-start justify-between gap-3">
+          <article className="flex flex-col rounded-3xl border border-[#aeddf89e] bg-white p-6 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
+            <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-lg font-bold text-[#16304c]">
+                <h3 className="text-[15px] font-bold text-[#16304c]">
                   Community Moments
                 </h3>
-                <p className="mt-1 text-sm text-[#6f8daa]">{community.note}</p>
+                <p className="mt-1 line-clamp-2 min-h-[38px] text-[0.78rem] leading-[1.55] text-[#6f8daa]">
+                  {community.note}
+                </p>
               </div>
-              <span className="rounded-full bg-[#dff3ff] px-3 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
+              <span className="shrink-0 rounded-full bg-[#dff3ff] px-3.5 py-1.5 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
                 {community.label}
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="mt-auto grid grid-cols-2 gap-3">
               {community.images.slice(0, 4).map((img, idx) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -1467,7 +1501,7 @@ const ShowcaseSections = () => {
                   src={img}
                   alt={`${community.label} moment ${idx + 1}`}
                   loading="lazy"
-                  className="aspect-[4/3] w-full rounded-2xl object-cover"
+                  className="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm transition-transform hover:scale-[1.02]"
                 />
               ))}
             </div>

@@ -263,11 +263,15 @@ function BookingWidget({
           <span className="text-2xl font-bold">{formattedPrice}</span>
           {!isFree && <span className="text-sm text-gray-500">/person</span>}
         </div>
-        {rating && (
+        {rating !== null && (
           <div className="flex items-center gap-1">
             <FiStar className="fill-yellow-400 text-yellow-400" size={16} />
-            <span className="font-semibold">{rating.toFixed(1)}</span>
-            <span className="text-sm text-gray-500">({totalReviews})</span>
+            <span className="font-semibold">
+              {rating > 0 ? rating.toFixed(1) : "NEW"}
+            </span>
+            {totalReviews > 0 && (
+              <span className="text-sm text-gray-500">({totalReviews})</span>
+            )}
           </div>
         )}
       </div>
@@ -525,14 +529,31 @@ function WhereWellMeet({
   return (
     <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-transparent to-blue-50/20 px-4 py-8 md:px-6">
       <h2 className="mb-6 text-2xl font-bold">Where we&apos;ll meet</h2>
-      <div className="relative flex h-48 items-center justify-center overflow-hidden rounded-xl bg-gray-200">
-        {/* Placeholder map */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-green-100" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0094CA]">
-            <FiMapPin className="text-white" size={16} />
+      <div className="relative h-64 w-full overflow-hidden rounded-xl bg-gray-100 shadow-inner">
+        {location ? (
+          <iframe
+            width="100%"
+            height="100%"
+            style={{ border: 0 }}
+            loading="lazy"
+            allowFullScreen
+            referrerPolicy="no-referrer-when-downgrade"
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+            title="Meeting Location Map"
+            className="rounded-xl grayscale-[20%] transition-all hover:grayscale-0"
+          ></iframe>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
+                <FiMapPin className="text-[#0094CA]" size={24} />
+              </div>
+              <p className="mt-3 text-sm font-medium text-gray-400">
+                Exact meeting point visible after booking
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <div className="mt-2 flex items-center justify-between">
         <p className="text-sm text-gray-500">
@@ -592,21 +613,27 @@ function GuestReviews({
       {/* Rating Summary */}
       <div className="mb-6 flex gap-8">
         <div className="text-center">
-          <p className="text-4xl font-bold">{rating?.toFixed(1) ?? "N/A"}</p>
-          <div className="my-1 flex justify-center gap-0.5">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <FiStar
-                key={star}
-                size={14}
-                className={
-                  star <= (rating ?? 0)
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "text-gray-300"
-                }
-              />
-            ))}
-          </div>
-          <p className="text-sm text-gray-500">{totalReviews} reviews</p>
+          <p className="text-4xl font-bold">
+            {(rating && rating > 0) ? rating.toFixed(1) : "NEW"}
+          </p>
+          {rating && rating > 0 && (
+            <div className="my-1 flex justify-center gap-0.5">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <FiStar
+                  key={star}
+                  size={14}
+                  className={
+                    star <= rating
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
+                  }
+                />
+              ))}
+            </div>
+          )}
+          {totalReviews > 0 && (
+            <p className="text-sm text-gray-500">{totalReviews} reviews</p>
+          )}
         </div>
 
         {/* Distribution Bars */}
@@ -865,11 +892,13 @@ export default function ExperienceDetailPage({
                       size={14}
                     />
                     <span className="font-semibold">
-                      {ratingData.avg_rating?.toFixed(1)}
+                      {(ratingData.avg_rating && ratingData.avg_rating > 0) ? ratingData.avg_rating.toFixed(1) : "NEW"}
                     </span>
-                    <span className="text-gray-500">
-                      ({ratingData.total_reviews} reviews)
-                    </span>
+                    {ratingData.total_reviews > 0 && (
+                      <span className="text-gray-500">
+                        ({ratingData.total_reviews} reviews)
+                      </span>
+                    )}
                   </span>
                 )}
               </div>

@@ -127,50 +127,56 @@ const CuratedSessionCard = ({
   return (
     <Link
       href={href}
-      className="group w-[260px] shrink-0 snap-start overflow-hidden rounded-[28px] border border-[#d6ebf7cc] bg-white shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1"
+      className="group w-[280px] shrink-0 snap-start overflow-hidden rounded-[32px] border border-[#aeddf840] bg-white p-3 shadow-[0_16px_40px_rgba(72,128,173,0.06)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(72,128,173,0.12)]"
     >
-      <div className="relative aspect-square w-full overflow-hidden rounded-[28px]">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[24px]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={imageUrl || "/assets/home/hiking.jpg"}
           alt={title}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
 
-        {/* Save button */}
+        {/* Save button - Glassmorphism */}
         {id && (
           <button
             onClick={handleSave}
             disabled={saveExperience.isPending || unsaveExperience.isPending}
-            className="absolute top-3 right-3 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-blue-50 hover:shadow-lg disabled:opacity-50"
+            className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#0094CA] backdrop-blur-md shadow-lg transition hover:bg-white hover:scale-110 active:scale-90 disabled:opacity-50"
             aria-label={isSaved ? "Remove from saved" : "Save experience"}
           >
             <Heart
-              className="h-6 w-6 transition"
+              className="h-4.5 w-4.5 transition-colors"
               fill={isSaved ? "#0094CA" : "none"}
               stroke="#0094CA"
-              strokeWidth={2}
+              strokeWidth={2.5}
             />
           </button>
         )}
       </div>
 
-      <div className="space-y-1.5 px-5 pt-4 pb-6">
-        <p className="line-clamp-1 text-[10px] font-extrabold tracking-[0.09em] text-[#3f89c3] uppercase">
+      <div className="px-3 pt-4 pb-5">
+        <span className="inline-block rounded-full bg-[#f0f9ff] px-2.5 py-1 text-[9px] font-black tracking-widest text-[#0e8ae0] uppercase">
           {headline}
-        </p>
-        <p className="line-clamp-1 text-2xl leading-tight font-bold tracking-[-0.03em] text-[#16304c]">
+        </span>
+        <h3 className="mt-2.5 line-clamp-1 text-lg font-black tracking-tight text-[#16304c]">
           {title}
-        </p>
-        <p className="line-clamp-2 min-h-[40px] text-xs leading-relaxed text-[#6f8daa]">
+        </h3>
+        <p className="mt-1.5 line-clamp-2 min-h-[36px] text-[13px] leading-relaxed text-[#5c84a5]">
           {description}
         </p>
-        <div className="flex items-center justify-between pt-1">
-          <span className="text-[11px] font-bold text-[#5e88ab]">{price}</span>
-          <span className="text-[11px] font-bold text-[#5e88ab]">
-            Rating {rating}
-          </span>
+        <div className="mt-4 flex items-center justify-between border-t border-slate-50 pt-4">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-black text-[#16304c]">{price}</span>
+            <span className="text-[10px] font-bold text-[#a0aec0]">/ session</span>
+          </div>
+          <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 ring-1 ring-amber-100">
+            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            <span className="text-[11px] font-black text-amber-700">
+              {rating}
+            </span>
+          </div>
         </div>
       </div>
     </Link>
@@ -1075,24 +1081,27 @@ const ShowcaseSections = () => {
         <div className="mx-auto w-full max-w-[1120px] py-14">
           <div className="flex w-full flex-col gap-14">
             <div className="w-full">
-              <div className="grid gap-5 rounded-[28px] border border-[#aeddf885] bg-white p-4 shadow-[0_18px_42px_rgba(60,121,175,0.10)] md:grid-cols-[1.03fr_0.97fr] md:items-center">
-                <div className="relative mx-auto aspect-square w-full max-w-[460px] overflow-hidden rounded-3xl">
+              <div className="group/card grid gap-6 rounded-[28px] border border-[#aeddf840] bg-white p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[0.85fr_1.15fr] md:items-center">
+                <div className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-[20px] shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={featured.image}
                     alt={featured.title}
                     loading="lazy"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover transition-transform duration-700 group-hover/card:scale-110"
                   />
 
-                  {/* Save button */}
+                  {/* Glassmorphic Overlay for Host info */}
+                  <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/20 to-transparent pointer-events-none" />
+
+                  {/* Save button - Compact */}
                   {featured.id && (
                     <button
                       onClick={handleFeaturedSave}
                       disabled={
                         saveExperience.isPending || unsaveExperience.isPending
                       }
-                      className="absolute top-3 right-3 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-blue-50 hover:shadow-lg disabled:opacity-50"
+                      className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#0094CA] backdrop-blur-md shadow-md transition hover:bg-white hover:scale-110 active:scale-95 disabled:opacity-50"
                       aria-label={
                         isFeaturedSaved
                           ? "Remove from saved"
@@ -1100,97 +1109,96 @@ const ShowcaseSections = () => {
                       }
                     >
                       <Heart
-                        className="h-6 w-6 transition"
+                        className="h-4.5 w-4.5 transition-colors"
                         fill={isFeaturedSaved ? "#0094CA" : "none"}
                         stroke="#0094CA"
-                        strokeWidth={2}
+                        strokeWidth={2.5}
                       />
                     </button>
                   )}
 
-                  <div className="absolute bottom-4 left-4 rounded-2xl bg-[#12334fc2] px-3 py-2 text-white backdrop-blur-sm">
-                    <p className="text-sm font-semibold">
-                      {featured.overlayTitle}
-                    </p>
-                    <p className="text-xs text-white/80">
-                      {featured.overlaySubtitle}
-                    </p>
+                  <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
+                    <div className="rounded-xl bg-black/40 px-3 py-1.5 text-white backdrop-blur-xl border border-white/20 shadow-lg">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-white/70">
+                        Host
+                      </p>
+                      <p className="text-xs font-bold">
+                        {featured.overlayTitle}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
-                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                      Featured Experience
-                    </span>
+                <div className="flex flex-col h-full py-1">
+                  <div className="flex items-center justify-end gap-3">
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <button
                         type="button"
                         onClick={showPrevFeatured}
-                        className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
-                        aria-label="Previous featured experience"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
                         disabled={featuredData.length <= 1}
                       >
-                        <ChevronLeft className="h-5 w-5" />
+                        <ChevronLeft className="h-4 w-4" />
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setIsFeaturedPlaying((v) => !v)}
-                        className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
-                        aria-label={
-                          isFeaturedPlaying
-                            ? "Pause featured experiences"
-                            : "Play featured experiences"
-                        }
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
                         disabled={featuredData.length <= 1}
                       >
                         {isFeaturedPlaying ? (
-                          <Pause className="h-5 w-5" />
+                          <Pause className="h-3.5 w-3.5 fill-current" />
                         ) : (
-                          <Play className="h-5 w-5" />
+                          <Play className="h-3.5 w-3.5 ml-0.5 fill-current" />
                         )}
                       </button>
 
                       <button
                         type="button"
                         onClick={showNextFeatured}
-                        className="grid h-10 w-10 place-items-center rounded-full border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white disabled:opacity-40"
-                        aria-label="Next featured experience"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
                         disabled={featuredData.length <= 1}
                       >
-                        <ChevronRight className="h-5 w-5" />
+                        <ChevronRight className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
 
-                  <h3 className="mt-3 font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl">
-                    {featured.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-[#6f8daa]">{featured.copy}</p>
-
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
-                      <Clock3 className="h-4 w-4" />
-                      {featured.duration}
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
-                      {featured.price}
-                    </span>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-[#dff3ff] px-3 py-2 text-xs font-bold text-[#3f7eb1]">
-                      <Star className="h-4 w-4" />
-                      {featured.rating}
-                    </span>
+                  <div className="mt-4">
+                    <h3 className="font-[Outfit,sans-serif] text-2xl font-black tracking-tight text-[#16304c] lg:text-3xl">
+                      {featured.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-[#5c84a5] line-clamp-2">
+                      {featured.copy}
+                    </p>
                   </div>
 
-                  <Link
-                    href={featuredHref}
-                    className="mt-5 flex w-full items-center justify-center rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
-                  >
-                    <span>Book This Experience</span>
-                  </Link>
+                  <div className="mt-auto pt-6">
+                    <div className="flex flex-wrap gap-2">
+                      <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
+                        <Clock3 className="h-3.5 w-3.5 text-[#0e8ae0]" />
+                        <span className="text-xs font-bold text-[#16304c]">{featured.duration}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
+                        <span className="text-xs font-bold text-[#0e8ae0]">$</span>
+                        <span className="text-xs font-bold text-[#16304c]">{featured.price}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span className="text-xs font-bold text-[#16304c]">{featured.rating}</span>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={featuredHref}
+                      className="group/btn relative mt-6 flex w-full items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-6 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(31,167,255,0.2)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(31,167,255,0.3)]"
+                    >
+                      <span className="relative z-10">Book This Experience</span>
+                      <div className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover/btn:translate-y-0" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1203,47 +1211,46 @@ const ShowcaseSections = () => {
             </div>
 
             <div className="w-full">
-              <div className="mb-6 flex items-end justify-between gap-4">
-                <div>
-                  {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
-                    <span className="inline-block h-2 w-2 rounded-full bg-current" />
-                    Curated Sessions
-                  </span> */}
-                  <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
+              <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+                <div className="max-w-[640px]">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-[#eef8ff] px-4 py-1.5 text-[10px] font-black tracking-[0.1em] text-[#0e8ae0] uppercase">
+                    Curated For You
+                  </span>
+                  <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-black tracking-tight text-[#16304c] sm:text-5xl">
                     Discover Experiences
                   </h2>
-                  <p className="mt-1.5 text-sm text-[#6f8daa] sm:text-base">
-                    Handpicked sessions you can book in a few taps.
+                  <p className="mt-3 text-base leading-relaxed text-[#5c84a5]">
+                    Handpicked sessions designed for real-world connection. Book in a few taps and experience something new.
                   </p>
                 </div>
 
                 {isCuratedOverflowing ? (
-                  <div className="hidden items-center gap-3 md:flex">
+                  <div className="hidden items-center gap-2 md:flex">
                     <button
                       type="button"
                       onClick={() => scrollCuratedSessions("left")}
-                      className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+                      className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
                       aria-label="Scroll curated sessions left"
                     >
-                      <ChevronLeft className="h-5 w-5" />
+                      <ChevronLeft className="h-6 w-6" />
                     </button>
                     {isCuratedAtScrollEnd ? (
                       <Link
                         href="/experiences"
-                        className="inline-flex h-14 items-center justify-center gap-2 border border-[#bdddf4] bg-[#f7fcff] px-5 text-sm font-extrabold text-[#2f7eb5] transition hover:bg-white"
+                        className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#bdddf480] bg-[#eef8ff] px-6 text-sm font-black text-[#0e8ae0] transition-all hover:bg-[#0e8ae0] hover:text-white"
                         aria-label="See more experiences"
                       >
-                        See more
+                        Explore All
                         <ChevronRight className="h-4 w-4" />
                       </Link>
                     ) : (
                       <button
                         type="button"
                         onClick={() => scrollCuratedSessions("right")}
-                        className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+                        className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
                         aria-label="Scroll curated sessions right"
                       >
-                        <ChevronRight className="h-5 w-5" />
+                        <ChevronRight className="h-6 w-6" />
                       </button>
                     )}
                   </div>

@@ -7,7 +7,7 @@ import { auth } from "~/utils/firebase";
 import { Navbar, Breadcrumb } from "~/components";
 import { HostApplicationSubmittedModal } from "~/components/become-host";
 import { Home } from "~/components";
-import { FiArrowRight, FiUploadCloud } from "react-icons/fi";
+import { FiArrowRight, FiArrowLeft, FiUploadCloud } from "react-icons/fi";
 import { toast } from "sonner";
 import {
   useMyProfile,
@@ -23,7 +23,6 @@ import { setStoredHostId } from "~/lib/auth-storage";
 /* ------------------------------------------------------------------ */
 
 interface HostFormData {
-  // Step 1
   fullName: string;
   city: string;
   experienceDesc: string;
@@ -32,11 +31,8 @@ interface HostFormData {
   socialInstagram: string;
   socialLinkedin: string;
   socialWebsite: string;
-  // Step 2
   preferredDays: string[];
   groupSize: number;
-  governmentIdFile: File | null;
-  governmentIdName: string;
 }
 
 const MOODS = ["Adventure", "Social", "Wellness"] as const;
@@ -81,24 +77,21 @@ export default function BecomeHostPage() {
   const draftMutation = useSaveHostDraft();
   const uploadMutation = useUploadFiles();
 
-  const [step, setStep] = useState(1);
   const [showSubmittedModal, setShowSubmittedModal] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
 
   const [form, setForm] = useState<HostFormData>({
     fullName: user?.displayName ?? "",
     city: "",
     experienceDesc: "",
-    moods: [],
+    moods: ["Adventure"],
     description: "",
     socialInstagram: "",
     socialLinkedin: "",
     socialWebsite: "",
     preferredDays: [],
     groupSize: 5,
-    governmentIdFile: null,
-    governmentIdName: "",
   });
 
   /* ---- helpers ---- */
@@ -128,39 +121,7 @@ export default function BecomeHostPage() {
     }));
   };
 
-  const handleFile = useCallback((file: File | undefined) => {
-    if (!file) return;
-    const allowed = [
-      "image/png",
-      "image/jpeg",
-      "image/svg+xml",
-      "application/pdf",
-    ];
-    if (!allowed.includes(file.type)) {
-      toast.error("Only PNG, JPG, SVG, or PDF files are allowed.");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("File must be under 10 MB.");
-      return;
-    }
-    setForm((prev) => ({
-      ...prev,
-      governmentIdFile: file,
-      governmentIdName: file.name,
-    }));
-  }, []);
-
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragActive(false);
-      handleFile(e.dataTransfer.files[0]);
-    },
-    [handleFile],
-  );
-
-  const progress = step === 1 ? 50 : 100;
+  const progress = 100;
 
   /* ---- guard: must be logged in + verified ---- */
 
@@ -306,7 +267,8 @@ export default function BecomeHostPage() {
     }
   };
 
-  const handleNextStep = () => {
+  const handleSubmit = async () => {
+    setShowErrors(true);
     if (!form.fullName.trim()) {
       toast.warning("Please enter your full name.");
       return;
@@ -323,40 +285,29 @@ export default function BecomeHostPage() {
       toast.warning("Please select at least one mood.");
       return;
     }
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleSubmit = async () => {
     if (form.preferredDays.length === 0) {
       toast.warning("Please select at least one preferred day.");
       return;
     }
-    if (!form.governmentIdFile) {
-      toast.warning("Please upload your Government ID for verification.");
+    if (
+      !form.socialInstagram.trim() &&
+      !form.socialLinkedin.trim() &&
+      !form.socialWebsite.trim()
+    ) {
+      toast.warning("Please provide at least one social media link.");
       return;
     }
     if (!validUserId) {
       toast.error("Please complete your profile (signup) first.");
       return;
     }
+    if (!form.description.trim()) {
+      toast.warning("Please provide a short description about yourself or your plans.");
+      return;
+    }
 
     setSubmitting(true);
     try {
-      // 1. Upload government ID to S3
-      let govIdUrl: string | undefined;
-      try {
-        const uploadRes = await uploadMutation.mutateAsync({
-          files: [form.governmentIdFile],
-          folder: "hosts/government-ids",
-        });
-        govIdUrl = uploadRes.data[0]?.url;
-      } catch (uploadErr) {
-        console.warn(
-          "File upload failed (server may not have S3 configured), continuing without:",
-          uploadErr,
-        );
-      }
 
       // 2. Submit host application
       const nameParts = form.fullName.trim().split(" ");
@@ -371,7 +322,7 @@ export default function BecomeHostPage() {
         description: form.description || undefined,
         preferred_days: form.preferredDays.map((d) => d.toLowerCase()),
         group_size: form.groupSize,
-        government_id_url: govIdUrl,
+        government_id_url: undefined,
         social_instagram: form.socialInstagram.trim() || null,
         social_linkedin: form.socialLinkedin.trim() || null,
         social_website: form.socialWebsite.trim() || null,
@@ -417,9 +368,7 @@ export default function BecomeHostPage() {
               Become a Host
             </h1>
             <p className="mt-1 text-sm font-medium text-[#0094CA]">
-              {step === 1
-                ? "Step 1 of 2: Basic Information"
-                : "Step 2 of 2: Logistics & Verification"}
+              Complete your profile to start hosting
             </p>
           </div>
 
@@ -444,362 +393,280 @@ export default function BecomeHostPage() {
 
         <hr className="my-6 border-gray-200" />
 
-        {/* ─── STEP 1 ─── */}
-        {step === 1 && (
-          <div className="space-y-10">
-            {/* Personal Information */}
-            <section>
-              <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                <span className="text-[#0094CA]">👤</span> Personal Information
-              </h2>
-              <div className="mt-5 grid gap-5 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-gray-900">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={form.fullName}
-                    onChange={(e) => updateField("fullName", e.target.value)}
-                    placeholder="e.g. Alex Rivera"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-gray-900">
-                    City of Residence
-                  </label>
+        {/* Combined Step 1 & Step 2 */}
+        <div className="space-y-10">
+          {/* Personal Information */}
+          <section>
+            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+              <span className="text-[#0094CA]">👤</span> Personal Information
+            </h2>
+            <div className="mt-5 grid gap-5 sm:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={form.fullName}
+                  onChange={(e) => updateField("fullName", e.target.value)}
+                  placeholder="e.g. Alex Rivera"
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.fullName.trim()
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300 focus:border-[#0094CA]"
+                  }`}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                  City of Residence
+                </label>
                   <input
                     type="text"
                     value={form.city}
                     onChange={(e) => updateField("city", e.target.value)}
                     placeholder="e.g. San Francisco"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                      showErrors && !form.city.trim()
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300 focus:border-[#0094CA]"
+                    }`}
                   />
+              </div>
+            </div>
+          </section>
+
+          {/* Experience Details */}
+          <section>
+            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+              <span className="text-[#0094CA]">✅</span> Experience Details
+            </h2>
+
+            <div className="mt-5 space-y-5">
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                  What Experiences will you Host?
+                </label>
+                <input
+                  type="text"
+                  value={form.experienceDesc}
+                  onChange={(e) =>
+                    updateField("experienceDesc", e.target.value)
+                  }
+                  placeholder="Write about all the activities you are planning to host"
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.experienceDesc.trim()
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300 focus:border-[#0094CA]"
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-900">
+                  Select Moods
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {MOODS.filter(m => m === "Adventure").map((mood) => {
+                    const selected = form.moods.includes(mood);
+                    return (
+                      <button
+                        key={mood}
+                        type="button"
+                        onClick={() => toggleMood(mood)}
+                        className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
+                          selected
+                            ? "border-[#0094CA] bg-[#0094CA] text-white"
+                            : "border-gray-300 bg-white text-gray-700 hover:border-[#0094CA] hover:text-[#0094CA]"
+                        }`}
+                      >
+                        ✦ {mood}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            </section>
 
-            {/* Experience Details */}
-            <section>
-              <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                <span className="text-[#0094CA]">✅</span> Experience Details
-              </h2>
-
-              <div className="mt-5 space-y-5">
-                {/* What Experiences */}
-                <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-gray-900">
-                    What Experiences will you Host?
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-sm font-semibold text-gray-900">
+                    Description <span className="text-red-500 font-bold">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={form.experienceDesc}
-                    onChange={(e) =>
-                      updateField("experienceDesc", e.target.value)
-                    }
-                    placeholder="Write about all the activities you are planning to host"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                  />
+                  <span className="text-xs text-gray-400">
+                    {form.description.length}/300
+                  </span>
                 </div>
+                <textarea
+                  value={form.description}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 300)
+                      updateField("description", e.target.value);
+                  }}
+                  maxLength={300}
+                  rows={5}
+                  placeholder="Describe the magic you're thinking of creating..."
+                  className={`w-full resize-none rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.description.trim()
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-300 focus:border-[#0094CA]"
+                  }`}
+                />
+              </div>
 
-                {/* Moods */}
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    Select Moods
+              <div>
+                <div className="mb-3">
+                  <label className="block text-sm font-semibold text-gray-900">
+                    Social Links <span className="text-red-500 font-bold">*</span>
                   </label>
-                  <div className="flex flex-wrap gap-2">
-                    {MOODS.map((mood) => {
-                      const selected = form.moods.includes(mood);
-                      return (
-                        <button
-                          key={mood}
-                          type="button"
-                          onClick={() => toggleMood(mood)}
-                          className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
-                            selected
-                              ? "border-[#0094CA] bg-[#0094CA] text-white"
-                              : "border-gray-300 bg-white text-gray-700 hover:border-[#0094CA] hover:text-[#0094CA]"
-                          }`}
-                        >
-                          ✦ {mood}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    At least one link is required for verification.
+                  </p>
                 </div>
-
-                {/* Description */}
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <label className="text-sm font-semibold text-gray-900">
-                      Description
-                    </label>
-                    <span className="text-xs text-gray-400">
-                      {form.description.length}/300
-                    </span>
-                  </div>
-                  <textarea
-                    value={form.description}
-                    onChange={(e) => {
-                      if (e.target.value.length <= 300)
-                        updateField("description", e.target.value);
-                    }}
-                    maxLength={300}
-                    rows={5}
-                    placeholder="Describe the magic you're thinking of creating..."
-                    className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                  />
-                </div>
-
-                <div>
-                  <div className="mb-3">
-                    <label className="block text-sm font-semibold text-gray-900">
-                      Social Links
-                    </label>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Optional links that help us review your public presence.
-                    </p>
-                  </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                        Instagram
-                      </label>
-                      <input
-                        type="url"
-                        value={form.socialInstagram}
-                        onChange={(e) =>
-                          updateField("socialInstagram", e.target.value)
-                        }
-                        placeholder="https://instagram.com/yourprofile"
-                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                        LinkedIn
-                      </label>
-                      <input
-                        type="url"
-                        value={form.socialLinkedin}
-                        onChange={(e) =>
-                          updateField("socialLinkedin", e.target.value)
-                        }
-                        placeholder="https://linkedin.com/in/yourprofile"
-                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                      />
-                    </div>
-                  </div>
-                  <div className="mt-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
                     <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Website
+                      Instagram
                     </label>
                     <input
                       type="url"
-                      value={form.socialWebsite}
+                      value={form.socialInstagram}
                       onChange={(e) =>
-                        updateField("socialWebsite", e.target.value)
+                        updateField("socialInstagram", e.target.value)
                       }
-                      placeholder="https://yourwebsite.com"
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      placeholder="https://instagram.com/yourprofile"
+                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                        showErrors &&
+                        !form.socialInstagram.trim() &&
+                        !form.socialLinkedin.trim() &&
+                        !form.socialWebsite.trim()
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300 focus:border-[#0094CA]"
+                      }`}
                     />
                   </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Bottom actions */}
-            <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-              <button
-                onClick={handleSaveDraft}
-                className="text-sm font-medium text-gray-500 transition hover:text-gray-700"
-              >
-                Save as Draft
-              </button>
-              <button
-                onClick={handleNextStep}
-                className="flex items-center gap-2 rounded-full bg-[#0094CA] px-7 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab]"
-              >
-                Next Steps <FiArrowRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ─── STEP 2 ─── */}
-        {step === 2 && (
-          <div className="space-y-10">
-            {/* Availability */}
-            <section>
-              <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                <span className="text-[#0094CA]">📅</span> Availability
-              </h2>
-
-              <div className="mt-5 space-y-6">
-                {/* Preferred Days */}
-                <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
-                    Preferred Days
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {DAYS.map(({ key, label }) => {
-                      const selected = form.preferredDays.includes(key);
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => toggleDay(key)}
-                          className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${
-                            selected
-                              ? "border-[#0094CA] bg-[#0094CA] text-white"
-                              : "border-gray-300 bg-white text-gray-600 hover:border-[#0094CA]"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Group Size */}
-                <div>
-                  <label className="mb-1.5 block text-sm font-semibold text-gray-900">
-                    Approximate Group Size
-                  </label>
-                  <div className="flex w-fit items-center gap-3 rounded-lg border border-gray-300 px-4 py-3">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      LinkedIn
+                    </label>
                     <input
-                      type="number"
-                      min={1}
-                      max={100}
-                      value={form.groupSize}
+                      type="url"
+                      value={form.socialLinkedin}
                       onChange={(e) =>
-                        updateField(
-                          "groupSize",
-                          Math.max(1, parseInt(e.target.value) || 1),
-                        )
+                        updateField("socialLinkedin", e.target.value)
                       }
-                      className="w-16 text-sm font-bold text-gray-900 outline-none"
+                      placeholder="https://linkedin.com/in/yourprofile"
+                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                        showErrors &&
+                        !form.socialInstagram.trim() &&
+                        !form.socialLinkedin.trim() &&
+                        !form.socialWebsite.trim()
+                          ? "border-red-500 bg-red-50"
+                          : "border-gray-300 focus:border-[#0094CA]"
+                      }`}
                     />
-                    <span className="text-sm text-gray-400">People</span>
                   </div>
-                  <p className="mt-1.5 text-xs text-gray-500">
-                    How many guests can you comfortably host at once?
-                  </p>
+                </div>
+                <div className="mt-4">
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Website
+                  </label>
+                  <input
+                    type="url"
+                    value={form.socialWebsite}
+                    onChange={(e) =>
+                      updateField("socialWebsite", e.target.value)
+                    }
+                    placeholder="https://yourwebsite.com"
+                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                      showErrors &&
+                      !form.socialInstagram.trim() &&
+                      !form.socialLinkedin.trim() &&
+                      !form.socialWebsite.trim()
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300 focus:border-[#0094CA]"
+                    }`}
+                  />
                 </div>
               </div>
-            </section>
-
-            <hr className="border-gray-200" />
-
-            {/* Verification */}
-            <section>
-              <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                <span className="text-[#0094CA]">🔒</span> Verification
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Required for safety and trust. We never share your ID.
-              </p>
-
-              {/* Upload area */}
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragActive(true);
-                }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={handleDrop}
-                className={`mt-5 flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-12 transition ${
-                  dragActive
-                    ? "border-[#0094CA] bg-[#e6f8ff]"
-                    : form.governmentIdFile
-                      ? "border-green-400 bg-green-50"
-                      : "border-gray-300 bg-gray-50"
-                }`}
-              >
-                {form.governmentIdFile ? (
-                  <>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
-                      <svg
-                        className="h-6 w-6 text-green-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                    <p className="mt-3 text-sm font-semibold text-gray-900">
-                      {form.governmentIdName}
-                    </p>
-                    <button
-                      onClick={() => {
-                        updateField("governmentIdFile", null);
-                        updateField("governmentIdName", "");
-                      }}
-                      className="mt-1 text-xs text-red-500 hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#e6f8ff]">
-                      <FiUploadCloud className="h-6 w-6 text-[#0094CA]" />
-                    </div>
-                    <p className="mt-3 text-sm font-bold text-gray-900">
-                      Upload Government ID
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Drag and drop or{" "}
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="font-medium text-[#0094CA] hover:underline"
-                      >
-                        browse files
-                      </button>
-                    </p>
-                  </>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".png,.jpg,.jpeg,.svg,.pdf"
-                  className="hidden"
-                  onChange={(e) => handleFile(e.target.files?.[0])}
-                />
-              </div>
-            </section>
-
-            {/* Bottom actions */}
-            <div className="flex items-center justify-between border-t border-gray-200 pt-6">
-              <button
-                onClick={() => {
-                  // Save for later = draft
-                  void handleSaveDraft();
-                }}
-                className="text-sm font-medium text-gray-500 transition hover:text-gray-700"
-              >
-                Save for later
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="flex items-center gap-2 rounded-full bg-[#0094CA] px-7 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-50"
-              >
-                {submitting ? "Submitting..." : "Submit Host Request"}{" "}
-                <FiArrowRight className="h-4 w-4" />
-              </button>
             </div>
+          </section>
+
+          <hr className="border-gray-200" />
+
+          {/* Availability */}
+          <section>
+            <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+              <span className="text-[#0094CA]">📅</span> Availability
+            </h2>
+
+            <div className="mt-5 space-y-6">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-900">
+                  Preferred Days
+                </label>
+                <div className={`flex flex-wrap gap-2 rounded-xl p-1 transition ${showErrors && form.preferredDays.length === 0 ? "bg-red-50 ring-1 ring-red-500" : ""}`}>
+                  {DAYS.map(({ key, label }) => {
+                    const selected = form.preferredDays.includes(key);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => toggleDay(key)}
+                        className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${
+                          selected
+                            ? "border-[#0094CA] bg-[#0094CA] text-white"
+                            : "border-gray-300 bg-white text-gray-600 hover:border-[#0094CA]"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                  Approximate Group Size
+                </label>
+                <div className="flex w-fit items-center gap-3 rounded-lg border border-gray-300 px-4 py-3">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={form.groupSize}
+                    onChange={(e) =>
+                      updateField(
+                        "groupSize",
+                        Math.max(1, parseInt(e.target.value) || 1),
+                      )
+                    }
+                    className="w-16 text-sm font-bold text-gray-900 outline-none"
+                  />
+                  <span className="text-sm text-gray-400">People</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Bottom actions */}
+          <div className="flex items-center justify-between border-t border-gray-200 pt-6">
+            <button
+              onClick={handleSaveDraft}
+              className="text-sm font-medium text-gray-500 transition hover:text-gray-700"
+            >
+              Save as Draft
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="flex items-center gap-2 rounded-full bg-[#0094CA] px-10 py-4 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(0,148,202,0.24)] transition hover:-translate-y-0.5 hover:bg-[#007dab] disabled:opacity-50"
+            >
+              {submitting ? "Submitting..." : "Submit Host Request"}
+              <FiArrowRight className="h-4 w-4" />
+            </button>
           </div>
-        )}
+        </div>
       </main>
 
       <Home.Footer />

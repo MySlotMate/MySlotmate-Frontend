@@ -75,6 +75,21 @@ type CuratedSessionItem = {
   imageUrl: string;
   rating: string;
   price: string;
+  time?: string;
+  isRecurring?: boolean;
+};
+
+const formatEventDate = (iso?: string) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 };
 
 const CuratedSessionCard = ({
@@ -85,9 +100,12 @@ const CuratedSessionCard = ({
   imageUrl,
   rating,
   price,
+  time,
+  isRecurring,
 }: CuratedSessionItem) => {
   const [userId, setUserId] = useState<string | null>(null);
   const href = id ? `/experience/${id}` : "/experiences";
+  const dateLabel = formatEventDate(time);
 
   const { data: savedStatus } = useIsExperienceSaved(id ?? null, userId);
   const saveExperience = useSaveExperience();
@@ -154,6 +172,12 @@ const CuratedSessionCard = ({
             />
           </button>
         )}
+
+        {isRecurring ? (
+          <span className="absolute top-3 left-3 z-40 rounded-full bg-[#0e8ae0] px-2.5 py-1 text-[9px] font-black tracking-widest text-white uppercase shadow-md">
+            Recurring
+          </span>
+        ) : null}
       </div>
 
       <div className="px-3 pt-4 pb-5">
@@ -166,6 +190,11 @@ const CuratedSessionCard = ({
         <p className="mt-1.5 line-clamp-2 min-h-[36px] text-[13px] leading-relaxed text-[#5c84a5]">
           {description}
         </p>
+        {dateLabel ? (
+          <p className="mt-2 text-[11px] font-extrabold tracking-[0.04em] text-[#0e8ae0]">
+            {dateLabel}
+          </p>
+        ) : null}
         <div className="mt-4 flex items-center justify-between border-t border-slate-50 pt-4">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-black text-[#16304c]">{price}</span>
@@ -473,6 +502,8 @@ const ShowcaseSections = () => {
             ? event.avg_rating.toFixed(1)
             : "NEW",
         price: formatPrice(event.price_cents),
+        time: event.time,
+        isRecurring: event.is_recurring,
       }));
 
     return upcoming.length > 0 ? upcoming : fallback;

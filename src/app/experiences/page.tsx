@@ -18,7 +18,22 @@ interface ExperienceCardProps {
   pricing: string;
   duration: string;
   mood?: string;
+  time?: string;
+  isRecurring?: boolean;
 }
+
+const formatEventDate = (iso?: string) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
 
 const ExperienceCard = ({
   id,
@@ -28,7 +43,10 @@ const ExperienceCard = ({
   pricing,
   duration,
   mood,
+  time,
+  isRecurring,
 }: ExperienceCardProps) => {
+  const dateLabel = formatEventDate(time);
   return (
     <Link
       href={`/experience/${id}`}
@@ -47,6 +65,11 @@ const ExperienceCard = ({
             {mood}
           </span>
         ) : null}
+        {isRecurring ? (
+          <span className="absolute top-3 right-3 rounded-full bg-[#0e8ae0] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-white uppercase">
+            Recurring
+          </span>
+        ) : null}
       </div>
 
       <div className="p-3">
@@ -56,6 +79,11 @@ const ExperienceCard = ({
         <p className="mt-1 line-clamp-2 text-xs text-[#6f8daa]">
           {description}
         </p>
+        {dateLabel ? (
+          <p className="mt-2 text-[11px] font-extrabold tracking-[0.04em] text-[#0e8ae0]">
+            {dateLabel}
+          </p>
+        ) : null}
         <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-extrabold text-[#5e88ab]">
           <span>{duration}</span>
           <span>{pricing}</span>
@@ -197,6 +225,8 @@ export default function ExperiencesPage() {
                 pricing={formatPrice(event.price_cents)}
                 duration={formatDuration(event.duration_minutes)}
                 mood={event.mood ?? undefined}
+                time={event.time}
+                isRecurring={event.is_recurring}
               />
             ))}
           </div>

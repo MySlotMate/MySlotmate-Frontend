@@ -58,12 +58,13 @@ function getGeneratedDescription(value: unknown): string | null {
 }
 
 const MOODS = [
-  "Adventurous", "Relaxing", "Creative", "Social", "Educational", "Wellness", "Culinary", "Cultural"
+  "Adventure" //, "Relaxing", "Creative", "Social", "Educational", "Wellness", "Culinary", "Cultural"
 ];
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
 
 const CANCELLATION_POLICIES = [
+  { value: "no_refund", label: "No Refund", description: "Non-refundable once booked" },
   { value: "flexible", label: "Flexible", description: "Full refund up to 24 hours before" },
   { value: "moderate", label: "Moderate", description: "Full refund up to 5 days before" },
   { value: "strict", label: "Strict", description: "50% refund up to 1 week before" },
@@ -232,12 +233,12 @@ function ImageUpload({
 /* ------------------------------------------------------------------ */
 /*  Mood Selector Component                                            */
 /* ------------------------------------------------------------------ */
-function MoodSelector({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function MoodSelector({ value, onChange, hasError }: { value: string; onChange: (v: string) => void; hasError?: boolean }) {
   return (
     <div className="space-y-2">
       <label className="block text-sm font-medium text-gray-700">Experience Mood</label>
       <p className="text-xs text-gray-500">What vibe best describes your experience?</p>
-      <div className="flex flex-wrap gap-2">
+      <div className={`flex flex-wrap gap-2 rounded-xl p-1 transition ${hasError ? "bg-red-50 ring-1 ring-red-500" : ""}`}>
         {MOODS.map((mood) => (
           <button
             key={mood}
@@ -368,6 +369,8 @@ export default function CreateExperiencePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string>("");
+
+  const [showErrors, setShowErrors] = useState(false);
 
   // Suggestion states
   const titleSuggestions = useSuggestions();
@@ -517,18 +520,22 @@ export default function CreateExperiencePage() {
   /* ---------------------------------------------------------------- */
   const validateStep1 = (): boolean => {
     if (!form.title.trim()) {
+      setShowErrors(true);
       toast.error("Please enter an experience title");
       return false;
     }
     if (!form.hookLine.trim()) {
+      setShowErrors(true);
       toast.error("Please enter a hook line");
       return false;
     }
     if (!form.mood) {
+      setShowErrors(true);
       toast.error("Please select a mood");
       return false;
     }
     if (!form.description.trim()) {
+      setShowErrors(true);
       toast.error("Please add a description");
       return false;
     }
@@ -547,14 +554,17 @@ export default function CreateExperiencePage() {
 
   const validateStep2 = (): boolean => {
     if (!form.eventDate) {
+      setShowErrors(true);
       toast.error("Please select an event date");
       return false;
     }
     if (!form.eventTime) {
+      setShowErrors(true);
       toast.error("Please select a start time");
       return false;
     }
     if (!form.isFree && form.priceCents <= 0) {
+      setShowErrors(true);
       toast.error("Please set a valid price");
       return false;
     }
@@ -738,7 +748,11 @@ export default function CreateExperiencePage() {
                   }}
                   onBlur={() => titleSuggestions.clearSuggestions()}
                   placeholder="e.g., Morning Yoga by the Beach"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#0094CA] outline-none transition ${
+                    showErrors && !form.title.trim()
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-200 focus:border-transparent"
+                  }`}
                   maxLength={100}
                 />
                 <p className="text-xs text-gray-400">{form.title.length}/100 characters</p>
@@ -771,7 +785,11 @@ export default function CreateExperiencePage() {
                   }}
                   onBlur={() => hookSuggestions.clearSuggestions()}
                   placeholder="A short catchy phrase to attract guests"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#0094CA] outline-none transition ${
+                    showErrors && !form.hookLine.trim()
+                      ? "border-red-500 bg-red-50"
+                      : "border-gray-200 focus:border-transparent"
+                  }`}
                   maxLength={150}
                 />
                 <p className="text-xs text-gray-400">{form.hookLine.length}/150 characters</p>
@@ -789,7 +807,11 @@ export default function CreateExperiencePage() {
               </div>
 
               {/* Mood Selector */}
-              <MoodSelector value={form.mood} onChange={(v) => updateForm("mood", v)} />
+              <MoodSelector
+                value={form.mood}
+                onChange={(v) => updateForm("mood", v)}
+                hasError={showErrors && !form.mood}
+              />
 
 
 
@@ -992,7 +1014,11 @@ export default function CreateExperiencePage() {
                     onBlur={() => descriptionSuggestions.clearSuggestions()}
                     placeholder="Describe what guests will experience, what they'll learn, and what makes your experience special..."
                     rows={5}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none resize-none"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#0094CA] outline-none resize-none transition ${
+                      showErrors && !form.description.trim()
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-200 focus:border-transparent"
+                    }`}
                     maxLength={2000}
                   />
                   <div className="flex items-center justify-between">
@@ -1125,7 +1151,11 @@ export default function CreateExperiencePage() {
                           min={0}
                           value={form.priceCents / 100}
                           onChange={(e) => updateForm("priceCents", Math.max(0, parseFloat(e.target.value) || 0) * 100)}
-                          className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                          className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#0094CA] outline-none transition ${
+                            showErrors && !form.isFree && form.priceCents <= 0
+                              ? "border-red-500 bg-red-50"
+                              : "border-gray-200 focus:border-transparent"
+                          }`}
                         />
                       </div>
                       <p className="text-xs text-gray-500">Platform fee: 30% • You&apos;ll earn: ₹{((form.priceCents / 100) * 0.70).toFixed(0)} per booking</p>
@@ -1147,7 +1177,11 @@ export default function CreateExperiencePage() {
                         value={form.eventDate}
                         onChange={(e) => updateForm("eventDate", e.target.value)}
                         min={new Date().toISOString().split("T")[0]}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#0094CA] outline-none transition ${
+                          showErrors && !form.eventDate
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-200 focus:border-transparent"
+                        }`}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1156,7 +1190,11 @@ export default function CreateExperiencePage() {
                         type="time"
                         value={form.eventTime}
                         onChange={(e) => updateForm("eventTime", e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-[#0094CA] outline-none transition ${
+                          showErrors && !form.eventTime
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-200 focus:border-transparent"
+                        }`}
                       />
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -935,7 +935,7 @@ const ShowcaseSections = () => {
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
               Explore Experiences
             </span> */}
-            <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
+            <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
               Experiences built around real people
             </h2>
             <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
@@ -1285,7 +1285,7 @@ const ShowcaseSections = () => {
             <div className="w-full">
               <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
                 <div className="max-w-[640px]">
-                  <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-black tracking-tight text-[#16304c] sm:text-5xl">
+                  <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-black tracking-tight text-[#16304c] sm:text-5xl">
                     Discover Experiences
                   </h2>
                   <p className="mt-3 text-base leading-relaxed text-[#5c84a5]">

@@ -39,9 +39,9 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: appUrl,
     siteName: "MySlotMate",
-    title: "MySlotMate - Book Unique Experiences with Amazing Hosts",
+    title: "MySlotMate - Book People's Time.",
     description:
-      "Discover and book unique experiences with expert hosts. Learn new skills, meet interesting people, and create unforgettable memories.",
+      "From coffee chats to travel experiences —book people for real-life moments, anytime.",
     images: [
       {
         url: "/og-image.jpg",

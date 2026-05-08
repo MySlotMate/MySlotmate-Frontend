@@ -967,7 +967,7 @@ const ShowcaseSections = () => {
               Explore Experiences
             </span> */}
             <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
-              Experiences built around real people
+              Experiences Built Around Real People
             </h2>
             <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
               From deep conversations to creative sessions —discover experiences
@@ -1044,7 +1044,7 @@ const ShowcaseSections = () => {
               How it works
             </span> */}
             <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
-              Turn your mood into a real experience
+              Turn Your Mood Into A Real Experience
             </h2>
             <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
               Discover someone. Book a moment. Experience something real.

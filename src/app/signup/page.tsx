@@ -210,13 +210,24 @@ export default function SignUpPage() {
                     Phone Number
                   </label>
                   <div className="relative">
-                    <FiPhone className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <div className="pointer-events-none absolute left-3.5 top-1/2 flex -translate-y-1/2 items-center gap-1.5">
+                      <FiPhone className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-500">+91</span>
+                      <div className="h-4 w-[1px] bg-gray-200" />
+                    </div>
                     <input
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+91 98765 43210"
+                      onChange={(e) => {
+                        let val = e.target.value.replace(/\D/g, "");
+                        if (val.length === 12 && val.startsWith("91")) {
+                          val = val.slice(2);
+                        }
+                        if (val.length <= 10) setPhone(val);
+                      }}
+                      placeholder="98765 43210"
                       type="tel"
-                      className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      maxLength={10}
+                      className="w-full rounded-lg border border-gray-300 py-3 pl-[78px] pr-4 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-400">

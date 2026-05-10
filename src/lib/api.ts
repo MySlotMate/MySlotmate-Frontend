@@ -112,6 +112,22 @@ export function completeAadhar(body: CompleteAadharPayload) {
   });
 }
 
+/** POST /auth/otp/send */
+export function sendPhoneOTP(userId: string) {
+  return apiFetch<{ message: string }>("/auth/otp/send", {
+    method: "POST",
+    data: { user_id: userId },
+  });
+}
+
+/** POST /auth/otp/verify */
+export function verifyPhoneOTP(userId: string, otp: string) {
+  return apiFetch<{ message: string }>("/auth/otp/verify", {
+    method: "POST",
+    data: { user_id: userId, otp },
+  });
+}
+
 /* ── User Profile ──────────────────────────────────────────────── */
 
 export interface UserProfileUpdatePayload {

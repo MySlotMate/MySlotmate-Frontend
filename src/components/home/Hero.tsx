@@ -16,7 +16,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
   const router = useRouter();
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const { data: events } = useListPublicEvents();
-  const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
+  const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal, hostStatus } =
     useListTimeAction();
 
   useEffect(() => {
@@ -172,7 +172,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
               suppressHydrationWarning
               className="w-full rounded-lg border border-[#78bce759] bg-white/90 px-5 py-3 text-sm font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5 sm:w-auto sm:min-w-[180px]"
             >
-              Become a Host
+              {hostStatus === "approved" ? "Create Experience" : "Become a Host"}
             </button>
           </div>
 
@@ -208,7 +208,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
           <div className="absolute top-[30px] right-[8px] bottom-[16px] left-[56px] rounded-[38px] border border-[#aeddf899] bg-[linear-gradient(180deg,#e8f6ff,#f8fcff)] shadow-[0_24px_60px_rgba(58,119,172,0.12)]" />
 
           <div
-            className={`absolute inset-x-1 top-12 bottom-8 z-10 overflow-visible md:inset-x-6 md:top-14 md:bottom-10 ${isPageLoaded ? "hero-stack-ready" : ""}`}
+            className={`absolute inset-x-1 top-12 bottom-8 z-10 overflow-visible md:inset-x-6 md:top-4 md:bottom-10 ${isPageLoaded ? "hero-stack-ready" : ""}`}
           >
             <div className="hero-stack-in absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2 md:top-[2%] md:left-[16%] md:translate-x-0 md:translate-y-0">
               <div className="hero-stack-drop">

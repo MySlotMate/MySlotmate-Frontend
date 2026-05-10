@@ -481,6 +481,19 @@ export function useCompleteAadhar() {
   });
 }
 
+export function useSendPhoneOTP() {
+  return useMutation({
+    mutationFn: (userId: string) => api.sendPhoneOTP(userId),
+  });
+}
+
+export function useVerifyPhoneOTP() {
+  return useMutation({
+    mutationFn: ({ userId, otp }: { userId: string; otp: string }) =>
+      api.verifyPhoneOTP(userId, otp),
+  });
+}
+
 export function useSubmitHostApplication() {
   const qc = useQueryClient();
   return useMutation({

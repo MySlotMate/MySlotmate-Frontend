@@ -36,23 +36,46 @@ const PeopleCard = ({
       className="group shrink-0 snap-start w-[260px] overflow-hidden rounded-[28px] border border-[#d6ebf7cc] bg-white shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1"
     >
       {/* Changed h-[272px] w-[272px] to aspect-square w-full */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-[28px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl || "/assets/home/people1.png"}
-          alt={name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
+      <div className="relative aspect-square w-full overflow-hidden rounded-[28px] bg-[#f8fbff]">
+        {imageUrl && !imageUrl.includes("people1.png") ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={imageUrl}
+            alt={name}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="relative flex h-full w-full items-center justify-center bg-[#E9EDF0]">
+            {/* WhatsApp Style Silhouette */}
+            <div className="relative h-full w-full flex items-center justify-center opacity-40">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-2/3 w-2/3 fill-[#ABB4BA]"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
+            </div>
+
+            {/* Subtle Gradient Overlay for Depth */}
+            <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/5 pointer-events-none" />
+          </div>
+        )}
         {isVerified ? (
-          <span className="absolute bottom-3 right-3 z-10 drop-shadow-sm">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/assets/home/verified.svg"
-              alt="Verified"
-              loading="lazy"
-              className="h-7 w-7"
-            />
+          <span className="absolute bottom-3 right-3 z-10">
+            <div className="relative">
+              <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20 scale-150" />
+              {/* White background to fill the transparent tick, inset slightly to avoid outer border */}
+              <div className="absolute inset-[2px] bg-white rounded-full" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/assets/home/verified.svg"
+                alt="Verified"
+                loading="lazy"
+                className="relative h-7 w-7 drop-shadow-md"
+              />
+            </div>
           </span>
         ) : null}
       </div>
@@ -241,7 +264,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
             </div>
           ) : (
             filteredHosts.map((host) => (
-              
+
               <PeopleCard
                 key={host.id}
                 id={host.id}

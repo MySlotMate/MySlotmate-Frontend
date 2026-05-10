@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useBookingsByUser, useListPublicEvents } from "~/hooks/useApi";
+import { useBookingsByUser, useListPublicEvents, useCancelBooking } from "~/hooks/useApi";
 import { type BookingDTO, type EventDTO } from "~/lib/api";
 import * as components from "~/components";
 import { InboxSidebar, ReviewModal } from "~/components/activities";
-import { FiCalendar, FiUsers, FiXCircle, FiCheck, FiMessageCircle, FiStar } from "react-icons/fi";
+import { FiCalendar, FiUsers, FiXCircle, FiCheck, FiMessageCircle, FiStar, FiTrash2, FiX, FiAlertCircle } from "react-icons/fi";
 import Breadcrumb from "~/components/Breadcrumb";
+import { toast } from "sonner";
 
 interface BookingWithEvent {
   booking: BookingDTO;
@@ -23,6 +24,8 @@ export default function ActivitiesPage() {
   const [activeReviewEventId, setActiveReviewEventId] = useState<string | null>(
     null,
   );
+  const [activeCancelBookingId, setActiveCancelBookingId] = useState<string | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("msm_user_id");
@@ -38,6 +41,8 @@ export default function ActivitiesPage() {
 
   // Fetch all public events to get event details
   const { data: allEvents } = useListPublicEvents();
+
+  const cancelBooking = useCancelBooking();
 
   // Merge bookings with event details
   const bookingsWithEvents: BookingWithEvent[] = (bookings ?? [])
@@ -61,6 +66,22 @@ export default function ActivitiesPage() {
   const formatPrice = (priceCents: number | null | undefined) => {
     if (!priceCents) return "Free";
     return `₹${(priceCents / 100).toFixed(0)}`;
+  };
+
+  const handleCancelBooking = async () => {
+    if (!activeCancelBookingId || !userId) return;
+
+    setIsCancelling(true);
+    try {
+      await cancelBooking.mutateAsync({ bookingId: activeCancelBookingId, userId });
+      toast.success("Booking cancelled successfully.");
+      setActiveCancelBookingId(null);
+    } catch (err) {
+      console.error("Cancellation error:", err);
+      toast.error("Failed to cancel booking. Please try again.");
+    } finally {
+      setIsCancelling(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -227,7 +248,7 @@ export default function ActivitiesPage() {
                     </div>
 
                     {/* Action Button */}
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                       <button
                         onClick={() => setActiveInboxEventId(event.id)}
                         className="inline-flex items-center gap-2 rounded-lg border border-[#0094CA] px-4 py-2 text-sm font-medium text-[#0094CA] transition hover:bg-[#f0faff]"
@@ -235,13 +256,26 @@ export default function ActivitiesPage() {
                         <FiMessageCircle className="h-4 w-4" />
                         View Inbox
                       </button>
-                      <button
-                        onClick={() => setActiveReviewEventId(event.id)}
-                        className="inline-flex items-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0076a3]"
-                      >
-                        <FiStar className="h-4 w-4" />
-                        Add Review
-                      </button>
+                      
+                      {booking.status === "confirmed" && (
+                        <button
+                          onClick={() => setActiveReviewEventId(event.id)}
+                          className="inline-flex items-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#0076a3]"
+                        >
+                          <FiStar className="h-4 w-4" />
+                          Add Review
+                        </button>
+                      )}
+
+                      {(booking.status === "confirmed" || booking.status === "pending") && (
+                        <button
+                          onClick={() => setActiveCancelBookingId(booking.id)}
+                          className="inline-flex items-center gap-2 rounded-lg border border-red-100 bg-red-50/50 px-4 py-2 text-sm font-medium text-red-500 transition hover:bg-red-50"
+                        >
+                          <FiXCircle className="h-4 w-4" />
+                          Cancel Booking
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -306,6 +340,50 @@ export default function ActivitiesPage() {
             // Optional: show success message or refresh reviews
           }}
         />
+      )}
+      {/* Cancellation Modal */}
+      {activeCancelBookingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <FiAlertCircle className="text-red-500" size={24} />
+              </div>
+              <button 
+                onClick={() => setActiveCancelBookingId(null)}
+                className="text-gray-400 hover:text-gray-600 transition"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+            
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Cancel Booking?</h3>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              Are you sure you want to cancel this booking? This action will notify the host and may be subject to cancellation policies.
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => setActiveCancelBookingId(null)}
+                className="flex-1 py-2.5 border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition"
+                disabled={isCancelling}
+              >
+                No, Keep it
+              </button>
+              <button
+                onClick={handleCancelBooking}
+                className="flex-1 py-2.5 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition flex items-center justify-center gap-2 disabled:opacity-50"
+                disabled={isCancelling}
+              >
+                {isCancelling ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  "Yes, Cancel"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );

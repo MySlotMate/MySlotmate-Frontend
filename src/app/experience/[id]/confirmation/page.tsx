@@ -118,7 +118,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
                 {host?.avatar_url ? (
                   <img
                     src={host.avatar_url}
-                    alt={host.first_name}                    loading="lazy"                    className="w-6 h-6 rounded-full object-cover"
+                    alt={host.first_name} loading="lazy" className="w-6 h-6 rounded-full object-cover"
                   />
                 ) : (
                   <div className="w-6 h-6 rounded-full bg-[#0094CA] flex items-center justify-center text-white text-xs font-bold">
@@ -197,13 +197,13 @@ export default function ConfirmationPage({
     <>
       <Navbar />
       <div className="max-w-xl mx-auto site-x py-6">
-        <Breadcrumb 
+        <Breadcrumb
           items={[
-            { label: "Home", href: "/" }, 
+            { label: "Home", href: "/" },
             { label: "Experiences", href: "/experiences" },
             { label: "Confirmation" }
-          ]} 
-          className="mb-6" 
+          ]}
+          className="mb-6"
         />
       </div>
       <Suspense

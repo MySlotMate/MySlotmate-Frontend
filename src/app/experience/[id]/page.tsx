@@ -14,6 +14,7 @@ import {
   useIsExperienceSaved,
   useSaveExperience,
   useUnsaveExperience,
+  useEventAvailability,
 } from "~/hooks/useApi";
 import {
   FiBookmark,
@@ -29,6 +30,7 @@ import {
 import { LuLanguages, LuBadgeCheck, LuSparkles } from "react-icons/lu";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import type { OccurrenceAvailability } from "~/lib/api";
 
 export const runtime = "edge";
 
@@ -224,6 +226,8 @@ function BookingWidget({
   eventDate: _eventDate,
   capacity,
   totalBookings,
+  availability,
+  isRecurring,
   onBook,
 }: {
   price: number | null;
@@ -234,10 +238,19 @@ function BookingWidget({
   eventDate: string;
   capacity: number;
   totalBookings: number;
+  availability?: OccurrenceAvailability[];
+  isRecurring: boolean;
   onBook: (date: string, guests: number) => void;
 }) {
+  const [selectedDate, setSelectedDate] = useState(_eventDate);
   const [guests, setGuests] = useState(1);
-  const spotsLeft = capacity - totalBookings;
+
+  // Find the selected occurrence availability
+  const currentOccurrence = availability?.find((a) => a.date === selectedDate);
+  const spotsLeft = currentOccurrence
+    ? currentOccurrence.remaining
+    : capacity - totalBookings;
+
   const maxGuests = Math.max(0, Math.min(spotsLeft, 10));
   const guestOptions = Array.from({ length: maxGuests }, (_, i) => i + 1);
 
@@ -245,8 +258,10 @@ function BookingWidget({
     ? "Free"
     : `₹${((price ?? 0) / 100).toFixed(0)}`;
 
-  // Check if event date has passed
-  const eventHasPassed = _eventDate ? new Date(_eventDate) < new Date() : false;
+  // Check if selected date has passed
+  const eventHasPassed = selectedDate
+    ? new Date(selectedDate) < new Date()
+    : false;
 
   useEffect(() => {
     if (guestOptions.length === 0) return;
@@ -276,30 +291,43 @@ function BookingWidget({
         )}
       </div>
 
-      {/* Date Display */}
+      {/* Date Display / Selector */}
       <div className="mb-4">
         <label className="mb-1 block text-sm font-medium text-gray-700">
-          DATE & TIME
+          {isRecurring ? "SELECT DATE & TIME" : "DATE & TIME"}
         </label>
-        <div className="relative">
-          <div className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700">
-            <FiCalendar size={18} className="text-[#0094CA]" />
-            <span className="font-medium">
-              {_eventDate
-                ? new Date(_eventDate).toLocaleDateString("en-US", {
-                    weekday: "short",
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "Date TBD"}
-            </span>
+        {isRecurring && availability && availability.length > 0 ? (
+          <div className="relative">
+            <select
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-3 pr-11 text-base text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-4 focus:ring-[#0094CA]/15"
+            >
+              {availability.map((occ) => (
+                <option key={occ.date} value={occ.date}>
+                  {format(new Date(occ.date), "eee, MMM d • h:mm a")}
+                  {occ.is_fully_booked ? " (Full)" : ` (${occ.remaining} left)`}
+                </option>
+              ))}
+            </select>
+            <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-gray-500" />
           </div>
-        </div>
+        ) : (
+          <div className="relative">
+            <div className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700">
+              <FiCalendar size={18} className="text-[#0094CA]" />
+              <span className="font-medium">
+                {selectedDate
+                  ? format(new Date(selectedDate), "eee, MMM d • h:mm a")
+                  : "Date TBD"}
+              </span>
+            </div>
+          </div>
+        )}
         <p className="mt-1 text-xs text-gray-500">
-          This event is scheduled on the date and time shown above
+          {isRecurring && availability && availability.length > 0
+            ? "Choose your preferred session from the list"
+            : "This is a one-time event on the date shown above"}
         </p>
       </div>
 
@@ -341,11 +369,11 @@ function BookingWidget({
         <>
           {/* Book Button */}
           <button
-            onClick={() => onBook(_eventDate, guests)}
-            disabled={!_eventDate || spotsLeft <= 0}
+            onClick={() => onBook(selectedDate, guests)}
+            disabled={!selectedDate || spotsLeft <= 0}
             className="w-full rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Continue
+            {spotsLeft <= 0 ? "Fully Booked" : "Continue"}
           </button>
 
           <p className="mt-2 text-center text-sm text-gray-500">
@@ -714,6 +742,7 @@ export default function ExperienceDetailPage({
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
   const { data: reviews } = useReviewsByEvent(resolvedParams.id);
   const { data: ratingData } = useEventRating(resolvedParams.id);
+  const { data: availability } = useEventAvailability(resolvedParams.id);
   const { data: savedStatus } = useIsExperienceSaved(resolvedParams.id, userId);
 
   const saveExperience = useSaveExperience();
@@ -939,6 +968,8 @@ export default function ExperienceDetailPage({
                 eventDate={event.time}
                 capacity={event.capacity}
                 totalBookings={event.total_bookings}
+                availability={availability}
+                isRecurring={event.is_recurring}
                 onBook={handleBook}
               />
             </div>

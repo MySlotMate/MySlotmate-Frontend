@@ -10,88 +10,8 @@ import { LuLoader2 } from "react-icons/lu";
 import * as components from "~/components";
 import Breadcrumb from "~/components/Breadcrumb";
 
-interface ExperienceCardProps {
-  id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  pricing: string;
-  duration: string;
-  mood?: string;
-  time?: string;
-  isRecurring?: boolean;
-}
+import { ExperienceCard } from "~/components/ExperienceCard";
 
-const formatEventDate = (iso?: string) => {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return null;
-  return d.toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
-
-const ExperienceCard = ({
-  id,
-  title,
-  description,
-  imageUrl,
-  pricing,
-  duration,
-  mood,
-  time,
-  isRecurring,
-}: ExperienceCardProps) => {
-  const dateLabel = formatEventDate(time);
-  return (
-    <Link
-      href={`/experience/${id}`}
-      className="overflow-hidden rounded-[22px] border border-[#aeddf89e] bg-white shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
-    >
-      <div className="relative">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl || "/assets/home/hiking.jpg"}
-          alt={title}
-          loading="lazy"
-          className="h-[190px] w-full object-cover"
-        />
-        {mood ? (
-          <span className="absolute top-3 left-3 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
-            {mood}
-          </span>
-        ) : null}
-        {isRecurring ? (
-          <span className="absolute top-3 right-3 rounded-full bg-[#0e8ae0] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-white uppercase">
-            Recurring
-          </span>
-        ) : null}
-      </div>
-
-      <div className="p-3">
-        <h3 className="line-clamp-1 text-[14px] font-bold text-[#16304c]">
-          {title}
-        </h3>
-        <p className="mt-1 line-clamp-2 text-xs text-[#6f8daa]">
-          {description}
-        </p>
-        {dateLabel ? (
-          <p className="mt-2 text-[11px] font-extrabold tracking-[0.04em] text-[#0e8ae0]">
-            {dateLabel}
-          </p>
-        ) : null}
-        <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-extrabold text-[#5e88ab]">
-          <span>{duration}</span>
-          <span>{pricing}</span>
-        </div>
-      </div>
-    </Link>
-  );
-};
 
 export default function ExperiencesPage() {
   const [location, setLocation] = useState<CityLocation | null>(null);
@@ -215,6 +135,7 @@ export default function ExperiencesPage() {
               <ExperienceCard
                 key={event.id}
                 id={event.id}
+                headline={event.mood ?? event.location ?? "Experience"}
                 title={event.title}
                 description={
                   event.hook_line ??
@@ -222,11 +143,20 @@ export default function ExperiencesPage() {
                   "Discover a hosted experience near you."
                 }
                 imageUrl={event.cover_image_url ?? "/assets/home/hiking.jpg"}
-                pricing={formatPrice(event.price_cents)}
-                duration={formatDuration(event.duration_minutes)}
-                mood={event.mood ?? undefined}
+                rating={
+                  event.avg_rating !== null &&
+                  event.avg_rating !== undefined &&
+                  event.avg_rating !== 0
+                    ? event.avg_rating.toFixed(1)
+                    : "New"
+                }
+                price={formatPrice(event.price_cents)}
                 time={event.time}
                 isRecurring={event.is_recurring}
+                capacity={event.capacity}
+                totalBookings={event.total_bookings}
+                recurrenceRule={event.recurrence_rule}
+                nextAvailableDate={event.next_available_date}
               />
             ))}
           </div>

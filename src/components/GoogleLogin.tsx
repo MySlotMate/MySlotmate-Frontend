@@ -138,11 +138,17 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
           />
           <span>
             I&apos;ve read and agreed to{" "}
-            <a href="#" className="font-medium text-[#0094CA] hover:underline">
+            <a
+              href="/support/terms-conditions"
+              className="font-medium text-[#0094CA] hover:underline"
+            >
               User Agreement
             </a>{" "}
             and{" "}
-            <a href="#" className="font-medium text-[#0094CA] hover:underline">
+            <a
+              href="/support/policies"
+              className="font-medium text-[#0094CA] hover:underline"
+            >
               Privacy Policy
             </a>
           </span>
@@ -151,7 +157,10 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
         {/* Help link */}
         <p className="mt-6 text-center text-sm text-gray-500">
           Having trouble logging in?{" "}
-          <a href="#" className="font-semibold text-gray-800 hover:underline">
+          <a
+            href="/support"
+            className="font-semibold text-gray-800 hover:underline"
+          >
             Get Help
           </a>
         </p>

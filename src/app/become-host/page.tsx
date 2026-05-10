@@ -796,17 +796,23 @@ export default function BecomeHostPage() {
           {/* Bottom actions */}
           <div className="flex items-center justify-between border-t border-gray-200 pt-6">
             <button
+              type="button"
               onClick={handleSaveDraft}
               className="text-sm font-medium text-gray-500 transition hover:text-gray-700"
             >
               Save as Draft
             </button>
             <button
+              type="button"
               onClick={handleOpenOtp}
-              disabled={submitting}
+              disabled={submitting || sendOtpMutation.isPending}
               className="flex items-center gap-2 rounded-full bg-[#0094CA] px-10 py-4 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(0,148,202,0.24)] transition hover:-translate-y-0.5 hover:bg-[#007dab] disabled:opacity-50"
             >
-              {submitting ? "Submitting..." : "Submit Host Request"}
+              {sendOtpMutation.isPending
+                ? "Sending OTP..."
+                : submitting
+                  ? "Submitting..."
+                  : "Submit Host Request"}
               <FiArrowRight className="h-4 w-4" />
             </button>
           </div>
@@ -824,6 +830,7 @@ export default function BecomeHostPage() {
       <OTPVerificationModal
         open={showOtpModal}
         onClose={() => setShowOtpModal(false)}
+        resending={sendOtpMutation.isPending}
         phoneNumber={userProfile?.phn_number ?? user?.phoneNumber ?? "xxxxxx"}
         onVerify={async (code) => {
           if (!validUserId) return false;
@@ -841,7 +848,7 @@ export default function BecomeHostPage() {
           }
         }}
         onResend={async () => {
-          if (!validUserId) return;
+          if (!validUserId || sendOtpMutation.isPending) return;
           try {
             await sendOtpMutation.mutateAsync(validUserId);
             toast.success("OTP Resent!");

@@ -8,6 +8,7 @@ interface OTPVerificationModalProps {
   onClose: () => void;
   onVerify: (otp: string) => Promise<boolean>;
   onResend: () => Promise<void>;
+  resending?: boolean;
   phoneNumber: string;
 }
 
@@ -16,6 +17,7 @@ export function OTPVerificationModal({
   onClose,
   onVerify,
   onResend,
+  resending,
   phoneNumber,
 }: OTPVerificationModalProps) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -172,9 +174,10 @@ export function OTPVerificationModal({
           ) : (
             <button
               onClick={onResend}
-              className="text-sm font-bold text-[#0094CA] hover:underline"
+              disabled={resending}
+              className="text-sm font-bold text-[#0094CA] hover:underline disabled:opacity-50"
             >
-              Resend Code
+              {resending ? "Resending..." : "Resend Code"}
             </button>
           )}
         </div>

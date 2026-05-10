@@ -76,7 +76,13 @@ function ExperienceCard({ event }: { event: EventDTO }) {
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex items-center gap-1.5 text-xs text-gray-500">
           <HiOutlineCalendar className="h-4 w-4" />
-          {formatEventDate(event.time)}
+          {event.next_available_date && event.next_available_date !== event.time ? (
+            <span className="text-emerald-600 font-bold">
+              Next: {formatEventDate(event.next_available_date)}
+            </span>
+          ) : (
+            formatEventDate(event.time)
+          )}
         </div>
         <h4 className="text-base font-bold text-gray-900">{event.title}</h4>
         <p className="line-clamp-2 text-sm text-gray-500">

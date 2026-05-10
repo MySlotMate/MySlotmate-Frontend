@@ -47,8 +47,11 @@ export default function HostCalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<EventDTO | null>(null);
   const [viewMode, setViewMode] = useState<"month" | "week" | "list">("month");
 
-  // Fetch attendees for selected event
-  const { data: attendees } = useEventAttendees(selectedEvent?.id ?? null);
+  // Fetch attendees for selected event occurrence
+  const { data: attendees } = useEventAttendees(
+    selectedEvent?.id ?? null,
+    selectedEvent?.time,
+  );
 
   const eventsByDayKey = useMemo(() => {
     const map = new Map<string, NonNullable<typeof events>>();

@@ -10,6 +10,7 @@ import {
   useEvent,
   usePublicHostProfile,
   useListPublicEvents,
+  useBooking,
 } from "~/hooks/useApi";
 import { FiCheck, FiCalendar, FiMessageCircle } from "react-icons/fi";
 import { format } from "date-fns";
@@ -31,9 +32,10 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
   const [reason, setReason] = useState("");
 
   // Can use booking ID for additional details if needed
-  void searchParams.get("booking");
+  const bookingId = searchParams.get("booking");
 
   const { data: event, isLoading: eventLoading } = useEvent(eventId);
+  const { data: booking, isLoading: bookingLoading } = useBooking(bookingId);
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
   const { data: allEvents } = useListPublicEvents();
 
@@ -50,7 +52,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
     }
   }, [event, allEvents]);
 
-  if (eventLoading) {
+  if (eventLoading || bookingLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
@@ -69,7 +71,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
     );
   }
 
-  const eventDate = new Date(event.time);
+  const eventDate = new Date(booking?.occurrence_date ?? event.time);
 
   return (
     <main className="min-h-screen bg-gray-50 py-16">

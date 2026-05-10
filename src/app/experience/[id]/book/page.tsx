@@ -416,6 +416,7 @@ function BookingContent({ eventId }: { eventId: string }) {
             user_id: userId,
             event_id: eventId,
             quantity: quantity,
+            occurrence_date: new Date(date || event.time).toISOString(),
             idempotency_key: idempotencyKey,
           });
 

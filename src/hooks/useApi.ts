@@ -24,6 +24,7 @@ export const queryKeys = {
   hostEventsFiltered: (hostId: string, filters?: Record<string, string>) =>
     ["hostEventsFiltered", hostId, filters] as const,
   event: (eventId: string) => ["event", eventId] as const,
+  eventAvailability: (eventId: string) => ["eventAvailability", eventId] as const,
   eventAttendees: (eventId: string) => ["eventAttendees", eventId] as const,
   reviewsByEvent: (eventId: string) => ["reviewsByEvent", eventId] as const,
   eventRating: (eventId: string) => ["eventRating", eventId] as const,
@@ -31,6 +32,7 @@ export const queryKeys = {
   isExperienceSaved: (eventId: string, userId: string) =>
     ["isExperienceSaved", eventId, userId] as const,
   bookingsByUser: (userId: string) => ["bookingsByUser", userId] as const,
+  booking: (bookingId: string) => ["booking", bookingId] as const,
   payoutMethods: (hostId: string) => ["payoutMethods", hostId] as const,
   earnings: (hostId: string) => ["earnings", hostId] as const,
   payoutHistory: (hostId: string) => ["payoutHistory", hostId] as const,
@@ -313,10 +315,20 @@ export function useEvent(eventId: string | null) {
   });
 }
 
-export function useEventAttendees(eventId: string | null) {
+export function useEventAvailability(eventId: string | null) {
   return useQuery({
-    queryKey: queryKeys.eventAttendees(eventId ?? ""),
-    queryFn: () => api.getEventAttendees(eventId!),
+    queryKey: queryKeys.eventAvailability(eventId ?? ""),
+    queryFn: () => api.getEventAvailability(eventId!),
+    enabled: !!eventId,
+    staleTime: 30 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useEventAttendees(eventId: string | null, date?: string) {
+  return useQuery({
+    queryKey: [...queryKeys.eventAttendees(eventId ?? ""), date],
+    queryFn: () => api.getEventAttendees(eventId!, date),
     enabled: !!eventId,
     staleTime: 60 * 1000,
     select: (res) => res.data,
@@ -372,6 +384,16 @@ export function useBookingsByUser(userId: string | null) {
     queryFn: () => api.getBookingsByUser(userId!),
     enabled: !!userId,
     staleTime: 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useBooking(bookingId: string | null) {
+  return useQuery({
+    queryKey: queryKeys.booking(bookingId ?? ""),
+    queryFn: () => api.getBooking(bookingId!),
+    enabled: !!bookingId,
+    staleTime: 5 * 60 * 1000,
     select: (res) => res.data,
   });
 }

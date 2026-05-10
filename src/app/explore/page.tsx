@@ -27,6 +27,8 @@ import {
 } from "~/lib/hostMoodFilters";
 import { getMoodDisplayLabel } from "~/lib/moods";
 
+import { ExperienceCard } from "~/components/ExperienceCard";
+
 const EXPLORE_PILLS = [
   "All",
   "Adventure",
@@ -34,7 +36,6 @@ const EXPLORE_PILLS = [
   "Food",
   "Wellness",
 ] as const;
-
 type ExplorePill = (typeof EXPLORE_PILLS)[number];
 
 const PILL_TO_MOODS: Record<Exclude<ExplorePill, "All">, string[]> = {
@@ -698,40 +699,32 @@ export default function ExplorePage() {
             <>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {visibleEvents.map((event) => (
-                  <Link
+                  <ExperienceCard
                     key={event.id}
-                    href={`/experience/${event.id}`}
-                    className="overflow-hidden rounded-[22px] border border-[#aeddf89e] bg-white shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
-                  >
-                    <div className="relative">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={event.cover_image_url ?? "/assets/home/hiking.jpg"}
-                        alt={event.title}
-                        loading="lazy"
-                        className="h-[190px] w-full object-cover"
-                      />
-                      {event.mood && (
-                        <span className="absolute top-3 left-3 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
-                          {event.mood}
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <h3 className="line-clamp-1 text-[14px] font-bold text-[#16304c]">
-                        {event.title}
-                      </h3>
-                      <p className="mt-1 line-clamp-2 text-xs text-[#6f8daa]">
-                        {event.hook_line ??
-                          event.description ??
-                          "Discover a hosted experience near you."}
-                      </p>
-                      <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-extrabold text-[#5e88ab]">
-                        <span>{formatDuration(event.duration_minutes)}</span>
-                        <span>{formatPrice(event.price_cents)}</span>
-                      </div>
-                    </div>
-                  </Link>
+                    id={event.id}
+                    headline={event.mood ?? event.location ?? "Experience"}
+                    title={event.title}
+                    description={
+                      event.hook_line ??
+                      event.description ??
+                      "Discover a hosted experience near you."
+                    }
+                    imageUrl={event.cover_image_url ?? "/assets/home/hiking.jpg"}
+                    rating={
+                      event.avg_rating !== null &&
+                      event.avg_rating !== undefined &&
+                      event.avg_rating !== 0
+                        ? event.avg_rating.toFixed(1)
+                        : "New"
+                    }
+                    price={formatPrice(event.price_cents)}
+                    time={event.time}
+                    isRecurring={event.is_recurring}
+                    capacity={event.capacity}
+                    totalBookings={event.total_bookings}
+                    recurrenceRule={event.recurrence_rule}
+                    nextAvailableDate={event.next_available_date}
+                  />
                 ))}
               </div>
 

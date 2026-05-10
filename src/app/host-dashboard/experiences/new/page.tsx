@@ -1470,10 +1470,10 @@ export default function CreateExperiencePage() {
                         className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                       >
                         <option value="">Select frequency</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="biweekly">Every 2 weeks</option>
-                        <option value="monthly">Monthly</option>
+                        <option value="FREQ=DAILY">Daily</option>
+                        <option value="FREQ=WEEKLY">Weekly</option>
+                        <option value="FREQ=WEEKLY;INTERVAL=2">Every 2 weeks</option>
+                        <option value="FREQ=MONTHLY">Monthly</option>
                       </select>
                     </div>
                   )}

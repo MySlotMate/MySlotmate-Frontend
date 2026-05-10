@@ -73,8 +73,9 @@ export default function ActivitiesPage() {
       day: "numeric",
       month: "short",
       year: "numeric",
-      hour: "2-digit",
+      hour: "numeric",
       minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -204,7 +205,7 @@ export default function ActivitiesPage() {
                           <div>
                             <p className="text-xs text-gray-500">Date</p>
                             <p className="text-sm font-medium">
-                              {formatDate(event.time)}
+                              {formatDate(booking.occurrence_date)}
                             </p>
                           </div>
                         </div>

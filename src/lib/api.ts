@@ -710,8 +710,17 @@ export interface EventDTO {
   avg_rating: number | null;
   total_bookings: number;
   total_reviews: number;
+  next_available_date: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface OccurrenceAvailability {
+  date: string;
+  total_booked: number;
+  capacity: number;
+  remaining: number;
+  is_fully_booked: boolean;
 }
 
 /** GET /events/host/{hostID} */
@@ -727,6 +736,11 @@ export function listPublicEvents() {
 /** GET /events/{eventID} */
 export function getEvent(eventId: string) {
   return apiFetch<EventDTO>(`/events/${eventId}`);
+}
+
+/** GET /events/{eventID}/availability */
+export function getEventAvailability(eventId: string) {
+  return apiFetch<OccurrenceAvailability[]>(`/events/${eventId}/availability`);
 }
 
 /* ------------------------------------------------------------------ */
@@ -915,8 +929,10 @@ export function resumeEvent(eventId: string, hostId: string) {
 }
 
 /** GET /events/{eventID}/attendees — list confirmed attendees */
-export function getEventAttendees(eventId: string) {
-  return apiFetch<BookingDTO[]>(`/events/${eventId}/attendees`);
+export function getEventAttendees(eventId: string, date?: string) {
+  let url = `/events/${eventId}/attendees`;
+  if (date) url += `?date=${encodeURIComponent(date)}`;
+  return apiFetch<BookingDTO[]>(url);
 }
 
 /* ------------------------------------------------------------------ */
@@ -927,6 +943,7 @@ export interface BookingDTO {
   id: string;
   event_id: string;
   user_id: string;
+  occurrence_date: string;
   quantity: number;
   status: "pending" | "confirmed" | "cancelled" | "refunded";
   payment_id: string | null;
@@ -943,6 +960,7 @@ export interface CreateBookingPayload {
   user_id: string;
   event_id: string;
   quantity: number;
+  occurrence_date?: string;
   idempotency_key?: string;
 }
 
@@ -969,6 +987,11 @@ export function cancelBooking(bookingId: string, userId: string) {
 /** GET /bookings/user/{userID} — list bookings for a user */
 export function getBookingsByUser(userId: string) {
   return apiFetch<BookingDTO[]>(`/bookings/user/${userId}`);
+}
+
+/** GET /bookings/{bookingID} — get a single booking */
+export function getBooking(bookingId: string) {
+  return apiFetch<BookingDTO>(`/bookings/${bookingId}`);
 }
 
 /* ------------------------------------------------------------------ */

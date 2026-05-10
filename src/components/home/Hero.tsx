@@ -161,18 +161,18 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
             moments, anytime.
           </p>
 
-          <div className="flex flex-wrap gap-4 pt-2">
+          <div className="flex flex-row gap-3 pt-2">
             <button
               onClick={handleBookTime}
               suppressHydrationWarning
-              className="w-full rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5 sm:w-auto sm:min-w-[180px]"
+              className="flex-1 rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-4 py-3 text-[13px] font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5 sm:min-w-[180px] sm:flex-none sm:px-6 sm:text-sm"
             >
               Explore Experiences
             </button>
             <button
               onClick={handleListTime}
               suppressHydrationWarning
-              className="w-full rounded-lg border border-[#78bce759] bg-white/90 px-5 py-3 text-sm font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5 sm:w-auto sm:min-w-[180px]"
+              className="flex-1 rounded-lg border border-[#78bce759] bg-white/90 px-4 py-3 text-[13px] font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5 sm:min-w-[180px] sm:flex-none sm:px-6 sm:text-sm"
             >
               {hostStatus === "approved"
                 ? "Create Experience"

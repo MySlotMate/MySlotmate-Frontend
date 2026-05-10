@@ -67,154 +67,10 @@ type CommunitySet = {
   images: string[];
 };
 
-type CuratedSessionItem = {
-  id?: string;
-  headline: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  rating: string;
-  price: string;
-  time?: string;
-  isRecurring?: boolean;
-};
+import { ExperienceCard, type ExperienceCardItem } from "../../components/ExperienceCard";
 
-const formatEventDate = (iso?: string) => {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return null;
-  return d.toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
+type CuratedSessionItem = ExperienceCardItem;
 
-const CuratedSessionCard = ({
-  id,
-  headline,
-  title,
-  description,
-  imageUrl,
-  rating,
-  price,
-  time,
-  isRecurring,
-}: CuratedSessionItem) => {
-  const [userId, setUserId] = useState<string | null>(null);
-  const href = id ? `/experience/${id}` : "/experiences";
-  const dateLabel = formatEventDate(time);
-
-  const { data: savedStatus } = useIsExperienceSaved(id ?? null, userId);
-  const saveExperience = useSaveExperience();
-  const unsaveExperience = useUnsaveExperience();
-
-  const isSaved = savedStatus?.saved ?? false;
-
-  useEffect(() => {
-    const id = localStorage.getItem("msm_user_id");
-    if (id) {
-      setUserId(id);
-    }
-  }, []);
-
-  const handleSave = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (!id || !userId) {
-      if (!userId) toast.error("Please login to save experiences");
-      return;
-    }
-
-    if (isSaved) {
-      unsaveExperience.mutate(
-        { eventId: id, userId },
-        { onSuccess: () => toast.success("Removed from saved") },
-      );
-    } else {
-      saveExperience.mutate(
-        { user_id: userId, event_id: id },
-        { onSuccess: () => toast.success("Saved to your list") },
-      );
-    }
-  };
-
-  return (
-    <Link
-      href={href}
-      className="group w-[280px] shrink-0 snap-start overflow-hidden rounded-[32px] border border-[#aeddf840] bg-white p-3 shadow-[0_16px_40px_rgba(72,128,173,0.06)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(72,128,173,0.12)]"
-    >
-      <div className="relative aspect-square w-full overflow-hidden rounded-[24px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl || "/assets/home/hiking.jpg"}
-          alt={title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
-
-        {/* Save button - Glassmorphism */}
-        {id && (
-          <button
-            onClick={handleSave}
-            disabled={saveExperience.isPending || unsaveExperience.isPending}
-            className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#0094CA] shadow-lg backdrop-blur-md transition hover:scale-110 hover:bg-white active:scale-90 disabled:opacity-50"
-            aria-label={isSaved ? "Remove from saved" : "Save experience"}
-          >
-            <Heart
-              className="h-4.5 w-4.5 transition-colors"
-              fill={isSaved ? "#0094CA" : "none"}
-              stroke="#0094CA"
-              strokeWidth={2.5}
-            />
-          </button>
-        )}
-
-        {isRecurring ? (
-          <span className="absolute top-3 left-3 z-40 rounded-full bg-[#0e8ae0] px-2.5 py-1 text-[9px] font-black tracking-widest text-white uppercase shadow-md">
-            Recurring
-          </span>
-        ) : null}
-      </div>
-
-      <div className="px-3 pt-4 pb-5">
-        <span className="inline-block rounded-full bg-[#f0f9ff] px-2.5 py-1 text-[9px] font-black tracking-widest text-[#0e8ae0] uppercase">
-          {headline}
-        </span>
-        <h3 className="mt-2.5 line-clamp-1 text-lg font-black tracking-tight text-[#16304c]">
-          {title}
-        </h3>
-        <p className="mt-1.5 line-clamp-2 min-h-[36px] text-[13px] leading-relaxed text-[#5c84a5]">
-          {description}
-        </p>
-        {dateLabel ? (
-          <p className="mt-2 text-[11px] font-extrabold tracking-[0.04em] text-[#0e8ae0]">
-            {dateLabel}
-          </p>
-        ) : null}
-        <div className="mt-4 flex items-center justify-between border-t border-slate-50 pt-4">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-black text-[#16304c]">{price}</span>
-            <span className="text-[10px] font-bold text-[#a0aec0]">
-              / session
-            </span>
-          </div>
-          <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 ring-1 ring-amber-100">
-            {rating !== "New" && (
-              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            )}
-            <span className="text-[11px] font-black text-amber-700">
-              {rating}
-            </span>
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-};
 
 const WAY_CARDS = [
   {
@@ -512,6 +368,10 @@ const ShowcaseSections = () => {
         price: formatPrice(event.price_cents),
         time: event.time,
         isRecurring: event.is_recurring,
+        capacity: event.capacity,
+        totalBookings: event.total_bookings,
+        recurrenceRule: event.recurrence_rule,
+        nextAvailableDate: event.next_available_date,
       }));
 
     return upcoming.length > 0 ? upcoming : fallback;
@@ -1378,8 +1238,9 @@ const ShowcaseSections = () => {
                 className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2"
               >
                 {curatedSessions.map((session, idx) => (
-                  <CuratedSessionCard
+                  <ExperienceCard
                     key={session.id ?? `${session.title}-${idx}`}
+                    className="w-[280px] shrink-0 snap-start"
                     {...session}
                   />
                 ))}

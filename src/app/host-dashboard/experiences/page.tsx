@@ -100,6 +100,7 @@ interface ExperienceCardProps {
     cover_image_url: string | null;
     status: string;
     time: string;
+    next_available_date: string | null;
     avg_rating: number | null;
     total_bookings: number;
     total_reviews: number;
@@ -123,7 +124,7 @@ function ExperienceCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
-  const nextDate = event.status === "paused" ? null : event.time;
+  const nextDate = event.status === "paused" ? null : (event.next_available_date ?? event.time);
   const isPaused = event.status === "paused";
   const isDraft = event.status === "draft";
   const isLive = event.status === "live";

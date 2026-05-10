@@ -3,7 +3,6 @@ import React, { useMemo, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HeroCard from "./HeroCard";
 import { BecomeHostModal } from "~/components/become-host";
-import Breadcrumb from "~/components/Breadcrumb";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 import { useListPublicEvents } from "~/hooks/useApi";
 import { type EventDTO } from "~/lib/api";
@@ -16,8 +15,12 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
   const router = useRouter();
   const [isPageLoaded, setIsPageLoaded] = useState(false);
   const { data: events } = useListPublicEvents();
-  const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal, hostStatus } =
-    useListTimeAction();
+  const {
+    closeBecomeHostModal,
+    handleListTimeClick,
+    showBecomeHostModal,
+    hostStatus,
+  } = useListTimeAction();
 
   useEffect(() => {
     if (document.readyState === "complete") {
@@ -43,79 +46,79 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
   const cardData = [
     upcomingEvents[0]
       ? {
-        id: upcomingEvents[0].id,
-        photo:
-          upcomingEvents[0].cover_image_url ?? "/assets/home/heropic1.png",
-        type: upcomingEvents[0].mood ?? "Adventure",
-        title: upcomingEvents[0].title,
-        description:
-          upcomingEvents[0].hook_line ??
-          "Discover a hosted experience near you.",
-        duration: `${upcomingEvents[0].duration_minutes ?? 0} mins`,
-      }
+          id: upcomingEvents[0].id,
+          photo:
+            upcomingEvents[0].cover_image_url ?? "/assets/home/heropic1.png",
+          type: upcomingEvents[0].mood ?? "Adventure",
+          title: upcomingEvents[0].title,
+          description:
+            upcomingEvents[0].hook_line ??
+            "Discover a hosted experience near you.",
+          duration: `${upcomingEvents[0].duration_minutes ?? 0} mins`,
+        }
       : {
-        photo: "/assets/home/heropic1.png",
-        type: "Adventure",
-        title: "Mountain Trekking",
-        description: "Sunrise hikes with local experts.",
-        duration: "120 mins",
-      },
+          photo: "/assets/home/heropic1.png",
+          type: "Adventure",
+          title: "Mountain Trekking",
+          description: "Sunrise hikes with local experts.",
+          duration: "120 mins",
+        },
     upcomingEvents[1]
       ? {
-        id: upcomingEvents[1].id,
-        photo:
-          upcomingEvents[1].cover_image_url ?? "/assets/home/heropic2.png",
-        type: upcomingEvents[1].mood ?? "Social",
-        title: upcomingEvents[1].title,
-        description:
-          upcomingEvents[1].hook_line ??
-          "Meet people through shared interests.",
-        duration: `${upcomingEvents[1].duration_minutes ?? 0} mins`,
-      }
+          id: upcomingEvents[1].id,
+          photo:
+            upcomingEvents[1].cover_image_url ?? "/assets/home/heropic2.png",
+          type: upcomingEvents[1].mood ?? "Social",
+          title: upcomingEvents[1].title,
+          description:
+            upcomingEvents[1].hook_line ??
+            "Meet people through shared interests.",
+          duration: `${upcomingEvents[1].duration_minutes ?? 0} mins`,
+        }
       : {
-        photo: "/assets/home/heropic2.png",
-        type: "Creative",
-        title: "Scuba Diving",
-        description: "Dive into curated local adventures.",
-        duration: "90 mins",
-      },
+          photo: "/assets/home/heropic2.png",
+          type: "Creative",
+          title: "Scuba Diving",
+          description: "Dive into curated local adventures.",
+          duration: "90 mins",
+        },
     upcomingEvents[2]
       ? {
-        id: upcomingEvents[2].id,
-        photo:
-          upcomingEvents[2].cover_image_url ?? "/assets/home/heropic3.png",
-        type: upcomingEvents[2].mood ?? "Relaxing",
-        title: upcomingEvents[2].title,
-        description:
-          upcomingEvents[2].hook_line ?? "Try something new this weekend.",
-        duration: `${upcomingEvents[2].duration_minutes ?? 0} mins`,
-      }
+          id: upcomingEvents[2].id,
+          photo:
+            upcomingEvents[2].cover_image_url ?? "/assets/home/heropic3.png",
+          type: upcomingEvents[2].mood ?? "Relaxing",
+          title: upcomingEvents[2].title,
+          description:
+            upcomingEvents[2].hook_line ?? "Try something new this weekend.",
+          duration: `${upcomingEvents[2].duration_minutes ?? 0} mins`,
+        }
       : {
-        photo: "/assets/home/heropic3.png",
-        type: "Wellness",
-        title: "Urban Photography Walk",
-        description: "Capture city stories with a host.",
-        duration: "180 mins",
-      },
+          photo: "/assets/home/heropic3.png",
+          type: "Wellness",
+          title: "Urban Photography Walk",
+          description: "Capture city stories with a host.",
+          duration: "180 mins",
+        },
     upcomingEvents[3]
       ? {
-        id: upcomingEvents[3].id,
-        photo:
-          upcomingEvents[3].cover_image_url ?? "/assets/home/heropic4.png",
-        type: upcomingEvents[3].mood ?? "Cultural",
-        title: upcomingEvents[3].title,
-        description:
-          upcomingEvents[3].hook_line ??
-          "Explore stories with local experts.",
-        duration: `${upcomingEvents[3].duration_minutes ?? 0} mins`,
-      }
+          id: upcomingEvents[3].id,
+          photo:
+            upcomingEvents[3].cover_image_url ?? "/assets/home/heropic4.png",
+          type: upcomingEvents[3].mood ?? "Cultural",
+          title: upcomingEvents[3].title,
+          description:
+            upcomingEvents[3].hook_line ??
+            "Explore stories with local experts.",
+          duration: `${upcomingEvents[3].duration_minutes ?? 0} mins`,
+        }
       : {
-        photo: "/assets/home/heropic1.png",
-        type: "Cultural",
-        title: "Heritage Walk",
-        description: "Uncover hidden stories around your city.",
-        duration: "150 mins",
-      },
+          photo: "/assets/home/heropic1.png",
+          type: "Cultural",
+          title: "Heritage Walk",
+          description: "Uncover hidden stories around your city.",
+          duration: "150 mins",
+        },
   ];
 
   const handleBookTime = () => {
@@ -135,19 +138,17 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
 
   return (
     <section className="site-x relative z-0 w-full pt-[calc(var(--navbar-height)+1rem)] pb-10 sm:pb-20">
-
       <div className="mx-auto grid w-full max-w-[1120px] gap-8 pt-4 pb-4 md:pt-3 md:pb-4 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-5">
         <div className="mb-10 space-y-6 sm:space-y-7 md:mb-0">
-
-          <h1 
-            style={{ 
+          <h1
+            style={{
               fontFamily: '"Outfit", sans-serif',
-              fontSize: 'clamp(3rem, 5.8vw, 5.1rem)', 
-              lineHeight: '0.95', 
-              letterSpacing: '-0.06em',
+              fontSize: "clamp(3rem, 5.8vw, 5.1rem)",
+              lineHeight: "0.95",
+              letterSpacing: "-0.06em",
               fontWeight: 800,
-              maxWidth: '480px',
-              margin: '18px 0 14px'
+              maxWidth: "480px",
+              margin: "18px 0 14px",
             }}
             className="text-[#16304c]"
           >
@@ -155,8 +156,9 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
             <span className="block text-[#0e8ae0]">Time.</span>
           </h1>
 
-          <p className="max-w-[490px] font-manrope text-[1rem] leading-[1.65] text-[#6f8daa]">
-            From coffee chats to travel experiences —book people for real-life moments, anytime.
+          <p className="font-manrope max-w-[490px] text-[1rem] leading-[1.65] text-[#6f8daa]">
+            From coffee chats to travel experiences —book people for real-life
+            moments, anytime.
           </p>
 
           <div className="flex flex-wrap gap-4 pt-2">
@@ -172,7 +174,9 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
               suppressHydrationWarning
               className="w-full rounded-lg border border-[#78bce759] bg-white/90 px-5 py-3 text-sm font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5 sm:w-auto sm:min-w-[180px]"
             >
-              {hostStatus === "approved" ? "Create Experience" : "Become a Host"}
+              {hostStatus === "approved"
+                ? "Create Experience"
+                : "Become a Host"}
             </button>
           </div>
 
@@ -200,7 +204,9 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
                 +10k
               </div>
             </div>
-            <p className="text-[0.98rem] font-medium text-[#9096a0]">Used by interesting people</p>
+            <p className="text-[0.98rem] font-medium text-[#9096a0]">
+              Used by interesting people
+            </p>
           </div>
         </div>
 

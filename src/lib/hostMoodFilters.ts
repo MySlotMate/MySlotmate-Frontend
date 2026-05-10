@@ -27,7 +27,9 @@ export function buildUpcomingHostMoodMap(events?: EventDTO[] | null) {
   );
 }
 
-export function getAvailableHostMoodFilters(hostMoodMap: Map<string, string[]>) {
+export function getAvailableHostMoodFilters(
+  hostMoodMap: Map<string, string[]>,
+) {
   const availableMoods = new Set<string>();
 
   for (const moods of hostMoodMap.values()) {

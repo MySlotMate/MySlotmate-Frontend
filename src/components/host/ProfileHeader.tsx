@@ -5,29 +5,38 @@ import { FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import { FiGlobe } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
 import { IoLocationSharp } from "react-icons/io5";
-import { FiMessageSquare } from "react-icons/fi";
 import { HiArrowRight } from "react-icons/hi";
 
-export default function ProfileHeader({ 
+export default function ProfileHeader({
   host,
   onViewExperiences,
-  onWriteReview,
-}: { 
+}: {
   host: PublicHostProfileDTO;
   onViewExperiences?: () => void;
-  onWriteReview?: () => void;
 }) {
   const fullName = `${host.first_name} ${host.last_name}`;
 
   const socialLinks = [
     host.social_instagram
-      ? { key: "instagram", url: host.social_instagram, icon: <FaInstagram className="h-4 w-4" /> }
+      ? {
+          key: "instagram",
+          url: host.social_instagram,
+          icon: <FaInstagram className="h-4 w-4" />,
+        }
       : null,
     host.social_linkedin
-      ? { key: "linkedin", url: host.social_linkedin, icon: <FaLinkedinIn className="h-4 w-4" /> }
+      ? {
+          key: "linkedin",
+          url: host.social_linkedin,
+          icon: <FaLinkedinIn className="h-4 w-4" />,
+        }
       : null,
     host.social_website
-      ? { key: "website", url: host.social_website, icon: <FiGlobe className="h-4 w-4" /> }
+      ? {
+          key: "website",
+          url: host.social_website,
+          icon: <FiGlobe className="h-4 w-4" />,
+        }
       : null,
   ].filter(Boolean) as { key: string; url: string; icon: React.ReactNode }[];
 
@@ -45,7 +54,7 @@ export default function ProfileHeader({
             className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-md"
           />
           {host.is_identity_verified && (
-            <MdVerified className="absolute bottom-0 right-0 h-6 w-6 text-[#0094CA]" />
+            <MdVerified className="absolute right-0 bottom-0 h-6 w-6 text-[#0094CA]" />
           )}
         </div>
 
@@ -85,21 +94,13 @@ export default function ProfileHeader({
 
       {/* Right: Buttons */}
       <div className="flex flex-col items-center gap-3 sm:items-end">
-        <button 
+        <button
           onClick={onViewExperiences}
           className="flex items-center gap-2 rounded-full bg-[#0094CA] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007aa8]"
         >
           View Live Experiences
           <HiArrowRight className="h-4 w-4" />
         </button>
-        {/* Write a Review button commented out */}
-        {/* <button 
-          onClick={onWriteReview}
-          className="flex items-center gap-2 rounded-full border-2 border-gray-300 px-6 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA]"
-        >
-          <FiMessageSquare className="h-4 w-4" />
-          Write a Review
-        </button> */}
       </div>
     </div>
   );

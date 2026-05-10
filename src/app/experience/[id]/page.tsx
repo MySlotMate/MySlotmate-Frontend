@@ -314,7 +314,7 @@ function BookingWidget({
               <select
                 value={guests}
                 onChange={(e) => setGuests(Number(e.target.value))}
-                className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-3 pr-11 text-base text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-4 focus:ring-[#0094CA]/15"
+                className="w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 py-3 pr-11 text-base text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-4 focus:ring-[#0094CA]/15"
               >
                 {guestOptions.map((n) => (
                   <option key={n} value={n}>
@@ -372,43 +372,6 @@ function BookingWidget({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  The Plan Component                                                 */
-/* ------------------------------------------------------------------ */
-interface PlanItem {
-  title: string;
-  description: string;
-  duration: string;
-}
-
-function ThePlan({ items }: { items: PlanItem[] }) {
-  if (items.length === 0) return null;
-
-  return (
-    <div className="border-b border-gray-100 py-6">
-      <h2 className="mb-4 text-xl font-bold">The Plan</h2>
-      <div className="space-y-4">
-        {items.map((item, i) => (
-          <div key={i} className="flex gap-4">
-            <div className="flex flex-col items-center">
-              <div className="h-3 w-3 rounded-full bg-[#0094CA]" />
-              {i < items.length - 1 && (
-                <div className="mt-1 h-full w-0.5 flex-1 bg-[#0094CA]/30" />
-              )}
-            </div>
-            <div className="flex-1 pb-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold">{item.title}</h3>
-                <span className="text-sm text-[#0094CA]">{item.duration}</span>
-              </div>
-              <p className="mt-1 text-sm text-gray-600">{item.description}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /* ------------------------------------------------------------------ */
 /*  Meet Your Host Component                                           */
@@ -614,7 +577,7 @@ function GuestReviews({
       <div className="mb-6 flex gap-8">
         <div className="text-center">
           <p className="text-4xl font-bold">
-            {(rating && rating > 0) ? rating.toFixed(1) : "NEW"}
+            {rating && rating > 0 ? rating.toFixed(1) : "NEW"}
           </p>
           {rating && rating > 0 && (
             <div className="my-1 flex justify-center gap-0.5">
@@ -801,26 +764,6 @@ export default function ExperienceDetailPage({
     );
   };
 
-  // Parse description for "The Plan" section (simple implementation)
-  const planItems: PlanItem[] = event?.description
-    ? [
-        {
-          title: "Introduction & Welcome",
-          description: "Meet the host and fellow guests",
-          duration: "15 mins",
-        },
-        {
-          title: "Main Activity",
-          description: event.description.slice(0, 150) + "...",
-          duration: "1 hour 30 mins",
-        },
-        {
-          title: "Wrap Up & Q&A",
-          description: "Final thoughts and questions",
-          duration: "15 mins",
-        },
-      ]
-    : [];
 
   if (eventLoading) {
     return (
@@ -892,7 +835,9 @@ export default function ExperienceDetailPage({
                       size={14}
                     />
                     <span className="font-semibold">
-                      {(ratingData.avg_rating && ratingData.avg_rating > 0) ? ratingData.avg_rating.toFixed(1) : "NEW"}
+                      {ratingData.avg_rating && ratingData.avg_rating > 0
+                        ? ratingData.avg_rating.toFixed(1)
+                        : "NEW"}
                     </span>
                     {ratingData.total_reviews > 0 && (
                       <span className="text-gray-500">
@@ -958,8 +903,6 @@ export default function ExperienceDetailPage({
                 )}
               </div>
 
-              {/* The Plan */}
-              {/* <ThePlan items={planItems} /> */}
 
               {/* Meet Your Host */}
               <MeetYourHost

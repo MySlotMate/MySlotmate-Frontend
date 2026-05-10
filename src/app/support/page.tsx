@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect, type ReactNode } from "react";
-import { FiArrowRight, FiPhoneCall, FiSearch, FiX } from "react-icons/fi";
+import { useState, useEffect, type ReactNode } from "react";
+import { FiArrowRight, FiPhoneCall, FiX } from "react-icons/fi";
 import {
   LuAlertCircle,
   LuBadgeHelp,
@@ -27,10 +27,6 @@ interface AssistCard {
   accentClassName: string;
 }
 
-interface KnowledgeTopic {
-  label: string;
-  topic: string;
-}
 
 const assistCards: AssistCard[] = [
   {
@@ -71,14 +67,6 @@ const assistCards: AssistCard[] = [
   },
 ];
 
-const knowledgeTopics: KnowledgeTopic[] = [
-  { label: "Cancellations", topic: "cancellation" },
-  { label: "Payouts & Taxes", topic: "payout" },
-  { label: "Guest Requirements", topic: "community" },
-  { label: "Reviews", topic: "review" },
-  { label: "Video Settings", topic: "safety" },
-  { label: "Hosting Guidelines", topic: "hosting" },
-];
 
 function AssistCardComponent({
   title,
@@ -96,7 +84,9 @@ function AssistCardComponent({
         {icon}
       </div>
       <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
-      <p className="mt-3 grow text-sm leading-6 text-slate-500">{description}</p>
+      <p className="mt-3 grow text-sm leading-6 text-slate-500">
+        {description}
+      </p>
       <Link
         href={href}
         className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#0094CA] transition hover:text-[#007dab]"
@@ -109,10 +99,10 @@ function AssistCardComponent({
 }
 
 export default function SupportPage() {
-  const [knowledgeQuery, setKnowledgeQuery] = useState("");
   const [isTicketsOpen, setIsTicketsOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const { data: userTickets, isLoading: ticketsLoading } = useUserTickets(userId);
+  const { data: userTickets, isLoading: ticketsLoading } =
+    useUserTickets(userId);
 
   useEffect(() => {
     const id = localStorage.getItem("msm_user_id");
@@ -121,18 +111,6 @@ export default function SupportPage() {
     }
   }, []);
 
-  const filteredTopics = useMemo(() => {
-    const query = knowledgeQuery.trim().toLowerCase();
-
-    if (!query) {
-      return knowledgeTopics;
-    }
-
-    return knowledgeTopics.filter(({ label, topic }) => {
-      const haystack = `${label} ${topic}`.toLowerCase();
-      return haystack.includes(query);
-    });
-  }, [knowledgeQuery]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -182,7 +160,10 @@ export default function SupportPage() {
 
   return (
     <SupportPageShell>
-      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Support & Safety" }]} className="mb-6" />
+      <Breadcrumb
+        items={[{ label: "Home", href: "/" }, { label: "Support & Safety" }]}
+        className="mb-6"
+      />
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
@@ -204,7 +185,7 @@ export default function SupportPage() {
       <section className="mt-8 overflow-hidden rounded-[28px] border border-orange-100 bg-white p-6 shadow-[0_18px_48px_rgba(15,23,42,0.08)] sm:p-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
           <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-500">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-orange-500 uppercase">
               <LuShieldAlert className="h-4 w-4" />
               Emergency SOS
             </div>
@@ -213,8 +194,8 @@ export default function SupportPage() {
               Need immediate help during a live session?
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-7 text-slate-500 sm:text-base">
-              Our Trust &amp; Safety team prioritizes urgent incidents so you can
-              get help quickly when something feels unsafe.
+              Our Trust &amp; Safety team prioritizes urgent incidents so you
+              can get help quickly when something feels unsafe.
             </p>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -253,47 +234,6 @@ export default function SupportPage() {
         </div>
       </section>
 
-      {/* Knowledge Base (temporarily disabled) */}
-      {/*
-      <section className="mt-14 text-center">
-        <div className="mx-auto max-w-2xl">
-          <h2 className="text-2xl font-bold text-slate-900">Knowledge Base</h2>
-          <p className="mt-2 text-sm text-slate-500 sm:text-base">
-            Find quick answers to common hosting, policy, and payout questions.
-          </p>
-        </div>
-
-        <div className="mx-auto mt-6 flex w-full max-w-2xl items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-3 shadow-sm">
-          <FiSearch className="h-4 w-4 text-slate-400" />
-          <input
-            value={knowledgeQuery}
-            onChange={(event) => setKnowledgeQuery(event.target.value)}
-            type="text"
-            placeholder="Search articles, guides, and policies..."
-            className="w-full bg-transparent text-sm text-slate-700 outline-none"
-          />
-        </div>
-
-        <div className="mx-auto mt-6 flex max-w-4xl flex-wrap justify-center gap-3">
-          {filteredTopics.map(({ label, topic }) => (
-            <Link
-              key={label}
-              href={`/support/policies?topic=${encodeURIComponent(topic)}`}
-              className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-[#0094CA] hover:text-[#0094CA]"
-            >
-              <LuBadgeHelp className="h-4 w-4" />
-              {label}
-            </Link>
-          ))}
-        </div>
-
-        {filteredTopics.length === 0 && (
-          <p className="mt-5 text-sm text-slate-500">
-            No quick topics matched your search. Try another keyword.
-          </p>
-        )}
-      </section>
-      */}
 
       {/* Tickets Modal */}
       {isTicketsOpen && (
@@ -302,9 +242,12 @@ export default function SupportPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100 p-6">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">Support Tickets</h2>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Support Tickets
+                </h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  {userTickets?.length ?? 0} ticket{(userTickets?.length ?? 0) !== 1 ? "s" : ""} raised
+                  {userTickets?.length ?? 0} ticket
+                  {(userTickets?.length ?? 0) !== 1 ? "s" : ""} raised
                 </p>
               </div>
               <button
@@ -350,14 +293,17 @@ export default function SupportPage() {
                               <div className="mt-3 flex flex-wrap gap-2">
                                 <span
                                   className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium capitalize ${getCategoryColor(
-                                    ticket.category || "other"
+                                    ticket.category || "other",
                                   )}`}
                                 >
-                                  {ticket.category?.replace(/_/g, " ") || "Other"}
+                                  {ticket.category?.replace(/_/g, " ") ||
+                                    "Other"}
                                 </span>
                                 <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-slate-600">
                                   {ticket.messages?.length || 0} message
-                                  {(ticket.messages?.length || 0) !== 1 ? "s" : ""}
+                                  {(ticket.messages?.length || 0) !== 1
+                                    ? "s"
+                                    : ""}
                                 </span>
                               </div>
                             </div>
@@ -384,9 +330,12 @@ export default function SupportPage() {
                   <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
                     <LuBadgeHelp className="h-6 w-6 text-[#0094CA]" />
                   </div>
-                  <p className="text-sm font-medium text-slate-900">No tickets yet</p>
+                  <p className="text-sm font-medium text-slate-900">
+                    No tickets yet
+                  </p>
                   <p className="mt-1 text-sm text-slate-500">
-                    You haven&apos;t raised any support tickets. Feel free to reach out if you need help!
+                    You haven&apos;t raised any support tickets. Feel free to
+                    reach out if you need help!
                   </p>
                 </div>
               )}

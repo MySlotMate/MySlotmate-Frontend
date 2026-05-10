@@ -33,7 +33,7 @@ const PeopleCard = ({
     <Link
       href={`/host/${id}`}
       // Added w-[260px] to keep the card width consistent
-      className="group shrink-0 snap-start w-[260px] overflow-hidden rounded-[28px] border border-[#d6ebf7cc] bg-white shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1"
+      className="group w-[260px] shrink-0 snap-start overflow-hidden rounded-[28px] border border-[#d6ebf7cc] bg-white shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1"
     >
       {/* Changed h-[272px] w-[272px] to aspect-square w-full */}
       <div className="relative aspect-square w-full overflow-hidden rounded-[28px] bg-[#f8fbff]">
@@ -48,7 +48,7 @@ const PeopleCard = ({
         ) : (
           <div className="relative flex h-full w-full items-center justify-center bg-[#E9EDF0]">
             {/* WhatsApp Style Silhouette */}
-            <div className="relative h-full w-full flex items-center justify-center opacity-40">
+            <div className="relative flex h-full w-full items-center justify-center opacity-40">
               <svg
                 viewBox="0 0 24 24"
                 className="h-2/3 w-2/3 fill-[#ABB4BA]"
@@ -59,15 +59,15 @@ const PeopleCard = ({
             </div>
 
             {/* Subtle Gradient Overlay for Depth */}
-            <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/5 pointer-events-none" />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent to-black/5" />
           </div>
         )}
         {isVerified ? (
-          <span className="absolute bottom-3 right-3 z-10">
+          <span className="absolute right-3 bottom-3 z-10">
             <div className="relative">
-              <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-20 scale-150" />
+              <div className="absolute inset-0 scale-150 animate-ping rounded-full bg-white opacity-20" />
               {/* White background to fill the transparent tick, inset slightly to avoid outer border */}
-              <div className="absolute inset-[2px] bg-white rounded-full" />
+              <div className="absolute inset-[2px] rounded-full bg-white" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/assets/home/verified.svg"
@@ -80,11 +80,11 @@ const PeopleCard = ({
         ) : null}
       </div>
 
-      <div className="space-y-1.5 px-5 pb-6 pt-4">
-        <p className="line-clamp-1 text-[10px] font-extrabold uppercase tracking-[0.09em] text-[#3f89c3]">
+      <div className="space-y-1.5 px-5 pt-4 pb-6">
+        <p className="line-clamp-1 text-[10px] font-extrabold tracking-[0.09em] text-[#3f89c3] uppercase">
           {headline}
         </p>
-        <p className="line-clamp-1 text-2xl font-bold leading-tight tracking-[-0.03em] text-[#16304c]">
+        <p className="line-clamp-1 text-2xl leading-tight font-bold tracking-[-0.03em] text-[#16304c]">
           {name}
         </p>
         <p className="line-clamp-2 min-h-[40px] text-xs leading-relaxed text-[#6f8daa]">
@@ -139,11 +139,11 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
 
         const distance = hostCity
           ? calculateDistance(
-            location.lat,
-            location.lng,
-            hostCity.lat,
-            hostCity.lng,
-          )
+              location.lat,
+              location.lng,
+              hostCity.lat,
+              hostCity.lng,
+            )
           : Number.POSITIVE_INFINITY;
 
         return { host, distance };
@@ -158,11 +158,16 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
     if (!viewport) return;
 
     const overflowThresholdPx = 2;
-    const maxScrollLeft = Math.max(0, viewport.scrollWidth - viewport.clientWidth);
+    const maxScrollLeft = Math.max(
+      0,
+      viewport.scrollWidth - viewport.clientWidth,
+    );
     const overflowing = maxScrollLeft > overflowThresholdPx;
 
     const endThresholdPx = 12;
-    const atEnd = overflowing && Math.ceil(viewport.scrollLeft + endThresholdPx) >= maxScrollLeft;
+    const atEnd =
+      overflowing &&
+      Math.ceil(viewport.scrollLeft + endThresholdPx) >= maxScrollLeft;
 
     setIsOverflowing(overflowing);
     setIsAtScrollEnd(atEnd);
@@ -252,7 +257,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
 
         <div
           ref={cardsViewportRef}
-          className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 hide-scrollbar"
+          className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2"
         >
           {isLoading ? (
             <div className="flex w-full items-center justify-center py-12">
@@ -264,13 +269,19 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
             </div>
           ) : (
             filteredHosts.map((host) => (
-
               <PeopleCard
                 key={host.id}
                 id={host.id}
-                name={`${host.first_name} ${host.last_name}`.trim() || host.first_name}
+                name={
+                  `${host.first_name} ${host.last_name}`.trim() ||
+                  host.first_name
+                }
                 imageUrl={host.avatar_url ?? "/assets/home/people1.png"}
-                rating={host.avg_rating && host.avg_rating > 0 ? host.avg_rating.toFixed(1) : "0"}
+                rating={
+                  host.avg_rating && host.avg_rating > 0
+                    ? host.avg_rating.toFixed(1)
+                    : "0"
+                }
                 headline={(host.tagline ?? "Local Host").toUpperCase()}
                 description={
                   host.bio ??

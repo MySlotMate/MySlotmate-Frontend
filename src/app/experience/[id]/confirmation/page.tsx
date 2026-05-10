@@ -6,7 +6,11 @@ import Link from "next/link";
 import Navbar from "~/components/Navbar";
 import Breadcrumb from "~/components/Breadcrumb";
 import { RecommendationPopup } from "~/components/RecommendationPopup";
-import { useEvent, usePublicHostProfile, useListPublicEvents } from "~/hooks/useApi";
+import {
+  useEvent,
+  usePublicHostProfile,
+  useListPublicEvents,
+} from "~/hooks/useApi";
 import { FiCheck, FiCalendar, FiMessageCircle } from "react-icons/fi";
 import { format } from "date-fns";
 import { getRecommendedEventSync } from "~/lib/recommendations";
@@ -21,7 +25,9 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showRecommendation, setShowRecommendation] = useState(false);
-  const [recommendedEvent, setRecommendedEvent] = useState<EventDTO | null>(null);
+  const [recommendedEvent, setRecommendedEvent] = useState<EventDTO | null>(
+    null,
+  );
   const [reason, setReason] = useState("");
 
   // Can use booking ID for additional details if needed
@@ -46,16 +52,16 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
   if (eventLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0094CA]" />
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <p className="text-xl text-gray-600 mb-4">Experience not found</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
+        <p className="mb-4 text-xl text-gray-600">Experience not found</p>
         <Link href="/" className="text-[#0094CA] hover:underline">
           Go back home
         </Link>
@@ -67,36 +73,37 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
   return (
     <main className="min-h-screen bg-gray-50 py-16">
-      <div className="max-w-lg mx-auto site-x text-center">
+      <div className="site-x mx-auto max-w-lg text-center">
         {/* Success Checkmark */}
-        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500">
             <FiCheck className="text-white" size={32} />
           </div>
         </div>
 
         {/* Success Message */}
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="mb-2 text-2xl font-bold text-gray-900">
           Your Experience is confirmed
         </h1>
-        <p className="text-gray-500 mb-8">
-          We&apos;ve notified {host?.first_name ?? "the host"} about your booking. You&apos;re all set for the {event.title}.
+        <p className="mb-8 text-gray-500">
+          We&apos;ve notified {host?.first_name ?? "the host"} about your
+          booking. You&apos;re all set for the {event.title}.
         </p>
 
         {/* Booking Card */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 text-left shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white p-6 text-left shadow-sm">
           <div className="flex gap-4">
             {/* Image */}
-            <div className="w-28 h-24 rounded-lg overflow-hidden shrink-0">
+            <div className="h-24 w-28 shrink-0 overflow-hidden rounded-lg">
               {event.cover_image_url ? (
                 <img
                   src={event.cover_image_url}
                   alt={event.title}
                   loading="lazy"
-                  className="w-full h-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm">
+                <div className="flex h-full w-full items-center justify-center bg-gray-200 text-sm text-gray-400">
                   No image
                 </div>
               )}
@@ -104,29 +111,37 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
             {/* Details */}
             <div className="flex-1">
-              <h3 className="font-semibold text-gray-900 mb-2">{event.title}</h3>
-              <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+              <h3 className="mb-2 font-semibold text-gray-900">
+                {event.title}
+              </h3>
+              <div className="mb-2 flex items-center gap-2 text-sm text-gray-600">
                 <FiCalendar size={14} className="text-gray-400" />
                 <span>{format(eventDate, "EEEE, MMM d")}</span>
               </div>
-              <div className="text-sm text-gray-500 mb-2">
-                {format(eventDate, "h:mm a")} - Duration: {event.duration_minutes ?? 60} min
+              <div className="mb-2 text-sm text-gray-500">
+                {format(eventDate, "h:mm a")} - Duration:{" "}
+                {event.duration_minutes ?? 60} min
               </div>
 
               {/* Host */}
-              <div className="flex items-center gap-2 mt-3">
+              <div className="mt-3 flex items-center gap-2">
                 {host?.avatar_url ? (
                   <img
                     src={host.avatar_url}
-                    alt={host.first_name} loading="lazy" className="w-6 h-6 rounded-full object-cover"
+                    alt={host.first_name}
+                    loading="lazy"
+                    className="h-6 w-6 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-[#0094CA] flex items-center justify-center text-white text-xs font-bold">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0094CA] text-xs font-bold text-white">
                     {host?.first_name?.[0] ?? "H"}
                   </div>
                 )}
                 <span className="text-xs text-gray-500">
-                  Hosted by <span className="font-medium text-gray-700">{host?.first_name ?? "Host"}</span>
+                  Hosted by{" "}
+                  <span className="font-medium text-gray-700">
+                    {host?.first_name ?? "Host"}
+                  </span>
                 </span>
               </div>
             </div>
@@ -134,14 +149,15 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         </div>
 
         {/* Chat Unlocked Notice */}
-        <div className="mt-6 bg-[#0094CA]/5 border border-[#0094CA]/20 rounded-lg p-4 flex items-start gap-3">
-          <div className="w-8 h-8 bg-[#0094CA] rounded-lg flex items-center justify-center shrink-0">
+        <div className="mt-6 flex items-start gap-3 rounded-lg border border-[#0094CA]/20 bg-[#0094CA]/5 p-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#0094CA]">
             <FiMessageCircle className="text-white" size={16} />
           </div>
           <div className="text-left">
             <p className="font-semibold text-gray-900">Chat Unlocked</p>
             <p className="text-sm text-gray-600">
-              The chat for this experience is now unlocked. You can reach out to {host?.first_name ?? "the host"} anytime to coordinate details.
+              The chat for this experience is now unlocked. You can reach out to{" "}
+              {host?.first_name ?? "the host"} anytime to coordinate details.
             </p>
           </div>
         </div>
@@ -150,7 +166,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         <div className="mt-8 flex gap-4">
           <button
             onClick={() => router.push("/activities")}
-            className="flex-1 py-3 bg-[#0094CA] hover:bg-[#007ba8] text-white rounded-lg font-semibold transition flex items-center justify-center gap-2"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8]"
           >
             <FiCalendar size={18} />
             Go to My Bookings
@@ -196,20 +212,20 @@ export default function ConfirmationPage({
   return (
     <>
       <Navbar />
-      <div className="max-w-xl mx-auto site-x py-6">
+      <div className="site-x mx-auto max-w-xl py-6">
         <Breadcrumb
           items={[
             { label: "Home", href: "/" },
             { label: "Experiences", href: "/experiences" },
-            { label: "Confirmation" }
+            { label: "Confirmation" },
           ]}
           className="mb-6"
         />
       </div>
       <Suspense
         fallback={
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0094CA]" />
+          <div className="flex min-h-screen items-center justify-center bg-gray-50">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
           </div>
         }
       >

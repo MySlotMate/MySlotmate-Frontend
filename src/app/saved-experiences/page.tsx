@@ -76,7 +76,7 @@ export default function SavedExperiencesPage() {
         onError: () => {
           setRemovingId(null);
         },
-      }
+      },
     );
   };
 
@@ -84,13 +84,19 @@ export default function SavedExperiencesPage() {
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       <components.Navbar />
 
-      <div className="mx-auto w-full max-w-[1120px] site-x py-12 pt-28">
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Saved Experiences" }]} className="mb-8" />
+      <div className="site-x mx-auto w-full max-w-[1120px] py-12 pt-28">
+        <Breadcrumb
+          items={[{ label: "Home", href: "/" }, { label: "Saved Experiences" }]}
+          className="mb-8"
+        />
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-gray-900">Saved Experiences</h1>
-          <p className="text-gray-600 mt-3 text-lg">
-            {savedWithEvents.length} {savedWithEvents.length === 1 ? "experience" : "experiences"} saved
+          <h1 className="text-4xl font-bold text-gray-900">
+            Saved Experiences
+          </h1>
+          <p className="mt-3 text-lg text-gray-600">
+            {savedWithEvents.length}{" "}
+            {savedWithEvents.length === 1 ? "experience" : "experiences"} saved
           </p>
         </div>
 
@@ -98,7 +104,7 @@ export default function SavedExperiencesPage() {
         {savedLoading && isHydrated ? (
           <div className="flex items-center justify-center py-32">
             <div className="text-center">
-              <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent mx-auto mb-4" />
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
               <p className="text-gray-600">Loading your saved experiences...</p>
             </div>
           </div>
@@ -107,7 +113,7 @@ export default function SavedExperiencesPage() {
             {savedWithEvents.map(({ saved, event }) => (
               <div
                 key={saved.id}
-                className="border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 group bg-white flex flex-col h-full"
+                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all duration-300 hover:shadow-xl"
               >
                 {/* Image Container */}
                 <div className="relative aspect-video overflow-hidden bg-gray-200">
@@ -118,11 +124,11 @@ export default function SavedExperiencesPage() {
                     }
                     alt={event.title}
                     loading="lazy"
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                   {/* Badge */}
                   {event.mood && (
-                    <div className="absolute top-3 left-3 bg-[#0094CA] text-white px-3 py-1.5 rounded-full text-xs font-semibold">
+                    <div className="absolute top-3 left-3 rounded-full bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white">
                       {event.mood}
                     </div>
                   )}
@@ -131,7 +137,7 @@ export default function SavedExperiencesPage() {
                   <button
                     onClick={() => handleUnsave(event.id)}
                     disabled={removingId === event.id}
-                    className="absolute top-3 right-3 bg-white hover:bg-red-50 text-[#0094CA] hover:text-red-500 p-2.5 rounded-full shadow-md hover:shadow-lg transition-all disabled:opacity-60"
+                    className="absolute top-3 right-3 rounded-full bg-white p-2.5 text-[#0094CA] shadow-md transition-all hover:bg-red-50 hover:text-red-500 hover:shadow-lg disabled:opacity-60"
                     title="Remove from saved"
                   >
                     {removingId === event.id ? (
@@ -143,28 +149,30 @@ export default function SavedExperiencesPage() {
                 </div>
 
                 {/* Content */}
-                <div className="p-5 flex flex-col justify-between flex-1">
+                <div className="flex flex-1 flex-col justify-between p-5">
                   {/* Title and Description */}
                   <div>
                     <Link href={`/experience/${event.id}`}>
-                      <h3 className="font-bold text-base text-gray-900 hover:text-[#0094CA] transition line-clamp-2">
+                      <h3 className="line-clamp-2 text-base font-bold text-gray-900 transition hover:text-[#0094CA]">
                         {event.title}
                       </h3>
                     </Link>
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                    <p className="mt-2 line-clamp-2 text-sm text-gray-600">
                       {event.hook_line ?? event.description?.substring(0, 60)}
                     </p>
 
                     {/* Info */}
-                    <div className="flex items-center gap-4 mt-4 text-sm pt-3 border-t border-gray-100">
+                    <div className="mt-4 flex items-center gap-4 border-t border-gray-100 pt-3 text-sm">
                       {event.location && (
-                        <div className="flex items-center gap-1.5 text-gray-600 flex-1">
-                          <FiMapPin className="h-4 w-4 text-[#0094CA] flex-shrink-0" />
-                          <span className="truncate text-xs">{event.location}</span>
+                        <div className="flex flex-1 items-center gap-1.5 text-gray-600">
+                          <FiMapPin className="h-4 w-4 flex-shrink-0 text-[#0094CA]" />
+                          <span className="truncate text-xs">
+                            {event.location}
+                          </span>
                         </div>
                       )}
                       <div className="flex items-center gap-1 font-bold text-[#0094CA]">
-                        <span className="inline-flex h-4 w-4 items-center justify-center text-sm font-bold leading-none">
+                        <span className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none font-bold">
                           ₹
                         </span>
                         {formatPrice(event.price_cents)}
@@ -175,7 +183,7 @@ export default function SavedExperiencesPage() {
                   {/* CTA Button */}
                   <Link
                     href={`/experience/${event.id}`}
-                    className="mt-5 w-full px-4 py-2.5 bg-[#0094CA] text-white rounded-lg hover:bg-[#0076a3] transition font-semibold text-center text-sm shadow-sm hover:shadow-md"
+                    className="mt-5 w-full rounded-lg bg-[#0094CA] px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-[#0076a3] hover:shadow-md"
                   >
                     View Experience
                   </Link>
@@ -185,16 +193,19 @@ export default function SavedExperiencesPage() {
           </div>
         ) : isHydrated ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="mb-6 inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full">
+            <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-blue-100">
               <FiBookmark className="h-10 w-10 text-[#0094CA]" />
             </div>
-            <p className="text-2xl font-bold text-gray-900 mb-2">No saved experiences</p>
-            <p className="text-gray-600 mb-8 max-w-md">
-              Start exploring and save your favorite experiences to view them later.
+            <p className="mb-2 text-2xl font-bold text-gray-900">
+              No saved experiences
+            </p>
+            <p className="mb-8 max-w-md text-gray-600">
+              Start exploring and save your favorite experiences to view them
+              later.
             </p>
             <Link
               href="/experiences"
-              className="px-6 py-3 bg-[#0094CA] text-white rounded-lg hover:bg-[#0076a3] transition font-semibold shadow-md hover:shadow-lg"
+              className="rounded-lg bg-[#0094CA] px-6 py-3 font-semibold text-white shadow-md transition hover:bg-[#0076a3] hover:shadow-lg"
             >
               Explore Experiences
             </Link>

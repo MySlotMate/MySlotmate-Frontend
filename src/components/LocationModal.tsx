@@ -17,32 +17,37 @@ export interface CityLocation {
 // Comprehensive database of Indian cities with coordinates
 export const POPULAR_CITIES: CityLocation[] = [
   // Top metros
-  { city: "Mumbai", state: "Maharashtra", lat: 19.0760, lng: 72.8777 },
+  { city: "Mumbai", state: "Maharashtra", lat: 19.076, lng: 72.8777 },
   { city: "Delhi", state: "Delhi", lat: 28.7041, lng: 77.1025 },
   { city: "Bengaluru", state: "Karnataka", lat: 12.9716, lng: 77.5946 },
-  { city: "Hyderabad", state: "Telangana", lat: 17.3850, lng: 78.4867 },
+  { city: "Hyderabad", state: "Telangana", lat: 17.385, lng: 78.4867 },
   { city: "Chennai", state: "Tamil Nadu", lat: 13.0827, lng: 80.2707 },
   { city: "Kolkata", state: "West Bengal", lat: 22.5726, lng: 88.3639 },
-  
+
   // Tier 2 cities
   { city: "Pune", state: "Maharashtra", lat: 18.5204, lng: 73.8567 },
   { city: "Ahmedabad", state: "Gujarat", lat: 23.0225, lng: 72.5714 },
   { city: "Jaipur", state: "Rajasthan", lat: 26.9124, lng: 75.7873 },
   { city: "Lucknow", state: "Uttar Pradesh", lat: 26.8467, lng: 80.9462 },
   { city: "Guwahati", state: "Assam", lat: 26.1445, lng: 91.7362 },
-  { city: "Silchar", state: "Assam", lat: 24.8170, lng: 92.7790 },
+  { city: "Silchar", state: "Assam", lat: 24.817, lng: 92.779 },
   { city: "Chandigarh", state: "Chandigarh", lat: 30.7333, lng: 76.7794 },
   { city: "Kochi", state: "Kerala", lat: 9.9312, lng: 76.2673 },
   { city: "Indore", state: "Madhya Pradesh", lat: 22.7196, lng: 75.8577 },
   { city: "Bhopal", state: "Madhya Pradesh", lat: 23.1815, lng: 79.9864 },
   { city: "Nagpur", state: "Maharashtra", lat: 21.1458, lng: 79.0882 },
   { city: "Coimbatore", state: "Tamil Nadu", lat: 11.0081, lng: 76.9124 },
-  
+
   // Beach & tourism cities
   { city: "Goa", state: "Goa", lat: 15.2993, lng: 73.8243 },
-  
+
   // Tier 3 & tier 2 expansion
-  { city: "Visakhapatnam", state: "Andhra Pradesh", lat: 17.6869, lng: 83.2185 },
+  {
+    city: "Visakhapatnam",
+    state: "Andhra Pradesh",
+    lat: 17.6869,
+    lng: 83.2185,
+  },
   { city: "Vadodara", state: "Gujarat", lat: 22.3072, lng: 73.1812 },
   { city: "Surat", state: "Gujarat", lat: 21.1458, lng: 72.8479 },
   { city: "Ranchi", state: "Jharkhand", lat: 23.3441, lng: 85.3096 },
@@ -97,7 +102,12 @@ async function reverseGeocode(
     const addr = data.address;
     if (!addr) return null;
     const city =
-      addr.city ?? addr.town ?? addr.village ?? addr.state_district ?? addr.county ?? "Unknown";
+      addr.city ??
+      addr.town ??
+      addr.village ??
+      addr.state_district ??
+      addr.county ??
+      "Unknown";
     const state = addr.state ?? "";
     const resLat = parseFloat(data.lat ?? "0");
     const resLng = parseFloat(data.lon ?? "0");
@@ -108,13 +118,21 @@ async function reverseGeocode(
 }
 
 /** Calculate distance between two points (Haversine formula) in kilometers */
-export function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+export function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+): number {
   const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLng = (lng2 - lng1) * (Math.PI / 180);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -159,7 +177,10 @@ export default function LocationModal({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         void (async () => {
-          const loc = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          const loc = await reverseGeocode(
+            pos.coords.latitude,
+            pos.coords.longitude,
+          );
           setDetecting(false);
           if (loc) {
             saveLocation(loc);
@@ -212,7 +233,11 @@ export default function LocationModal({
             const addr = item.address;
             if (!addr) continue;
             const city =
-              addr.city ?? addr.town ?? addr.village ?? addr.state_district ?? addr.county;
+              addr.city ??
+              addr.town ??
+              addr.village ??
+              addr.state_district ??
+              addr.county;
             if (!city) continue;
             const key = `${city}-${addr.state ?? ""}`;
             if (seen.has(key)) continue;
@@ -221,7 +246,7 @@ export default function LocationModal({
               city,
               state: addr.state ?? "",
               lat: parseFloat(item.lat ?? "0"),
-              lng: parseFloat(item.lon ?? "0")
+              lng: parseFloat(item.lon ?? "0"),
             });
           }
           setSearchResults(results);
@@ -259,14 +284,27 @@ export default function LocationModal({
       : POPULAR_CITIES;
 
   // Decide which list to show
-  const showSearchResults = search.trim().length >= 2 && searchResults.length > 0;
+  const showSearchResults =
+    search.trim().length >= 2 && searchResults.length > 0;
 
   // Separate featured cities for the top row
-  const FEATURED_NAMES = ["Ahmedabad", "Chennai", "Delhi", "Goa", "Hyderabad", "Kolkata", "Mumbai"];
+  const FEATURED_NAMES = [
+    "Ahmedabad",
+    "Chennai",
+    "Delhi",
+    "Goa",
+    "Hyderabad",
+    "Kolkata",
+    "Mumbai",
+  ];
   const featuredCities = filteredPopular
-    .filter(c => FEATURED_NAMES.includes(c.city))
-    .sort((a, b) => FEATURED_NAMES.indexOf(a.city) - FEATURED_NAMES.indexOf(b.city));
-  const moreCities = filteredPopular.filter(c => !FEATURED_NAMES.includes(c.city)).sort((a, b) => a.city.localeCompare(b.city));
+    .filter((c) => FEATURED_NAMES.includes(c.city))
+    .sort(
+      (a, b) => FEATURED_NAMES.indexOf(a.city) - FEATURED_NAMES.indexOf(b.city),
+    );
+  const moreCities = filteredPopular
+    .filter((c) => !FEATURED_NAMES.includes(c.city))
+    .sort((a, b) => a.city.localeCompare(b.city));
 
   return (
     <>
@@ -277,8 +315,7 @@ export default function LocationModal({
       />
 
       {/* Modal Container */}
-      <div className="fixed left-1/2 top-1/2 z-[10000] w-[95%] max-w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-[38px] bg-white p-5 shadow-[0_24px_60px_rgba(0,0,0,0.15)] sm:p-8">
-        
+      <div className="fixed top-1/2 left-1/2 z-[10000] w-[95%] max-w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-[38px] bg-white p-5 shadow-[0_24px_60px_rgba(0,0,0,0.15)] sm:p-8">
         {/* Header & Close */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-[#16304c]">Select Location</h2>
@@ -290,7 +327,7 @@ export default function LocationModal({
           </button>
         </div>
 
-        <div className="max-h-[75vh] overflow-y-auto px-1 pr-2 custom-scrollbar">
+        <div className="custom-scrollbar max-h-[75vh] overflow-y-auto px-1 pr-2">
           {/* Search Bar */}
           <div className="mt-5 px-1">
             <input
@@ -299,7 +336,7 @@ export default function LocationModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search city, area or locality"
-              className="box-border w-full rounded-xl border border-[#aeddf873] bg-white px-5 py-3 text-sm text-[#16304c] placeholder-[#5e88ab] outline-none transition focus:ring-2 focus:ring-[#0094CA]/20"
+              className="box-border w-full rounded-xl border border-[#aeddf873] bg-white px-5 py-3 text-sm text-[#16304c] placeholder-[#5e88ab] transition outline-none focus:ring-2 focus:ring-[#0094CA]/20"
             />
           </div>
 
@@ -310,12 +347,15 @@ export default function LocationModal({
               disabled={detecting}
               className="flex items-center gap-2 text-sm font-semibold text-[#0094CA] transition hover:text-[#007ba8] disabled:opacity-60"
             >
-              <LuLocateFixed className={`h-4 w-4 ${detecting ? "animate-spin" : ""}`} />
+              <LuLocateFixed
+                className={`h-4 w-4 ${detecting ? "animate-spin" : ""}`}
+              />
               {detecting ? "Detecting location…" : "Use Current Location"}
             </button>
             {current && (
               <span className="text-xs text-[#5e88ab]">
-                Current: <strong className="text-[#16304c]">{current.city}</strong>
+                Current:{" "}
+                <strong className="text-[#16304c]">{current.city}</strong>
               </span>
             )}
           </div>
@@ -323,7 +363,9 @@ export default function LocationModal({
           {showSearchResults ? (
             /* Nominatim API Search Results */
             <div className="mt-8">
-              <h3 className="text-sm font-bold text-[#16304c]">Search Results</h3>
+              <h3 className="text-sm font-bold text-[#16304c]">
+                Search Results
+              </h3>
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {searchResults.map((loc) => (
                   <button
@@ -331,8 +373,12 @@ export default function LocationModal({
                     onClick={() => handleSelect(loc)}
                     className="flex flex-col items-start rounded-xl border border-[#aeddf873] p-3 text-left transition hover:border-[#0094CA] hover:bg-[#f0f9ff]"
                   >
-                    <span className="text-sm font-bold text-[#16304c]">{loc.city}</span>
-                    <span className="text-xs text-[#5e88ab] line-clamp-1">{loc.state}</span>
+                    <span className="text-sm font-bold text-[#16304c]">
+                      {loc.city}
+                    </span>
+                    <span className="line-clamp-1 text-xs text-[#5e88ab]">
+                      {loc.state}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -342,7 +388,9 @@ export default function LocationModal({
               {/* Popular Cities Section (Featured) */}
               {featuredCities.length > 0 && (
                 <div className="mt-8">
-                  <h3 className="text-sm font-bold text-[#16304c]">Popular Cities</h3>
+                  <h3 className="text-sm font-bold text-[#16304c]">
+                    Popular Cities
+                  </h3>
                   <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-5 sm:gap-4 md:grid-cols-7">
                     {featuredCities.map((loc) => (
                       <button
@@ -352,19 +400,25 @@ export default function LocationModal({
                       >
                         <div className="flex h-16 w-16 items-center justify-center rounded-[20px] border border-[#aeddf873] bg-[#f8fcff] transition-all group-hover:border-[#0094CA] group-hover:bg-[#f0f9ff] group-hover:shadow-[0_8px_20px_rgba(0,148,202,0.1)] sm:h-[72px] sm:w-[72px]">
                           {failedImages.has(loc.city) ? (
-                            <IoLocationSharp className="h-9 w-9 opacity-80 text-[#0094CA] transition-opacity group-hover:opacity-100 sm:h-10 sm:w-10" />
+                            <IoLocationSharp className="h-9 w-9 text-[#0094CA] opacity-80 transition-opacity group-hover:opacity-100 sm:h-10 sm:w-10" />
                           ) : (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={`/assets/home/${loc.city.toLowerCase()}.svg`}
                               alt={loc.city}
                               loading="lazy"
-                              onError={() => setFailedImages(prev => new Set(prev).add(loc.city))}
+                              onError={() =>
+                                setFailedImages((prev) =>
+                                  new Set(prev).add(loc.city),
+                                )
+                              }
                               className="h-9 w-9 object-contain opacity-80 transition-opacity group-hover:opacity-100 sm:h-10 sm:w-10"
                             />
                           )}
                         </div>
-                        <span className="text-[12px] font-bold text-[#16304c]">{loc.city}</span>
+                        <span className="text-[12px] font-bold text-[#16304c]">
+                          {loc.city}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -374,7 +428,9 @@ export default function LocationModal({
               {/* More Cities Section (List) */}
               {moreCities.length > 0 && (
                 <div className="mt-10">
-                  <h3 className="text-sm font-bold text-[#16304c]">More Cities</h3>
+                  <h3 className="text-sm font-bold text-[#16304c]">
+                    More Cities
+                  </h3>
                   <div className="mt-5 grid grid-cols-3 gap-y-3 text-[12px] font-medium text-[#5e88ab] sm:grid-cols-4 md:grid-cols-6">
                     {moreCities.map((loc) => (
                       <button
@@ -390,14 +446,19 @@ export default function LocationModal({
               )}
 
               {searching && (
-                <p className="mt-8 text-center text-sm text-[#5e88ab]">Searching...</p>
-              )}
-
-              {search.trim().length >= 2 && !searching && searchResults.length === 0 && filteredPopular.length === 0 && (
                 <p className="mt-8 text-center text-sm text-[#5e88ab]">
-                  No cities found for &ldquo;{search}&rdquo;
+                  Searching...
                 </p>
               )}
+
+              {search.trim().length >= 2 &&
+                !searching &&
+                searchResults.length === 0 &&
+                filteredPopular.length === 0 && (
+                  <p className="mt-8 text-center text-sm text-[#5e88ab]">
+                    No cities found for &ldquo;{search}&rdquo;
+                  </p>
+                )}
             </>
           )}
         </div>

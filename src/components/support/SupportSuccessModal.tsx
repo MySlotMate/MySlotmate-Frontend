@@ -53,7 +53,7 @@ export default function SupportSuccessModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full p-2 text-gray-400 transition hover:bg-white/80 hover:text-gray-700"
+          className="absolute top-4 right-4 rounded-full p-2 text-gray-400 transition hover:bg-white/80 hover:text-gray-700"
           aria-label="Close success message"
         >
           <FiX className="h-5 w-5" />
@@ -87,8 +87,12 @@ export default function SupportSuccessModal({
             <FiClock className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">Expected response time</p>
-            <p className="text-xs text-slate-500">Usually within 24 business hours.</p>
+            <p className="text-sm font-semibold text-slate-900">
+              Expected response time
+            </p>
+            <p className="text-xs text-slate-500">
+              Usually within 24 business hours.
+            </p>
           </div>
         </div>
 

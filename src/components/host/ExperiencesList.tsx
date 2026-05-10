@@ -26,22 +26,25 @@ function formatPrice(cents: number | null, isFree: boolean): string {
 /** Format ISO time → "Sat, Nov 18 • 2:00 PM" */
 function formatEventDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }) +
+  return (
+    d.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }) +
     " • " +
     d.toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
-    });
+    })
+  );
 }
 
 function ExperienceCard({ event }: { event: EventDTO }) {
-  const moodColor =
-    event.mood ? (moodColorMap[event.mood] ?? "#0094CA") : "#0094CA";
+  const moodColor = event.mood
+    ? (moodColorMap[event.mood] ?? "#0094CA")
+    : "#0094CA";
 
   return (
     <div className="flex w-full min-w-65 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm sm:w-[48%]">
@@ -55,13 +58,13 @@ function ExperienceCard({ event }: { event: EventDTO }) {
           className="h-full w-full object-cover"
         />
         {/* Price badge */}
-        <span className="absolute right-3 top-3 rounded-full bg-[#0094CA] px-3 py-1 text-xs font-semibold text-white">
+        <span className="absolute top-3 right-3 rounded-full bg-[#0094CA] px-3 py-1 text-xs font-semibold text-white">
           {formatPrice(event.price_cents, event.is_free)}
         </span>
         {/* Mood badge */}
         {event.mood && (
           <span
-            className="absolute bottom-3 left-3 rounded-full px-3 py-1 text-xs font-semibold capitalize text-white"
+            className="absolute bottom-3 left-3 rounded-full px-3 py-1 text-xs font-semibold text-white capitalize"
             style={{ backgroundColor: moodColor }}
           >
             ✦ {event.mood}
@@ -79,7 +82,10 @@ function ExperienceCard({ event }: { event: EventDTO }) {
         <p className="line-clamp-2 text-sm text-gray-500">
           {event.description ?? event.hook_line ?? ""}
         </p>
-        <Link href={`/experience/${event.id}`} className="mt-auto w-full rounded-full bg-[#0094CA] py-2.5 text-sm font-semibold text-white transition hover:bg-[#007aa8] text-center">
+        <Link
+          href={`/experience/${event.id}`}
+          className="mt-auto w-full rounded-full bg-[#0094CA] py-2.5 text-center text-sm font-semibold text-white transition hover:bg-[#007aa8]"
+        >
           Book Experience
         </Link>
       </div>
@@ -87,11 +93,7 @@ function ExperienceCard({ event }: { event: EventDTO }) {
   );
 }
 
-export default function ExperiencesList({
-  events,
-}: {
-  events: EventDTO[];
-}) {
+export default function ExperiencesList({ events }: { events: EventDTO[] }) {
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -99,7 +101,7 @@ export default function ExperiencesList({
           Live & Upcoming Experiences
         </h2>
       </div>
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row overflow-x-scroll [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mt-4 flex flex-col gap-4 overflow-x-scroll [scrollbar-width:none] sm:flex-row [&::-webkit-scrollbar]:hidden">
         {events.map((evt) => (
           <ExperienceCard key={evt.id} event={evt} />
         ))}

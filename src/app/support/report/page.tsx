@@ -59,7 +59,9 @@ export default function ReportIssuePage() {
   const [user] = useAuthState(auth);
   const [storedUserId, setStoredUserId] = useState<string | null>(null);
   const [storedHostId, setStoredHostId] = useState<string | null>(null);
-  const [submittedTicketId, setSubmittedTicketId] = useState<string | null>(null);
+  const [submittedTicketId, setSubmittedTicketId] = useState<string | null>(
+    null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const uploadFilesMutation = useUploadFiles();
   const createTicketMutation = useCreateSupportTicket();
@@ -130,7 +132,9 @@ export default function ReportIssuePage() {
     }
 
     if (!validUserId) {
-      toast.error("We could not find your account profile. Please sign in again.");
+      toast.error(
+        "We could not find your account profile. Please sign in again.",
+      );
       return;
     }
 
@@ -182,7 +186,11 @@ export default function ReportIssuePage() {
       const ticket = await createTicketMutation.mutateAsync({
         user_id: validUserId,
         category: "report_participant",
-        subject: ["Report", formData.participantName.trim(), selectedEvent?.title]
+        subject: [
+          "Report",
+          formData.participantName.trim(),
+          selectedEvent?.title,
+        ]
           .filter(Boolean)
           .join(" • "),
         message: formData.description.trim(),
@@ -194,7 +202,9 @@ export default function ReportIssuePage() {
       });
 
       setSubmittedTicketId(ticket.data.id);
-      toast.success("Report submitted successfully. Our team will review it shortly.");
+      toast.success(
+        "Report submitted successfully. Our team will review it shortly.",
+      );
       setFormData({
         selectedExperience: "",
         participantName: "",
@@ -245,7 +255,7 @@ export default function ReportIssuePage() {
                   selectedExperience: event.target.value,
                 }));
               }}
-              className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 outline-none transition focus:border-[#0094CA]"
+              className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
             >
               <option value="">Choose experience...</option>
               {experienceOptions.map((item) => (
@@ -256,7 +266,8 @@ export default function ReportIssuePage() {
             </select>
             {experienceOptions.length === 0 && (
               <p className="mt-2 text-xs text-slate-400">
-                No hosted experiences found yet. If needed, continue with a general report.
+                No hosted experiences found yet. If needed, continue with a
+                general report.
               </p>
             )}
           </div>
@@ -275,7 +286,7 @@ export default function ReportIssuePage() {
                     date: event.target.value,
                   }));
                 }}
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 outline-none transition focus:border-[#0094CA]"
+                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
                 required
               />
             </div>
@@ -294,7 +305,7 @@ export default function ReportIssuePage() {
                   }));
                 }}
                 placeholder="Who is this about?"
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 outline-none transition focus:border-[#0094CA]"
+                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
                 required
               />
             </div>
@@ -352,14 +363,15 @@ export default function ReportIssuePage() {
               }}
               placeholder="Describe what happened and any actions already taken"
               rows={6}
-              className="w-full rounded-2xl border border-gray-200 bg-[#f8fbfd] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#0094CA]"
+              className="w-full rounded-2xl border border-gray-200 bg-[#f8fbfd] px-4 py-3 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
               required
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-900">
-              Evidence Upload <span className="font-normal text-slate-400">(Optional)</span>
+              Evidence Upload{" "}
+              <span className="font-normal text-slate-400">(Optional)</span>
             </label>
             <SupportFileDropzone
               fileName={formData.evidence?.name}
@@ -408,8 +420,8 @@ export default function ReportIssuePage() {
             <div className="text-sm leading-6 text-slate-500">
               <p className="font-semibold text-slate-700">Review Process</p>
               <p>
-                We aim to review all reports within 24 hours. If you are in immediate
-                danger, contact local authorities first.
+                We aim to review all reports within 24 hours. If you are in
+                immediate danger, contact local authorities first.
               </p>
             </div>
 

@@ -27,7 +27,13 @@ import {
 } from "~/lib/hostMoodFilters";
 import { getMoodDisplayLabel } from "~/lib/moods";
 
-const EXPLORE_PILLS = ["All", "Adventure", "Creative", "Food", "Wellness"] as const;
+const EXPLORE_PILLS = [
+  "All",
+  "Adventure",
+  "Creative",
+  "Food",
+  "Wellness",
+] as const;
 
 type ExplorePill = (typeof EXPLORE_PILLS)[number];
 
@@ -176,27 +182,27 @@ export default function ExplorePage() {
 
     const searched = normalizedQuery
       ? list.filter((host) =>
-        matchesNormalizedQuery(normalizedQuery, [
-          host.first_name,
-          host.last_name,
-          host.city,
-          host.tagline,
-          host.bio,
-          ...(host.expertise_tags ?? []),
-        ]),
-      )
+          matchesNormalizedQuery(normalizedQuery, [
+            host.first_name,
+            host.last_name,
+            host.city,
+            host.tagline,
+            host.bio,
+            ...(host.expertise_tags ?? []),
+          ]),
+        )
       : list;
 
     const pillFiltered =
       pill === "All"
         ? searched
         : searched.filter((host) =>
-          matchesExplorePill(pill, [
-            host.tagline,
-            host.bio,
-            ...(host.expertise_tags ?? []),
-          ]),
-        );
+            matchesExplorePill(pill, [
+              host.tagline,
+              host.bio,
+              ...(host.expertise_tags ?? []),
+            ]),
+          );
 
     const moodFiltered = pillFiltered.filter((host) =>
       hostMatchesMood(host.id, hostMoodFilter, hostMoodMap),
@@ -232,23 +238,34 @@ export default function ExplorePage() {
     const byPrice = (evtPriceCents: number | null, filter: PriceFilter) => {
       const rupees = evtPriceCents ? evtPriceCents / 100 : 0;
       switch (filter) {
-        case "any": return true;
-        case "free": return !evtPriceCents || rupees <= 0;
-        case "under_500": return rupees > 0 && rupees < 500;
-        case "500_1500": return rupees >= 500 && rupees < 1500;
-        case "1500_3000": return rupees >= 1500 && rupees < 3000;
-        case "3000_plus": return rupees >= 3000;
+        case "any":
+          return true;
+        case "free":
+          return !evtPriceCents || rupees <= 0;
+        case "under_500":
+          return rupees > 0 && rupees < 500;
+        case "500_1500":
+          return rupees >= 500 && rupees < 1500;
+        case "1500_3000":
+          return rupees >= 1500 && rupees < 3000;
+        case "3000_plus":
+          return rupees >= 3000;
       }
     };
 
     const byDuration = (mins: number | null, filter: DurationFilter) => {
       const m = mins ?? null;
       switch (filter) {
-        case "any": return true;
-        case "under_60": return m !== null && m < 60;
-        case "60_120": return m !== null && m >= 60 && m < 120;
-        case "120_240": return m !== null && m >= 120 && m < 240;
-        case "240_plus": return m !== null && m >= 240;
+        case "any":
+          return true;
+        case "under_60":
+          return m !== null && m < 60;
+        case "60_120":
+          return m !== null && m >= 60 && m < 120;
+        case "120_240":
+          return m !== null && m >= 120 && m < 240;
+        case "240_plus":
+          return m !== null && m >= 240;
       }
     };
 
@@ -261,20 +278,34 @@ export default function ExplorePage() {
       const hasRating = rating !== null && Number.isFinite(rating);
       const hasReviews = (totalReviews ?? 0) > 0;
       switch (filter) {
-        case "any": return true;
-        case "new": return !hasRating || !hasReviews;
-        case "3_5_plus": return hasRating && rating >= 3.5;
-        case "4_0_plus": return hasRating && rating >= 4.0;
-        case "4_5_plus": return hasRating && rating >= 4.5;
+        case "any":
+          return true;
+        case "new":
+          return !hasRating || !hasReviews;
+        case "3_5_plus":
+          return hasRating && rating >= 3.5;
+        case "4_0_plus":
+          return hasRating && rating >= 4.0;
+        case "4_5_plus":
+          return hasRating && rating >= 4.5;
       }
     };
 
     return list
       .filter((event) => byPrice(event.price_cents, priceFilter))
       .filter((event) => byDuration(event.duration_minutes, durationFilter))
-      .filter((event) => byRating(event.avg_rating, event.total_reviews, ratingFilter))
+      .filter((event) =>
+        byRating(event.avg_rating, event.total_reviews, ratingFilter),
+      )
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
-  }, [events, priceFilter, durationFilter, ratingFilter, normalizedQuery, pill]);
+  }, [
+    events,
+    priceFilter,
+    durationFilter,
+    ratingFilter,
+    normalizedQuery,
+    pill,
+  ]);
 
   const visibleEvents = filteredExperiences.slice(0, visibleExperiences);
   const canLoadMore = visibleExperiences < filteredExperiences.length;
@@ -303,8 +334,11 @@ export default function ExplorePage() {
     <main className="min-h-screen bg-[linear-gradient(180deg,#fafeff,#f2faff)] text-[#16304c]">
       <components.Navbar />
 
-      <div className="mx-auto w-full max-w-[77.5rem] site-x py-8 pt-24">
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Explore" }]} className="mb-6" />
+      <div className="site-x mx-auto w-full max-w-[77.5rem] py-8 pt-24">
+        <Breadcrumb
+          items={[{ label: "Home", href: "/" }, { label: "Explore" }]}
+          className="mb-6"
+        />
 
         <section className="pb-2">
           {/* Search */}
@@ -333,7 +367,7 @@ export default function ExplorePage() {
                   <div className="max-h-[22rem] overflow-y-auto">
                     {experienceSearchSuggestions.length > 0 && (
                       <div className="px-2 pb-2">
-                        <p className="px-2 pb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#7da2c1]">
+                        <p className="px-2 pb-2 text-[10px] font-extrabold tracking-[0.12em] text-[#7da2c1] uppercase">
                           Experiences
                         </p>
                         <div className="space-y-1">
@@ -348,9 +382,13 @@ export default function ExplorePage() {
                                 <Compass className="h-4 w-4" />
                               </span>
                               <span className="min-w-0 flex-1 text-left">
-                                <span className="block truncate font-bold">{event.title}</span>
+                                <span className="block truncate font-bold">
+                                  {event.title}
+                                </span>
                                 <span className="block truncate text-xs text-[#6f8daa]">
-                                  {event.location ?? event.mood ?? "Explore this experience"}
+                                  {event.location ??
+                                    event.mood ??
+                                    "Explore this experience"}
                                 </span>
                               </span>
                               <ArrowRight className="h-4 w-4 shrink-0 text-[#9db8cf]" />
@@ -362,13 +400,14 @@ export default function ExplorePage() {
 
                     {hostSearchSuggestions.length > 0 && (
                       <div className="px-2 pb-2">
-                        <p className="px-2 pb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#7da2c1]">
+                        <p className="px-2 pb-2 text-[10px] font-extrabold tracking-[0.12em] text-[#7da2c1] uppercase">
                           Hosts
                         </p>
                         <div className="space-y-1">
                           {hostSearchSuggestions.map((host) => {
                             const fullName =
-                              `${host.first_name} ${host.last_name}`.trim() || host.first_name;
+                              `${host.first_name} ${host.last_name}`.trim() ||
+                              host.first_name;
                             return (
                               <button
                                 key={host.id}
@@ -380,7 +419,9 @@ export default function ExplorePage() {
                                   <UserRound className="h-4 w-4" />
                                 </span>
                                 <span className="min-w-0 flex-1 text-left">
-                                  <span className="block truncate font-bold">{fullName}</span>
+                                  <span className="block truncate font-bold">
+                                    {fullName}
+                                  </span>
                                   <span className="flex items-center gap-1 truncate text-xs text-[#6f8daa]">
                                     <MapPin className="h-3 w-3 shrink-0" />
                                     {host.city}
@@ -396,7 +437,7 @@ export default function ExplorePage() {
 
                     {quickFilterSuggestions.length > 0 && (
                       <div className="px-2">
-                        <p className="px-2 pb-2 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#7da2c1]">
+                        <p className="px-2 pb-2 text-[10px] font-extrabold tracking-[0.12em] text-[#7da2c1] uppercase">
                           Quick Filters
                         </p>
                         <div className="space-y-1">
@@ -405,7 +446,9 @@ export default function ExplorePage() {
                               key={item}
                               type="button"
                               onClick={() =>
-                                handleQuickFilterSelect(item as Exclude<ExplorePill, "All">)
+                                handleQuickFilterSelect(
+                                  item as Exclude<ExplorePill, "All">,
+                                )
                               }
                               className="flex w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[#16304c] outline-none hover:bg-[#eef8ff]"
                             >
@@ -413,7 +456,9 @@ export default function ExplorePage() {
                                 <Sparkles className="h-4 w-4" />
                               </span>
                               <span className="min-w-0 flex-1 text-left">
-                                <span className="block truncate font-bold">Filter by {item}</span>
+                                <span className="block truncate font-bold">
+                                  Filter by {item}
+                                </span>
                                 <span className="block truncate text-xs text-[#6f8daa]">
                                   Narrow the explore feed instantly
                                 </span>
@@ -443,10 +488,11 @@ export default function ExplorePage() {
                   key={item}
                   type="button"
                   onClick={() => setPill(item)}
-                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${isActive
-                    ? "bg-[#dff3ff] text-[#0e8ae0]"
-                    : "bg-white/90 text-[#5a88ac]"
-                    }`}
+                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${
+                    isActive
+                      ? "bg-[#dff3ff] text-[#0e8ae0]"
+                      : "bg-white/90 text-[#5a88ac]"
+                  }`}
                 >
                   {item}
                 </button>
@@ -457,7 +503,9 @@ export default function ExplorePage() {
           {/* Event-only filter selects */}
           <div className="mt-3 flex flex-wrap gap-2">
             <div className="relative">
-              <label htmlFor="price-filter" className="sr-only">Price range</label>
+              <label htmlFor="price-filter" className="sr-only">
+                Price range
+              </label>
               <select
                 id="price-filter"
                 value={priceFilter}
@@ -474,12 +522,16 @@ export default function ExplorePage() {
             </div>
 
             <div className="relative">
-              <label htmlFor="duration-filter" className="sr-only">Duration</label>
+              <label htmlFor="duration-filter" className="sr-only">
+                Duration
+              </label>
               <select
                 id="duration-filter"
                 value={durationFilter}
-                onChange={(e) => setDurationFilter(e.target.value as DurationFilter)}
-                className="h-9 rounded-full border border-sky-200 bg-white/90 px-4 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#5a88ac] shadow-[0_10px_24px_rgba(74,141,194,0.08)] outline-none"
+                onChange={(e) =>
+                  setDurationFilter(e.target.value as DurationFilter)
+                }
+                className="h-9 rounded-full border border-sky-200 bg-white/90 px-4 text-[11px] font-extrabold tracking-[0.08em] text-[#5a88ac] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] outline-none"
               >
                 <option value="any">Duration: Any</option>
                 <option value="under_60">Under 1 hour</option>
@@ -490,7 +542,9 @@ export default function ExplorePage() {
             </div>
 
             <div className="relative">
-              <label htmlFor="rating-filter" className="sr-only">Rating</label>
+              <label htmlFor="rating-filter" className="sr-only">
+                Rating
+              </label>
               <select
                 id="rating-filter"
                 value={ratingFilter}
@@ -535,10 +589,11 @@ export default function ExplorePage() {
                   key={mood}
                   type="button"
                   onClick={() => setHostMoodFilter(mood)}
-                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${hostMoodFilter === mood
-                    ? "bg-[#dff3ff] text-[#0e8ae0]"
-                    : "bg-white/90 text-[#5a88ac]"
-                    }`}
+                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${
+                    hostMoodFilter === mood
+                      ? "bg-[#dff3ff] text-[#0e8ae0]"
+                      : "bg-white/90 text-[#5a88ac]"
+                  }`}
                 >
                   {getMoodDisplayLabel(mood)}
                 </button>
@@ -557,7 +612,9 @@ export default function ExplorePage() {
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {filteredHosts.map((host) => {
-                const fullName = `${host.first_name} ${host.last_name}`.trim() || host.first_name;
+                const fullName =
+                  `${host.first_name} ${host.last_name}`.trim() ||
+                  host.first_name;
                 const hostMoods = getHostMoodTags(host.id, hostMoodMap, 2);
                 return (
                   <Link
@@ -578,7 +635,9 @@ export default function ExplorePage() {
                           {fullName}
                         </h3>
                         <span className="rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
-                          {host.avg_rating && host.avg_rating > 0 ? host.avg_rating.toFixed(1) : "NEW"}
+                          {host.avg_rating && host.avg_rating > 0
+                            ? host.avg_rating.toFixed(1)
+                            : "NEW"}
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-[#6f8daa]">
@@ -595,7 +654,7 @@ export default function ExplorePage() {
                           {hostMoods.map((mood) => (
                             <span
                               key={mood}
-                              className="rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#0e8ae0]"
+                              className="rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase"
                             >
                               {getMoodDisplayLabel(mood)}
                             </span>
@@ -622,7 +681,7 @@ export default function ExplorePage() {
                 {location?.city ? ` around ${location.city}` : ""}.
               </p>
             </div>
-            <span className="inline-flex items-center justify-center rounded-full border border-sky-200 bg-white/90 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#5a88ac] shadow-[0_10px_24px_rgba(74,141,194,0.08)]">
+            <span className="inline-flex items-center justify-center rounded-full border border-sky-200 bg-white/90 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#5a88ac] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)]">
               Sort by&nbsp;&nbsp;Recommended
             </span>
           </div>
@@ -653,7 +712,7 @@ export default function ExplorePage() {
                         className="h-[190px] w-full object-cover"
                       />
                       {event.mood && (
-                        <span className="absolute left-3 top-3 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#0e8ae0]">
+                        <span className="absolute top-3 left-3 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
                           {event.mood}
                         </span>
                       )}
@@ -663,7 +722,9 @@ export default function ExplorePage() {
                         {event.title}
                       </h3>
                       <p className="mt-1 line-clamp-2 text-xs text-[#6f8daa]">
-                        {event.hook_line ?? event.description ?? "Discover a hosted experience near you."}
+                        {event.hook_line ??
+                          event.description ??
+                          "Discover a hosted experience near you."}
                       </p>
                       <div className="mt-3 flex items-center justify-between gap-2 text-[11px] font-extrabold text-[#5e88ab]">
                         <span>{formatDuration(event.duration_minutes)}</span>

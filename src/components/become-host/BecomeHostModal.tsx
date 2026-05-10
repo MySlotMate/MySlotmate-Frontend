@@ -18,7 +18,7 @@ export default function BecomeHostModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-xl sm:px-8 sm:py-10">
+      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-xl sm:px-8 sm:py-10">
         {/* Close button */}
         <button
           onClick={onClose}

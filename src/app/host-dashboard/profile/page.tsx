@@ -6,17 +6,8 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
-import {
-  FiX,
-  FiEdit2,
-  FiCheck,
-} from "react-icons/fi";
-import {
-  LuShieldCheck,
-  LuBadgeCheck,
-  LuStar,
-  LuUsers,
-} from "react-icons/lu";
+import { FiX, FiEdit2, FiCheck } from "react-icons/fi";
+import { LuShieldCheck, LuBadgeCheck, LuStar, LuUsers } from "react-icons/lu";
 import { FaInstagram, FaLinkedin, FaGlobe } from "react-icons/fa";
 import { toast } from "sonner";
 import { useDragDrop } from "~/hooks/useDragDrop";
@@ -98,7 +89,13 @@ export default function HostProfileEditPage() {
     }
   }, []);
 
-  const { isDragging: isAvatarDragging, handleDragEnter: handleAvatarDragEnter, handleDragLeave: handleAvatarDragLeave, handleDragOver: handleAvatarDragOver, handleDrop: handleAvatarDrop } = useDragDrop({
+  const {
+    isDragging: isAvatarDragging,
+    handleDragEnter: handleAvatarDragEnter,
+    handleDragLeave: handleAvatarDragLeave,
+    handleDragOver: handleAvatarDragOver,
+    handleDrop: handleAvatarDrop,
+  } = useDragDrop({
     onDrop: handleAvatarFiles,
     accept: "image/*",
   });
@@ -144,8 +141,6 @@ export default function HostProfileEditPage() {
       });
     }
   }, [hostData, user?.email]);
-
-
 
   /* helpers */
   const update = <K extends keyof HostProfileData>(
@@ -242,594 +237,628 @@ export default function HostProfileEditPage() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
         </div>
       ) : (
-      <main className="mx-auto max-w-6xl site-x py-8">
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Dashboard", href: "/host-dashboard" }, { label: "Profile" }]} className="mb-6" />
+        <main className="site-x mx-auto max-w-6xl py-8">
+          <Breadcrumb
+            items={[
+              { label: "Home", href: "/" },
+              { label: "Dashboard", href: "/host-dashboard" },
+              { label: "Profile" },
+            ]}
+            className="mb-6"
+          />
 
-        {/* Header row */}
-        <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-              Host Profile
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Manage your public persona and build trust with your guests.
-            </p>
+          {/* Header row */}
+          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+                Host Profile
+              </h1>
+              <p className="mt-1 text-sm text-gray-500">
+                Manage your public persona and build trust with your guests.
+              </p>
+            </div>
+            {hostId ? (
+              <Link
+                href={`/host/${hostId}`}
+                className="shrink-0 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
+              >
+                Preview Public Profile
+              </Link>
+            ) : (
+              <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-400">
+                Preview Public Profile
+              </span>
+            )}
           </div>
-          {hostId ? (
-            <Link
-              href={`/host/${hostId}`}
-              className="shrink-0 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
-            >
-              Preview Public Profile
-            </Link>
-          ) : (
-            <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-400">
-              Preview Public Profile
-            </span>
-          )}
-        </div>
 
-        {/* ── Profile completion bar ── */}
-        <div className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <LuShieldCheck className="h-5 w-5 text-[#0094CA]" />
-              <span className="text-sm font-semibold text-gray-900">
-                Profile Completion
+          {/* ── Profile completion bar ── */}
+          <div className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <LuShieldCheck className="h-5 w-5 text-[#0094CA]" />
+                <span className="text-sm font-semibold text-gray-900">
+                  Profile Completion
+                </span>
+              </div>
+              <span
+                className={`text-sm font-bold ${completionPct === 100 ? "text-green-600" : "text-[#0094CA]"}`}
+              >
+                {completionPct}%
               </span>
             </div>
-            <span
-              className={`text-sm font-bold ${completionPct === 100 ? "text-green-600" : "text-[#0094CA]"}`}
-            >
-              {completionPct}%
-            </span>
-          </div>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
-            <div
-              className="h-full rounded-full bg-[#0094CA] transition-all duration-500"
-              style={{ width: `${completionPct}%` }}
-            />
-          </div>
-          {completionPct < 100 && (
-            <div className="mt-2 flex items-center justify-between">
-              <p className="text-xs text-gray-500">
-                Almost there! Add a phone number to reach 100%.
-              </p>
-              <button className="text-xs font-semibold text-[#0094CA] hover:underline">
-                Complete now
-              </button>
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+              <div
+                className="h-full rounded-full bg-[#0094CA] transition-all duration-500"
+                style={{ width: `${completionPct}%` }}
+              />
             </div>
-          )}
-        </div>
-
-        {/* ── Body: Two columns ── */}
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* ─── LEFT: Basic Information (2/3) ─── */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-gray-900">
-                  Basic Information
-                </h2>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="text-sm font-semibold text-[#0094CA] hover:underline disabled:opacity-50"
-                >
-                  {saving ? "Saving..." : "Save Changes"}
+            {completionPct < 100 && (
+              <div className="mt-2 flex items-center justify-between">
+                <p className="text-xs text-gray-500">
+                  Almost there! Add a phone number to reach 100%.
+                </p>
+                <button className="text-xs font-semibold text-[#0094CA] hover:underline">
+                  Complete now
                 </button>
               </div>
+            )}
+          </div>
 
-              {/* Avatar */}
-              <div className="mt-6 flex items-center gap-5">
-                {form?.avatarUrl?.trim() ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={form.avatarUrl}
-                    alt="Avatar"
-                    loading="lazy"
-                    className="h-20 w-20 rounded-full border-2 border-gray-200 object-cover"
-                  />
-                ) : (
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100">
-                    <span className="text-2xl text-gray-400">👤</span>
-                  </div>
-                )}
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900">
-                    Your Avatar
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Recommended 500×500px, JPG or PNG
-                  </p>
-                  <div 
-                    ref={avatarDropZoneRef}
-                    onDragEnter={handleAvatarDragEnter}
-                    onDragLeave={handleAvatarDragLeave}
-                    onDragOver={handleAvatarDragOver}
-                    onDrop={handleAvatarDrop}
-                    onClick={() => fileInputRef.current?.click()}
-                    className={`mt-3 rounded-lg border-2 border-dashed p-3 text-center cursor-pointer transition ${
-                      isAvatarDragging
-                        ? "border-[#0094CA] bg-[#0094CA]/5"
-                        : "border-gray-300 hover:border-[#0094CA] hover:bg-gray-50"
-                    }`}
-                  >
-                    <p className={`text-xs transition ${isAvatarDragging ? "text-[#0094CA] font-semibold" : "text-gray-500"}`}>
-                      {isAvatarDragging ? "Drop image here" : "Drag or click to upload"}
-                    </p>
-                  </div>
-                  <div className="mt-2 flex gap-3">
-                    <button
-                      onClick={() => update("avatarUrl", "")}
-                      className="text-xs font-medium text-red-500 hover:underline"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".png,.jpg,.jpeg"
-                    className="hidden"
-                    onChange={handleAvatarChange}
-                  />
-                </div>
-              </div>
-
-              {/* First / Last name */}
-              <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    First Name
-                  </label>
-                  <input
-                    value={form.firstName}
-                    onChange={(e) => update("firstName", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Last Name
-                  </label>
-                  <input
-                    value={form.lastName}
-                    onChange={(e) => update("lastName", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                  />
-                </div>
-              </div>
-
-              {/* Tagline */}
-              <div className="mt-5">
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Tagline
-                </label>
-                <input
-                  value={form.tagline}
-                  onChange={(e) => update("tagline", e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                />
-              </div>
-
-              {/* Bio */}
-              <div className="mt-5">
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Bio
-                </label>
-                <textarea
-                  value={form.bio}
-                  onChange={(e) => update("bio", e.target.value)}
-                  rows={4}
-                  className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
-                />
-              </div>
-
-              {/* Expertise Tags */}
-              <div className="mt-5">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Expertise &amp; Vibe
-                </label>
-                <div className="flex flex-wrap items-center gap-2">
-                  {form.expertiseTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="flex items-center gap-1 rounded-full bg-[#0094CA] px-3 py-1.5 text-xs font-medium text-white"
-                    >
-                      {tag}
-                      <button
-                        onClick={() => removeTag(tag)}
-                        className="ml-0.5 hover:text-white/70"
-                      >
-                        <FiX className="h-3 w-3" />
-                      </button>
-                    </span>
-                  ))}
-                  <div className="flex items-center gap-1">
-                    <input
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && addTag()}
-                      placeholder="+ Add Tag"
-                      className="w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-[#0094CA]"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ─── Social Presence ─── */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              <h2 className="text-lg font-bold text-gray-900">
-                Social Presence
-              </h2>
-
-              <div className="mt-5 space-y-4">
-                {/* Instagram */}
-                <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-pink-500 to-orange-400">
-                      <FaInstagram className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        Instagram
-                      </p>
-                      {form.socialInstagram ? (
-                        <p 
-                          onClick={() => window.open(form.socialInstagram, "_blank")}
-                          className="text-xs text-gray-500 cursor-pointer hover:text-[#0094CA] hover:underline transition"
-                        >
-                          {form.socialInstagram}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-gray-500">Not connected</p>
-                      )}
-                    </div>
-                  </div>
-                  {form.socialInstagram ? (
-                    <button
-                      onClick={async () => {
-                        if (!validUserId) {
-                          toast.error("User ID not found");
-                          return;
-                        }
-                        try {
-                          await disconnectSocialMutation.mutateAsync({
-                            userId: validUserId,
-                            platform: "instagram",
-                          });
-                          update("socialInstagram", "");
-                          toast.success("Instagram disconnected");
-                        } catch {
-                          toast.error("Failed to disconnect Instagram");
-                        }
-                      }}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <FiX className="h-4 w-4" />
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={async () => {
-                        const val = prompt(
-                          "Enter your Instagram profile URL (e.g., https://instagram.com/username):",
-                          "https://instagram.com/",
-                        );
-                        if (val?.trim()) {
-                          if (!validUserId) {
-                            toast.error("User ID not found");
-                            return;
-                          }
-                          try {
-                            await connectSocialMutation.mutateAsync({
-                              userId: validUserId,
-                              platform: "instagram",
-                              url: val.trim(),
-                            });
-                            update("socialInstagram", val.trim());
-                            toast.success("Instagram connected!");
-                          } catch (err) {
-                            console.error("Failed to connect Instagram:", err);
-                            toast.error("Failed to connect Instagram");
-                          }
-                        }
-                      }}
-                      disabled={connectSocialMutation.isPending}
-                      className="text-sm font-semibold text-[#0094CA] hover:underline disabled:opacity-50"
-                    >
-                      {connectSocialMutation.isPending ? "Connecting..." : "Connect"}
-                    </button>
-                  )}
-                </div>
-
-                {/* LinkedIn */}
-                <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0A66C2]">
-                      <FaLinkedin className="h-4 w-4 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        LinkedIn
-                      </p>
-                      {form.socialLinkedin ? (
-                        <p 
-                          onClick={() => window.open(form.socialLinkedin, "_blank")}
-                          className="text-xs text-[#0094CA] cursor-pointer hover:underline transition"
-                        >
-                          {form.socialLinkedin.includes("linkedin.com") ? form.socialLinkedin : `https://linkedin.com/in/${form.socialLinkedin}`}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-gray-500">Not connected</p>
-                      )}
-                    </div>
-                  </div>
-                  {form.socialLinkedin ? (
-                    <button
-                      onClick={async () => {
-                        if (!validUserId) {
-                          toast.error("User ID not found");
-                          return;
-                        }
-                        try {
-                          await disconnectSocialMutation.mutateAsync({
-                            userId: validUserId,
-                            platform: "linkedin",
-                          });
-                          update("socialLinkedin", "");
-                          toast.success("LinkedIn disconnected");
-                        } catch (err) {
-                          console.error("Failed to disconnect LinkedIn:", err);
-                          toast.error("Failed to disconnect LinkedIn");
-                        }
-                      }}
-                      className="text-gray-400 hover:text-gray-600"
-                    >
-                      <FiX className="h-4 w-4" />
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={async () => {
-                        const val = prompt(
-                          "Enter your LinkedIn profile URL (e.g., https://linkedin.com/in/username):",
-                          "https://linkedin.com/in/",
-                        );
-                        if (val?.trim()) {
-                          if (!validUserId) {
-                            toast.error("User ID not found");
-                            return;
-                          }
-                          try {
-                            await connectSocialMutation.mutateAsync({
-                              userId: validUserId,
-                              platform: "linkedin",
-                              url: val.trim(),
-                            });
-                            update("socialLinkedin", val.trim());
-                            toast.success("LinkedIn connected!");
-                          } catch (err) {
-                            console.error("Failed to connect LinkedIn:", err);
-                            toast.error("Failed to connect LinkedIn");
-                          }
-                        }
-                      }}
-                      disabled={connectSocialMutation.isPending}
-                      className="text-sm font-semibold text-[#0094CA] hover:underline disabled:opacity-50"
-                    >
-                      {connectSocialMutation.isPending ? "Connecting..." : "Connect"}
-                    </button>
-                  )}
-                </div>
-
-                {/* Website */}
-                <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200">
-                      <FaGlobe className="h-4 w-4 text-gray-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">
-                        Website
-                      </p>
-                      {form.socialWebsite ? (
-                        <p 
-                          onClick={() => window.open(form.socialWebsite, "_blank")}
-                          className="text-xs text-gray-500 cursor-pointer hover:text-[#0094CA] hover:underline transition"
-                        >
-                          {form.socialWebsite}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-gray-500">Not set</p>
-                      )}
-                    </div>
-                  </div>
+          {/* ── Body: Two columns ── */}
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* ─── LEFT: Basic Information (2/3) ─── */}
+            <div className="space-y-6 lg:col-span-2">
+              <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    Basic Information
+                  </h2>
                   <button
-                    className="text-gray-400 hover:text-gray-600"
-                    onClick={async () => {
-                      const val = prompt(
-                        "Enter your website URL (e.g., https://example.com):",
-                        form.socialWebsite,
-                      );
-                      if (val?.trim()) {
-                        if (!validUserId) {
-                          toast.error("User ID not found");
-                          return;
-                        }
-                        try {
-                          await connectSocialMutation.mutateAsync({
-                            userId: validUserId,
-                            platform: "website",
-                            url: val.trim(),
-                          });
-                          update("socialWebsite", val.trim());
-                          toast.success("Website updated!");
-                        } catch (err) {
-                          console.error("Failed to update website:", err);
-                          toast.error("Failed to update website");
-                        }
-                      } else if (val === "" && form.socialWebsite) {
-                        // User cleared the website
-                        if (!validUserId) {
-                          toast.error("User ID not found");
-                          return;
-                        }
-                        try {
-                          await disconnectSocialMutation.mutateAsync({
-                            userId: validUserId,
-                            platform: "website",
-                          });
-                          update("socialWebsite", "");
-                          toast.success("Website removed");
-                        } catch (err) {
-                          console.error("Failed to remove website:", err);
-                          toast.error("Failed to remove website");
-                        }
-                      }
-                    }}
-                    disabled={connectSocialMutation.isPending || disconnectSocialMutation.isPending}
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="text-sm font-semibold text-[#0094CA] hover:underline disabled:opacity-50"
                   >
-                    <FiEdit2 className="h-4 w-4" />
+                    {saving ? "Saving..." : "Save Changes"}
                   </button>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* ─── RIGHT: Trust & Safety (1/3) ─── */}
-          <div className="space-y-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                <span className="text-green-500">🛡️</span> Trust &amp; Safety
-              </h2>
-              <p className="mt-1 text-xs text-gray-500">
-                Verification enhances trust.
-              </p>
-
-              <div className="mt-5 space-y-5">
-                {/* Government ID */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Government ID
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {form.isGovIdVerified
-                        ? "Identity Verified"
-                        : "Not verified"}
-                    </p>
-                  </div>
-                  {form.isGovIdVerified ? (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                      <FiCheck className="h-4 w-4 text-green-600" />
-                    </div>
+                {/* Avatar */}
+                <div className="mt-6 flex items-center gap-5">
+                  {form?.avatarUrl?.trim() ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={form.avatarUrl}
+                      alt="Avatar"
+                      loading="lazy"
+                      className="h-20 w-20 rounded-full border-2 border-gray-200 object-cover"
+                    />
                   ) : (
-                    <button className="rounded-lg bg-[#0094CA] px-4 py-1.5 text-xs font-semibold text-white">
-                      Verify Now
-                    </button>
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100">
+                      <span className="text-2xl text-gray-400">👤</span>
+                    </div>
                   )}
-                </div>
-
-                {/* Email */}
-                <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <p className="text-sm font-semibold text-gray-900">
-                      Email Address
+                      Your Avatar
                     </p>
                     <p className="text-xs text-gray-500">
-                      {form.email || "No email"}
+                      Recommended 500×500px, JPG or PNG
                     </p>
+                    <div
+                      ref={avatarDropZoneRef}
+                      onDragEnter={handleAvatarDragEnter}
+                      onDragLeave={handleAvatarDragLeave}
+                      onDragOver={handleAvatarDragOver}
+                      onDrop={handleAvatarDrop}
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`mt-3 cursor-pointer rounded-lg border-2 border-dashed p-3 text-center transition ${
+                        isAvatarDragging
+                          ? "border-[#0094CA] bg-[#0094CA]/5"
+                          : "border-gray-300 hover:border-[#0094CA] hover:bg-gray-50"
+                      }`}
+                    >
+                      <p
+                        className={`text-xs transition ${isAvatarDragging ? "font-semibold text-[#0094CA]" : "text-gray-500"}`}
+                      >
+                        {isAvatarDragging
+                          ? "Drop image here"
+                          : "Drag or click to upload"}
+                      </p>
+                    </div>
+                    <div className="mt-2 flex gap-3">
+                      <button
+                        onClick={() => update("avatarUrl", "")}
+                        className="text-xs font-medium text-red-500 hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".png,.jpg,.jpeg"
+                      className="hidden"
+                      onChange={handleAvatarChange}
+                    />
                   </div>
                 </div>
 
-                {/* Phone */}
-                <div className="flex items-center justify-between">
+                {/* First / Last name */}
+                <div className="mt-6 grid gap-5 sm:grid-cols-2">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Phone Number
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {form.phone || "No phone number"}
-                    </p>
+                    <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                      First Name
+                    </label>
+                    <input
+                      value={form.firstName}
+                      onChange={(e) => update("firstName", e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                      Last Name
+                    </label>
+                    <input
+                      value={form.lastName}
+                      onChange={(e) => update("lastName", e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    />
+                  </div>
+                </div>
+
+                {/* Tagline */}
+                <div className="mt-5">
+                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                    Tagline
+                  </label>
+                  <input
+                    value={form.tagline}
+                    onChange={(e) => update("tagline", e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                  />
+                </div>
+
+                {/* Bio */}
+                <div className="mt-5">
+                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                    Bio
+                  </label>
+                  <textarea
+                    value={form.bio}
+                    onChange={(e) => update("bio", e.target.value)}
+                    rows={4}
+                    className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                  />
+                </div>
+
+                {/* Expertise Tags */}
+                <div className="mt-5">
+                  <label className="mb-2 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                    Expertise &amp; Vibe
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {form.expertiseTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="flex items-center gap-1 rounded-full bg-[#0094CA] px-3 py-1.5 text-xs font-medium text-white"
+                      >
+                        {tag}
+                        <button
+                          onClick={() => removeTag(tag)}
+                          className="ml-0.5 hover:text-white/70"
+                        >
+                          <FiX className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <div className="flex items-center gap-1">
+                      <input
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addTag()}
+                        placeholder="+ Add Tag"
+                        className="w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-[#0094CA]"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Earned Trust Badges */}
-              <div className="mt-6 border-t border-gray-200 pt-5">
-                <p className="mb-3 text-sm font-semibold text-gray-900">
-                  Earned Trust Badges
-                </p>
-                <div className="flex gap-3">
-                  {/* Identity Verified */}
-                  <div
-                    className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
-                      form.isIdentityVerified
-                        ? "border-[#0094CA] bg-[#e6f8ff]"
-                        : "border-gray-200 bg-gray-50 opacity-40"
-                    }`}
-                  >
-                    <LuBadgeCheck
-                      className={`h-6 w-6 ${form.isIdentityVerified ? "text-[#0094CA]" : "text-gray-400"}`}
-                    />
-                    <span className="mt-1 text-[10px] font-medium text-gray-700">
-                      Identity
-                    </span>
-                    <span className="text-[10px] text-gray-500">Verified</span>
+              {/* ─── Social Presence ─── */}
+              <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <h2 className="text-lg font-bold text-gray-900">
+                  Social Presence
+                </h2>
+
+                <div className="mt-5 space-y-4">
+                  {/* Instagram */}
+                  <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-pink-500 to-orange-400">
+                        <FaInstagram className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          Instagram
+                        </p>
+                        {form.socialInstagram ? (
+                          <p
+                            onClick={() =>
+                              window.open(form.socialInstagram, "_blank")
+                            }
+                            className="cursor-pointer text-xs text-gray-500 transition hover:text-[#0094CA] hover:underline"
+                          >
+                            {form.socialInstagram}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-500">Not connected</p>
+                        )}
+                      </div>
+                    </div>
+                    {form.socialInstagram ? (
+                      <button
+                        onClick={async () => {
+                          if (!validUserId) {
+                            toast.error("User ID not found");
+                            return;
+                          }
+                          try {
+                            await disconnectSocialMutation.mutateAsync({
+                              userId: validUserId,
+                              platform: "instagram",
+                            });
+                            update("socialInstagram", "");
+                            toast.success("Instagram disconnected");
+                          } catch {
+                            toast.error("Failed to disconnect Instagram");
+                          }
+                        }}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <FiX className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={async () => {
+                          const val = prompt(
+                            "Enter your Instagram profile URL (e.g., https://instagram.com/username):",
+                            "https://instagram.com/",
+                          );
+                          if (val?.trim()) {
+                            if (!validUserId) {
+                              toast.error("User ID not found");
+                              return;
+                            }
+                            try {
+                              await connectSocialMutation.mutateAsync({
+                                userId: validUserId,
+                                platform: "instagram",
+                                url: val.trim(),
+                              });
+                              update("socialInstagram", val.trim());
+                              toast.success("Instagram connected!");
+                            } catch (err) {
+                              console.error(
+                                "Failed to connect Instagram:",
+                                err,
+                              );
+                              toast.error("Failed to connect Instagram");
+                            }
+                          }
+                        }}
+                        disabled={connectSocialMutation.isPending}
+                        className="text-sm font-semibold text-[#0094CA] hover:underline disabled:opacity-50"
+                      >
+                        {connectSocialMutation.isPending
+                          ? "Connecting..."
+                          : "Connect"}
+                      </button>
+                    )}
                   </div>
 
-                  {/* Super Host */}
-                  <div
-                    className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
-                      form.isSuperHost
-                        ? "border-amber-400 bg-amber-50"
-                        : "border-gray-200 bg-gray-50 opacity-40"
-                    }`}
-                  >
-                    <LuStar
-                      className={`h-6 w-6 ${form.isSuperHost ? "text-amber-500" : "text-gray-400"}`}
-                    />
-                    <span className="mt-1 text-[10px] font-medium text-gray-700">
-                      Super
-                    </span>
-                    <span className="text-[10px] text-gray-500">Host</span>
+                  {/* LinkedIn */}
+                  <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0A66C2]">
+                        <FaLinkedin className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          LinkedIn
+                        </p>
+                        {form.socialLinkedin ? (
+                          <p
+                            onClick={() =>
+                              window.open(form.socialLinkedin, "_blank")
+                            }
+                            className="cursor-pointer text-xs text-[#0094CA] transition hover:underline"
+                          >
+                            {form.socialLinkedin.includes("linkedin.com")
+                              ? form.socialLinkedin
+                              : `https://linkedin.com/in/${form.socialLinkedin}`}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-500">Not connected</p>
+                        )}
+                      </div>
+                    </div>
+                    {form.socialLinkedin ? (
+                      <button
+                        onClick={async () => {
+                          if (!validUserId) {
+                            toast.error("User ID not found");
+                            return;
+                          }
+                          try {
+                            await disconnectSocialMutation.mutateAsync({
+                              userId: validUserId,
+                              platform: "linkedin",
+                            });
+                            update("socialLinkedin", "");
+                            toast.success("LinkedIn disconnected");
+                          } catch (err) {
+                            console.error(
+                              "Failed to disconnect LinkedIn:",
+                              err,
+                            );
+                            toast.error("Failed to disconnect LinkedIn");
+                          }
+                        }}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <FiX className="h-4 w-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={async () => {
+                          const val = prompt(
+                            "Enter your LinkedIn profile URL (e.g., https://linkedin.com/in/username):",
+                            "https://linkedin.com/in/",
+                          );
+                          if (val?.trim()) {
+                            if (!validUserId) {
+                              toast.error("User ID not found");
+                              return;
+                            }
+                            try {
+                              await connectSocialMutation.mutateAsync({
+                                userId: validUserId,
+                                platform: "linkedin",
+                                url: val.trim(),
+                              });
+                              update("socialLinkedin", val.trim());
+                              toast.success("LinkedIn connected!");
+                            } catch (err) {
+                              console.error("Failed to connect LinkedIn:", err);
+                              toast.error("Failed to connect LinkedIn");
+                            }
+                          }
+                        }}
+                        disabled={connectSocialMutation.isPending}
+                        className="text-sm font-semibold text-[#0094CA] hover:underline disabled:opacity-50"
+                      >
+                        {connectSocialMutation.isPending
+                          ? "Connecting..."
+                          : "Connect"}
+                      </button>
+                    )}
                   </div>
 
-                  {/* Community Champ */}
-                  <div
-                    className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
-                      form.isCommunityChamp
-                        ? "border-purple-400 bg-purple-50"
-                        : "border-gray-200 bg-gray-50 opacity-40"
-                    }`}
-                  >
-                    <LuUsers
-                      className={`h-6 w-6 ${form.isCommunityChamp ? "text-purple-500" : "text-gray-400"}`}
-                    />
-                    <span className="mt-1 text-[10px] font-medium text-gray-700">
-                      Community
-                    </span>
-                    <span className="text-[10px] text-gray-500">Champ</span>
+                  {/* Website */}
+                  <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200">
+                        <FaGlobe className="h-4 w-4 text-gray-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          Website
+                        </p>
+                        {form.socialWebsite ? (
+                          <p
+                            onClick={() =>
+                              window.open(form.socialWebsite, "_blank")
+                            }
+                            className="cursor-pointer text-xs text-gray-500 transition hover:text-[#0094CA] hover:underline"
+                          >
+                            {form.socialWebsite}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-gray-500">Not set</p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      className="text-gray-400 hover:text-gray-600"
+                      onClick={async () => {
+                        const val = prompt(
+                          "Enter your website URL (e.g., https://example.com):",
+                          form.socialWebsite,
+                        );
+                        if (val?.trim()) {
+                          if (!validUserId) {
+                            toast.error("User ID not found");
+                            return;
+                          }
+                          try {
+                            await connectSocialMutation.mutateAsync({
+                              userId: validUserId,
+                              platform: "website",
+                              url: val.trim(),
+                            });
+                            update("socialWebsite", val.trim());
+                            toast.success("Website updated!");
+                          } catch (err) {
+                            console.error("Failed to update website:", err);
+                            toast.error("Failed to update website");
+                          }
+                        } else if (val === "" && form.socialWebsite) {
+                          // User cleared the website
+                          if (!validUserId) {
+                            toast.error("User ID not found");
+                            return;
+                          }
+                          try {
+                            await disconnectSocialMutation.mutateAsync({
+                              userId: validUserId,
+                              platform: "website",
+                            });
+                            update("socialWebsite", "");
+                            toast.success("Website removed");
+                          } catch (err) {
+                            console.error("Failed to remove website:", err);
+                            toast.error("Failed to remove website");
+                          }
+                        }
+                      }}
+                      disabled={
+                        connectSocialMutation.isPending ||
+                        disconnectSocialMutation.isPending
+                      }
+                    >
+                      <FiEdit2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Pro Tip card */}
-            <div className="rounded-xl bg-[#0094CA] p-5 text-white">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
-                <LuBadgeCheck className="h-5 w-5" />
+            {/* ─── RIGHT: Trust & Safety (1/3) ─── */}
+            <div className="space-y-6">
+              <div className="rounded-xl border border-gray-200 bg-white p-6">
+                <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+                  <span className="text-green-500">🛡️</span> Trust &amp; Safety
+                </h2>
+                <p className="mt-1 text-xs text-gray-500">
+                  Verification enhances trust.
+                </p>
+
+                <div className="mt-5 space-y-5">
+                  {/* Government ID */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        Government ID
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {form.isGovIdVerified
+                          ? "Identity Verified"
+                          : "Not verified"}
+                      </p>
+                    </div>
+                    {form.isGovIdVerified ? (
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                        <FiCheck className="h-4 w-4 text-green-600" />
+                      </div>
+                    ) : (
+                      <button className="rounded-lg bg-[#0094CA] px-4 py-1.5 text-xs font-semibold text-white">
+                        Verify Now
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        Email Address
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {form.email || "No email"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        Phone Number
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {form.phone || "No phone number"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Earned Trust Badges */}
+                <div className="mt-6 border-t border-gray-200 pt-5">
+                  <p className="mb-3 text-sm font-semibold text-gray-900">
+                    Earned Trust Badges
+                  </p>
+                  <div className="flex gap-3">
+                    {/* Identity Verified */}
+                    <div
+                      className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
+                        form.isIdentityVerified
+                          ? "border-[#0094CA] bg-[#e6f8ff]"
+                          : "border-gray-200 bg-gray-50 opacity-40"
+                      }`}
+                    >
+                      <LuBadgeCheck
+                        className={`h-6 w-6 ${form.isIdentityVerified ? "text-[#0094CA]" : "text-gray-400"}`}
+                      />
+                      <span className="mt-1 text-[10px] font-medium text-gray-700">
+                        Identity
+                      </span>
+                      <span className="text-[10px] text-gray-500">
+                        Verified
+                      </span>
+                    </div>
+
+                    {/* Super Host */}
+                    <div
+                      className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
+                        form.isSuperHost
+                          ? "border-amber-400 bg-amber-50"
+                          : "border-gray-200 bg-gray-50 opacity-40"
+                      }`}
+                    >
+                      <LuStar
+                        className={`h-6 w-6 ${form.isSuperHost ? "text-amber-500" : "text-gray-400"}`}
+                      />
+                      <span className="mt-1 text-[10px] font-medium text-gray-700">
+                        Super
+                      </span>
+                      <span className="text-[10px] text-gray-500">Host</span>
+                    </div>
+
+                    {/* Community Champ */}
+                    <div
+                      className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
+                        form.isCommunityChamp
+                          ? "border-purple-400 bg-purple-50"
+                          : "border-gray-200 bg-gray-50 opacity-40"
+                      }`}
+                    >
+                      <LuUsers
+                        className={`h-6 w-6 ${form.isCommunityChamp ? "text-purple-500" : "text-gray-400"}`}
+                      />
+                      <span className="mt-1 text-[10px] font-medium text-gray-700">
+                        Community
+                      </span>
+                      <span className="text-[10px] text-gray-500">Champ</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-base font-bold">Pro Tip</h3>
-              <p className="mt-1 text-sm text-white/80">
-                Hosts with a connected LinkedIn account and verified phone
-                number get 30% more booking inquiries on average.
-              </p>
+
+              {/* Pro Tip card */}
+              <div className="rounded-xl bg-[#0094CA] p-5 text-white">
+                <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
+                  <LuBadgeCheck className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-bold">Pro Tip</h3>
+                <p className="mt-1 text-sm text-white/80">
+                  Hosts with a connected LinkedIn account and verified phone
+                  number get 30% more booking inquiries on average.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      </main>
+        </main>
       )}
     </div>
   );

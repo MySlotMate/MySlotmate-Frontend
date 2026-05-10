@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { type ReviewDTO } from "~/lib/api";
 import { FaStar } from "react-icons/fa";
 import { useUserProfile } from "~/hooks/useApi";
@@ -45,16 +45,25 @@ function sentimentLabel(score: number | null): {
   return { text: "Genuine", color: "#0094CA" };
 }
 
-function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; hostId?: string; currentHostId?: string }) {
+function ReviewCard({
+  review,
+  hostId,
+  currentHostId,
+}: {
+  review: ReviewDTO;
+  hostId?: string;
+  currentHostId?: string;
+}) {
   const [replyText, setReplyText] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
   const { mutate: addReply, isPending: isReplying } = useAddReplyToReview();
-  
+
   const label = sentimentLabel(review.sentiment_score);
   const { data: reviewer } = useUserProfile(review.user_id);
-  
+
   const reviewerName = reviewer?.name ?? review.name ?? "Anonymous Reviewer";
-  const reviewerAvatar = reviewer?.avatar_url ?? "/assets/home/avatar-placeholder.png";
+  const reviewerAvatar =
+    reviewer?.avatar_url ?? "/assets/home/avatar-placeholder.png";
 
   // Check if current user is the host of this event
   const isCurrentUserHost = hostId && currentHostId && hostId === currentHostId;
@@ -68,7 +77,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
             setReplyText("");
             setShowReplyInput(false);
           },
-        }
+        },
       );
     }
   };
@@ -94,7 +103,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
           {timeAgo(review.created_at)}
         </span>
       </div>
-      <p className="mt-2 text-sm italic text-gray-600">
+      <p className="mt-2 text-sm text-gray-600 italic">
         &ldquo;{review.description}&rdquo;
       </p>
       <div className="mt-2 flex items-center justify-between">
@@ -109,7 +118,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
         {isCurrentUserHost && !showReplyInput && !review.reply?.length && (
           <button
             onClick={() => setShowReplyInput(true)}
-            className="text-xs font-semibold text-[#0094CA] hover:text-[#007aa8] transition"
+            className="text-xs font-semibold text-[#0094CA] transition hover:text-[#007aa8]"
           >
             Add Reply
           </button>
@@ -117,7 +126,9 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
       </div>
       {review.reply && review.reply.length > 0 && (
         <div className="mt-3 border-l-2 border-gray-300 bg-gray-50 p-3">
-          <p className="text-xs font-semibold text-gray-700 mb-1">Host Reply:</p>
+          <p className="mb-1 text-xs font-semibold text-gray-700">
+            Host Reply:
+          </p>
           {review.reply.map((replyText, idx) => (
             <p key={idx} className="text-sm text-gray-600">
               {replyText}
@@ -139,7 +150,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
               <button
                 onClick={handleReplySubmit}
                 disabled={!replyText.trim() || isReplying}
-                className="rounded bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007aa8] disabled:bg-gray-300 transition"
+                className="rounded bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#007aa8] disabled:bg-gray-300"
               >
                 {isReplying ? "Sending..." : "Send Reply"}
               </button>
@@ -148,7 +159,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
                   setShowReplyInput(false);
                   setReplyText("");
                 }}
-                className="rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:border-gray-400 transition"
+                className="rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-400"
               >
                 Cancel
               </button>
@@ -195,13 +206,18 @@ export default function RatingsSection({
       {/* Reviews list - Show only first 4 reviews */}
       <div className="mt-4">
         {reviews.slice(0, 4).map((r) => (
-          <ReviewCard key={r.id} review={r} hostId={hostId} currentHostId={eventHostId} />
+          <ReviewCard
+            key={r.id}
+            review={r}
+            hostId={hostId}
+            currentHostId={eventHostId}
+          />
         ))}
       </div>
 
       {/* Read All */}
       {total_reviews > 0 && (
-        <button 
+        <button
           onClick={onReadAllReviews}
           className="mt-4 w-full rounded-full border border-gray-300 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA]"
         >

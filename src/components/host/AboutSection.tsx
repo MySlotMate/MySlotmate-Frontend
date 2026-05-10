@@ -30,7 +30,10 @@ export default function AboutSection({
               {expanded ? (
                 <p style={{ whiteSpace: "pre-line" }}>{aboutText}</p>
               ) : (
-                <p>{aboutText.slice(0, 250)}{aboutText.length > 250 ? "..." : ""}</p>
+                <p>
+                  {aboutText.slice(0, 250)}
+                  {aboutText.length > 250 ? "..." : ""}
+                </p>
               )}
             </div>
             {aboutText.length > 250 && (
@@ -39,7 +42,11 @@ export default function AboutSection({
                 className="mt-2 flex items-center gap-1 text-sm font-semibold text-[#0094CA] hover:underline"
               >
                 {expanded ? "Show less" : "Read more"}
-                <span className={`transition-transform ${expanded ? "rotate-180" : ""}`}>▾</span>
+                <span
+                  className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+                >
+                  ▾
+                </span>
               </button>
             )}
           </>
@@ -76,7 +83,7 @@ export default function AboutSection({
             {moods.map((mood) => (
               <span
                 key={mood}
-                className="rounded-full bg-[#e6f8ff] px-4 py-1.5 text-sm font-medium capitalize text-[#0094CA]"
+                className="rounded-full bg-[#e6f8ff] px-4 py-1.5 text-sm font-medium text-[#0094CA] capitalize"
               >
                 {mood}
               </span>

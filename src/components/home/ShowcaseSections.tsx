@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -161,7 +161,7 @@ const CuratedSessionCard = ({
           <button
             onClick={handleSave}
             disabled={saveExperience.isPending || unsaveExperience.isPending}
-            className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#0094CA] backdrop-blur-md shadow-lg transition hover:bg-white hover:scale-110 active:scale-90 disabled:opacity-50"
+            className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#0094CA] shadow-lg backdrop-blur-md transition hover:scale-110 hover:bg-white active:scale-90 disabled:opacity-50"
             aria-label={isSaved ? "Remove from saved" : "Save experience"}
           >
             <Heart
@@ -198,10 +198,14 @@ const CuratedSessionCard = ({
         <div className="mt-4 flex items-center justify-between border-t border-slate-50 pt-4">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-black text-[#16304c]">{price}</span>
-            <span className="text-[10px] font-bold text-[#a0aec0]">/ session</span>
+            <span className="text-[10px] font-bold text-[#a0aec0]">
+              / session
+            </span>
           </div>
           <div className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 ring-1 ring-amber-100">
-            {rating !== "New" && <Star className="h-3 w-3 fill-amber-400 text-amber-400" />}
+            {rating !== "New" && (
+              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+            )}
             <span className="text-[11px] font-black text-amber-700">
               {rating}
             </span>
@@ -455,7 +459,9 @@ const ShowcaseSections = () => {
         duration: `${event.duration_minutes ?? 0} mins`,
         price: formatPrice(event.price_cents),
         rating:
-          event.avg_rating !== null && event.avg_rating !== undefined && event.avg_rating !== 0
+          event.avg_rating !== null &&
+          event.avg_rating !== undefined &&
+          event.avg_rating !== 0
             ? event.avg_rating.toFixed(1)
             : "NEW",
         image: event.cover_image_url ?? "/assets/home/hiking.jpg",
@@ -498,7 +504,9 @@ const ShowcaseSections = () => {
           "Discover a hosted experience near you.",
         imageUrl: event.cover_image_url ?? "/assets/home/hiking.jpg",
         rating:
-          event.avg_rating !== null && event.avg_rating !== undefined && event.avg_rating !== 0
+          event.avg_rating !== null &&
+          event.avg_rating !== undefined &&
+          event.avg_rating !== 0
             ? event.avg_rating.toFixed(1)
             : "NEW",
         price: formatPrice(event.price_cents),
@@ -518,25 +526,25 @@ const ShowcaseSections = () => {
       !mounted || !location
         ? hosts.slice(0, 3)
         : hosts
-          .map((host) => {
-            const hostCity = POPULAR_CITIES.find(
-              (city) => city.city.toLowerCase() === host.city.toLowerCase(),
-            );
+            .map((host) => {
+              const hostCity = POPULAR_CITIES.find(
+                (city) => city.city.toLowerCase() === host.city.toLowerCase(),
+              );
 
-            const distance = hostCity
-              ? calculateDistance(
-                location.lat,
-                location.lng,
-                hostCity.lat,
-                hostCity.lng,
-              )
-              : Number.POSITIVE_INFINITY;
+              const distance = hostCity
+                ? calculateDistance(
+                    location.lat,
+                    location.lng,
+                    hostCity.lat,
+                    hostCity.lng,
+                  )
+                : Number.POSITIVE_INFINITY;
 
-            return { host, distance };
-          })
-          .sort((a, b) => a.distance - b.distance)
-          .slice(0, 3)
-          .map(({ host }) => host);
+              return { host, distance };
+            })
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 3)
+            .map(({ host }) => host);
 
     const mappedStories = nearbyHosts.map((host) => {
       const fullName = `${host.first_name} ${host.last_name}`.trim();
@@ -549,7 +557,10 @@ const ShowcaseSections = () => {
           `${host.first_name} is hosting meaningful local experiences on MySlotMate.`,
         statOne: `${host.total_reviews ?? 0}`,
         statOneLabel: "Reviews",
-        statTwo: host.avg_rating && host.avg_rating !== 0 ? host.avg_rating.toFixed(1) : "NEW",
+        statTwo:
+          host.avg_rating && host.avg_rating !== 0
+            ? host.avg_rating.toFixed(1)
+            : "NEW",
         statTwoLabel: "User Rating",
         image:
           host.avatar_url ??
@@ -614,15 +625,6 @@ const ShowcaseSections = () => {
     setFeaturedIndex((prev) => (prev + 1) % featuredData.length);
   };
 
-  const showPrevStory = () => {
-    if (storyData.length <= 1) return;
-    setStoryIndex((prev) => (prev - 1 + storyData.length) % storyData.length);
-  };
-
-  const showNextStory = () => {
-    if (storyData.length <= 1) return;
-    setStoryIndex((prev) => (prev + 1) % storyData.length);
-  };
 
   const updateCuratedSessionsScrollState = () => {
     const viewport = curatedSessionsViewportRef.current;
@@ -680,7 +682,6 @@ const ShowcaseSections = () => {
     };
   }, [curatedSessions.length]);
 
-
   useEffect(() => {
     setFeaturedIndex((prev) =>
       featuredData.length === 0 ? 0 : Math.min(prev, featuredData.length - 1),
@@ -690,7 +691,6 @@ const ShowcaseSections = () => {
   useEffect(() => {
     if (featuredData.length <= 1) setIsFeaturedPlaying(false);
   }, [featuredData.length]);
-
 
   useEffect(() => {
     setStoryIndex((prev) =>
@@ -939,7 +939,9 @@ const ShowcaseSections = () => {
         );
 
         // Icon popping effect
-        const icons = steps.map((s) => s?.querySelector(".step-icon-container"));
+        const icons = steps.map((s) =>
+          s?.querySelector(".step-icon-container"),
+        );
         timeline.fromTo(
           icons,
           { scale: 0, opacity: 0 },
@@ -1022,7 +1024,9 @@ const ShowcaseSections = () => {
                       <h3 className="mt-2 text-[15px] font-bold text-white drop-shadow-md">
                         {card.title}
                       </h3>
-                      <p className="text-xs text-white/90 drop-shadow-sm">{card.desc}</p>
+                      <p className="text-xs text-white/90 drop-shadow-sm">
+                        {card.desc}
+                      </p>
                     </div>
                   </div>
                 </article>
@@ -1195,7 +1199,7 @@ const ShowcaseSections = () => {
                   />
 
                   {/* Glassmorphic Overlay for Host info */}
-                  <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/20 to-transparent pointer-events-none" />
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/20 to-transparent" />
 
                   {/* Save button - Compact */}
                   {featured.id && (
@@ -1204,7 +1208,7 @@ const ShowcaseSections = () => {
                       disabled={
                         saveExperience.isPending || unsaveExperience.isPending
                       }
-                      className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#0094CA] backdrop-blur-md shadow-md transition hover:bg-white hover:scale-110 active:scale-95 disabled:opacity-50"
+                      className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#0094CA] shadow-md backdrop-blur-md transition hover:scale-110 hover:bg-white active:scale-95 disabled:opacity-50"
                       aria-label={
                         isFeaturedSaved
                           ? "Remove from saved"
@@ -1220,9 +1224,9 @@ const ShowcaseSections = () => {
                     </button>
                   )}
 
-                  <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">
-                    <div className="rounded-xl bg-black/40 px-3 py-1.5 text-white backdrop-blur-xl border border-white/20 shadow-lg">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-white/70">
+                  <div className="absolute right-4 bottom-4 left-4 flex items-end justify-between gap-3">
+                    <div className="rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 text-white shadow-lg backdrop-blur-xl">
+                      <p className="text-[9px] font-bold tracking-wider text-white/70 uppercase">
                         Host
                       </p>
                       <p className="text-xs font-bold">
@@ -1232,9 +1236,8 @@ const ShowcaseSections = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col h-full py-1">
+                <div className="flex h-full flex-col py-1">
                   <div className="flex items-center justify-end gap-3">
-
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
@@ -1254,7 +1257,7 @@ const ShowcaseSections = () => {
                         {isFeaturedPlaying ? (
                           <Pause className="h-3.5 w-3.5 fill-current" />
                         ) : (
-                          <Play className="h-3.5 w-3.5 ml-0.5 fill-current" />
+                          <Play className="ml-0.5 h-3.5 w-3.5 fill-current" />
                         )}
                       </button>
 
@@ -1282,15 +1285,25 @@ const ShowcaseSections = () => {
                     <div className="flex flex-wrap gap-2">
                       <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
                         <Clock3 className="h-3.5 w-3.5 text-[#0e8ae0]" />
-                        <span className="text-xs font-bold text-[#16304c]">{featured.duration}</span>
+                        <span className="text-xs font-bold text-[#16304c]">
+                          {featured.duration}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
-                        <span className="text-xs font-bold text-[#0e8ae0]">$</span>
-                        <span className="text-xs font-bold text-[#16304c]">{featured.price}</span>
+                        <span className="text-xs font-bold text-[#0e8ae0]">
+                          $
+                        </span>
+                        <span className="text-xs font-bold text-[#16304c]">
+                          {featured.price}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
-                        {featured.rating !== "New" && <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />}
-                        <span className="text-xs font-bold text-[#16304c]">{featured.rating}</span>
+                        {featured.rating !== "New" && (
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        )}
+                        <span className="text-xs font-bold text-[#16304c]">
+                          {featured.rating}
+                        </span>
                       </div>
                     </div>
 
@@ -1298,7 +1311,9 @@ const ShowcaseSections = () => {
                       href={featuredHref}
                       className="group/btn relative mt-6 flex w-full items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-6 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(31,167,255,0.2)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(31,167,255,0.3)]"
                     >
-                      <span className="relative z-10">Book This Experience</span>
+                      <span className="relative z-10">
+                        Book This Experience
+                      </span>
                       <div className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover/btn:translate-y-0" />
                     </Link>
                   </div>
@@ -1320,7 +1335,8 @@ const ShowcaseSections = () => {
                     Discover Experiences
                   </h2>
                   <p className="mt-3 text-base leading-relaxed text-[#5c84a5]">
-                    Handpicked sessions designed for real-world connection. Book in a few taps and experience something new.
+                    Handpicked sessions designed for real-world connection. Book
+                    in a few taps and experience something new.
                   </p>
                 </div>
 
@@ -1386,7 +1402,7 @@ const ShowcaseSections = () => {
         <div className="mx-auto grid w-full max-w-[1120px] items-center gap-10 py-14 lg:grid-cols-[0.92fr_1.08fr]">
           <Link
             href={storyHref}
-            className="relative mx-auto mb-12 w-full max-w-[410px] block"
+            className="relative mx-auto mb-12 block w-full max-w-[410px]"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -1461,7 +1477,7 @@ const ShowcaseSections = () => {
               key={item.label}
               className="flex flex-col items-center justify-center rounded-[22px] border border-[#aeddf859] bg-white px-4 py-8 text-center shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
             >
-              <strong className="relative inline-block font-outfit text-[clamp(2rem,3.5vw,2.8rem)] font-extrabold leading-none tracking-[-0.05em] text-[#0e8ae0]">
+              <strong className="font-outfit relative inline-block text-[clamp(2rem,3.5vw,2.8rem)] leading-none font-extrabold tracking-[-0.05em] text-[#0e8ae0]">
                 {formatStat(stats[idx] ?? 0, STATS_TARGETS[idx] ?? 0)}
                 {item.suffix && (
                   <span className="absolute top-1 ml-0.5 text-[0.45em] font-medium">
@@ -1483,7 +1499,7 @@ const ShowcaseSections = () => {
       >
         <div className="mx-auto grid w-full max-w-[1120px] gap-[18px] py-14 lg:grid-cols-[0.9fr_1.1fr]">
           <article className="flex flex-col rounded-[26px] bg-[linear-gradient(135deg,#109ae9,#0d85db)] p-6 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
-            <span className="inline-flex self-start items-center gap-2 rounded-full border border-white/20 bg-white/20 px-3 py-1.5 text-[10px] font-extrabold tracking-[0.08em] uppercase">
+            <span className="inline-flex items-center gap-2 self-start rounded-full border border-white/20 bg-white/20 px-3 py-1.5 text-[10px] font-extrabold tracking-[0.08em] uppercase">
               Host Corner
             </span>
             <h3 className="mt-3 max-w-[400px] font-[Outfit,sans-serif] text-2xl leading-tight font-bold tracking-[-0.04em] sm:text-3xl">

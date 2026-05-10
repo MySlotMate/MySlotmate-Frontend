@@ -101,13 +101,15 @@ function ExperienceSummaryCard({
   const spotsLeft = event.capacity - event.total_bookings;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <h2 className="text-lg font-semibold text-gray-900 mb-2">{event.title}</h2>
+    <div className="rounded-xl border border-gray-200 bg-white p-6">
+      <h2 className="mb-2 text-lg font-semibold text-gray-900">
+        {event.title}
+      </h2>
 
       {/* Mood Tags */}
       {event.mood && (
-        <div className="flex gap-2 mb-4">
-          <span className="px-2 py-1 bg-[#0094CA]/10 text-[#0094CA] text-xs font-medium rounded-full">
+        <div className="mb-4 flex gap-2">
+          <span className="rounded-full bg-[#0094CA]/10 px-2 py-1 text-xs font-medium text-[#0094CA]">
             {event.mood.toUpperCase()}
           </span>
         </div>
@@ -115,16 +117,16 @@ function ExperienceSummaryCard({
 
       <div className="flex gap-4">
         {/* Image */}
-        <div className="w-32 h-28 rounded-lg overflow-hidden shrink-0">
+        <div className="h-28 w-32 shrink-0 overflow-hidden rounded-lg">
           {event.cover_image_url ? (
             <img
               src={event.cover_image_url}
               alt={event.title}
               loading="lazy"
-              className="w-full h-full object-cover"
+              className="h-full w-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+            <div className="flex h-full w-full items-center justify-center bg-gray-200 text-gray-400">
               No image
             </div>
           )}
@@ -141,7 +143,8 @@ function ExperienceSummaryCard({
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <FiClock className="text-gray-400" size={14} />
             <span>
-              {isValidDate ? format(eventDate, "h:mm a") : "Time TBD"} ({event.duration_minutes ?? 60} min)
+              {isValidDate ? format(eventDate, "h:mm a") : "Time TBD"} (
+              {event.duration_minutes ?? 60} min)
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -157,16 +160,18 @@ function ExperienceSummaryCard({
                   src={host.avatar_url}
                   alt={host.first_name}
                   loading="lazy"
-                  className="w-6 h-6 rounded-full object-cover"
+                  className="h-6 w-6 rounded-full object-cover"
                 />
               ) : (
-                <div className="w-6 h-6 rounded-full bg-[#0094CA] flex items-center justify-center text-white text-xs font-bold">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0094CA] text-xs font-bold text-white">
                   {host?.first_name?.[0] ?? "H"}
                 </div>
               )}
               <div className="text-xs text-gray-500">
                 <span className="block">Hosted by</span>
-                <span className="font-medium text-gray-900">{host?.first_name ?? "Host"}</span>
+                <span className="font-medium text-gray-900">
+                  {host?.first_name ?? "Host"}
+                </span>
               </div>
             </div>
 
@@ -236,7 +241,8 @@ function BookingContent({ eventId }: { eventId: string }) {
   const totalPrice = pricePerPerson * guests;
   const totalPriceCents = totalPrice * 100;
   const walletBalance = wallet?.balance_cents ?? 0;
-  const hasInsufficientBalance = !event?.is_free && totalPriceCents > 0 && walletBalance < totalPriceCents;
+  const hasInsufficientBalance =
+    !event?.is_free && totalPriceCents > 0 && walletBalance < totalPriceCents;
   const shortfall = totalPriceCents - walletBalance;
 
   const waitForWalletBalance = async (
@@ -344,7 +350,9 @@ function BookingContent({ eventId }: { eventId: string }) {
               verifiedBalance = verifyRes.data.balance_cents;
             } catch (err) {
               console.error("Payment verification failed:", err);
-              toast.error("Payment verification failed. Please contact support.");
+              toast.error(
+                "Payment verification failed. Please contact support.",
+              );
               setIsProcessingPayment(false);
               return;
             }
@@ -419,7 +427,9 @@ function BookingContent({ eventId }: { eventId: string }) {
               : "Payment successful! Booking confirmed.",
           );
 
-          router.push(`/experience/${eventId}/confirmation?booking=${bookingRes.data.id}`);
+          router.push(
+            `/experience/${eventId}/confirmation?booking=${bookingRes.data.id}`,
+          );
           return;
         } catch (err) {
           const shouldRetryTopupBooking =
@@ -448,16 +458,16 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   if (eventLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0094CA]" />
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
-        <p className="text-xl text-gray-600 mb-4">Experience not found</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
+        <p className="mb-4 text-xl text-gray-600">Experience not found</p>
         <Link href="/" className="text-[#0094CA] hover:underline">
           Go back home
         </Link>
@@ -471,11 +481,13 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   return (
     <main className="min-h-screen bg-gray-50 py-10">
-      <div className="max-w-xl mx-auto site-x">
+      <div className="site-x mx-auto max-w-xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Review your booking</h1>
-          <p className="text-gray-500 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Review your booking
+          </h1>
+          <p className="mt-1 text-gray-500">
             You&apos;re just one step away from a great experience.
           </p>
         </div>
@@ -491,7 +503,7 @@ function BookingContent({ eventId }: { eventId: string }) {
 
         {/* Note for Host */}
         <div className="mt-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Add a note for the host
           </label>
           <textarea
@@ -499,25 +511,33 @@ function BookingContent({ eventId }: { eventId: string }) {
             onChange={(e) => setNote(e.target.value)}
             placeholder="Introduce yourself or share any special requests..."
             rows={4}
-            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none resize-none"
+            className="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
           />
         </div>
 
         {/* Wallet Balance Section (for paid events) */}
         {!event.is_free && totalPriceCents > 0 && (
           <div className="mt-6">
-            <div className={`rounded-xl border-2 p-4 ${hasInsufficientBalance ? 'border-blue-300 bg-blue-50' : 'border-green-200 bg-green-50'}`}>
+            <div
+              className={`rounded-xl border-2 p-4 ${hasInsufficientBalance ? "border-blue-300 bg-blue-50" : "border-green-200 bg-green-50"}`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${hasInsufficientBalance ? 'bg-blue-100' : 'bg-green-100'}`}>
-                    <LuWallet className={`h-5 w-5 ${hasInsufficientBalance ? 'text-blue-600' : 'text-green-600'}`} />
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${hasInsufficientBalance ? "bg-blue-100" : "bg-green-100"}`}
+                  >
+                    <LuWallet
+                      className={`h-5 w-5 ${hasInsufficientBalance ? "text-blue-600" : "text-green-600"}`}
+                    />
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Wallet Balance</p>
                     {walletLoading ? (
-                      <div className="h-5 w-16 bg-gray-200 animate-pulse rounded" />
+                      <div className="h-5 w-16 animate-pulse rounded bg-gray-200" />
                     ) : (
-                      <p className={`text-lg font-bold ${hasInsufficientBalance ? 'text-blue-700' : 'text-green-700'}`}>
+                      <p
+                        className={`text-lg font-bold ${hasInsufficientBalance ? "text-blue-700" : "text-green-700"}`}
+                      >
                         ₹{(walletBalance / 100).toLocaleString("en-IN")}
                       </p>
                     )}
@@ -530,11 +550,13 @@ function BookingContent({ eventId }: { eventId: string }) {
                 <div className="mt-3 border-t border-blue-200 pt-3">
                   <div className="text-sm">
                     <p className="font-medium text-blue-800">
-                      You can pay the remaining ₹{(shortfall / 100).toFixed(0)} directly
-                      Click &quot;Pay & Confirm&quot; below to pay via card/UPI and complete your booking.
+                      You can pay the remaining ₹{(shortfall / 100).toFixed(0)}{" "}
+                      directly Click &quot;Pay & Confirm&quot; below to pay via
+                      card/UPI and complete your booking.
                     </p>
-                    <p className="text-blue-700 text-xs mt-1">
-                      Click Pay and Confirm below to pay via card/UPI and complete your booking.
+                    <p className="mt-1 text-xs text-blue-700">
+                      Click Pay and Confirm below to pay via card/UPI and
+                      complete your booking.
                     </p>
                   </div>
                 </div>
@@ -547,7 +569,7 @@ function BookingContent({ eventId }: { eventId: string }) {
         <button
           onClick={handleConfirmBooking}
           disabled={isSubmitting || isProcessingPayment}
-          className="w-full mt-6 py-4 bg-[#0094CA] hover:bg-[#007ba8] text-white rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-4 font-semibold text-white transition hover:bg-[#007ba8] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting || isProcessingPayment ? (
             <>
@@ -566,7 +588,10 @@ function BookingContent({ eventId }: { eventId: string }) {
         {/* Chat Unlock Info */}
         <div className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-500">
           <FiShield size={14} />
-          <span>Your chat with {host?.first_name ?? "the host"} will unlock once the booking is confirmed.</span>
+          <span>
+            Your chat with {host?.first_name ?? "the host"} will unlock once the
+            booking is confirmed.
+          </span>
         </div>
 
         {/* Policies */}
@@ -598,20 +623,20 @@ export default function BookingReviewPage({
   return (
     <>
       <Navbar />
-      <div className="max-w-xl mx-auto site-x py-6">
-        <Breadcrumb 
+      <div className="site-x mx-auto max-w-xl py-6">
+        <Breadcrumb
           items={[
-            { label: "Home", href: "/" }, 
+            { label: "Home", href: "/" },
             { label: "Experiences", href: "/experiences" },
-            { label: "Book Experience" }
-          ]} 
-          className="mb-6" 
+            { label: "Book Experience" },
+          ]}
+          className="mb-6"
         />
       </div>
       <Suspense
         fallback={
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0094CA]" />
+          <div className="flex min-h-screen items-center justify-center bg-gray-50">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
           </div>
         }
       >

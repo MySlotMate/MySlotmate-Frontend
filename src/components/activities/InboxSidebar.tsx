@@ -93,14 +93,14 @@ export default function InboxSidebar({
 
     if (moderationResult.score > 5) {
       toast.error(
-        `Message violates community guidelines (Risk Level: ${moderationResult.score}/10). ${moderationResult.details}`
+        `Message violates community guidelines (Risk Level: ${moderationResult.score}/10). ${moderationResult.details}`,
       );
       return;
     }
 
     if (moderationResult.score >= 3) {
       toast.warning(
-        `⚠️ Warning: ${moderationResult.details} (Risk Level: ${moderationResult.score}/10)`
+        `⚠️ Warning: ${moderationResult.details} (Risk Level: ${moderationResult.score}/10)`,
       );
     }
 
@@ -135,29 +135,29 @@ export default function InboxSidebar({
       />
 
       {/* Sidebar */}
-      <div className="absolute right-0 top-0 z-[330] flex h-screen w-full max-w-96 flex-col overflow-hidden bg-white shadow-2xl transform transition-transform duration-300">
+      <div className="absolute top-0 right-0 z-[330] flex h-screen w-full max-w-96 transform flex-col overflow-hidden bg-white shadow-2xl transition-transform duration-300">
         {/* Header */}
-        <div className="relative overflow-hidden border-b border-[#d7e8f2] bg-gradient-to-br from-[#f7fbff] via-white to-[#e8f7ff] px-6 pb-5 pt-6">
-          <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[#0094CA]/12 blur-2xl" />
+        <div className="relative overflow-hidden border-b border-[#d7e8f2] bg-gradient-to-br from-[#f7fbff] via-white to-[#e8f7ff] px-6 pt-6 pb-5">
+          <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-[#0094CA]/12 blur-2xl" />
           <div className="pointer-events-none absolute bottom-0 left-0 h-24 w-24 rounded-full bg-[#00c2a8]/10 blur-2xl" />
 
           <button
             type="button"
             aria-label="Close inbox"
             onClick={onClose}
-            className="absolute right-4 top-4 z-20 rounded-full border border-white/80 bg-white/85 p-2 text-slate-600 shadow-sm backdrop-blur transition hover:bg-white hover:text-slate-900"
+            className="absolute top-4 right-4 z-20 rounded-full border border-white/80 bg-white/85 p-2 text-slate-600 shadow-sm backdrop-blur transition hover:bg-white hover:text-slate-900"
           >
             <FiX className="h-5 w-5" />
           </button>
 
           <div className="relative flex items-start gap-4 pr-14">
             <div className="min-w-0 flex-1">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#bfe6f4] bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#0076a3] shadow-sm backdrop-blur">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#bfe6f4] bg-white/80 px-3 py-1 text-[11px] font-semibold tracking-[0.24em] text-[#0076a3] uppercase shadow-sm backdrop-blur">
                 <FiMessageCircle className="h-3.5 w-3.5" />
                 Event Inbox
               </div>
 
-              <h2 className="text-2xl font-bold leading-tight text-slate-900">
+              <h2 className="text-2xl leading-tight font-bold text-slate-900">
                 {eventTitle}
               </h2>
 
@@ -176,9 +176,9 @@ export default function InboxSidebar({
         </div>
 
         {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto bg-gray-50 px-6 py-4 space-y-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex-1 space-y-4 overflow-y-auto bg-gray-50 px-6 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {loading && messages.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex h-full items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
             </div>
           ) : messages.length === 0 ? (
@@ -191,7 +191,8 @@ export default function InboxSidebar({
                   Start the conversation
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  Ask the host about the plan, the meeting point, or anything you want to know before the event.
+                  Ask the host about the plan, the meeting point, or anything
+                  you want to know before the event.
                 </p>
               </div>
             </div>
@@ -200,19 +201,21 @@ export default function InboxSidebar({
               <div
                 key={msg.id}
                 className={`flex ${
-                  msg.sender_type === "guest" && msg.sender_id === userId ? "justify-end" : "justify-start"
+                  msg.sender_type === "guest" && msg.sender_id === userId
+                    ? "justify-end"
+                    : "justify-start"
                 }`}
               >
                 <div
-                  className={`max-w-xs px-4 py-2 rounded-lg ${
+                  className={`max-w-xs rounded-lg px-4 py-2 ${
                     msg.sender_type === "guest" && msg.sender_id === userId
                       ? "bg-[#0094CA] text-white"
-                      : "bg-white border border-gray-200 text-gray-900"
+                      : "border border-gray-200 bg-white text-gray-900"
                   }`}
                 >
                   <p className="text-sm">{msg.message}</p>
                   <p
-                    className={`text-xs mt-1 ${
+                    className={`mt-1 text-xs ${
                       msg.sender_type === "guest" && msg.sender_id === userId
                         ? "text-blue-100"
                         : "text-gray-500"
@@ -232,20 +235,20 @@ export default function InboxSidebar({
         </div>
 
         {/* Message Input */}
-        <div className="border-t border-gray-200 px-6 py-4 bg-white">
+        <div className="border-t border-gray-200 bg-white px-6 py-4">
           <form onSubmit={handleSendMessage} className="flex gap-2">
             <input
               type="text"
               value={messageText}
               onChange={(e) => setMessageText(e.target.value)}
               placeholder="Type a message..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#0094CA] text-sm"
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#0094CA] focus:outline-none"
               disabled={sending}
             />
             <button
               type="submit"
               disabled={sending || !messageText.trim()}
-              className="px-4 py-2 bg-[#0094CA] text-white rounded-lg hover:bg-[#0076a3] disabled:opacity-50 transition"
+              className="rounded-lg bg-[#0094CA] px-4 py-2 text-white transition hover:bg-[#0076a3] disabled:opacity-50"
             >
               <FiSend className="h-4 w-4" />
             </button>

@@ -2,13 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+const words = ["Discover hosts", "Book experiences", "Become a host"];
+
 export default function Preloader() {
   const [isVisible, setIsVisible] = useState(true);
-  const words = [
-    "Discover hosts",
-    "Book experiences",
-    "Become a host",
-  ];
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
@@ -65,7 +62,7 @@ export default function Preloader() {
               src="/assets/navbar/roundlogo.png"
               alt="M logo"
               loading="lazy"
-              className="h-24 w-24 md:h-32 md:w-32 object-contain drop-shadow-lg rounded-full transform-gpu"
+              className="h-24 w-24 transform-gpu rounded-full object-contain drop-shadow-lg md:h-32 md:w-32"
               style={{ animation: "logoFloat 2.6s ease-in-out infinite" }}
             />
           </div>
@@ -75,14 +72,17 @@ export default function Preloader() {
         <div className="flex flex-col items-center gap-3">
           {/* Heading removed to avoid repeating brand text shown by the logo */}
 
-          <div className="h-8 relative">
+          <div className="relative h-8">
             {words.map((w, i) => (
               <div
                 key={w}
-                className={`word absolute left-1/2 text-center text-lg md:text-2xl text-[#0f3b57] font-extrabold ${i === wordIndex ? "visible" : "invisible"}`}
+                className={`word absolute left-1/2 text-center text-lg font-extrabold text-[#0f3b57] md:text-2xl ${i === wordIndex ? "visible" : "invisible"}`}
                 style={{
                   transition: "opacity 260ms ease, transform 260ms ease",
-                  transform: i === wordIndex ? "translate(-50%, 0)" : "translate(-50%, 10px)",
+                  transform:
+                    i === wordIndex
+                      ? "translate(-50%, 0)"
+                      : "translate(-50%, 10px)",
                   opacity: i === wordIndex ? 1 : 0,
                 }}
               >
@@ -95,7 +95,8 @@ export default function Preloader() {
 
       <style jsx>{`
         @keyframes float {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateY(0px);
           }
           50% {
@@ -104,7 +105,8 @@ export default function Preloader() {
         }
 
         @keyframes bounce {
-          0%, 100% {
+          0%,
+          100% {
             opacity: 0.3;
             transform: translateY(0);
           }
@@ -115,34 +117,64 @@ export default function Preloader() {
         }
 
         @keyframes wordIn {
-          0% { opacity: 0; transform: translateY(8px); }
-          100% { opacity: 1; transform: translateY(0); }
+          0% {
+            opacity: 0;
+            transform: translateY(8px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
-        .animate-word-in { animation: wordIn 360ms ease forwards; }
-        .word { position: absolute; transform: translate(-50%, 0); }
-
-        
+        .animate-word-in {
+          animation: wordIn 360ms ease forwards;
+        }
+        .word {
+          position: absolute;
+          transform: translate(-50%, 0);
+        }
 
         /* slow spin for the outer ring */
         @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         /* ring pulse scale */
         @keyframes ringPulse {
-          0% { transform: scale(1); opacity: 0.6; }
-          50% { transform: scale(1.08); opacity: 0.95; }
-          100% { transform: scale(1); opacity: 0.6; }
+          0% {
+            transform: scale(1);
+            opacity: 0.6;
+          }
+          50% {
+            transform: scale(1.08);
+            opacity: 0.95;
+          }
+          100% {
+            transform: scale(1);
+            opacity: 0.6;
+          }
         }
 
         /* subtle logo float + scale + rotate */
         @keyframes logoFloat {
-          0% { transform: translateY(0) scale(1) rotate(0deg); }
-          40% { transform: translateY(-6px) scale(1.06) rotate(4deg); }
-          60% { transform: translateY(-3px) scale(1.03) rotate(-2deg); }
-          100% { transform: translateY(0) scale(1) rotate(0deg); }
+          0% {
+            transform: translateY(0) scale(1) rotate(0deg);
+          }
+          40% {
+            transform: translateY(-6px) scale(1.06) rotate(4deg);
+          }
+          60% {
+            transform: translateY(-3px) scale(1.03) rotate(-2deg);
+          }
+          100% {
+            transform: translateY(0) scale(1) rotate(0deg);
+          }
         }
       `}</style>
     </div>

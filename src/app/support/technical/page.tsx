@@ -4,12 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import type { IconType } from "react-icons";
-import {
-  FiAlertCircle,
-  FiCalendar,
-  FiSearch,
-  FiVideo,
-} from "react-icons/fi";
+import { FiAlertCircle, FiCalendar, FiSearch, FiVideo } from "react-icons/fi";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { toast } from "sonner";
 import {
@@ -59,7 +54,8 @@ const commonTopics: CommonTopic[] = [
   {
     id: 4,
     title: "Dashboard Errors",
-    description: "Login issues, broken analytics, or confusing dashboard states.",
+    description:
+      "Login issues, broken analytics, or confusing dashboard states.",
     icon: LuLayoutDashboard,
   },
 ];
@@ -85,8 +81,12 @@ function CommonTopicCard({ topic }: { topic: CommonTopic }) {
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e6f8ff] text-[#0094CA]">
         <Icon className="h-5 w-5" />
       </div>
-      <h3 className="mt-4 text-lg font-semibold text-slate-900">{topic.title}</h3>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{topic.description}</p>
+      <h3 className="mt-4 text-lg font-semibold text-slate-900">
+        {topic.title}
+      </h3>
+      <p className="mt-2 text-sm leading-6 text-slate-500">
+        {topic.description}
+      </p>
     </div>
   );
 }
@@ -96,7 +96,9 @@ export default function TechnicalSupportPage() {
   const [storedUserId, setStoredUserId] = useState<string | null>(null);
   const [storedHostId, setStoredHostId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [submittedTicketId, setSubmittedTicketId] = useState<string | null>(null);
+  const [submittedTicketId, setSubmittedTicketId] = useState<string | null>(
+    null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const uploadFilesMutation = useUploadFiles();
   const createTicketMutation = useCreateSupportTicket();
@@ -168,7 +170,9 @@ export default function TechnicalSupportPage() {
     }
 
     if (!validUserId) {
-      toast.error("We could not find your account profile. Please sign in again.");
+      toast.error(
+        "We could not find your account profile. Please sign in again.",
+      );
       return;
     }
 
@@ -201,9 +205,7 @@ export default function TechnicalSupportPage() {
         user_id: validUserId,
         category: "technical_support",
         subject: [
-          issueLabels[
-            contactDetails.issueCategory as keyof typeof issueLabels
-          ],
+          issueLabels[contactDetails.issueCategory as keyof typeof issueLabels],
           selectedEvent?.title,
           `Priority: ${contactDetails.priorityLevel}`,
         ]
@@ -275,7 +277,7 @@ export default function TechnicalSupportPage() {
 
       <div className="my-10 flex items-center gap-4">
         <hr className="flex-1 border-t border-gray-200" />
-        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+        <span className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
           Still need help?
         </span>
         <hr className="flex-1 border-t border-gray-200" />
@@ -312,7 +314,7 @@ export default function TechnicalSupportPage() {
                     issueCategory: event.target.value,
                   }));
                 }}
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 outline-none transition focus:border-[#0094CA]"
+                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
               >
                 {Object.entries(issueLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -335,7 +337,7 @@ export default function TechnicalSupportPage() {
                     selectedExperience: event.target.value,
                   }));
                 }}
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 outline-none transition focus:border-[#0094CA]"
+                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
               >
                 <option value="">General platform issue</option>
                 {experienceOptions.map((item) => (
@@ -346,7 +348,8 @@ export default function TechnicalSupportPage() {
               </select>
               {experienceOptions.length === 0 && (
                 <p className="mt-2 text-xs text-slate-400">
-                  No hosted experiences found yet. You can still submit a general issue.
+                  No hosted experiences found yet. You can still submit a
+                  general issue.
                 </p>
               )}
             </div>
@@ -376,7 +379,9 @@ export default function TechnicalSupportPage() {
                         : "border-gray-200 bg-[#f8fbfd] text-slate-700 hover:border-[#0094CA]"
                     }`}
                   >
-                    <span className={`h-2.5 w-2.5 rounded-full ${option.dotClassName}`} />
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${option.dotClassName}`}
+                    />
                     {option.label}
                   </button>
                 );
@@ -398,14 +403,15 @@ export default function TechnicalSupportPage() {
               }}
               placeholder="Describe your technical issue in detail"
               rows={5}
-              className="w-full rounded-2xl border border-gray-200 bg-[#f8fbfd] px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-[#0094CA]"
+              className="w-full rounded-2xl border border-gray-200 bg-[#f8fbfd] px-4 py-3 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
               required
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-900">
-              Attachments <span className="font-normal text-slate-400">(Optional)</span>
+              Attachments{" "}
+              <span className="font-normal text-slate-400">(Optional)</span>
             </label>
             <SupportFileDropzone
               fileName={contactDetails.attachment?.name}
@@ -417,8 +423,11 @@ export default function TechnicalSupportPage() {
             <div className="flex items-start gap-3 text-sm text-slate-500">
               <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#0094CA]" />
               <p>
-                Need urgent help instead? Use the {" "}
-                <Link href="/support/report" className="font-semibold text-[#0094CA] hover:underline">
+                Need urgent help instead? Use the{" "}
+                <Link
+                  href="/support/report"
+                  className="font-semibold text-[#0094CA] hover:underline"
+                >
                   participant report flow
                 </Link>{" "}
                 for safety incidents.

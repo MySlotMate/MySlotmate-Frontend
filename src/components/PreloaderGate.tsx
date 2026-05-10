@@ -20,4 +20,3 @@ export default function PreloaderGate({
   if (isPreloading) return <Preloader />;
   return <>{children}</>;
 }
-

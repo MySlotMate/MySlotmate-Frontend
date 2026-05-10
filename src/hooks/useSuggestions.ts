@@ -20,7 +20,7 @@ export interface UseSuggestionsReturn {
   generateSuggestions: (
     text: string,
     fieldType: "title" | "hookLine" | "description",
-    context?: Record<string, string>
+    context?: Record<string, string>,
   ) => Promise<void>;
   clearSuggestions: () => void;
 }
@@ -44,7 +44,7 @@ export function useSuggestions(): UseSuggestionsReturn {
     async (
       text: string,
       fieldType: "title" | "hookLine" | "description",
-      context?: Record<string, string>
+      context?: Record<string, string>,
     ) => {
       // Clear previous error
       setError(null);
@@ -73,12 +73,14 @@ export function useSuggestions(): UseSuggestionsReturn {
             }
 
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+            const model = genAI.getGenerativeModel({
+              model: "gemini-2.0-flash",
+            });
 
-          let prompt = "";
+            let prompt = "";
 
-          if (fieldType === "title") {
-            prompt = `You are helping someone create an experience listing. The user started typing an experience title:
+            if (fieldType === "title") {
+              prompt = `You are helping someone create an experience listing. The user started typing an experience title:
 "${text}"
 
 Generate 3 short, catchy, and engaging experience titles that:
@@ -93,8 +95,8 @@ Return ONLY a JSON array of objects like: [
 ]
 
 No markdown, no explanation, just JSON.`;
-          } else if (fieldType === "hookLine") {
-            prompt = `You are helping someone create an experience listing. The experience title is: "${context?.title ?? "Untitled"}"
+            } else if (fieldType === "hookLine") {
+              prompt = `You are helping someone create an experience listing. The experience title is: "${context?.title ?? "Untitled"}"
 
 The user started typing a hook line (a catchy phrase to attract guests):
 "${text}"
@@ -111,8 +113,8 @@ Return ONLY a JSON array like: [
 ]
 
 No markdown, no explanation, just JSON.`;
-          } else if (fieldType === "description") {
-            prompt = `You are helping someone create an experience listing. The experience is: "${context?.title ?? "Untitled"}"
+            } else if (fieldType === "description") {
+              prompt = `You are helping someone create an experience listing. The experience is: "${context?.title ?? "Untitled"}"
 Hook line: "${context?.hookLine ?? ""}"
 Mood: "${context?.mood ?? ""}"
 
@@ -130,31 +132,31 @@ Return ONLY a JSON array like: [
 ]
 
 No markdown, no explanation, just JSON.`;
-          }
+            }
 
-          const result = await model.generateContent(prompt);
-          const responseText = result.response.text();
+            const result = await model.generateContent(prompt);
+            const responseText = result.response.text();
 
-          // Extract JSON from response
-          const jsonMatch = /\[\[\s\S]*\]/.exec(responseText);
-          if (!jsonMatch?.[0]) {
-            setIsLoading(false);
-            return;
-          }
+            // Extract JSON from response
+            const jsonMatch = /\[\[\s\S]*\]/.exec(responseText);
+            if (!jsonMatch?.[0]) {
+              setIsLoading(false);
+              return;
+            }
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const parsed = JSON.parse(jsonMatch[0]);
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            const parsed = JSON.parse(jsonMatch[0]);
 
-          // Transform to include IDs
-          const transformedSuggestions: Suggestion[] = (parsed as Array<{ text: string; confidence?: number }>).map(
-            (item, idx) => ({
+            // Transform to include IDs
+            const transformedSuggestions: Suggestion[] = (
+              parsed as Array<{ text: string; confidence?: number }>
+            ).map((item, idx) => ({
               id: `${fieldType}-${Date.now()}-${idx}`,
               text: item.text,
               confidence: item.confidence,
-            })
-          );
+            }));
 
-          setSuggestions(transformedSuggestions);
+            setSuggestions(transformedSuggestions);
           } catch (err) {
             console.error("Suggestion generation error:", err);
             // Silently fail - don't show error to user as this is an enhancement feature
@@ -164,7 +166,7 @@ No markdown, no explanation, just JSON.`;
         })();
       }, 500);
     },
-    [clearSuggestions]
+    [clearSuggestions],
   );
 
   // Cleanup timer on unmount

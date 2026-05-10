@@ -23,7 +23,7 @@ export function useListTimeAction() {
 
   const handleListTimeClick = () => {
     if (hostStatus === "approved") {
-      router.push("/host-dashboard");
+      router.push("/host-dashboard/experiences/new");
       return;
     }
 

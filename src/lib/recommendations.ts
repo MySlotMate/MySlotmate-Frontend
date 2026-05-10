@@ -3,7 +3,6 @@
  * Uses Gemini AI to recommend similar mood events based on a booked event
  */
 
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import type { EventDTO } from "~/lib/api";
@@ -19,7 +18,7 @@ export interface RecommendationResult {
  */
 function recommendByMoodLocal(
   bookedEvent: EventDTO,
-  availableEvents: EventDTO[]
+  availableEvents: EventDTO[],
 ): RecommendationResult {
   // Filter events that are:
   // 1. Not the booked event
@@ -39,7 +38,9 @@ function recommendByMoodLocal(
     // Match mood exactly or partial match
     return (
       event.mood.toLowerCase() === bookedEvent.mood?.toLowerCase() ||
-      event.mood.toLowerCase().includes((bookedEvent.mood ?? "").toLowerCase()) ||
+      event.mood
+        .toLowerCase()
+        .includes((bookedEvent.mood ?? "").toLowerCase()) ||
       (bookedEvent.mood ?? "").toLowerCase().includes(event.mood.toLowerCase())
     );
   });
@@ -54,7 +55,7 @@ function recommendByMoodLocal(
 
   // Sort by closest date and pick the first one
   similarEvents.sort(
-    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()
+    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
   );
 
   const recommended = similarEvents[0];
@@ -78,7 +79,7 @@ function recommendByMoodLocal(
  */
 async function recommendByMoodAI(
   bookedEvent: EventDTO,
-  availableEvents: EventDTO[]
+  availableEvents: EventDTO[],
 ): Promise<RecommendationResult> {
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -105,9 +106,7 @@ async function recommendByMoodAI(
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
     const genAI = new GoogleGenerativeAI(apiKey);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const eventsJson = JSON.stringify(
@@ -117,7 +116,7 @@ async function recommendByMoodAI(
         mood: e.mood,
         description: e.description?.substring(0, 100),
         time: e.time,
-      }))
+      })),
     );
 
     const prompt = `Given that a user just booked an "${bookedEvent.mood}" experience titled "${bookedEvent.title}", 
@@ -133,32 +132,35 @@ Respond with ONLY a JSON object in this format:
   "reason": "brief reason why"
 }`;
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const result = await model.generateContent(prompt);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
     const responseText = result.response.text();
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const jsonMatch = /\{[\s\S]*\}/.exec(responseText);
     if (!jsonMatch?.[0]) {
       return recommendByMoodLocal(bookedEvent, availableEvents);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const aiResult = JSON.parse(jsonMatch[0]);
+    const aiResult = JSON.parse(jsonMatch[0]) as {
+      recommendedEventId: string;
+      similarityScore: number;
+      reason: string;
+    };
     const recommended = viableEvents.find(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      (e) => e.id === aiResult.recommendedEventId
+      (e) => e.id === aiResult.recommendedEventId,
     );
 
     if (!recommended) {
       return recommendByMoodLocal(bookedEvent, availableEvents);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const score: number = typeof aiResult.similarityScore === "number" ? aiResult.similarityScore : 80;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-    const reason: string = typeof aiResult.reason === "string" ? aiResult.reason : "Based on your preferences";
+    const score: number =
+      typeof aiResult.similarityScore === "number"
+        ? aiResult.similarityScore
+        : 80;
+    const reason: string =
+      typeof aiResult.reason === "string"
+        ? aiResult.reason
+        : "Based on your preferences";
 
     return {
       recommendedEvent: recommended,
@@ -176,7 +178,7 @@ Respond with ONLY a JSON object in this format:
  */
 export async function getRecommendedEvent(
   bookedEvent: EventDTO,
-  availableEvents: EventDTO[]
+  availableEvents: EventDTO[],
 ): Promise<RecommendationResult> {
   // Try AI first, fallback to local
   return await recommendByMoodAI(bookedEvent, availableEvents);
@@ -187,7 +189,7 @@ export async function getRecommendedEvent(
  */
 export function getRecommendedEventSync(
   bookedEvent: EventDTO,
-  availableEvents: EventDTO[]
+  availableEvents: EventDTO[],
 ): RecommendationResult {
   return recommendByMoodLocal(bookedEvent, availableEvents);
 }

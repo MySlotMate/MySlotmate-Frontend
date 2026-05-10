@@ -14,7 +14,7 @@ const firebaseConfig = {
   storageBucket: "myslotmate-25994.firebasestorage.app",
   messagingSenderId: "728491994800",
   appId: "1:728491994800:web:2082cf8ee638189b059575",
-  measurementId: "G-3H7F86DQGQ"
+  measurementId: "G-3H7F86DQGQ",
 };
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

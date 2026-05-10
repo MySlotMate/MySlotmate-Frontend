@@ -79,7 +79,7 @@ export function OTPVerificationModal({
         setOtp(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
       }
-    } catch (err) {
+    } catch {
       setError("Verification failed. Please check your connection.");
       setOtp(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
@@ -92,10 +92,10 @@ export function OTPVerificationModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all">
-      <div className="relative w-full max-w-md animate-in fade-in zoom-in duration-300 rounded-3xl bg-white p-8 shadow-2xl">
+      <div className="animate-in fade-in zoom-in relative w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl duration-300">
         <button
           onClick={onClose}
-          className="absolute right-6 top-6 rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+          className="absolute top-6 right-6 rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
         >
           <FiX className="h-5 w-5" />
         </button>
@@ -115,8 +115,8 @@ export function OTPVerificationModal({
             {phoneNumber.startsWith("+91")
               ? `+91 ${phoneNumber.slice(3, 5)}XXXXX${phoneNumber.slice(-3)}`
               : phoneNumber.length >= 10
-              ? `${phoneNumber.slice(0, 2)}XXXXX${phoneNumber.slice(-3)}`
-              : phoneNumber}
+                ? `${phoneNumber.slice(0, 2)}XXXXX${phoneNumber.slice(-3)}`
+                : phoneNumber}
           </span>
         </p>
 
@@ -166,7 +166,8 @@ export function OTPVerificationModal({
         <div className="mt-6 text-center">
           {timer > 0 ? (
             <p className="text-xs text-gray-400">
-              Resend code in <span className="font-bold text-gray-600">{timer}s</span>
+              Resend code in{" "}
+              <span className="font-bold text-gray-600">{timer}s</span>
             </p>
           ) : (
             <button

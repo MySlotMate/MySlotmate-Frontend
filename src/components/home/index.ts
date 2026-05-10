@@ -7,4 +7,14 @@ import Idea from "./Idea";
 import Footer from "./Footer";
 import AllHosts from "./AllHosts";
 import ShowcaseSections from "./ShowcaseSections";
-export {Hero,people,Trending,Banner,TrendingCard,Idea,Footer,AllHosts,ShowcaseSections};
+export {
+  Hero,
+  people,
+  Trending,
+  Banner,
+  TrendingCard,
+  Idea,
+  Footer,
+  AllHosts,
+  ShowcaseSections,
+};

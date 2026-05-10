@@ -75,11 +75,11 @@ export default function AadharVerificationModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
-      <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-white px-6 py-7 shadow-xl sm:px-8 sm:py-8">
+      <div className="relative max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white px-6 py-7 shadow-xl sm:px-8 sm:py-8">
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 transition hover:text-gray-600"
+          className="absolute top-4 right-4 text-gray-400 transition hover:text-gray-600"
         >
           <FiX className="h-5 w-5" />
         </button>
@@ -101,7 +101,7 @@ export default function AadharVerificationModal({
             </p>
 
             <div className="mt-6">
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 Aadhaar Number
               </label>
               <input
@@ -111,7 +111,7 @@ export default function AadharVerificationModal({
                 }
                 placeholder="1234 5678 9012"
                 maxLength={14}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm tracking-widest text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm tracking-widest text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
               />
             </div>
 
@@ -146,7 +146,7 @@ export default function AadharVerificationModal({
             </p>
 
             <div className="mt-6">
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 OTP
               </label>
               <input
@@ -154,7 +154,7 @@ export default function AadharVerificationModal({
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                 placeholder="Enter OTP"
                 maxLength={6}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-lg tracking-[0.5em] text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-lg tracking-[0.5em] text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
               />
             </div>
 

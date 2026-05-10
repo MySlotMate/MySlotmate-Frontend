@@ -27,8 +27,16 @@ const statsConfig = [
   },
 ];
 
-export default function StatsBar({ total_events_hosted, total_people_met, avg_rating }: StatsBarProps) {
-  const values: Record<string, number> = { total_events_hosted, total_people_met, avg_rating };
+export default function StatsBar({
+  total_events_hosted,
+  total_people_met,
+  avg_rating,
+}: StatsBarProps) {
+  const values: Record<string, number> = {
+    total_events_hosted,
+    total_people_met,
+    avg_rating,
+  };
 
   return (
     <div className="grid grid-cols-3 divide-x divide-gray-200 rounded-2xl border border-gray-100 bg-white py-8 shadow-sm">
@@ -39,8 +47,8 @@ export default function StatsBar({ total_events_hosted, total_people_met, avg_ra
           <p className="text-2xl font-bold text-gray-900">
             {s.key === "total_people_met"
               ? `${values[s.key]}+`
-              : s.key === "avg_rating" && values[s.key] === 0 
-                ? "NEW" 
+              : s.key === "avg_rating" && values[s.key] === 0
+                ? "NEW"
                 : String(values[s.key])}
           </p>
         </div>

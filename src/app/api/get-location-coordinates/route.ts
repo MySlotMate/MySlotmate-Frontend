@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "edge";
 
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   if (!locationName) {
     return NextResponse.json(
       { error: "Location name is required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         headers: {
           "User-Agent": "MySlotmate-App/1.0",
         },
-      }
+      },
     );
 
     if (!response.ok) {
@@ -33,13 +33,13 @@ export async function GET(request: NextRequest) {
     if (!Array.isArray(data) || data.length === 0) {
       return NextResponse.json(
         { error: "Location not found", fallback: true },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const location = data[0];
-    
+
     // Validate the response has required fields
     if (
       typeof location !== "object" ||
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     console.error("Location lookup error:", error);
     return NextResponse.json(
       { error: "Failed to fetch location", fallback: true },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

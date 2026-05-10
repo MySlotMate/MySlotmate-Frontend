@@ -277,7 +277,7 @@ function analyzePatterns(text: string): ModerationResult {
       // Case-insensitive word boundary matching
       const regex = new RegExp(
         `\\b${keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
-        "gi"
+        "gi",
       );
       const matches = lowerText.match(regex);
       const matchCount = matches ? matches.length : 0;
@@ -334,12 +334,11 @@ export async function analyzeContent(text: string): Promise<ModerationResult> {
   }
 
   // If Gemini API is configured and score is borderline/high (2-7), use AI for deeper analysis
-  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? process.env.GEMINI_API_KEY;
+  const apiKey =
+    process.env.NEXT_PUBLIC_GEMINI_API_KEY ?? process.env.GEMINI_API_KEY;
   if (apiKey && patternResult.score >= 2) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
       const genAI = new GoogleGenerativeAI(apiKey);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
       const prompt = `Analyze the following text for malicious intent patterns including:
@@ -368,13 +367,10 @@ Respond with a JSON object containing:
   "explanation": "brief explanation"
 }`;
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const result = await model.generateContent(prompt);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
       const responseText = result.response.text();
 
       // Parse JSON response
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const jsonMatch = /\{[\s\S]*\}/.exec(responseText);
       if (!jsonMatch?.[0]) {
         return patternResult;
@@ -402,7 +398,10 @@ Respond with a JSON object containing:
         details: aiResult.explanation ?? patternResult.details,
       };
     } catch (error) {
-      console.error("Gemini API error, falling back to pattern matching:", error);
+      console.error(
+        "Gemini API error, falling back to pattern matching:",
+        error,
+      );
       // Fall back to pattern matching result
     }
   }

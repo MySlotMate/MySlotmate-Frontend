@@ -13,4 +13,3 @@ export function createSocket(): Socket {
     transports: ["websocket", "polling"],
   });
 }
-

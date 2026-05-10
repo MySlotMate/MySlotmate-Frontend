@@ -5,7 +5,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { analyzeContent, analyzeContentSync, type ModerationResult } from "~/lib/moderation";
+import {
+  analyzeContent,
+  analyzeContentSync,
+  type ModerationResult,
+} from "~/lib/moderation";
 
 interface UseContentModerationReturn {
   checkContent: (text: string) => Promise<ModerationResult>;

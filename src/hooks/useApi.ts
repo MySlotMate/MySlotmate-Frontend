@@ -202,7 +202,6 @@ export function usePendingHostApplications(idToken: string | null) {
 export function usePlatformBalance(idToken: string | null) {
   return useQuery({
     queryKey: queryKeys.platformBalance,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
     queryFn: async () => {
       try {
         const result = await api.getPlatformBalance(idToken!);
@@ -215,7 +214,6 @@ export function usePlatformBalance(idToken: string | null) {
     },
     enabled: !!idToken,
     staleTime: 60 * 1000,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     select: (res) => {
       console.log("💾 usePlatformBalance select - res.data:", res.data);
       return res.data;
@@ -226,7 +224,6 @@ export function usePlatformBalance(idToken: string | null) {
 export function usePlatformPayoutMethods(idToken: string | null) {
   return useQuery({
     queryKey: queryKeys.platformPayoutMethods,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
     queryFn: async () => {
       try {
         const result = await api.getPlatformPayoutMethods(idToken!);
@@ -239,7 +236,6 @@ export function usePlatformPayoutMethods(idToken: string | null) {
     },
     enabled: !!idToken,
     staleTime: 2 * 60 * 1000,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     select: (res) => {
       console.log("💾 usePlatformPayoutMethods select - res.data:", res.data);
       return res.data;
@@ -553,7 +549,6 @@ export function useAddPlatformPayoutMethod() {
       body: api.PlatformAddPayoutMethodPayload;
       idToken: string;
     }) =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       api.addPlatformPayoutMethod(body, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
@@ -575,7 +570,6 @@ export function useSetPlatformPrimaryPayoutMethod() {
       methodId: string;
       idToken: string;
     }) =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       api.setPlatformPrimaryPayoutMethod(methodId, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
@@ -597,7 +591,6 @@ export function useDeletePlatformPayoutMethod() {
       methodId: string;
       idToken: string;
     }) =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       api.deletePlatformPayoutMethod(methodId, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
@@ -619,7 +612,6 @@ export function useWithdrawPlatformFees() {
       body: { amount_cents: number; idempotency_key?: string };
       idToken: string;
     }) =>
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       api.withdrawPlatformFees(body, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformBalance });
@@ -1075,7 +1067,7 @@ export function useAddReplyToReview() {
     mutationFn: ({
       reviewId,
       reply,
-      eventId,
+      eventId: _eventId,
     }: {
       reviewId: string;
       reply: string;

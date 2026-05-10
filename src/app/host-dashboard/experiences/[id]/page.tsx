@@ -4,7 +4,12 @@ import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
-import { useMyHost, useEvent, useUpdateEvent, useUploadFiles } from "~/hooks/useApi";
+import {
+  useMyHost,
+  useEvent,
+  useUpdateEvent,
+  useUploadFiles,
+} from "~/hooks/useApi";
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck } from "react-icons/fi";
 import type { BookingDTO } from "~/lib/api";
@@ -40,7 +45,14 @@ interface EventFormData {
 }
 
 const MOODS = [
-  "Adventurous", "Relaxing", "Creative", "Social", "Educational", "Wellness", "Culinary", "Cultural"
+  "Adventurous",
+  "Relaxing",
+  "Creative",
+  "Social",
+  "Educational",
+  "Wellness",
+  "Culinary",
+  "Cultural",
 ];
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
@@ -70,32 +82,43 @@ function ImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDropZoneRef = useRef<HTMLDivElement>(null);
 
-  const processFiles = useCallback((files: File[]) => {
-    if (files.length === 0) return;
+  const processFiles = useCallback(
+    (files: File[]) => {
+      if (files.length === 0) return;
 
-    const oversizedFiles: string[] = [];
-    const validFiles: File[] = [];
+      const oversizedFiles: string[] = [];
+      const validFiles: File[] = [];
 
-    files.forEach((file) => {
-      if (file.size > MAX_FILE_SIZE_BYTES) {
-        oversizedFiles.push(`${file.name} (${(file.size / (1024 * 1024)).toFixed(2)}MB)`);
-      } else {
-        validFiles.push(file);
+      files.forEach((file) => {
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+          oversizedFiles.push(
+            `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)}MB)`,
+          );
+        } else {
+          validFiles.push(file);
+        }
+      });
+
+      if (oversizedFiles.length > 0) {
+        toast.error(
+          `File${oversizedFiles.length > 1 ? "s" : ""} too large:\n${oversizedFiles.join(", ")}\n\nMax size is ${MAX_FILE_SIZE_MB}MB per file.`,
+        );
       }
-    });
 
-    if (oversizedFiles.length > 0) {
-      toast.error(
-        `File${oversizedFiles.length > 1 ? 's' : ''} too large:\n${oversizedFiles.join(', ')}\n\nMax size is ${MAX_FILE_SIZE_MB}MB per file.`
-      );
-    }
+      if (validFiles.length > 0) {
+        onUpload(validFiles);
+      }
+    },
+    [onUpload],
+  );
 
-    if (validFiles.length > 0) {
-      onUpload(validFiles);
-    }
-  }, [onUpload]);
-
-  const { isDragging, handleDragEnter, handleDragLeave, handleDragOver, handleDrop } = useDragDrop({
+  const {
+    isDragging,
+    handleDragEnter,
+    handleDragLeave,
+    handleDragOver,
+    handleDrop,
+  } = useDragDrop({
     onDrop: processFiles,
     accept: "image/*",
   });
@@ -114,11 +137,16 @@ function ImageUpload({
       {!multiple && preview && (
         <div className="relative inline-block">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={preview} alt="Preview" loading="lazy" className="w-full max-w-xs h-40 object-cover rounded-lg" />
+          <img
+            src={preview}
+            alt="Preview"
+            loading="lazy"
+            className="h-40 w-full max-w-xs rounded-lg object-cover"
+          />
           <button
             type="button"
             onClick={onRemove}
-            className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70"
+            className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70"
           >
             <FiX size={14} />
           </button>
@@ -126,15 +154,20 @@ function ImageUpload({
       )}
 
       {multiple && previews.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
+        <div className="mb-2 flex flex-wrap gap-2">
           {previews.map((p, i) => (
             <div key={i} className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p} alt={`Gallery ${i + 1}`} loading="lazy" className="w-20 h-20 object-cover rounded-lg" />
+              <img
+                src={p}
+                alt={`Gallery ${i + 1}`}
+                loading="lazy"
+                className="h-20 w-20 rounded-lg object-cover"
+              />
               <button
                 type="button"
                 onClick={() => onRemoveMultiple?.(i)}
-                className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white"
+                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white"
               >
                 <FiX size={12} />
               </button>
@@ -151,17 +184,24 @@ function ImageUpload({
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition ${
+          className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition ${
             isDragging
-              ? "border-[#0094CA] bg-[#0094CA]/5 scale-105"
+              ? "scale-105 border-[#0094CA] bg-[#0094CA]/5"
               : "border-gray-300 hover:border-[#0094CA] hover:bg-gray-50"
           }`}
         >
-          <FiUpload className={`mx-auto mb-2 transition ${isDragging ? "text-[#0094CA]" : "text-gray-400"}`} size={24} />
-          <p className={`text-sm transition ${isDragging ? "text-[#0094CA] font-semibold" : "text-gray-500"}`}>
-            {isDragging ? `Drop ${multiple ? "images" : "image"} here` : `Click to upload or drag ${multiple ? "images" : "image"}`}
+          <FiUpload
+            className={`mx-auto mb-2 transition ${isDragging ? "text-[#0094CA]" : "text-gray-400"}`}
+            size={24}
+          />
+          <p
+            className={`text-sm transition ${isDragging ? "font-semibold text-[#0094CA]" : "text-gray-500"}`}
+          >
+            {isDragging
+              ? `Drop ${multiple ? "images" : "image"} here`
+              : `Click to upload or drag ${multiple ? "images" : "image"}`}
           </p>
-          <p className="text-xs text-gray-400 mt-1">PNG, JPG up to 5MB</p>
+          <p className="mt-1 text-xs text-gray-400">PNG, JPG up to 5MB</p>
         </div>
       )}
 
@@ -186,7 +226,7 @@ function AttendeesList({ eventId }: { eventId: string }) {
     (async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}/attendees`
+          `${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}/attendees`,
         );
         if (response.ok) {
           const data = (await response.json()) as { data: BookingDTO[] };
@@ -201,30 +241,49 @@ function AttendeesList({ eventId }: { eventId: string }) {
   }, [eventId]);
 
   if (isLoading) {
-    return <div className="flex justify-center py-8"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0094CA]" /></div>;
+    return (
+      <div className="flex justify-center py-8">
+        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#0094CA]" />
+      </div>
+    );
   }
 
   if (!attendees || attendees.length === 0) {
-    return <p className="text-center text-gray-500 py-8">No bookings yet</p>;
+    return <p className="py-8 text-center text-gray-500">No bookings yet</p>;
   }
 
   return (
     <div className="space-y-3">
       {attendees.map((attendee) => (
-        <div key={attendee.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+        <div
+          key={attendee.id}
+          className="flex items-center justify-between rounded-lg border border-gray-200 p-4"
+        >
           <div>
-            <p className="font-semibold text-gray-900">User ID: {attendee.user_id}</p>
+            <p className="font-semibold text-gray-900">
+              User ID: {attendee.user_id}
+            </p>
             <p className="text-sm text-gray-500">Qty: {attendee.quantity}</p>
-            {attendee.amount_cents !== null && <p className="text-xs text-gray-400">₹{(attendee.amount_cents / 100).toFixed(2)}</p>}
+            {attendee.amount_cents !== null && (
+              <p className="text-xs text-gray-400">
+                ₹{(attendee.amount_cents / 100).toFixed(2)}
+              </p>
+            )}
           </div>
           <div className="text-right">
-            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-              attendee.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-              attendee.status === "confirmed" ? "bg-green-100 text-green-800" :
-              attendee.status === "cancelled" ? "bg-red-100 text-red-800" :
-              "bg-gray-100 text-gray-800"
-            }`}>
-              {attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1)}
+            <span
+              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
+                attendee.status === "pending"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : attendee.status === "confirmed"
+                    ? "bg-green-100 text-green-800"
+                    : attendee.status === "cancelled"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
+              }`}
+            >
+              {attendee.status.charAt(0).toUpperCase() +
+                attendee.status.slice(1)}
             </span>
           </div>
         </div>
@@ -232,8 +291,12 @@ function AttendeesList({ eventId }: { eventId: string }) {
     </div>
   );
 }
-         
-export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
+
+export default function EditEventPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -284,8 +347,14 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     if (event) {
       const [dateStr, timeStr] = (event.time ?? "").split("T");
-      const endTime = event.end_time ? new Date(event.end_time).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }) : "";
-      
+      const endTime = event.end_time
+        ? new Date(event.end_time).toLocaleTimeString("en-GB", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
+        : "";
+
       setForm({
         title: event.title ?? "",
         hookLine: event.hook_line ?? "",
@@ -320,7 +389,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     }
   }, [userId, hostLoading, router, isHydrated]);
 
-  const updateForm = <K extends keyof EventFormData>(key: K, value: EventFormData[K]) => {
+  const updateForm = <K extends keyof EventFormData>(
+    key: K,
+    value: EventFormData[K],
+  ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -342,11 +414,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     URL.revokeObjectURL(form.galleryPreviews[index]!);
     updateForm(
       "galleryImages",
-      form.galleryImages.filter((_, i) => i !== index)
+      form.galleryImages.filter((_, i) => i !== index),
     );
     updateForm(
       "galleryPreviews",
-      form.galleryPreviews.filter((_, i) => i !== index)
+      form.galleryPreviews.filter((_, i) => i !== index),
     );
   };
 
@@ -358,7 +430,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
     setIsSubmitting(true);
     try {
-      let coverImageUrl: string | undefined = form.coverImagePreview ?? undefined;
+      let coverImageUrl: string | undefined =
+        form.coverImagePreview ?? undefined;
       let galleryUrls: string[] = form.galleryPreviews;
 
       // Upload new cover image if selected
@@ -381,8 +454,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
             files: form.galleryImages,
             folder: "events/gallery",
           });
-          const newUrls = (uploadRes.data as Array<{ url: string }>).map((r) => r.url);
-          galleryUrls = [...form.galleryPreviews.filter(p => !p.startsWith("blob:")), ...newUrls];
+          const newUrls = (uploadRes.data as Array<{ url: string }>).map(
+            (r) => r.url,
+          );
+          galleryUrls = [
+            ...form.galleryPreviews.filter((p) => !p.startsWith("blob:")),
+            ...newUrls,
+          ];
         } catch (err) {
           console.warn("Gallery upload failed:", err);
         }
@@ -393,7 +471,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       if (form.endTime) {
         endDateTime = new Date(`${form.eventDate}T${form.endTime}`);
       } else {
-        endDateTime = new Date(eventDateTime.getTime() + form.durationMinutes * 60 * 1000);
+        endDateTime = new Date(
+          eventDateTime.getTime() + form.durationMinutes * 60 * 1000,
+        );
       }
 
       await updateEvent.mutateAsync({
@@ -410,8 +490,12 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           end_time: endDateTime.toISOString(),
           is_online: form.isOnline,
           location: form.isOnline ? undefined : form.location || undefined,
-          meeting_link: form.isOnline ? form.meetingLink || undefined : undefined,
-          google_maps_url: !form.isOnline ? form.googleMapsUrl || undefined : undefined,
+          meeting_link: form.isOnline
+            ? form.meetingLink || undefined
+            : undefined,
+          google_maps_url: !form.isOnline
+            ? form.googleMapsUrl || undefined
+            : undefined,
           duration_minutes: form.durationMinutes,
           capacity: form.maxGroupSize,
           min_group_size: form.minGroupSize,
@@ -449,7 +533,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ host_id: host.id }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -471,7 +555,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     return (
       <div className="min-h-screen bg-gray-50">
         <HostNavbar />
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
         </div>
       </div>
@@ -483,35 +567,39 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       <HostNavbar />
 
       <main className="min-h-screen bg-gray-50 pb-24">
-        <div className="max-w-4xl mx-auto site-x py-8">
-          <Breadcrumb 
+        <div className="site-x mx-auto max-w-4xl py-8">
+          <Breadcrumb
             items={[
-              { label: "Home", href: "/" }, 
+              { label: "Home", href: "/" },
               { label: "Dashboard", href: "/host-dashboard" },
               { label: "Experiences", href: "/host-dashboard/experiences" },
-              { label: "Edit" }
-            ]} 
-            className="mb-6" 
+              { label: "Edit" },
+            ]}
+            className="mb-6"
           />
-          
-          <div className="flex items-center gap-4 mb-6">
+
+          <div className="mb-6 flex items-center gap-4">
             <button
               onClick={() => router.push("/host-dashboard/experiences")}
-              className="p-2 hover:bg-gray-100 rounded-lg transition"
+              className="rounded-lg p-2 transition hover:bg-gray-100"
             >
               <FiArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Edit Experience</h1>
-              <p className="text-sm text-gray-500">Update your experience details</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Edit Experience
+              </h1>
+              <p className="text-sm text-gray-500">
+                Update your experience details
+              </p>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-4 mb-6 border-b border-gray-200">
+          <div className="mb-6 flex gap-4 border-b border-gray-200">
             <button
               onClick={() => router.push(`/host-dashboard/experiences/${id}`)}
-              className={`pb-3 px-1 font-medium transition ${
+              className={`px-1 pb-3 font-medium transition ${
                 !showBookings
                   ? "border-b-2 border-[#0094CA] text-[#0094CA]"
                   : "text-gray-500 hover:text-gray-700"
@@ -520,8 +608,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               Details
             </button>
             <button
-              onClick={() => router.push(`/host-dashboard/experiences/${id}?tab=bookings`)}
-              className={`pb-3 px-1 font-medium transition ${
+              onClick={() =>
+                router.push(`/host-dashboard/experiences/${id}?tab=bookings`)
+              }
+              className={`px-1 pb-3 font-medium transition ${
                 showBookings
                   ? "border-b-2 border-[#0094CA] text-[#0094CA]"
                   : "text-gray-500 hover:text-gray-700"
@@ -533,7 +623,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
           {/* Details Tab */}
           {!showBookings && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-6">
+            <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">
                   Experience Title <span className="text-red-500">*</span>
@@ -543,33 +633,39 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   value={form.title}
                   onChange={(e) => updateForm("title", e.target.value)}
                   placeholder="e.g., Morning Yoga by the Beach"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                   maxLength={100}
                 />
-                <p className="text-xs text-gray-400">{form.title.length}/100 characters</p>
+                <p className="text-xs text-gray-400">
+                  {form.title.length}/100 characters
+                </p>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Hook Line</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Hook Line
+                </label>
                 <input
                   type="text"
                   value={form.hookLine}
                   onChange={(e) => updateForm("hookLine", e.target.value)}
                   placeholder="A short catchy phrase to attract guests"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                  className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                   maxLength={150}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Mood</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Mood
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {MOODS.map((mood) => (
                     <button
                       key={mood}
                       type="button"
                       onClick={() => updateForm("mood", mood.toLowerCase())}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                         form.mood === mood.toLowerCase()
                           ? "bg-[#0094CA] text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -582,58 +678,70 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Description</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
                 <textarea
                   value={form.description}
                   onChange={(e) => updateForm("description", e.target.value)}
                   placeholder="Describe your experience..."
                   rows={5}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none resize-none"
+                  className="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                   maxLength={2000}
                 />
               </div>
 
               {/* Schedule & Pricing Section */}
               <div className="border-t border-gray-100 pt-6">
-                <h3 className="text-base font-semibold text-gray-900 mb-4">Schedule & Pricing</h3>
+                <h3 className="mb-4 text-base font-semibold text-gray-900">
+                  Schedule & Pricing
+                </h3>
 
                 {/* Date */}
-                <div className="space-y-2 mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Event Date <span className="text-red-500">*</span></label>
+                <div className="mb-4 space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Event Date <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="date"
                     value={form.eventDate}
                     onChange={(e) => updateForm("eventDate", e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                   />
                 </div>
 
                 {/* Time */}
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div className="mb-4 grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Start Time <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Start Time <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="time"
                       value={form.eventTime}
                       onChange={(e) => updateForm("eventTime", e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">End Time</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      End Time
+                    </label>
                     <input
                       type="time"
                       value={form.endTime}
                       onChange={(e) => updateForm("endTime", e.target.value)}
                       placeholder="Optional - auto-calculated from duration if not set"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                     />
                   </div>
                 </div>
 
                 {/* Duration */}
-                <div className="space-y-2 mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Duration (minutes) <span className="text-red-500">*</span></label>
+                <div className="mb-4 space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Duration (minutes) <span className="text-red-500">*</span>
+                  </label>
                   <div className="space-y-3">
                     {/* Quick Select Buttons */}
                     <div className="flex flex-wrap gap-2">
@@ -642,7 +750,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                           key={mins}
                           type="button"
                           onClick={() => updateForm("durationMinutes", mins)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
                             form.durationMinutes === mins
                               ? "bg-[#0094CA] text-white"
                               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -659,159 +767,224 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                         min={15}
                         step={5}
                         value={form.durationMinutes}
-                        onChange={(e) => updateForm("durationMinutes", Math.max(15, parseInt(e.target.value) || 30))}
-                        className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                        onChange={(e) =>
+                          updateForm(
+                            "durationMinutes",
+                            Math.max(15, parseInt(e.target.value) || 30),
+                          )
+                        }
+                        className="flex-1 rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                         placeholder="Enter custom duration"
                       />
-                      <span className="text-sm font-medium text-gray-600">min</span>
+                      <span className="text-sm font-medium text-gray-600">
+                        min
+                      </span>
                     </div>
-                    <p className="text-xs text-gray-500">Click quick options or enter custom duration (minimum 15 min)</p>
+                    <p className="text-xs text-gray-500">
+                      Click quick options or enter custom duration (minimum 15
+                      min)
+                    </p>
                   </div>
                 </div>
 
                 {/* Pricing */}
-                <div className="space-y-2 mb-4">
+                <div className="mb-4 space-y-2">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={form.isFree}
                       onChange={(e) => updateForm("isFree", e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-gray-300"
                     />
-                    <span className="text-sm font-medium text-gray-700">Free Experience</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Free Experience
+                    </span>
                   </label>
                 </div>
 
                 {!form.isFree && (
-                  <div className="space-y-2 mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Price (₹)</label>
+                  <div className="mb-4 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Price (₹)
+                    </label>
                     <input
                       type="number"
                       value={form.priceCents / 100}
-                      onChange={(e) => updateForm("priceCents", Math.round(parseFloat(e.target.value) * 100) || 0)}
+                      onChange={(e) =>
+                        updateForm(
+                          "priceCents",
+                          Math.round(parseFloat(e.target.value) * 100) || 0,
+                        )
+                      }
                       placeholder="e.g., 500"
                       min="0"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                     />
                   </div>
                 )}
 
                 {/* Group Size */}
-                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div className="mb-4 grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Min Group Size</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Min Group Size
+                    </label>
                     <input
                       type="number"
                       value={form.minGroupSize}
-                      onChange={(e) => updateForm("minGroupSize", parseInt(e.target.value) || 1)}
+                      onChange={(e) =>
+                        updateForm(
+                          "minGroupSize",
+                          parseInt(e.target.value) || 1,
+                        )
+                      }
                       min="1"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">Max Group Size</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Max Group Size
+                    </label>
                     <input
                       type="number"
                       value={form.maxGroupSize}
-                      onChange={(e) => updateForm("maxGroupSize", parseInt(e.target.value) || 10)}
+                      onChange={(e) =>
+                        updateForm(
+                          "maxGroupSize",
+                          parseInt(e.target.value) || 10,
+                        )
+                      }
                       min="1"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                     />
                   </div>
                 </div>
 
                 {/* Location Type */}
-                <div className="space-y-2 mb-4">
+                <div className="mb-4 space-y-2">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={form.isOnline}
                       onChange={(e) => updateForm("isOnline", e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-gray-300"
                     />
-                    <span className="text-sm font-medium text-gray-700">Online Experience</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Online Experience
+                    </span>
                   </label>
                 </div>
 
                 {form.isOnline ? (
-                  <div className="space-y-2 mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Meeting Link</label>
+                  <div className="mb-4 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Meeting Link
+                    </label>
                     <input
                       type="url"
                       value={form.meetingLink}
-                      onChange={(e) => updateForm("meetingLink", e.target.value)}
+                      onChange={(e) =>
+                        updateForm("meetingLink", e.target.value)
+                      }
                       placeholder="e.g., https://zoom.us/j/... or https://meet.google.com/..."
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                     />
                   </div>
                 ) : (
                   <>
-                    <div className="space-y-2 mb-4">
-                      <label className="block text-sm font-medium text-gray-700">Location <span className="text-red-500">*</span></label>
+                    <div className="mb-4 space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Location <span className="text-red-500">*</span>
+                      </label>
                       <input
                         type="text"
                         value={form.location}
                         onChange={(e) => updateForm("location", e.target.value)}
                         placeholder="e.g., Central Park, New York"
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                       />
                     </div>
-                    <div className="space-y-2 mb-4">
-                      <label className="block text-sm font-medium text-gray-700">Google Maps URL</label>
+                    <div className="mb-4 space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Google Maps URL
+                      </label>
                       <input
                         type="url"
                         value={form.googleMapsUrl}
-                        onChange={(e) => updateForm("googleMapsUrl", e.target.value)}
+                        onChange={(e) =>
+                          updateForm("googleMapsUrl", e.target.value)
+                        }
                         placeholder="https://maps.google.com/..."
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                       />
                     </div>
                   </>
                 )}
 
                 {/* Cancellation Policy */}
-                <div className="space-y-2 mb-4">
-                  <label className="block text-sm font-medium text-gray-700">Cancellation Policy</label>
+                <div className="mb-4 space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cancellation Policy
+                  </label>
                   <select
                     value={form.cancellationPolicy}
-                    onChange={(e) => updateForm("cancellationPolicy", e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none"
+                    onChange={(e) =>
+                      updateForm("cancellationPolicy", e.target.value)
+                    }
+                    className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                   >
-                    <option value="flexible">Flexible - Full refund up to 24 hours before</option>
-                    <option value="moderate">Moderate - Full refund up to 5 days before</option>
-                    <option value="strict">Strict - 50% refund up to 1 week before</option>
+                    <option value="flexible">
+                      Flexible - Full refund up to 24 hours before
+                    </option>
+                    <option value="moderate">
+                      Moderate - Full refund up to 5 days before
+                    </option>
+                    <option value="strict">
+                      Strict - 50% refund up to 1 week before
+                    </option>
                   </select>
                 </div>
 
                 {/* Recurring */}
-                <div className="space-y-2 mb-4">
+                <div className="mb-4 space-y-2">
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={form.isRecurring}
-                      onChange={(e) => updateForm("isRecurring", e.target.checked)}
-                      className="w-4 h-4 rounded border-gray-300"
+                      onChange={(e) =>
+                        updateForm("isRecurring", e.target.checked)
+                      }
+                      className="h-4 w-4 rounded border-gray-300"
                     />
-                    <span className="text-sm font-medium text-gray-700">Recurring Experience</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Recurring Experience
+                    </span>
                   </label>
                 </div>
 
                 {form.isRecurring && (
-                  <div className="space-y-2 mb-4">
-                    <label className="block text-sm font-medium text-gray-700">Recurrence Rule</label>
+                  <div className="mb-4 space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Recurrence Rule
+                    </label>
                     <input
                       type="text"
                       value={form.recurrenceRule}
-                      onChange={(e) => updateForm("recurrenceRule", e.target.value)}
+                      onChange={(e) =>
+                        updateForm("recurrenceRule", e.target.value)
+                      }
                       placeholder="e.g., FREQ=WEEKLY;BYDAY=MO,WE,FR"
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0094CA] focus:border-transparent outline-none text-xs"
+                      className="w-full rounded-lg border border-gray-200 px-4 py-3 text-xs outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                     />
-                    <p className="text-xs text-gray-500">Use iCalendar format for recurrence rules</p>
+                    <p className="text-xs text-gray-500">
+                      Use iCalendar format for recurrence rules
+                    </p>
                   </div>
                 )}
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid gap-6 md:grid-cols-2">
                 <ImageUpload
                   label="Cover Image"
                   helpText="This will be the main image shown to guests"
@@ -832,18 +1005,18 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 />
               </div>
 
-              <div className="pt-6 border-t border-gray-100 flex gap-4">
+              <div className="flex gap-4 border-t border-gray-100 pt-6">
                 <button
                   onClick={handleUpdate}
                   disabled={isSubmitting}
-                  className="flex-1 py-3 bg-[#0094CA] hover:bg-[#007ba8] text-white rounded-lg font-semibold transition disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
                 >
                   <FiCheck size={18} />
                   Save Changes
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="py-3 px-6 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-semibold transition flex items-center justify-center gap-2"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-red-50 px-6 py-3 font-semibold text-red-600 transition hover:bg-red-100"
                 >
                   <FiTrash2 size={18} />
                   Delete
@@ -854,8 +1027,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
           {/* Bookings Tab */}
           {showBookings && (
-            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Event Bookings</h2>
+            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <h2 className="mb-4 text-lg font-semibold text-gray-900">
+                Event Bookings
+              </h2>
               <AttendeesList eventId={id} />
             </div>
           )}
@@ -864,26 +1039,29 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-8">
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-8">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
               <FiTrash2 className="text-red-600" size={24} />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Delete Experience?</h2>
-            <p className="text-gray-500 mb-6">
-              This will permanently delete your experience. All confirmed bookings will be refunded.
+            <h2 className="mb-2 text-xl font-bold text-gray-900">
+              Delete Experience?
+            </h2>
+            <p className="mb-6 text-gray-500">
+              This will permanently delete your experience. All confirmed
+              bookings will be refunded.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-lg font-semibold transition"
+                className="flex-1 rounded-lg bg-gray-100 py-3 font-semibold text-gray-900 transition hover:bg-gray-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition disabled:opacity-50"
+                className="flex-1 rounded-lg bg-red-600 py-3 font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
               >
                 {isSubmitting ? "Deleting..." : "Delete"}
               </button>

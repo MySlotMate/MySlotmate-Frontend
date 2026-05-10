@@ -43,16 +43,25 @@ function sentimentLabel(score: number | null): {
   return { text: "Genuine", color: "#0094CA" };
 }
 
-function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; hostId?: string; currentHostId?: string }) {
+function ReviewCard({
+  review,
+  hostId,
+  currentHostId,
+}: {
+  review: ReviewDTO;
+  hostId?: string;
+  currentHostId?: string;
+}) {
   const [replyText, setReplyText] = useState("");
   const [showReplyInput, setShowReplyInput] = useState(false);
   const { mutate: addReply, isPending: isReplying } = useAddReplyToReview();
-  
+
   const label = sentimentLabel(review.sentiment_score);
   const { data: reviewer } = useUserProfile(review.user_id);
-  
+
   const reviewerName = reviewer?.name ?? review.name ?? "Anonymous Reviewer";
-  const reviewerAvatar = reviewer?.avatar_url ?? "/assets/home/avatar-placeholder.png";
+  const reviewerAvatar =
+    reviewer?.avatar_url ?? "/assets/home/avatar-placeholder.png";
 
   const isCurrentUserHost = hostId && currentHostId && hostId === currentHostId;
 
@@ -65,7 +74,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
             setReplyText("");
             setShowReplyInput(false);
           },
-        }
+        },
       );
     }
   };
@@ -91,7 +100,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
           {timeAgo(review.created_at)}
         </span>
       </div>
-      <p className="mt-2 text-sm italic text-gray-600">
+      <p className="mt-2 text-sm text-gray-600 italic">
         &ldquo;{review.description}&rdquo;
       </p>
       <div className="mt-2 flex items-center justify-between">
@@ -106,7 +115,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
         {isCurrentUserHost && !showReplyInput && !review.reply?.length && (
           <button
             onClick={() => setShowReplyInput(true)}
-            className="text-xs font-semibold text-[#0094CA] hover:text-[#007aa8] transition"
+            className="text-xs font-semibold text-[#0094CA] transition hover:text-[#007aa8]"
           >
             Add Reply
           </button>
@@ -114,7 +123,9 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
       </div>
       {review.reply && review.reply.length > 0 && (
         <div className="mt-3 border-l-2 border-gray-300 bg-gray-50 p-3">
-          <p className="text-xs font-semibold text-gray-700 mb-1">Host Reply:</p>
+          <p className="mb-1 text-xs font-semibold text-gray-700">
+            Host Reply:
+          </p>
           {review.reply.map((replyText, idx) => (
             <p key={idx} className="text-sm text-gray-600">
               {replyText}
@@ -136,7 +147,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
               <button
                 onClick={handleReplySubmit}
                 disabled={!replyText.trim() || isReplying}
-                className="rounded bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007aa8] disabled:bg-gray-300 transition"
+                className="rounded bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#007aa8] disabled:bg-gray-300"
               >
                 {isReplying ? "Sending..." : "Send Reply"}
               </button>
@@ -145,7 +156,7 @@ function ReviewCard({ review, hostId, currentHostId }: { review: ReviewDTO; host
                   setShowReplyInput(false);
                   setReplyText("");
                 }}
-                className="rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:border-gray-400 transition"
+                className="rounded border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-400"
               >
                 Cancel
               </button>
@@ -175,22 +186,26 @@ export function ReviewsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="animate-in fade-in zoom-in flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white duration-200">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 p-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">All Reviews</h2>
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-lg font-bold text-[#0094CA]">{avg_rating}</span>
+              <span className="text-lg font-bold text-[#0094CA]">
+                {avg_rating}
+              </span>
               <span className="text-sm text-gray-500">/ 5.0</span>
               <StarRating rating={avg_rating} />
-              <span className="text-sm text-gray-500 ml-2">({reviews.length} reviews)</span>
+              <span className="ml-2 text-sm text-gray-500">
+                ({reviews.length} reviews)
+              </span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition"
+            className="rounded-full p-2 transition hover:bg-gray-100"
           >
             <FiX size={20} />
           </button>
@@ -201,16 +216,16 @@ export function ReviewsModal({
           {reviews.length > 0 ? (
             <div>
               {reviews.map((review) => (
-                <ReviewCard 
-                  key={review.id} 
-                  review={review} 
+                <ReviewCard
+                  key={review.id}
+                  review={review}
                   hostId={hostId}
                   currentHostId={eventHostId}
                 />
               ))}
             </div>
           ) : (
-            <p className="text-center text-gray-500 py-8">No reviews yet</p>
+            <p className="py-8 text-center text-gray-500">No reviews yet</p>
           )}
         </div>
       </div>

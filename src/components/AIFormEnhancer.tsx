@@ -50,7 +50,12 @@ function isTextLikeField(
   element: Element | null,
 ): element is HTMLInputElement | HTMLTextAreaElement {
   if (!element) return false;
-  if (!(element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement)) {
+  if (
+    !(
+      element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement
+    )
+  ) {
     return false;
   }
 
@@ -62,7 +67,9 @@ function isTextLikeField(
 
 function getSuggestionWordList(): string[] {
   const fromWindow =
-    typeof window !== "undefined" ? window.localStorage.getItem("aiAutocompleteWords") : null;
+    typeof window !== "undefined"
+      ? window.localStorage.getItem("aiAutocompleteWords")
+      : null;
 
   if (!fromWindow) return AUTOCOMPLETE_WORDS;
 
@@ -77,7 +84,9 @@ function getSuggestionWordList(): string[] {
 function ensureDatalist(words: string[]) {
   if (typeof document === "undefined") return;
 
-  let datalist = document.getElementById(DATALIST_ID) as HTMLDataListElement | null;
+  let datalist = document.getElementById(
+    DATALIST_ID,
+  ) as HTMLDataListElement | null;
   if (!datalist) {
     datalist = document.createElement("datalist");
     datalist.id = DATALIST_ID;
@@ -148,13 +157,17 @@ function ensureSuggestionBox() {
 
 function hideSuggestionBox() {
   if (typeof document === "undefined") return;
-  const box = document.getElementById(SUGGESTION_BOX_ID) as HTMLDivElement | null;
+  const box = document.getElementById(
+    SUGGESTION_BOX_ID,
+  ) as HTMLDivElement | null;
   if (!box) return;
   box.style.display = "none";
 }
 
 function updateDatalistWithSuggestions(suggestions: string[]) {
-  const datalist = document.getElementById(DATALIST_ID) as HTMLDataListElement | null;
+  const datalist = document.getElementById(
+    DATALIST_ID,
+  ) as HTMLDataListElement | null;
   if (!datalist) return;
   datalist.innerHTML = "";
   suggestions.forEach((word) => {
@@ -181,18 +194,29 @@ function showSuggestionBox(
   box.style.maxWidth = `${Math.max(180, rect.width)}px`;
   box.innerText = suggestions
     .slice(0, 3)
-    .map((word, i) => `${i === 0 ? "Tab" : "or"}: ${prefix ? `${prefix}${word.slice(prefix.length)}` : word}`)
+    .map(
+      (word, i) =>
+        `${i === 0 ? "Tab" : "or"}: ${prefix ? `${prefix}${word.slice(prefix.length)}` : word}`,
+    )
     .join("    ");
   box.style.display = "block";
 }
 
-function getContext(value: string, caretPosition: number): { previousWord: string | null; prefix: string } {
+function getContext(
+  value: string,
+  caretPosition: number,
+): { previousWord: string | null; prefix: string } {
   const beforeCaret = value.slice(0, caretPosition);
   const prefixMatch = /([a-z']+)$/i.exec(beforeCaret);
   const prefix = (prefixMatch?.[1] ?? "").toLowerCase();
-  const withoutPrefix = prefix ? beforeCaret.slice(0, -prefix.length) : beforeCaret;
+  const withoutPrefix = prefix
+    ? beforeCaret.slice(0, -prefix.length)
+    : beforeCaret;
   const previousTokens = tokenize(withoutPrefix);
-  const previousWord = previousTokens.length > 0 ? previousTokens[previousTokens.length - 1]! : null;
+  const previousWord =
+    previousTokens.length > 0
+      ? previousTokens[previousTokens.length - 1]!
+      : null;
   return { previousWord, prefix };
 }
 
@@ -242,7 +266,11 @@ function resolveTabCompletion(
     if (!partial || partial.length < 1) return null;
     const normalizedPartial = partial.toLowerCase();
     const normalizedWord = word.toLowerCase();
-    if (!normalizedWord.startsWith(normalizedPartial) || normalizedWord === normalizedPartial) return null;
+    if (
+      !normalizedWord.startsWith(normalizedPartial) ||
+      normalizedWord === normalizedPartial
+    )
+      return null;
 
     const replaceStart = beforeCaret.length - partial.length;
     const nextBefore = `${beforeCaret.slice(0, replaceStart)}${word}`;
@@ -275,7 +303,8 @@ function resolveCompletionUsingWord(
   const normalizedPartial = partial.toLowerCase();
   const match = suggestionWord.toLowerCase();
 
-  if (!match.startsWith(normalizedPartial) || match === normalizedPartial) return null;
+  if (!match.startsWith(normalizedPartial) || match === normalizedPartial)
+    return null;
 
   const replaceStart = beforeCaret.length - partial.length;
   const nextBefore = `${beforeCaret.slice(0, replaceStart)}${suggestionWord}`;
@@ -314,7 +343,10 @@ function getWorstToxicityAcrossText(text: string): number {
   const units = [...sentences, ...words];
   if (units.length === 0) return 1;
 
-  return units.reduce((worst, unit) => Math.max(worst, scoreTextToxicity(unit)), 1);
+  return units.reduce(
+    (worst, unit) => Math.max(worst, scoreTextToxicity(unit)),
+    1,
+  );
 }
 
 export default function AIFormEnhancer() {
@@ -329,9 +361,16 @@ export default function AIFormEnhancer() {
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
-    const updateSuggestionsForField = (field: HTMLInputElement | HTMLTextAreaElement) => {
+    const updateSuggestionsForField = (
+      field: HTMLInputElement | HTMLTextAreaElement,
+    ) => {
       const caretPosition = field.selectionStart ?? field.value.length;
-      const suggestions = getNlpSuggestions(field.value, caretPosition, words, model);
+      const suggestions = getNlpSuggestions(
+        field.value,
+        caretPosition,
+        words,
+        model,
+      );
       if (suggestions.length === 0) {
         field.dataset.aiSuggestion = "";
         hideSuggestionBox();
@@ -346,7 +385,13 @@ export default function AIFormEnhancer() {
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Tab" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) {
+      if (
+        event.key !== "Tab" ||
+        event.shiftKey ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      ) {
         return;
       }
 
@@ -359,19 +404,30 @@ export default function AIFormEnhancer() {
       const selectionEnd = field.selectionEnd ?? selectionStart;
       if (selectionStart !== selectionEnd) return;
 
-      const completion = resolveTabCompletion(field.value, selectionStart, words);
+      const completion = resolveTabCompletion(
+        field.value,
+        selectionStart,
+        words,
+      );
       const fallbackSuggestion = field.dataset.aiSuggestion ?? "";
       const resolvedCompletion =
         completion ??
         (fallbackSuggestion
-          ? resolveCompletionUsingWord(field.value, selectionStart, fallbackSuggestion)
+          ? resolveCompletionUsingWord(
+              field.value,
+              selectionStart,
+              fallbackSuggestion,
+            )
           : null);
 
       if (!resolvedCompletion) return;
 
       event.preventDefault();
       field.value = resolvedCompletion.nextValue;
-      field.setSelectionRange(resolvedCompletion.nextCaretPosition, resolvedCompletion.nextCaretPosition);
+      field.setSelectionRange(
+        resolvedCompletion.nextCaretPosition,
+        resolvedCompletion.nextCaretPosition,
+      );
       field.dispatchEvent(new Event("input", { bubbles: true }));
     };
 
@@ -404,7 +460,10 @@ export default function AIFormEnhancer() {
 
       fields.forEach((field) => {
         if (!isTextLikeField(field) || field.disabled) return;
-        highestScore = Math.max(highestScore, getWorstToxicityAcrossText(field.value ?? ""));
+        highestScore = Math.max(
+          highestScore,
+          getWorstToxicityAcrossText(field.value ?? ""),
+        );
       });
 
       if (highestScore > TOXICITY_BLOCK_THRESHOLD) {

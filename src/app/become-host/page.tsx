@@ -1,19 +1,26 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { Navbar, Breadcrumb } from "~/components";
-import { HostApplicationSubmittedModal, OTPVerificationModal } from "~/components/become-host";
+import {
+  HostApplicationSubmittedModal,
+  OTPVerificationModal,
+} from "~/components/become-host";
 import { Home } from "~/components";
-import { FiArrowRight, FiArrowLeft, FiUploadCloud, FiCheck, FiShield, FiGlobe, FiUsers, FiCheckCircle } from "react-icons/fi";
+import {
+  FiArrowRight,
+  FiCheck,
+  FiShield,
+  FiUsers,
+} from "react-icons/fi";
 import { toast } from "sonner";
 import {
   useMyProfile,
   useSubmitHostApplication,
   useSaveHostDraft,
-  useUploadFiles,
   useApplicationStatus,
   useSendPhoneOTP,
   useVerifyPhoneOTP,
@@ -56,7 +63,6 @@ const DAYS = [
 export default function BecomeHostPage() {
   const router = useRouter();
   const [user] = useAuthState(auth);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Read userId from localStorage
   const [storedUserId, setStoredUserId] = useState<string | null>(null);
@@ -77,7 +83,6 @@ export default function BecomeHostPage() {
   // Mutation hooks
   const submitMutation = useSubmitHostApplication();
   const draftMutation = useSaveHostDraft();
-  const uploadMutation = useUploadFiles();
   const sendOtpMutation = useSendPhoneOTP();
   const verifyOtpMutation = useVerifyPhoneOTP();
 
@@ -205,14 +210,13 @@ export default function BecomeHostPage() {
         <Navbar />
         <main className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden bg-[#fafafa] pt-28 pb-16">
           {/* Ambient Background */}
-          <div className="absolute top-[-10%] left-[-10%] h-[600px] w-[600px] rounded-full bg-blue-50/40 blur-[120px] pointer-events-none" />
-          
+          <div className="pointer-events-none absolute top-[-10%] left-[-10%] h-[600px] w-[600px] rounded-full bg-blue-50/40 blur-[120px]" />
+
           <div className="relative z-10 w-full max-w-lg px-4">
             <div className="animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-1000 ease-out">
-              
               {/* Header Section */}
               <div className="mb-8 text-center">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-white shadow-xl shadow-gray-200/20 ring-1 ring-gray-100 transition-transform hover:scale-105">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-white shadow-xl ring-1 shadow-gray-200/20 ring-gray-100 transition-transform hover:scale-105">
                   <span className="text-3xl">{config.icon}</span>
                 </div>
                 <h1 className="text-2xl font-black tracking-tight text-gray-900 sm:text-3xl">
@@ -228,60 +232,94 @@ export default function BecomeHostPage() {
                 <div className="space-y-8">
                   {/* Step 1: Submitted */}
                   <div className="relative flex gap-6">
-                    <div className="absolute left-[15px] top-10 bottom-[-32px] w-[1px] bg-gradient-to-b from-green-500/30 to-gray-100" />
+                    <div className="absolute top-10 bottom-[-32px] left-[15px] w-[1px] bg-gradient-to-b from-green-500/30 to-gray-100" />
                     <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-green-500 text-white shadow-lg shadow-green-100">
                       <FiCheck className="h-4 w-4" />
                     </div>
                     <div className="pt-0.5">
-                      <h4 className="text-sm font-bold text-gray-900">Application Received</h4>
-                      <p className="mt-1 text-xs font-medium text-gray-400">Successfully logged for verification.</p>
+                      <h4 className="text-sm font-bold text-gray-900">
+                        Application Received
+                      </h4>
+                      <p className="mt-1 text-xs font-medium text-gray-400">
+                        Successfully logged for verification.
+                      </p>
                     </div>
                   </div>
 
                   {/* Step 2: Review */}
                   <div className="relative flex gap-6">
-                    <div className="absolute left-[15px] top-10 bottom-[-32px] w-[1px] bg-gray-100" />
-                    <div className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
-                      status === 'approved' 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-[#0094CA] text-white shadow-lg shadow-[#0094CA]/30 ring-4 ring-[#0094CA]/5'
-                    }`}>
-                      {status === 'approved' ? <FiCheck className="h-4 w-4" /> : <div className="h-2 w-2 animate-pulse rounded-full bg-white" />}
+                    <div className="absolute top-10 bottom-[-32px] left-[15px] w-[1px] bg-gray-100" />
+                    <div
+                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
+                        status === "approved"
+                          ? "bg-green-500 text-white"
+                          : "bg-[#0094CA] text-white shadow-lg ring-4 shadow-[#0094CA]/30 ring-[#0094CA]/5"
+                      }`}
+                    >
+                      {status === "approved" ? (
+                        <FiCheck className="h-4 w-4" />
+                      ) : (
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-white" />
+                      )}
                     </div>
                     <div className="pt-0.5">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold text-gray-900">Internal Review</h4>
-                        {status !== 'approved' && (
-                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-[#0094CA] ring-1 ring-[#0094CA]/10">Active</span>
+                        <h4 className="text-sm font-bold text-gray-900">
+                          Internal Review
+                        </h4>
+                        {status !== "approved" && (
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-black tracking-widest text-[#0094CA] uppercase ring-1 ring-[#0094CA]/10">
+                            Active
+                          </span>
                         )}
                       </div>
                       <p className="mt-1 text-xs font-medium text-gray-400">
-                        {status === 'approved' ? 'Verified and approved by our team.' : 'Validating your identity & credentials.'}
+                        {status === "approved"
+                          ? "Verified and approved by our team."
+                          : "Validating your identity & credentials."}
                       </p>
                     </div>
                   </div>
 
                   {/* Step 3: Access */}
                   <div className="relative flex gap-6">
-                    <div className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
-                      status === 'approved' ? 'bg-green-500 text-white' : 'bg-white border-2 border-gray-50 text-gray-200'
-                    }`}>
-                      {status === 'approved' ? <FiCheck className="h-4 w-4" /> : <FiShield className="h-4 w-4 opacity-30" />}
+                    <div
+                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
+                        status === "approved"
+                          ? "bg-green-500 text-white"
+                          : "border-2 border-gray-50 bg-white text-gray-200"
+                      }`}
+                    >
+                      {status === "approved" ? (
+                        <FiCheck className="h-4 w-4" />
+                      ) : (
+                        <FiShield className="h-4 w-4 opacity-30" />
+                      )}
                     </div>
                     <div className="pt-0.5">
-                      <h4 className={`text-sm font-bold ${status === 'approved' ? 'text-gray-900' : 'text-gray-300'}`}>Host Access</h4>
-                      <p className={`mt-1 text-xs font-medium ${status === 'approved' ? 'text-gray-400' : 'text-gray-200'}`}>
-                        {status === 'approved' ? 'Full dashboard control unlocked.' : 'Awaiting final team confirmation.'}
+                      <h4
+                        className={`text-sm font-bold ${status === "approved" ? "text-gray-900" : "text-gray-300"}`}
+                      >
+                        Host Access
+                      </h4>
+                      <p
+                        className={`mt-1 text-xs font-medium ${status === "approved" ? "text-gray-400" : "text-gray-200"}`}
+                      >
+                        {status === "approved"
+                          ? "Full dashboard control unlocked."
+                          : "Awaiting final team confirmation."}
                       </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Refined CTA / Footer Section */}
-                <div className="mt-10 pt-8 border-t border-gray-900/5">
+                <div className="mt-10 border-t border-gray-900/5 pt-8">
                   {status === "approved" ? (
                     <button
-                      onClick={() => router.push("/host-dashboard/experiences/new")}
+                      onClick={() =>
+                        router.push("/host-dashboard/experiences/new")
+                      }
                       className="group w-full rounded-2xl bg-gray-900 px-8 py-4 text-xs font-black text-white shadow-2xl transition-all hover:bg-gray-800 active:scale-95"
                     >
                       CREATE YOUR FIRST EXPERIENCE
@@ -293,12 +331,18 @@ export default function BecomeHostPage() {
                           <FiUsers className="h-5 w-5 text-[#0094CA]" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 leading-none">Estimated</p>
-                          <p className="mt-1 text-xs font-bold text-gray-700">24-48 Hours</p>
+                          <p className="text-[10px] leading-none font-black tracking-widest text-gray-400 uppercase">
+                            Estimated
+                          </p>
+                          <p className="mt-1 text-xs font-bold text-gray-700">
+                            24-48 Hours
+                          </p>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => window.open("mailto:support@myslotmate.com")}
+                      <button
+                        onClick={() =>
+                          window.open("mailto:support@myslotmate.com")
+                        }
                         className="text-xs font-black text-gray-400 hover:text-gray-900"
                       >
                         HELP?
@@ -312,7 +356,7 @@ export default function BecomeHostPage() {
               <div className="mt-12 text-center">
                 <button
                   onClick={() => router.push("/")}
-                  className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 transition hover:text-gray-900"
+                  className="text-xs font-black tracking-[0.2em] text-gray-400 uppercase transition hover:text-gray-900"
                 >
                   Return to Home
                 </button>
@@ -393,7 +437,9 @@ export default function BecomeHostPage() {
       return;
     }
     if (!form.description.trim()) {
-      toast.warning("Please provide a short description about yourself or your plans.");
+      toast.warning(
+        "Please provide a short description about yourself or your plans.",
+      );
       return;
     }
 
@@ -402,7 +448,9 @@ export default function BecomeHostPage() {
       setShowOtpModal(true);
     } catch (err) {
       console.error("Failed to send OTP:", err);
-      toast.error("Failed to send OTP. Please check your phone number or try again later.");
+      toast.error(
+        "Failed to send OTP. Please check your phone number or try again later.",
+      );
     }
   };
 
@@ -416,7 +464,7 @@ export default function BecomeHostPage() {
         first_name: nameParts[0] ?? "",
         last_name: nameParts.slice(1).join(" ") || "",
         city: form.city,
-        phn_number: userProfile?.phn_number || user?.phoneNumber || "",
+        phn_number: userProfile?.phn_number ?? user?.phoneNumber ?? "",
         experience_desc: form.experienceDesc || undefined,
         moods: form.moods.map((m) => m.toLowerCase()),
         description: form.description || undefined,
@@ -502,10 +550,11 @@ export default function BecomeHostPage() {
                   value={form.fullName}
                   onChange={(e) => updateField("fullName", e.target.value)}
                   placeholder="e.g. Alex Rivera"
-                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.fullName.trim()
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.fullName.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                    }`}
+                  }`}
                 />
               </div>
               <div>
@@ -517,10 +566,11 @@ export default function BecomeHostPage() {
                   value={form.city}
                   onChange={(e) => updateField("city", e.target.value)}
                   placeholder="e.g. San Francisco"
-                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.city.trim()
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.city.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                    }`}
+                  }`}
                 />
               </div>
             </div>
@@ -544,10 +594,11 @@ export default function BecomeHostPage() {
                     updateField("experienceDesc", e.target.value)
                   }
                   placeholder="Write about all the activities you are planning to host"
-                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.experienceDesc.trim()
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.experienceDesc.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                    }`}
+                  }`}
                 />
               </div>
 
@@ -563,10 +614,11 @@ export default function BecomeHostPage() {
                         key={mood}
                         type="button"
                         onClick={() => toggleMood(mood)}
-                        className={`rounded-full border px-5 py-2 text-sm font-medium transition ${selected
+                        className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
+                          selected
                             ? "border-[#0094CA] bg-[#0094CA] text-white"
                             : "border-gray-300 bg-white text-gray-700 hover:border-[#0094CA] hover:text-[#0094CA]"
-                          }`}
+                        }`}
                       >
                         ✦ {mood}
                       </button>
@@ -578,7 +630,8 @@ export default function BecomeHostPage() {
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="text-sm font-semibold text-gray-900">
-                    Description <span className="text-red-500 font-bold">*</span>
+                    Description{" "}
+                    <span className="font-bold text-red-500">*</span>
                   </label>
                   <span className="text-xs text-gray-400">
                     {form.description.length}/300
@@ -593,17 +646,19 @@ export default function BecomeHostPage() {
                   maxLength={300}
                   rows={5}
                   placeholder="Describe the magic you're thinking of creating..."
-                  className={`w-full resize-none rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.description.trim()
+                  className={`w-full resize-none rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.description.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                    }`}
+                  }`}
                 />
               </div>
 
               <div>
                 <div className="mb-3">
                   <label className="block text-sm font-semibold text-gray-900">
-                    Social Links <span className="text-red-500 font-bold">*</span>
+                    Social Links{" "}
+                    <span className="font-bold text-red-500">*</span>
                   </label>
                   <p className="mt-1 text-xs text-gray-500">
                     At least one link is required for verification.
@@ -621,13 +676,14 @@ export default function BecomeHostPage() {
                         updateField("socialInstagram", e.target.value)
                       }
                       placeholder="https://instagram.com/yourprofile"
-                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
-                          !form.socialInstagram.trim() &&
-                          !form.socialLinkedin.trim() &&
-                          !form.socialWebsite.trim()
+                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                        showErrors &&
+                        !form.socialInstagram.trim() &&
+                        !form.socialLinkedin.trim() &&
+                        !form.socialWebsite.trim()
                           ? "border-red-500 bg-red-50"
                           : "border-gray-300 focus:border-[#0094CA]"
-                        }`}
+                      }`}
                     />
                   </div>
                   <div>
@@ -641,13 +697,14 @@ export default function BecomeHostPage() {
                         updateField("socialLinkedin", e.target.value)
                       }
                       placeholder="https://linkedin.com/in/yourprofile"
-                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
-                          !form.socialInstagram.trim() &&
-                          !form.socialLinkedin.trim() &&
-                          !form.socialWebsite.trim()
+                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                        showErrors &&
+                        !form.socialInstagram.trim() &&
+                        !form.socialLinkedin.trim() &&
+                        !form.socialWebsite.trim()
                           ? "border-red-500 bg-red-50"
                           : "border-gray-300 focus:border-[#0094CA]"
-                        }`}
+                      }`}
                     />
                   </div>
                 </div>
@@ -662,13 +719,14 @@ export default function BecomeHostPage() {
                       updateField("socialWebsite", e.target.value)
                     }
                     placeholder="https://yourwebsite.com"
-                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
-                        !form.socialInstagram.trim() &&
-                        !form.socialLinkedin.trim() &&
-                        !form.socialWebsite.trim()
+                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                      showErrors &&
+                      !form.socialInstagram.trim() &&
+                      !form.socialLinkedin.trim() &&
+                      !form.socialWebsite.trim()
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300 focus:border-[#0094CA]"
-                      }`}
+                    }`}
                   />
                 </div>
               </div>
@@ -688,7 +746,9 @@ export default function BecomeHostPage() {
                 <label className="mb-2 block text-sm font-semibold text-gray-900">
                   Preferred Days
                 </label>
-                <div className={`flex flex-wrap gap-2 rounded-xl p-1 transition ${showErrors && form.preferredDays.length === 0 ? "bg-red-50 ring-1 ring-red-500" : ""}`}>
+                <div
+                  className={`flex flex-wrap gap-2 rounded-xl p-1 transition ${showErrors && form.preferredDays.length === 0 ? "bg-red-50 ring-1 ring-red-500" : ""}`}
+                >
                   {DAYS.map(({ key, label }) => {
                     const selected = form.preferredDays.includes(key);
                     return (
@@ -696,10 +756,11 @@ export default function BecomeHostPage() {
                         key={key}
                         type="button"
                         onClick={() => toggleDay(key)}
-                        className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${selected
+                        className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${
+                          selected
                             ? "border-[#0094CA] bg-[#0094CA] text-white"
                             : "border-gray-300 bg-white text-gray-700 hover:border-[#0094CA]"
-                          }`}
+                        }`}
                       >
                         {label}
                       </button>
@@ -763,11 +824,14 @@ export default function BecomeHostPage() {
       <OTPVerificationModal
         open={showOtpModal}
         onClose={() => setShowOtpModal(false)}
-        phoneNumber={userProfile?.phn_number || user?.phoneNumber || "xxxxxx"}
+        phoneNumber={userProfile?.phn_number ?? user?.phoneNumber ?? "xxxxxx"}
         onVerify={async (code) => {
           if (!validUserId) return false;
           try {
-            await verifyOtpMutation.mutateAsync({ userId: validUserId, otp: code });
+            await verifyOtpMutation.mutateAsync({
+              userId: validUserId,
+              otp: code,
+            });
             await handleFinalSubmit();
             return true;
           } catch (err) {

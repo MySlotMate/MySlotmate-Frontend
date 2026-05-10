@@ -136,7 +136,13 @@ function matchesQuery(query: string, values: string[]) {
   return values.some((value) => value.toLowerCase().includes(normalizedQuery));
 }
 
-function PolicyCard({ card, active }: { card: PolicyCardData; active?: boolean }) {
+function PolicyCard({
+  card,
+  active,
+}: {
+  card: PolicyCardData;
+  active?: boolean;
+}) {
   const Icon = card.icon;
 
   return (
@@ -159,21 +165,25 @@ function PolicyCard({ card, active }: { card: PolicyCardData; active?: boolean }
       </div>
 
       <h3 className="text-xl font-semibold text-slate-900">{card.title}</h3>
-      <p className="mt-3 text-sm leading-6 text-slate-500">{card.description}</p>
+      <p className="mt-3 text-sm leading-6 text-slate-500">
+        {card.description}
+      </p>
 
       {card.featured && (
         <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50 p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <p className="text-xs font-semibold tracking-[0.16em] text-slate-400 uppercase">
             Plain English Summary
           </p>
           <ul className="mt-3 space-y-3">
             <li className="flex items-start gap-2 text-sm text-slate-600">
               <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#0094CA]" />
-              Guests get a full refund if they cancel at least 48 hours in advance.
+              Guests get a full refund if they cancel at least 48 hours in
+              advance.
             </li>
             <li className="flex items-start gap-2 text-sm text-slate-600">
               <FiCheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#0094CA]" />
-              Last-minute host cancellations can lead to a fee or reduced ranking.
+              Last-minute host cancellations can lead to a fee or reduced
+              ranking.
             </li>
           </ul>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -242,7 +252,11 @@ export default function PoliciesPage() {
 
   const filteredCards = useMemo(() => {
     return policyCards.filter((card) =>
-      matchesQuery(searchQuery, [card.title, card.description, ...card.keywords]),
+      matchesQuery(searchQuery, [
+        card.title,
+        card.description,
+        ...card.keywords,
+      ]),
     );
   }, [searchQuery]);
 
@@ -262,11 +276,12 @@ export default function PoliciesPage() {
       />
 
       <div className="flex flex-col items-center text-center">
-        <div className="inline-flex items-center rounded-full bg-[#e6f8ff] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#0094CA]">
+        <div className="inline-flex items-center rounded-full bg-[#e6f8ff] px-4 py-1.5 text-xs font-semibold tracking-[0.18em] text-[#0094CA] uppercase">
           Community Trust Center
         </div>
         <h1 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          Platform Policies &amp; <span className="text-[#0094CA]">Guidelines</span>
+          Platform Policies &amp;{" "}
+          <span className="text-[#0094CA]">Guidelines</span>
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
           Everything you need to know about hosting responsibly, protecting the
@@ -290,7 +305,10 @@ export default function PoliciesPage() {
           <PolicyCard
             key={card.title}
             card={card}
-            active={card.featured && matchesQuery(searchQuery, [card.title, ...card.keywords])}
+            active={
+              card.featured &&
+              matchesQuery(searchQuery, [card.title, ...card.keywords])
+            }
           />
         ))}
       </section>
@@ -303,7 +321,9 @@ export default function PoliciesPage() {
 
       <section className="mt-12 rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-2">
-          <h2 className="text-2xl font-bold text-slate-900">Frequently Requested</h2>
+          <h2 className="text-2xl font-bold text-slate-900">
+            Frequently Requested
+          </h2>
           <p className="text-sm text-slate-500">
             Quick shortcuts for common policy questions.
           </p>

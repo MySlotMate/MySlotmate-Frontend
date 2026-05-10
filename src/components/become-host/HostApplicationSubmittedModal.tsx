@@ -26,19 +26,20 @@ export default function HostApplicationSubmittedModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-xl sm:px-8 sm:py-10">
+      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-xl sm:px-8 sm:py-10">
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition"
+          className="absolute top-4 right-4 text-gray-400 transition hover:text-gray-600"
           aria-label="Close"
         >
           <FiX className="h-5 w-5" />
         </button>
 
         {/* Logo */}
-          <div className="mb-5 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#0094CA]">{/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className="mb-5 flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#0094CA]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/home/logomyslotmate.png"
               alt="Myslotmate"
@@ -55,7 +56,8 @@ export default function HostApplicationSubmittedModal({
 
         {/* Subtitle */}
         <p className="mt-2 text-center text-sm text-gray-500">
-          We&apos;ve received your application. Our team is currently reviewing your profile to ensure the best experience for our community.
+          We&apos;ve received your application. Our team is currently reviewing
+          your profile to ensure the best experience for our community.
         </p>
 
         {/* Timeline */}
@@ -64,14 +66,26 @@ export default function HostApplicationSubmittedModal({
           <div className="flex items-start gap-4">
             <div className="flex flex-col items-center">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500">
-                <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                <svg
+                  className="h-4 w-4 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
               <div className="h-10 w-0.5 bg-gray-200" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">Application Sent</p>
+              <p className="text-sm font-semibold text-gray-900">
+                Application Sent
+              </p>
               <p className="text-xs text-gray-500">{todayStr}</p>
             </div>
           </div>
@@ -85,7 +99,9 @@ export default function HostApplicationSubmittedModal({
               <div className="h-10 w-0.5 bg-gray-200" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">Internal review</p>
+              <p className="text-sm font-semibold text-gray-900">
+                Internal review
+              </p>
               <p className="text-xs text-gray-500">Estimated: 24-48 hours</p>
             </div>
           </div>
@@ -98,7 +114,9 @@ export default function HostApplicationSubmittedModal({
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-400">Final Approval</p>
+              <p className="text-sm font-semibold text-gray-400">
+                Final Approval
+              </p>
               <p className="text-xs text-gray-400">Pending review completion</p>
             </div>
           </div>
@@ -118,7 +136,7 @@ export default function HostApplicationSubmittedModal({
         {/* View profile */}
         <button
           onClick={onClose}
-          className="mt-3 w-full text-center text-sm text-gray-500 hover:text-gray-700 transition"
+          className="mt-3 w-full text-center text-sm text-gray-500 transition hover:text-gray-700"
         >
           View my profile
         </button>
@@ -126,4 +144,3 @@ export default function HostApplicationSubmittedModal({
     </div>
   );
 }
-

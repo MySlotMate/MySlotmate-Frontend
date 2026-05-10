@@ -5,13 +5,16 @@ interface UseDragDropOptions {
   accept?: string; // e.g., "image/*" or ".pdf,.doc"
 }
 
-export function useDragDrop({ onDrop, accept = "image/*" }: UseDragDropOptions) {
+export function useDragDrop({
+  onDrop,
+  accept = "image/*",
+}: UseDragDropOptions) {
   const [isDragging, setIsDragging] = useState(false);
 
   const validateFiles = useCallback(
     (files: FileList | File[]): File[] => {
       const fileArray = Array.from(files);
-      
+
       // Filter by accept pattern
       if (accept) {
         return fileArray.filter((file) => {
@@ -21,18 +24,20 @@ export function useDragDrop({ onDrop, accept = "image/*" }: UseDragDropOptions) 
           // For other patterns, just accept if accept contains *
           if (accept.includes("*")) {
             const ext = file.name.split(".").pop()?.toLowerCase();
-            const acceptTypes = accept.split(",").map((t) => t.trim().replace(".", ""));
-            return acceptTypes.some((type) =>
-              type === "*" || (ext && acceptTypes.includes(ext))
+            const acceptTypes = accept
+              .split(",")
+              .map((t) => t.trim().replace(".", ""));
+            return acceptTypes.some(
+              (type) => type === "*" || (ext && acceptTypes.includes(ext)),
             );
           }
           return true;
         });
       }
-      
+
       return fileArray;
     },
-    [accept]
+    [accept],
   );
 
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -64,7 +69,7 @@ export function useDragDrop({ onDrop, accept = "image/*" }: UseDragDropOptions) 
         onDrop(files);
       }
     },
-    [onDrop, validateFiles]
+    [onDrop, validateFiles],
   );
 
   return {

@@ -71,8 +71,9 @@ function blocksToContent(blocks: BlogBlock[]): string {
 }
 
 function contentToBlocks(content: string | null | undefined): BlogBlock[] {
-  if (!content?.trim()) return [{ id: generateBlockId(), type: "text", content: "" }];
-  
+  if (!content?.trim())
+    return [{ id: generateBlockId(), type: "text", content: "" }];
+
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const parsed = JSON.parse(content);
@@ -83,7 +84,7 @@ function contentToBlocks(content: string | null | undefined): BlogBlock[] {
   } catch {
     // If not JSON, treat as legacy plain text content
   }
-  
+
   return [{ id: generateBlockId(), type: "text", content: content || "" }];
 }
 
@@ -144,8 +145,6 @@ function extractTableOfContents(blocks: BlogBlock[]): TOCItem[] {
   return items;
 }
 
-
-
 function getBlogExcerpt(blog: BlogDTO) {
   const source = getBlogValue(blog.description) || getBlogValue(blog.content);
   if (source.length <= 140) return source;
@@ -162,7 +161,10 @@ function getCategoryColor(category: string | null | undefined) {
     wellness: "bg-emerald-100 text-emerald-800",
   };
 
-  return colors[getBlogValue(category).toLowerCase()] ?? "bg-slate-100 text-slate-700";
+  return (
+    colors[getBlogValue(category).toLowerCase()] ??
+    "bg-slate-100 text-slate-700"
+  );
 }
 
 function mapBlogToFormState(blog: BlogDTO): BlogFormState {
@@ -177,7 +179,13 @@ function mapBlogToFormState(blog: BlogDTO): BlogFormState {
   };
 }
 
-function BlockRenderer({ blocks, showHeadings = false }: { blocks: BlogBlock[]; showHeadings?: boolean }) {
+function BlockRenderer({
+  blocks,
+  showHeadings = false,
+}: {
+  blocks: BlogBlock[];
+  showHeadings?: boolean;
+}) {
   const headingSizes: Record<number, string> = {
     1: "text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl",
     2: "text-2xl font-bold tracking-[-0.03em] text-[#16304c] sm:text-[2rem]",
@@ -224,7 +232,7 @@ function BlockRenderer({ blocks, showHeadings = false }: { blocks: BlogBlock[]; 
                         id: headingId,
                         className: `${sizeClass} scroll-mt-20`,
                       },
-                      text
+                      text,
                     );
                   }
                 }
@@ -278,7 +286,7 @@ function BlockEditor({
     const updated = blocks.map((block) =>
       block.id === blockId && block.type === "text"
         ? { ...block, content }
-        : block
+        : block,
     );
     onBlocksChange(updated);
   };
@@ -312,17 +320,23 @@ function BlockEditor({
   const handleAddTextBlock = (afterBlockId: string) => {
     const index = blocks.findIndex((b) => b.id === afterBlockId);
     if (index === -1) return; // Block not found
-    
+
     const newBlock: TextBlock = {
       id: generateBlockId(),
       type: "text",
       content: "",
     };
-    const updated = [...blocks.slice(0, index + 1), newBlock, ...blocks.slice(index + 1)];
+    const updated = [
+      ...blocks.slice(0, index + 1),
+      newBlock,
+      ...blocks.slice(index + 1),
+    ];
     onBlocksChange(updated);
   };
 
-  const handleImageSelection = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelection = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file || imageInsertIndex === null) return;
 
@@ -369,7 +383,8 @@ function BlockEditor({
       setImageInsertIndex(null);
       toast.success("Image uploaded successfully");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Image upload failed";
+      const message =
+        error instanceof Error ? error.message : "Image upload failed";
       toast.error(message);
     } finally {
       setUploadingImageId(null);
@@ -380,7 +395,10 @@ function BlockEditor({
   return (
     <div className="space-y-4">
       {blocks.map((block, index) => (
-        <div key={block.id} className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+        <div
+          key={block.id}
+          className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+        >
           {block.type === "text" ? (
             <div className="space-y-3">
               <textarea
@@ -406,7 +424,7 @@ function BlockEditor({
                     blockImageInputRef.current?.click();
                   }}
                   disabled={uploadingImageId !== null}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#cceeff] bg-[#f0faff] px-3 py-2 text-sm font-medium text-[#0094CA] transition hover:bg-[#e6f6ff] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#cceeff] bg-[#f0faff] px-3 py-2 text-sm font-medium text-[#0094CA] transition hover:bg-[#e6f6ff] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {uploadingImageId === null ? (
                     <>
@@ -461,7 +479,7 @@ function BlockEditor({
                     const updated = blocks.map((b) =>
                       b.id === block.id && b.type === "image"
                         ? { ...b, caption: e.target.value }
-                        : b
+                        : b,
                     );
                     onBlocksChange(updated);
                   }}
@@ -579,7 +597,7 @@ function BlogCard({
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,38,60,0.00)_20%,rgba(10,38,60,0.18)_100%)]" />
-        <div className="absolute left-5 top-5 flex flex-wrap items-center gap-2">
+        <div className="absolute top-5 left-5 flex flex-wrap items-center gap-2">
           <span
             className={`rounded-full px-3 py-1.5 text-[11px] font-bold shadow-sm backdrop-blur-sm ${getCategoryColor(blog.category)}`}
           >
@@ -679,7 +697,10 @@ function BlogDetailModal({
   const [readingProgress, setReadingProgress] = useState(0);
   const [showTOC, setShowTOC] = useState(true);
 
-  const blocks = useMemo(() => (blog ? contentToBlocks(blog.content) : []), [blog]);
+  const blocks = useMemo(
+    () => (blog ? contentToBlocks(blog.content) : []),
+    [blog],
+  );
   const tocItems = useMemo(() => extractTableOfContents(blocks), [blocks]);
 
   // Update reading progress
@@ -716,7 +737,8 @@ function BlogDetailModal({
     if (element && modalContentRef.current) {
       const rect = element.getBoundingClientRect();
       const containerRect = modalContentRef.current.getBoundingClientRect();
-      const scrollTop = rect.top - containerRect.top + modalContentRef.current.scrollTop - 60;
+      const scrollTop =
+        rect.top - containerRect.top + modalContentRef.current.scrollTop - 60;
       modalContentRef.current.scrollTo({ top: scrollTop, behavior: "smooth" });
     }
   };
@@ -724,7 +746,7 @@ function BlogDetailModal({
   return (
     <div className="fixed inset-0 z-250 flex items-center justify-center bg-black/50 p-4">
       {/* Progress bar */}
-      <div className="absolute top-0 left-0 right-0 z-251 h-1 bg-gray-200">
+      <div className="absolute top-0 right-0 left-0 z-251 h-1 bg-gray-200">
         <div
           className="h-full bg-[#0094CA] transition-all duration-300"
           style={{ width: `${readingProgress}%` }}
@@ -766,7 +788,9 @@ function BlogDetailModal({
             {/* Table of Contents Sidebar */}
             {showTOC && tocItems.length > 0 && (
               <aside className="hidden w-64 border-r border-gray-200 bg-gray-50 p-6 lg:block">
-                <h3 className="mb-4 text-sm font-semibold text-gray-700">Contents</h3>
+                <h3 className="mb-4 text-sm font-semibold text-gray-700">
+                  Contents
+                </h3>
                 <nav className="space-y-2">
                   {tocItems.map((item) => (
                     <button
@@ -791,7 +815,7 @@ function BlogDetailModal({
 
             {/* Main Content */}
             <div ref={contentRef} className="flex-1 p-6 sm:p-8">
-              <div className="h-48 -mx-6 -mt-6 mb-6 overflow-hidden rounded-t-3xl bg-slate-100 sm:-mx-8 sm:mb-8 sm:h-56 lg:h-64">
+              <div className="-mx-6 -mt-6 mb-6 h-48 overflow-hidden rounded-t-3xl bg-slate-100 sm:-mx-8 sm:mb-8 sm:h-56 lg:h-64">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={blog.cover_image_url ?? FALLBACK_BLOG_IMAGE}
@@ -1002,9 +1026,15 @@ export default function BlogsPage() {
         const matchesSearch =
           !normalizedSearch ||
           getBlogValue(blog.title).toLowerCase().includes(normalizedSearch) ||
-          getBlogValue(blog.description).toLowerCase().includes(normalizedSearch) ||
-          getBlogValue(blog.category).toLowerCase().includes(normalizedSearch) ||
-          getBlogValue(blog.author_name).toLowerCase().includes(normalizedSearch) ||
+          getBlogValue(blog.description)
+            .toLowerCase()
+            .includes(normalizedSearch) ||
+          getBlogValue(blog.category)
+            .toLowerCase()
+            .includes(normalizedSearch) ||
+          getBlogValue(blog.author_name)
+            .toLowerCase()
+            .includes(normalizedSearch) ||
           getBlogValue(blog.content).toLowerCase().includes(normalizedSearch);
 
         return matchesCategory && matchesSearch;
@@ -1021,7 +1051,10 @@ export default function BlogsPage() {
     error instanceof Error ? error.message : "Failed to load blogs.";
 
   const resetForm = () => {
-    if (formState.coverImageFile && formState.cover_image_url.startsWith("blob:")) {
+    if (
+      formState.coverImageFile &&
+      formState.cover_image_url.startsWith("blob:")
+    ) {
       URL.revokeObjectURL(formState.cover_image_url);
     }
     // Clean up blob URLs from image blocks
@@ -1215,7 +1248,9 @@ export default function BlogsPage() {
 
         setEditingBlog(blog);
         setFormState(mapBlogToFormState(blog));
-        toast.error(`Blog ${action} as a draft, but publishing failed. ${message}`);
+        toast.error(
+          `Blog ${action} as a draft, but publishing failed. ${message}`,
+        );
       }
     };
 
@@ -1223,10 +1258,9 @@ export default function BlogsPage() {
       let coverImageUrl = formState.cover_image_url.trim() || undefined;
 
       if (formState.coverImageFile) {
-        const previousPreviewUrl =
-          formState.cover_image_url.startsWith("blob:")
-            ? formState.cover_image_url
-            : null;
+        const previousPreviewUrl = formState.cover_image_url.startsWith("blob:")
+          ? formState.cover_image_url
+          : null;
         const uploadedCover = await uploadBlogCoverMutation.mutateAsync(
           formState.coverImageFile,
         );
@@ -1421,7 +1455,9 @@ export default function BlogsPage() {
                           <div className="flex flex-wrap gap-2">
                             <button
                               type="button"
-                              onClick={() => coverImageInputRef.current?.click()}
+                              onClick={() =>
+                                coverImageInputRef.current?.click()
+                              }
                               className="inline-flex items-center gap-2 rounded-lg border border-[#cceeff] bg-white px-3 py-2 text-sm font-medium text-[#0094CA] transition hover:bg-[#f0faff]"
                             >
                               <FiUpload className="h-4 w-4" />
@@ -1486,8 +1522,8 @@ export default function BlogsPage() {
                     Blog Content (With Images)
                   </span>
                   <p className="mb-4 text-sm text-gray-600">
-                    Create rich content with text and images. Use the buttons to add new blocks,
-                    reorder them, and add captions to images.
+                    Create rich content with text and images. Use the buttons to
+                    add new blocks, reorder them, and add captions to images.
                   </p>
                   <BlockEditor
                     blocks={formState.blocks}
@@ -1629,4 +1665,3 @@ export default function BlogsPage() {
     </div>
   );
 }
-

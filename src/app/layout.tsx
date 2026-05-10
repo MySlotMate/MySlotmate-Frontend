@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   publisher: "MySlotMate",
   authors: [{ name: "MySlotMate Team", url: "https://myslotmate.com" }],
   generator: "Next.js",
-  
+
   /* Open Graph Tags */
   openGraph: {
     type: "website",
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
-  
+
   /* Verification Tags */
   verification: {
     google: "google-site-verification-code",
@@ -91,9 +91,7 @@ export const metadata: Metadata = {
 
   /* Icons */
   icons: {
-    icon: [
-      { url: "/assets/home/logomyslotmate.png", sizes: "any" }
-    ],
+    icon: [{ url: "/assets/home/logomyslotmate.png", sizes: "any" }],
     apple: "/apple-touch-icon.png",
     other: [
       {
@@ -170,9 +168,7 @@ export default function RootLayout({
       name: "MySlotMate",
       url: appUrl,
       logo: "/assets/home/logomyslotmate.png",
-      sameAs: [
-        "https://www.instagram.com/myslotmate/",
-      ],
+      sameAs: ["https://www.instagram.com/myslotmate/"],
     },
     potentialAction: {
       "@type": "SearchAction",
@@ -185,7 +181,11 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className={`${geist.variable} ${manrope.variable} ${outfit.variable} overflow-x-hidden max-w-screen`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${geist.variable} ${manrope.variable} ${outfit.variable} max-w-screen overflow-x-hidden`}
+      suppressHydrationWarning
+    >
       <head>
         {/* JSON-LD Schema Markup */}
         <script
@@ -195,7 +195,11 @@ export default function RootLayout({
 
         {/* Preconnect for Performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         {/* Display font used in hero/preloader (removed) */}
 
         {/* DNS Prefetch */}
@@ -206,10 +210,13 @@ export default function RootLayout({
 
         {/* Additional Meta Tags for SEO */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
         <meta name="apple-mobile-web-app-title" content="MySlotMate" />
       </head>
-      <body className="overflow-x-hidden max-w-screen">
+      <body className="max-w-screen overflow-x-hidden">
         <Providers>
           <PreloaderGate>{children}</PreloaderGate>
         </Providers>
@@ -218,4 +225,3 @@ export default function RootLayout({
     </html>
   );
 }
-

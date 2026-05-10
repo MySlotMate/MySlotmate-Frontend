@@ -38,10 +38,7 @@ const Footer = () => {
                   Quick Links
                 </h4>
                 <div className="mt-3 space-y-2 text-sm text-[#5e88ab]">
-                  <Link
-                    href="/support"
-                    className="block hover:text-[#0e8ae0]"
-                  >
+                  <Link href="/support" className="block hover:text-[#0e8ae0]">
                     Safety
                   </Link>
                   <Link
@@ -50,16 +47,10 @@ const Footer = () => {
                   >
                     Guidelines
                   </Link>
-                  <Link
-                    href="/hosts"
-                    className="block hover:text-[#0e8ae0]"
-                  >
+                  <Link href="/hosts" className="block hover:text-[#0e8ae0]">
                     Community
                   </Link>
-                  <Link
-                    href="/blogs"
-                    className="block hover:text-[#0e8ae0]"
-                  >
+                  <Link href="/blogs" className="block hover:text-[#0e8ae0]">
                     Blog & Stories
                   </Link>
                 </div>

@@ -7,7 +7,7 @@ import {
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-export const runtime="edge";
+export const runtime = "edge";
 
 const generateDescriptionSchema = z.object({
   title: z.string().trim().max(120).optional().default(""),
@@ -16,7 +16,12 @@ const generateDescriptionSchema = z.object({
   location: z.string().trim().max(240).optional().default(""),
   durationMinutes: z.preprocess(
     (value) => (value === "" || value == null ? undefined : value),
-    z.coerce.number().int().positive().max(24 * 60).optional(),
+    z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(24 * 60)
+      .optional(),
   ),
   additional: z.string().trim().max(2000).optional().default(""),
 });
@@ -35,14 +40,8 @@ export async function POST(req: Request) {
   }
 
   const descriptionInput = parsedBody.data;
-  const {
-    title,
-    hookLine,
-    mood,
-    location,
-    durationMinutes,
-    additional,
-  } = descriptionInput;
+  const { title, hookLine, mood, location, durationMinutes, additional } =
+    descriptionInput;
 
   const apiKey =
     process.env.GEMINI_API_KEY ?? process.env.NEXT_PUBLIC_GEMINI_API_KEY;

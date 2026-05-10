@@ -16,9 +16,8 @@ import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
 import { createSocket } from "~/lib/socket";
 import type { EventDTO, InboxMessageDTO } from "~/lib/api";
-import { FiSearch, FiSend, FiVolume2, FiAlertTriangle } from "react-icons/fi";
+import { FiSearch, FiSend, FiVolume2 } from "react-icons/fi";
 import { format } from "date-fns";
-import type { ModerationResult } from "~/lib/moderation";
 
 export default function HostMessagesPage() {
   const qc = useQueryClient();
@@ -55,7 +54,6 @@ export default function HostMessagesPage() {
 
   const [input, setInput] = useState("");
   const [search, setSearch] = useState("");
-  const [moderationResult, setModerationResult] = useState<ModerationResult | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const markReadOnceRef = useRef<Set<string>>(new Set());
@@ -80,11 +78,15 @@ export default function HostMessagesPage() {
       void qc.invalidateQueries({ queryKey: ["hostMessages", hostId] });
 
       // Refresh selected thread; if event_id is present, refresh that thread too.
-      void qc.invalidateQueries({ queryKey: ["eventMessages", selectedEventId] });
+      void qc.invalidateQueries({
+        queryKey: ["eventMessages", selectedEventId],
+      });
 
       const maybe = payload as { event_id?: string };
       if (maybe?.event_id) {
-        void qc.invalidateQueries({ queryKey: ["eventMessages", maybe.event_id] });
+        void qc.invalidateQueries({
+          queryKey: ["eventMessages", maybe.event_id],
+        });
       }
     });
 
@@ -113,18 +115,17 @@ export default function HostMessagesPage() {
 
     // Check content moderation
     const result = checkContentSync(messageText);
-    setModerationResult(result);
 
     if (result.score > 5) {
       toast.error(
-        `Message violates community guidelines (Risk Level: ${result.score}/10).\n\n${result.details}`
+        `Message violates community guidelines (Risk Level: ${result.score}/10).\n\n${result.details}`,
       );
       return;
     }
 
     if (result.score >= 3) {
       toast.warning(
-        `⚠️ Warning: ${result.details} (Risk Level: ${result.score}/10)`
+        `⚠️ Warning: ${result.details} (Risk Level: ${result.score}/10)`,
       );
     }
 
@@ -136,7 +137,7 @@ export default function HostMessagesPage() {
         sender_id: hostId,
         message: messageText.trim(),
       },
-      { onSuccess: () => setInput("") }
+      { onSuccess: () => setInput("") },
     );
   };
 
@@ -187,7 +188,7 @@ export default function HostMessagesPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <HostNavbar />
-        <main className="mx-auto max-w-6xl site-x py-8">
+        <main className="site-x mx-auto max-w-6xl py-8">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
             No host profile found. Please apply as a host first.
           </div>
@@ -200,13 +201,21 @@ export default function HostMessagesPage() {
     <div className="min-h-screen bg-gray-50">
       <HostNavbar />
 
-      <main className="mx-auto max-w-6xl site-x py-8">
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Dashboard", href: "/host-dashboard" }, { label: "Messages" }]} className="mb-6" />
-        
+      <main className="site-x mx-auto max-w-6xl py-8">
+        <Breadcrumb
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Dashboard", href: "/host-dashboard" },
+            { label: "Messages" },
+          ]}
+          className="mb-6"
+        />
+
         <div className="mb-5">
           <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Select an event to view its thread. New messages arrive in real time.
+            Select an event to view its thread. New messages arrive in real
+            time.
           </p>
         </div>
 
@@ -255,7 +264,8 @@ export default function HostMessagesPage() {
                           {ev.title}
                         </p>
                         <p className="mt-0.5 text-xs text-gray-500">
-                          {format(new Date(ev.time), "EEE, MMM d")} • {format(new Date(ev.time), "h:mm a")}
+                          {format(new Date(ev.time), "EEE, MMM d")} •{" "}
+                          {format(new Date(ev.time), "h:mm a")}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -267,7 +277,10 @@ export default function HostMessagesPage() {
                       </div>
                     </div>
                     <p className="mt-2 text-[11px] text-gray-400">
-                      {ev.total_bookings} Confirmed {meta?.unreadCount ? `· ${meta.unreadCount} Unread` : "· All read"}
+                      {ev.total_bookings} Confirmed{" "}
+                      {meta?.unreadCount
+                        ? `· ${meta.unreadCount} Unread`
+                        : "· All read"}
                     </p>
                   </button>
                 );
@@ -282,19 +295,26 @@ export default function HostMessagesPage() {
                 <div className="flex items-center gap-3">
                   <p className="truncate text-base font-semibold text-gray-900">
                     {selectedEventId
-                      ? (eventById.get(selectedEventId)?.title ?? "Event thread")
+                      ? (eventById.get(selectedEventId)?.title ??
+                        "Event thread")
                       : "Select an event"}
                   </p>
                   {selectedEventId && (
                     <span className="text-xs text-gray-500">
-                      {format(new Date(eventById.get(selectedEventId)?.time ?? new Date()), "EEE, MMM d")}
+                      {format(
+                        new Date(
+                          eventById.get(selectedEventId)?.time ?? new Date(),
+                        ),
+                        "EEE, MMM d",
+                      )}
                     </span>
                   )}
                 </div>
                 {selectedEventId && (
                   <div className="mt-1 flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
-                      {eventById.get(selectedEventId)?.total_bookings ?? 0} Confirmed
+                      {eventById.get(selectedEventId)?.total_bookings ?? 0}{" "}
+                      Confirmed
                     </span>
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
                       Active Session
@@ -308,29 +328,32 @@ export default function HostMessagesPage() {
                 className="flex items-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-50"
                 onClick={() => {
                   if (!selectedEventId) return;
-                  const message = window.prompt("Enter your broadcast announcement:");
+                  const message = window.prompt(
+                    "Enter your broadcast announcement:",
+                  );
                   if (!message?.trim()) return;
 
                   // Check content moderation for broadcast
                   const result = checkContentSync(message);
-                  setModerationResult(result);
 
                   if (result.score > 5) {
                     toast.error(
-                      `Broadcast violates community guidelines (Risk Level: ${result.score}/10).\n\n${result.details}`
+                      `Broadcast violates community guidelines (Risk Level: ${result.score}/10).\n\n${result.details}`,
                     );
                     return;
                   }
 
                   if (result.score >= 3) {
                     toast.warning(
-                      `⚠️ Warning: ${result.details} (Risk Level: ${result.score}/10)`
+                      `⚠️ Warning: ${result.details} (Risk Level: ${result.score}/10)`,
                     );
                   }
 
-                  broadcastMessage.mutate(
-                    { message: message.trim(), host_id: hostId, event_id: selectedEventId },
-                  );
+                  broadcastMessage.mutate({
+                    message: message.trim(),
+                    host_id: hostId,
+                    event_id: selectedEventId,
+                  });
                 }}
               >
                 <FiVolume2 className="h-4 w-4" /> Broadcast Announcement
@@ -347,7 +370,8 @@ export default function HostMessagesPage() {
               {selectedEventId && (
                 <div className="space-y-4">
                   {(eventMessages ?? []).map((msg, idx, arr) => {
-                    const isMe = msg.sender_type === "host" && msg.sender_id === hostId;
+                    const isMe =
+                      msg.sender_type === "host" && msg.sender_id === hostId;
                     const isSystem = msg.sender_type === "system";
                     const label =
                       msg.sender_type === "system"
@@ -361,8 +385,12 @@ export default function HostMessagesPage() {
                     // Check if we need a day separator
                     const msgDate = new Date(msg.created_at);
                     const prevMsg = arr[idx - 1];
-                    const prevDate = prevMsg ? new Date(prevMsg.created_at) : null;
-                    const showDaySeparator = !prevDate || msgDate.toDateString() !== prevDate?.toDateString();
+                    const prevDate = prevMsg
+                      ? new Date(prevMsg.created_at)
+                      : null;
+                    const showDaySeparator =
+                      !prevDate ||
+                      msgDate.toDateString() !== prevDate?.toDateString();
 
                     const today = new Date();
                     const yesterday = new Date(today);
@@ -371,14 +399,16 @@ export default function HostMessagesPage() {
                     let dayLabel = format(msgDate, "EEEE, MMM d");
                     if (msgDate.toDateString() === today.toDateString()) {
                       dayLabel = "Today";
-                    } else if (msgDate.toDateString() === yesterday.toDateString()) {
+                    } else if (
+                      msgDate.toDateString() === yesterday.toDateString()
+                    ) {
                       dayLabel = "Yesterday";
                     }
 
                     return (
                       <div key={msg.id}>
                         {showDaySeparator && (
-                          <div className="flex items-center justify-center my-4">
+                          <div className="my-4 flex items-center justify-center">
                             <span className="rounded-full bg-[#e6f8ff] px-3 py-1 text-xs font-medium text-[#0094CA]">
                               {dayLabel}
                             </span>
@@ -392,25 +422,39 @@ export default function HostMessagesPage() {
                             </div>
                             <div>
                               <div className="flex items-center gap-2 text-xs text-gray-400">
-                                <span className="font-semibold text-gray-500">{label}</span>
+                                <span className="font-semibold text-gray-500">
+                                  {label}
+                                </span>
                                 <span>{format(msgDate, "h:mm a")}</span>
                               </div>
-                              <p className="mt-1 text-sm text-gray-600">{msg.message}</p>
+                              <p className="mt-1 text-sm text-gray-600">
+                                {msg.message}
+                              </p>
                             </div>
                           </div>
                         ) : (
-                          <div className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                            <div className={`flex items-start gap-3 max-w-[85%] ${isMe ? "flex-row-reverse" : ""}`}>
-                              <div className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                                isMe ? "bg-[#0094CA]" : "bg-amber-500"
-                              }`}>
+                          <div
+                            className={`flex ${isMe ? "justify-end" : "justify-start"}`}
+                          >
+                            <div
+                              className={`flex max-w-[85%] items-start gap-3 ${isMe ? "flex-row-reverse" : ""}`}
+                            >
+                              <div
+                                className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                                  isMe ? "bg-[#0094CA]" : "bg-amber-500"
+                                }`}
+                              >
                                 <span className="text-xs font-semibold text-white">
                                   {isMe ? "Y" : label.charAt(0)}
                                 </span>
                               </div>
                               <div>
-                                <div className={`flex items-center gap-2 text-xs text-gray-400 ${isMe ? "justify-end" : ""}`}>
-                                  <span className="font-semibold text-gray-700">{label}</span>
+                                <div
+                                  className={`flex items-center gap-2 text-xs text-gray-400 ${isMe ? "justify-end" : ""}`}
+                                >
+                                  <span className="font-semibold text-gray-700">
+                                    {label}
+                                  </span>
                                   <span>{format(msgDate, "h:mm a")}</span>
                                   {isMe && (
                                     <span className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500">
@@ -444,7 +488,9 @@ export default function HostMessagesPage() {
                 <input
                   className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:border-[#0094CA] focus:bg-white"
                   placeholder={
-                    selectedEventId ? "Write a message to the group..." : "Select an event first…"
+                    selectedEventId
+                      ? "Write a message to the group..."
+                      : "Select an event first…"
                   }
                   disabled={!selectedEventId}
                   value={input}
@@ -458,7 +504,7 @@ export default function HostMessagesPage() {
                 />
                 <button
                   disabled={!selectedEventId || !input.trim()}
-                  className="rounded-lg bg-[#0094CA] px-5 py-3 font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-50 flex items-center gap-2"
+                  className="flex items-center gap-2 rounded-lg bg-[#0094CA] px-5 py-3 font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-50"
                   onClick={() => {
                     handleSendMessage(input);
                   }}
@@ -466,7 +512,9 @@ export default function HostMessagesPage() {
                   Send <FiSend className="h-4 w-4" />
                 </button>
               </div>
-              <p className="mt-2 text-[10px] text-gray-400 text-right">Press ⌘+Enter to send</p>
+              <p className="mt-2 text-right text-[10px] text-gray-400">
+                Press ⌘+Enter to send
+              </p>
             </div>
           </div>
         </div>

@@ -2,7 +2,10 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useListHosts, useListPublicEvents } from "~/hooks/useApi";
-import { getSavedLocation, type CityLocation } from "~/components/LocationModal";
+import {
+  getSavedLocation,
+  type CityLocation,
+} from "~/components/LocationModal";
 import { LuLoader2 } from "react-icons/lu";
 import * as components from "~/components";
 import Breadcrumb from "~/components/Breadcrumb";
@@ -85,7 +88,7 @@ const HostCard = ({
             {moods.map((mood) => (
               <span
                 key={mood}
-                className="rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#0e8ae0]"
+                className="rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase"
               >
                 {getMoodDisplayLabel(mood)}
               </span>
@@ -153,18 +156,21 @@ export default function HostsPage() {
     <main className="min-h-screen bg-[linear-gradient(180deg,#fafeff,#f2faff)] text-[#16304c]">
       <components.Navbar />
 
-      <div className="mx-auto w-full max-w-[77rem] site-x py-8 pt-24">
-        <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Hosts" }]} className="mb-6" />
+      <div className="site-x mx-auto w-full max-w-[77rem] py-8 pt-24">
+        <Breadcrumb
+          items={[{ label: "Home", href: "/" }, { label: "Hosts" }]}
+          className="mb-6"
+        />
         <div className="mb-8 flex flex-col gap-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.05em] sm:text-5xl">
               Find Your Kind of People
             </h1>
-            
+
             {location && (
               <button
                 onClick={() => setFilterByLocation(!filterByLocation)}
-                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
+                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
                   filterByLocation
                     ? "bg-[#dff3ff] text-[#0e8ae0]"
                     : "bg-white/90 text-[#5a88ac] hover:bg-white"
@@ -182,7 +188,7 @@ export default function HostsPage() {
                   key={mood}
                   type="button"
                   onClick={() => setMoodFilter(mood)}
-                  className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
+                  className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
                     moodFilter === mood
                       ? "bg-[#dff3ff] text-[#0e8ae0]"
                       : "bg-white/90 text-[#5a88ac] hover:bg-white"
@@ -222,7 +228,11 @@ export default function HostsPage() {
                   host.first_name
                 }
                 imageUrl={host.avatar_url ?? "/assets/home/people1.png"}
-                rating={host.avg_rating && host.avg_rating > 0 ? host.avg_rating.toFixed(1) : "0"}
+                rating={
+                  host.avg_rating && host.avg_rating > 0
+                    ? host.avg_rating.toFixed(1)
+                    : "0"
+                }
                 headline={host.tagline ?? "Local Host"}
                 description={
                   host.bio ?? "Hosting thoughtful sessions around the city."

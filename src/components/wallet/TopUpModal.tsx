@@ -186,7 +186,7 @@ export default function TopUpModal({
       />
 
       {/* Modal */}
-      <div className="fixed left-1/2 top-1/2 z-50 w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6 max-h-[90vh]">
+      <div className="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
         {/* Header */}
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -202,7 +202,7 @@ export default function TopUpModal({
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition"
+            className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
           >
             <LuX className="h-5 w-5" />
           </button>
@@ -234,7 +234,7 @@ export default function TopUpModal({
             Or enter custom amount
           </p>
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-semibold text-gray-500">
+            <span className="absolute top-1/2 left-4 -translate-y-1/2 text-lg font-semibold text-gray-500">
               ₹
             </span>
             <input
@@ -243,7 +243,7 @@ export default function TopUpModal({
               placeholder="Enter amount"
               value={customAmount}
               onChange={(e) => handleCustomAmountChange(e.target.value)}
-              className={`w-full rounded-lg border-2 py-3 pl-10 pr-4 text-lg font-semibold outline-none transition ${
+              className={`w-full rounded-lg border-2 py-3 pr-4 pl-10 text-lg font-semibold transition outline-none ${
                 isCustom
                   ? "border-[#0094CA] ring-2 ring-[#0094CA]/20"
                   : "border-gray-200 focus:border-[#0094CA]"

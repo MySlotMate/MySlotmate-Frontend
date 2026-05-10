@@ -16,6 +16,7 @@ import {
   useUnsaveExperience,
   useEventAvailability,
 } from "~/hooks/useApi";
+import { useStoredAuth } from "~/hooks/useStoredAuth";
 import {
   FiBookmark,
   FiShare2,
@@ -31,6 +32,7 @@ import { LuLanguages, LuBadgeCheck, LuSparkles } from "react-icons/lu";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import type { OccurrenceAvailability } from "~/lib/api";
+import { GoogleLogin } from "~/components";
 
 export const runtime = "edge";
 
@@ -731,12 +733,9 @@ export default function ExperienceDetailPage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId } = useStoredAuth();
   const [showAllPhotos, setShowAllPhotos] = useState(false);
-
-  useEffect(() => {
-    setUserId(localStorage.getItem("msm_user_id"));
-  }, []);
+  const [showLogin, setShowLogin] = useState(false);
 
   const { data: event, isLoading: eventLoading } = useEvent(resolvedParams.id);
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
@@ -780,7 +779,7 @@ export default function ExperienceDetailPage({
 
   const handleBook = (date: string, guests: number) => {
     if (!userId) {
-      toast.error("Please login to book this experience");
+      setShowLogin(true);
       return;
     }
     if (!date) {
@@ -985,6 +984,7 @@ export default function ExperienceDetailPage({
         onClose={() => setShowAllPhotos(false)}
         images={allImages}
       />
+      <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
     </>
   );
 }

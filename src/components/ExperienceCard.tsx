@@ -160,7 +160,7 @@ export const ExperienceCard = ({
 
   const isSaved = savedStatus?.saved ?? false;
 
-  const isFull = capacity !== undefined && totalBookings !== undefined && totalBookings >= capacity;
+  const isFull = !isRecurring && capacity !== undefined && totalBookings !== undefined && totalBookings >= capacity;
 
   // Local fallback if backend didn't provide nextAvailableDate
   const nextDateLocal =
@@ -175,7 +175,7 @@ export const ExperienceCard = ({
 
   const spotsLeft =
     capacity !== undefined && totalBookings !== undefined
-      ? Math.max(0, capacity - totalBookings)
+      ? (isRecurring ? capacity : Math.max(0, capacity - totalBookings))
       : null;
 
   useEffect(() => {
@@ -283,7 +283,7 @@ export const ExperienceCard = ({
             )}
           </div>
 
-          {spotsLeft !== null && !(isFull && isRecurring) && (
+          {spotsLeft !== null && !((isFull || isShowingNext) && isRecurring) && (
             <div className="flex items-center gap-1.5">
               <Users size={11} className={isFull ? "text-red-500" : "text-emerald-600"} strokeWidth={2.5} />
               <p className={`text-[10px] font-bold tracking-[0.02em] ${
@@ -297,7 +297,7 @@ export const ExperienceCard = ({
               </p>
             </div>
           )}
-          {isFull && isRecurring && nextDateLabel && (
+          {isRecurring && (isShowingNext || (isFull && !!nextDateLabel)) && (
             <div className="flex items-center gap-1.5">
               <Users size={11} className="text-emerald-600" strokeWidth={2.5} />
               <p className="text-[10px] font-bold tracking-[0.02em] text-emerald-600 truncate">

@@ -25,6 +25,10 @@ export const queryKeys = {
     ["hostEventsFiltered", hostId, filters] as const,
   event: (eventId: string) => ["event", eventId] as const,
   eventAvailability: (eventId: string) => ["eventAvailability", eventId] as const,
+  eventOccurrencesForHost: (eventId: string, hostId: string) =>
+    ["eventOccurrencesForHost", eventId, hostId] as const,
+  experienceTemplates: (mood: string) =>
+    ["experienceTemplates", mood] as const,
   eventAttendees: (eventId: string) => ["eventAttendees", eventId] as const,
   reviewsByEvent: (eventId: string) => ["reviewsByEvent", eventId] as const,
   eventRating: (eventId: string) => ["eventRating", eventId] as const,
@@ -320,6 +324,29 @@ export function useEventAvailability(eventId: string | null) {
     queryKey: queryKeys.eventAvailability(eventId ?? ""),
     queryFn: () => api.getEventAvailability(eventId!),
     enabled: !!eventId,
+    staleTime: 30 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useExperienceTemplates(mood: string | null) {
+  return useQuery({
+    queryKey: queryKeys.experienceTemplates(mood ?? ""),
+    queryFn: () => api.listExperienceTemplates(mood ?? undefined),
+    enabled: !!mood,
+    staleTime: 10 * 60 * 1000, // 10 min — templates change rarely
+    select: (res) => res.data,
+  });
+}
+
+export function useEventOccurrencesForHost(
+  eventId: string | null,
+  hostId: string | null,
+) {
+  return useQuery({
+    queryKey: queryKeys.eventOccurrencesForHost(eventId ?? "", hostId ?? ""),
+    queryFn: () => api.getEventOccurrencesForHost(eventId!, hostId!),
+    enabled: !!eventId && !!hostId,
     staleTime: 30 * 1000,
     select: (res) => res.data,
   });
@@ -896,8 +923,17 @@ export function usePublishEvent() {
 export function usePauseEvent() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ eventId, hostId }: { eventId: string; hostId: string }) =>
-      api.pauseEvent(eventId, hostId),
+    mutationFn: ({
+      eventId,
+      hostId,
+      pausedFrom,
+      pausedDate,
+    }: {
+      eventId: string;
+      hostId: string;
+      pausedFrom?: string;
+      pausedDate?: string;
+    }) => api.pauseEvent(eventId, hostId, pausedFrom, pausedDate),
     onSuccess: (_data, variables) => {
       void qc.invalidateQueries({
         queryKey: queryKeys.eventsByHost(variables.hostId),

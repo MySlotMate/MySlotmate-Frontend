@@ -10,6 +10,7 @@ import {
   useCreateEvent,
   useUploadFiles,
   usePublishEvent,
+  useExperienceTemplates,
 } from "~/hooks/useApi";
 import { useContentModeration } from "~/hooks/useContentModeration";
 import { useSuggestions } from "~/hooks/useSuggestions";
@@ -28,8 +29,10 @@ import {
   FiShare2,
   FiExternalLink,
   FiAlertTriangle,
+  FiMap,
 } from "react-icons/fi";
 import { toast } from "sonner";
+import { MapPickerModal, LocationSearchInput } from "~/components";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -83,11 +86,6 @@ const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
 
 const CANCELLATION_POLICIES = [
   {
-    value: "no_refund",
-    label: "No Refund",
-    description: "Non-refundable once booked",
-  },
-  {
     value: "flexible",
     label: "Flexible",
     description: "Full refund up to 24 hours before",
@@ -101,6 +99,11 @@ const CANCELLATION_POLICIES = [
     value: "strict",
     label: "Strict",
     description: "50% refund up to 1 week before",
+  },
+  {
+    value: "no_refund",
+    label: "No Refund",
+    description: "Non-refundable once booked",
   },
 ];
 
@@ -349,6 +352,122 @@ function MoodSelector({
 }
 
 /* ------------------------------------------------------------------ */
+/*  Title Autocomplete — typeahead filtered by mood-keyed templates    */
+/* ------------------------------------------------------------------ */
+type TitleSuggestionsBag = ReturnType<typeof useSuggestions>;
+
+function TitleAutocomplete({
+  mood,
+  value,
+  onChange,
+  onSelectTemplate,
+  hasError,
+  showDropdown,
+  setShowDropdown,
+  blurTimer,
+  titleSuggestions,
+}: {
+  mood: string;
+  value: string;
+  onChange: (v: string) => void;
+  onSelectTemplate: (title: string, hookLine: string) => void;
+  hasError?: boolean;
+  showDropdown: boolean;
+  setShowDropdown: (v: boolean) => void;
+  blurTimer: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
+  titleSuggestions: TitleSuggestionsBag;
+}) {
+  const { data: templates, isLoading } = useExperienceTemplates(mood || null);
+
+  const q = value.trim().toLowerCase();
+  const filtered = (templates ?? []).filter((t) =>
+    q === "" ? true : t.title.toLowerCase().includes(q),
+  );
+
+  const moodDisabled = !mood;
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium text-gray-700">
+        Experience Title <span className="text-red-500">*</span>
+      </label>
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          disabled={moodDisabled}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setShowDropdown(true);
+            void titleSuggestions.generateSuggestions(e.target.value, "title");
+          }}
+          onFocus={() => {
+            if (blurTimer.current) {
+              clearTimeout(blurTimer.current);
+              blurTimer.current = null;
+            }
+            setShowDropdown(true);
+          }}
+          onBlur={() => {
+            // Delay close so option mousedown can register first.
+            blurTimer.current = setTimeout(() => {
+              setShowDropdown(false);
+              titleSuggestions.clearSuggestions();
+            }, 120);
+          }}
+          placeholder={
+            moodDisabled
+              ? "Pick a mood first to see suggestions"
+              : "Start typing — or pick a suggestion below"
+          }
+          className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
+            moodDisabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : ""
+          } ${
+            hasError
+              ? "border-red-500 bg-red-50"
+              : "border-gray-200 focus:border-transparent"
+          }`}
+          maxLength={100}
+        />
+
+        {showDropdown && !moodDisabled && (
+          <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+            {isLoading && (
+              <div className="px-4 py-3 text-sm text-gray-500">
+                Loading suggestions…
+              </div>
+            )}
+            {!isLoading && filtered.length === 0 && (
+              <div className="px-4 py-3 text-sm text-gray-500">
+                No matching templates — keep typing your own title.
+              </div>
+            )}
+            {!isLoading &&
+              filtered.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  // onMouseDown fires before the input's onBlur, so the click sticks.
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    onSelectTemplate(t.title, t.hook_line);
+                    setShowDropdown(false);
+                  }}
+                  className="block w-full border-b border-gray-100 px-4 py-3 text-left text-sm transition last:border-b-0 hover:bg-gray-50"
+                >
+                  <p className="font-semibold text-gray-900">{t.title}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{t.hook_line}</p>
+                </button>
+              ))}
+          </div>
+        )}
+      </div>
+      <p className="text-xs text-gray-400">{value.length}/100 characters</p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Preview Card Component                                             */
 /* ------------------------------------------------------------------ */
 function PreviewCard({ form }: { form: FormData }) {
@@ -474,6 +593,7 @@ export default function CreateExperiencePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string>("");
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   const [showErrors, setShowErrors] = useState(false);
 
@@ -481,6 +601,10 @@ export default function CreateExperiencePage() {
   const titleSuggestions = useSuggestions();
   const hookSuggestions = useSuggestions();
   const descriptionSuggestions = useSuggestions();
+
+  // Title-typeahead dropdown driven by mood-keyed templates.
+  const [showTitleDropdown, setShowTitleDropdown] = useState(false);
+  const titleBlurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [form, setForm] = useState<FormData>({
     title: "",
@@ -853,45 +977,35 @@ export default function CreateExperiencePage() {
                 </p>
               </div>
 
-              {/* Title */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Experience Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => {
-                    updateForm("title", e.target.value);
-                    void titleSuggestions.generateSuggestions(
-                      e.target.value,
-                      "title",
-                    );
-                  }}
-                  onBlur={() => titleSuggestions.clearSuggestions()}
-                  placeholder="e.g., Morning Yoga by the Beach"
-                  className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-                    showErrors && !form.title.trim()
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-200 focus:border-transparent"
-                  }`}
-                  maxLength={100}
-                />
-                <p className="text-xs text-gray-400">
-                  {form.title.length}/100 characters
-                </p>
-                {titleSuggestions.suggestions.length > 0 && (
-                  <SuggestionChips
-                    suggestions={titleSuggestions.suggestions}
-                    isLoading={titleSuggestions.isLoading}
-                    onSelect={(suggestion) => {
-                      updateForm("title", suggestion);
-                      titleSuggestions.clearSuggestions();
-                    }}
-                    onDismiss={titleSuggestions.clearSuggestions}
-                  />
-                )}
-              </div>
+              {/* Mood Selector — chosen first so the title typeahead can suggest matching templates */}
+              <MoodSelector
+                value={form.mood}
+                onChange={(v) => {
+                  updateForm("mood", v);
+                  // Reset prefilled title/hook so the new mood's templates surface cleanly.
+                  if (v !== form.mood) {
+                    updateForm("title", "");
+                    updateForm("hookLine", "");
+                  }
+                }}
+                hasError={showErrors && !form.mood}
+              />
+
+              {/* Title — typeahead filtered by mood-keyed templates */}
+              <TitleAutocomplete
+                mood={form.mood}
+                value={form.title}
+                onChange={(v) => updateForm("title", v)}
+                onSelectTemplate={(title, hookLine) => {
+                  updateForm("title", title);
+                  updateForm("hookLine", hookLine);
+                }}
+                hasError={showErrors && !form.title.trim()}
+                showDropdown={showTitleDropdown}
+                setShowDropdown={setShowTitleDropdown}
+                blurTimer={titleBlurTimer}
+                titleSuggestions={titleSuggestions}
+              />
 
               {/* Hook Line */}
               <div className="space-y-2">
@@ -935,13 +1049,6 @@ export default function CreateExperiencePage() {
                   />
                 )}
               </div>
-
-              {/* Mood Selector */}
-              <MoodSelector
-                value={form.mood}
-                onChange={(v) => updateForm("mood", v)}
-                hasError={showErrors && !form.mood}
-              />
 
               {/* Visuals Section */}
               <div className="border-t border-gray-100 pt-6">
@@ -1038,27 +1145,29 @@ export default function CreateExperiencePage() {
                     <label className="block text-sm font-medium text-gray-700">
                       Location
                     </label>
-                    <input
-                      type="text"
-                      value={form.location}
-                      onChange={(e) => {
-                        const newLocation = e.target.value;
-                        updateForm("location", newLocation);
-
-                        // Auto-generate exact Google Maps URL with coordinates
-                        if (newLocation.trim()) {
-                          void fetchExactLocation(newLocation);
-                        }
-                      }}
-                      onBlur={() => {
-                        // If location exists but no maps URL, generate one
-                        if (form.location.trim() && !form.googleMapsUrl) {
-                          void fetchExactLocation(form.location);
-                        }
-                      }}
-                      placeholder="Enter the meeting location"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
+                    <div className="flex gap-2">
+                      <LocationSearchInput
+                        value={form.location}
+                        onChange={(val) => updateForm("location", val)}
+                        onSelect={(addr, lat, lng) => {
+                          updateForm("location", addr);
+                          updateForm(
+                            "googleMapsUrl",
+                            `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                          );
+                        }}
+                        placeholder="Search for a location or locality..."
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMapPicker(true)}
+                        className="flex items-center gap-2 rounded-lg border border-[#0094CA] bg-white px-4 py-3 text-sm font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5"
+                        title="Pick from map"
+                      >
+                        <FiMap size={18} />
+                        <span className="hidden sm:inline">Pick from Map</span>
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1574,6 +1683,18 @@ export default function CreateExperiencePage() {
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}
         experienceId={createdEventId}
+      />
+
+      <MapPickerModal
+        isOpen={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        onSelect={(lat, lng, addr) => {
+          updateForm("location", addr);
+          updateForm(
+            "googleMapsUrl",
+            `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+          );
+        }}
       />
     </>
   );

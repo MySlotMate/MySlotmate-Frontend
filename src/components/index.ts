@@ -4,6 +4,8 @@ import * as BecomeHost from "./become-host";
 export { default as GoogleLogin } from "./GoogleLogin";
 export { default as Navbar } from "./Navbar";
 export { default as Breadcrumb } from "./Breadcrumb";
+export { default as MapPickerModal } from "./MapPickerModal";
+export { default as LocationSearchInput } from "./LocationSearchInput";
 export type { BreadcrumbItem } from "./Breadcrumb";
 
 export { Home, Host, BecomeHost };

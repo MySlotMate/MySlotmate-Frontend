@@ -623,13 +623,28 @@ export default function ExplorePage() {
                     href={`/host/${host.id}`}
                     className="overflow-hidden rounded-[22px] border border-[#aeddf89e] bg-white shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={host.avatar_url ?? "/assets/home/people1.png"}
-                      alt={fullName}
-                      loading="lazy"
-                      className="h-[214px] w-full object-cover"
-                    />
+                    {host.avatar_url ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={host.avatar_url}
+                        alt={fullName}
+                        loading="lazy"
+                        className="h-[214px] w-full object-cover"
+                      />
+                    ) : (
+                      <div className="relative flex h-[214px] w-full items-center justify-center bg-[#E9EDF0]">
+                        <div className="relative flex h-full w-full items-center justify-center opacity-40">
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-2/3 w-2/3 fill-[#ABB4BA]"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                          </svg>
+                        </div>
+                        <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent to-black/5" />
+                      </div>
+                    )}
                     <div className="p-4">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="line-clamp-1 text-[15px] font-bold text-[#16304c]">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEventsByHost, useMyHost, useResumeEvent } from "~/hooks/useApi";
+import { useEventsByHost, useMyHost, useResumeEvent, usePauseEvent, useEventOccurrencesForHost } from "~/hooks/useApi";
+import type { OccurrenceAvailability } from "~/lib/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 import { HostNavbar } from "~/components/host-dashboard";
@@ -12,8 +13,11 @@ import {
   FiEdit2,
   FiTrash2,
   FiEye,
+  FiPause,
+  FiPlay,
+  FiShield,
 } from "react-icons/fi";
-import { LuBookOpen } from "react-icons/lu";
+import { LuBookOpen, LuRotateCcw } from "react-icons/lu";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -107,27 +111,53 @@ interface ExperienceCardProps {
     created_at: string;
     updated_at: string;
     paused_at: string | null;
+    paused_from: string | null;
+    paused_dates: string[] | null;
+    cancellation_policy: string | null;
+    is_recurring: boolean;
   };
   hostId: string;
-  onResume: (eventId: string) => void;
-  isResuming: boolean;
+  onResume: (eventId: string) => Promise<void>;
+  onPause: (eventId: string, options?: { pausedFrom?: string; pausedDate?: string }) => Promise<void>;
+  isProcessing: boolean;
 }
 
 function ExperienceCard({
   event,
   hostId: _hostId,
-  onResume: _onResume,
-  isResuming: _isResuming,
+  onResume,
+  onPause,
+  isProcessing,
 }: ExperienceCardProps) {
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPauseConfirm, setShowPauseConfirm] = useState(false);
+  const [pauseOption, setPauseOption] = useState<"all" | "from" | "date">("all");
+  const [selectedDate, setSelectedDate] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
 
-  const nextDate = event.status === "paused" ? null : (event.next_available_date ?? event.time);
   const isPaused = event.status === "paused";
   const isDraft = event.status === "draft";
   const isLive = event.status === "live";
+
+  // Pause shape: full series pause vs partial (from-session or specific-dates)
+  const hasPausedFrom = !!event.paused_from;
+  const hasPausedDates = (event.paused_dates?.length ?? 0) > 0;
+  const isPartialPause = isPaused && (hasPausedFrom || hasPausedDates);
+  const isFullPause = isPaused && !isPartialPause;
+
+  // For a partial pause we still have bookable sessions ahead, so show the next
+  // available date instead of just "Paused".
+  const nextDate = isFullPause ? null : (event.next_available_date ?? event.time);
+
+  const pauseDetail = isFullPause
+    ? "Paused"
+    : hasPausedFrom
+      ? `Paused from ${formatNextDate(event.paused_from)}`
+      : hasPausedDates && event.paused_dates
+        ? `${event.paused_dates.length} session${event.paused_dates.length > 1 ? "s" : ""} paused`
+        : null;
 
   const footerText = isPaused
     ? `PAUSED ${formatRelativeTime(event.paused_at ?? event.updated_at)}`
@@ -143,32 +173,20 @@ function ExperienceCard({
     router.push(`/host-dashboard/experiences/${event.id}?tab=bookings`);
   };
 
-  const handleDelete = async () => {
-    if (!_hostId) return;
-    setIsDeleting(true);
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/events/${event.id}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ host_id: _hostId }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete event");
-      }
-
-      toast.success("Experience deleted successfully!");
-      await queryClient.invalidateQueries({ queryKey: ["events"] });
-      setShowDeleteConfirm(false);
-    } catch (err) {
-      console.error("Delete failed:", err);
-      toast.error("Failed to delete event");
-    } finally {
-      setIsDeleting(false);
+  const togglePause = async () => {
+    if (isPaused) {
+      await onResume(event.id);
+    } else {
+      setShowPauseConfirm(true);
     }
+  };
+
+  const handlePauseConfirm = async () => {
+    setShowPauseConfirm(false);
+    const options: { pausedFrom?: string; pausedDate?: string } = {};
+    if (pauseOption === "from") options.pausedFrom = selectedDate;
+    if (pauseOption === "date") options.pausedDate = selectedDate;
+    await onPause(event.id, options);
   };
 
   return (
@@ -202,10 +220,10 @@ function ExperienceCard({
             <span>Next:</span>
             <span
               className={
-                isPaused ? "font-medium text-amber-600" : "text-gray-700"
+                isFullPause ? "font-medium text-amber-600" : "text-gray-700"
               }
             >
-              {isPaused ? "Paused" : formatNextDate(nextDate)}
+              {isFullPause ? "Paused" : formatNextDate(nextDate)}
             </span>
             {isLive && event.avg_rating !== null && (
               <>
@@ -221,11 +239,28 @@ function ExperienceCard({
             )}
           </div>
 
+          {/* Pause detail (partial pauses keep "Next" populated and show this) */}
+          {isPaused && pauseDetail && !isFullPause && (
+            <div className="flex items-center gap-2 text-xs">
+              <FiPause className="h-3.5 w-3.5 text-amber-600" />
+              <span className="font-medium text-amber-600">{pauseDetail}</span>
+            </div>
+          )}
+
           {/* Bookings */}
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <LuBookOpen className="h-3.5 w-3.5" />
             <span className="text-gray-700">{event.total_bookings}</span>
             <span>Bookings total</span>
+          </div>
+
+          {/* Cancellation Policy */}
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <FiShield className="h-3.5 w-3.5" />
+            <span className="font-medium text-gray-700 capitalize">
+              {event.cancellation_policy ?? "Not set"}
+            </span>
+            <span>Policy</span>
           </div>
         </div>
 
@@ -246,19 +281,48 @@ function ExperienceCard({
               </span>
             </div>
 
-            {/* View bookings button */}
-            <div className="group relative">
-              <button
-                onClick={handleViewBookings}
-                className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#0094CA]"
-                title="View Bookings"
-              >
-                <FiEye className="h-4 w-4" />
-              </button>
-              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                View Bookings
-              </span>
-            </div>
+            {/* View Bookings button */}
+            {!isDraft && (
+              <div className="group relative">
+                <button
+                  onClick={handleViewBookings}
+                  className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-[#0094CA]"
+                  title="View bookings"
+                >
+                  <FiEye className="h-4 w-4" />
+                </button>
+                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
+                  View Bookings
+                </span>
+              </div>
+            )}
+
+            {/* Pause/Resume button */}
+            {!isDraft && (
+              <div className="group relative">
+                <button
+                  onClick={togglePause}
+                  disabled={isProcessing}
+                  className={`rounded-lg p-2 transition ${
+                    isPaused
+                      ? "text-green-600 hover:bg-green-50"
+                      : "text-amber-600 hover:bg-amber-50"
+                  } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
+                  title={isPaused ? "Resume" : "Pause"}
+                >
+                  {isProcessing ? (
+                    <LuRotateCcw className="h-4 w-4 animate-spin" />
+                  ) : isPaused ? (
+                    <FiPlay className="h-4 w-4" />
+                  ) : (
+                    <FiPause className="h-4 w-4" />
+                  )}
+                </button>
+                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
+                  {isPaused ? "Resume Experience" : "Pause Experience"}
+                </span>
+              </div>
+            )}
 
             {/* Delete button */}
             <div className="group relative ml-auto">
@@ -274,11 +338,27 @@ function ExperienceCard({
               </span>
             </div>
           </div>
-          <span className="text-[10px] font-medium tracking-wide text-gray-400">
-            {footerText}
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium tracking-wide text-gray-400">
+              {footerText}
+            </span>
+          </div>
         </div>
       </div>
+
+      {/* Pause Confirmation Modal */}
+      {showPauseConfirm && (
+        <PauseModalContent
+          event={event}
+          hostId={_hostId}
+          onCancel={() => setShowPauseConfirm(false)}
+          onConfirm={handlePauseConfirm}
+          option={pauseOption}
+          setOption={setPauseOption}
+          selectedDate={selectedDate}
+          setSelectedDate={setSelectedDate}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
@@ -303,7 +383,35 @@ function ExperienceCard({
                 Cancel
               </button>
               <button
-                onClick={handleDelete}
+                onClick={async () => {
+                  if (!_hostId) return;
+                  setIsDeleting(true);
+                  try {
+                    const response = await fetch(
+                      `${process.env.NEXT_PUBLIC_API_URL}/events/${event.id}`,
+                      {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ host_id: _hostId }),
+                      },
+                    );
+
+                    if (!response.ok) {
+                      throw new Error("Failed to delete event");
+                    }
+
+                    toast.success("Experience deleted successfully!");
+                    await queryClient.invalidateQueries({
+                      queryKey: ["events"],
+                    });
+                    setShowDeleteConfirm(false);
+                  } catch (err) {
+                    console.error("Delete failed:", err);
+                    toast.error("Failed to delete event");
+                  } finally {
+                    setIsDeleting(false);
+                  }
+                }}
                 disabled={isDeleting}
                 className="flex-1 rounded-lg bg-red-600 py-3 font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
               >
@@ -353,7 +461,7 @@ export default function ExperiencesPage() {
   const [tab, setTab] = useState<"all" | "live" | "draft" | "paused">("all");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"newest" | "oldest">("newest");
-  const [resumingId, setResumingId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
   useEffect(() => {
     setUserId(localStorage.getItem("msm_user_id"));
@@ -367,6 +475,7 @@ export default function ExperiencesPage() {
     refetch: refetchEvents,
   } = useEventsByHost(host?.id ?? null);
   const resumeEvent = useResumeEvent();
+  const pauseEvent = usePauseEvent();
 
   useEffect(() => {
     if (isHydrated && !userId && !hostLoading) {
@@ -413,14 +522,36 @@ export default function ExperiencesPage() {
 
   const handleResume = async (eventId: string) => {
     if (!host?.id) return;
-    setResumingId(eventId);
+    setProcessingId(eventId);
     try {
       await resumeEvent.mutateAsync({ eventId, hostId: host.id });
+      toast.success("Experience resumed successfully!");
       await refetchEvents();
     } catch (error) {
       console.error("Failed to resume event:", error);
+      toast.error("Failed to resume experience");
     } finally {
-      setResumingId(null);
+      setProcessingId(null);
+    }
+  };
+
+  const handlePause = async (eventId: string, options?: { pausedFrom?: string; pausedDate?: string }) => {
+    if (!host?.id) return;
+    setProcessingId(eventId);
+    try {
+      await pauseEvent.mutateAsync({ 
+        eventId, 
+        hostId: host.id,
+        pausedFrom: options?.pausedFrom,
+        pausedDate: options?.pausedDate,
+      });
+      toast.success("Experience paused successfully!");
+      await refetchEvents();
+    } catch (error) {
+      console.error("Failed to pause event:", error);
+      toast.error("Failed to pause experience");
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -562,7 +693,8 @@ export default function ExperiencesPage() {
                   event={event}
                   hostId={host.id}
                   onResume={handleResume}
-                  isResuming={resumingId === event.id}
+                  onPause={handlePause}
+                  isProcessing={processingId === event.id}
                 />
               ))}
               <CreateNewCard />
@@ -610,6 +742,199 @@ export default function ExperiencesPage() {
           </div>
         )}
       </main>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Pause Modal Content Component                                      */
+/* ------------------------------------------------------------------ */
+function PauseModalContent({
+  event,
+  hostId,
+  onCancel,
+  onConfirm,
+  option,
+  setOption,
+  selectedDate,
+  setSelectedDate,
+}: {
+  event: { id: string; title: string; is_recurring: boolean };
+  hostId: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+  option: "all" | "from" | "date";
+  setOption: (o: "all" | "from" | "date") => void;
+  selectedDate: string;
+  setSelectedDate: (d: string) => void;
+}) {
+  const { data: availability, isLoading: availLoading } =
+    useEventOccurrencesForHost(event.id, hostId);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-8">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+          <FiPause className="text-amber-600" size={24} />
+        </div>
+        <h2 className="mb-2 text-xl font-bold text-gray-900">
+          Pause {event.title}?
+        </h2>
+        <p className="mb-6 text-sm text-gray-500">
+          Select how you would like to pause this experience.
+        </p>
+
+        <div className="mb-6 space-y-3">
+          {/* Pause All */}
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-100 p-3 transition hover:bg-gray-50">
+            <input
+              type="radio"
+              name="pause-type"
+              checked={option === "all"}
+              onChange={() => setOption("all")}
+              className="mt-1 h-4 w-4 text-[#0094CA]"
+            />
+            <div>
+              <p className="text-sm font-semibold text-gray-900">
+                Pause entirely
+              </p>
+              <p className="text-xs text-gray-400">
+                Hide the entire experience series.
+              </p>
+            </div>
+          </label>
+
+          {/* Pause From Session */}
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-100 p-3 transition hover:bg-gray-50">
+            <input
+              type="radio"
+              name="pause-type"
+              checked={option === "from"}
+              onChange={() => setOption("from")}
+              className="mt-1 h-4 w-4 text-[#0094CA]"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900">
+                Pause from a specific session onwards
+              </p>
+              <p className="text-xs text-gray-400">
+                Keep current sessions, but pause this session and all after it.
+              </p>
+              {option === "from" && (
+                <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-gray-100">
+                  {availLoading ? (
+                    <div className="p-3 text-center text-xs text-gray-400">
+                      Loading sessions...
+                    </div>
+                  ) : (
+                    availability?.map((a: OccurrenceAvailability) => (
+                      <div
+                        key={a.date}
+                        onClick={() => !a.is_paused && setSelectedDate(a.date)}
+                        className={`p-2 text-xs transition ${
+                          a.is_paused
+                            ? "cursor-not-allowed text-gray-400 line-through"
+                            : selectedDate === a.date
+                              ? "cursor-pointer bg-[#0094CA]/10 text-[#0094CA]"
+                              : "cursor-pointer hover:bg-gray-50"
+                        }`}
+                      >
+                        {new Date(a.date).toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                        {a.is_paused && (
+                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                            paused
+                          </span>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          </label>
+
+          {/* Pause Specific Date */}
+          {event.is_recurring && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-100 p-3 transition hover:bg-gray-50">
+              <input
+                type="radio"
+                name="pause-type"
+                checked={option === "date"}
+                onChange={() => setOption("date")}
+                className="mt-1 h-4 w-4 text-[#0094CA]"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900">
+                  Pause specific session
+                </p>
+                <p className="text-xs text-gray-400">
+                  Skip just one occurrence of this series.
+                </p>
+                {option === "date" && (
+                  <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-gray-100">
+                    {availLoading ? (
+                      <div className="p-3 text-center text-xs text-gray-400">
+                        Loading sessions...
+                      </div>
+                    ) : (
+                      availability?.map((a: OccurrenceAvailability) => (
+                        <div
+                          key={a.date}
+                          onClick={() => !a.is_paused && setSelectedDate(a.date)}
+                          className={`p-2 text-xs transition ${
+                            a.is_paused
+                              ? "cursor-not-allowed text-gray-400 line-through"
+                              : selectedDate === a.date
+                                ? "cursor-pointer bg-[#0094CA]/10 text-[#0094CA]"
+                                : "cursor-pointer hover:bg-gray-50"
+                          }`}
+                        >
+                          {new Date(a.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                          {a.is_paused && (
+                            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                              paused
+                            </span>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </label>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 rounded-lg bg-gray-100 py-3 font-semibold text-gray-900 transition hover:bg-gray-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={
+              (option === "from" || option === "date") && !selectedDate
+            }
+            className="flex-1 rounded-lg bg-amber-600 py-3 font-semibold text-white transition hover:bg-amber-700 disabled:opacity-50"
+          >
+            Pause Now
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

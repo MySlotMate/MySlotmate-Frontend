@@ -27,6 +27,7 @@ import {
   FiCalendar,
   FiGrid,
   FiChevronDown,
+  FiShield,
 } from "react-icons/fi";
 import { LuLanguages, LuBadgeCheck, LuSparkles } from "react-icons/lu";
 import { format } from "date-fns";
@@ -230,6 +231,7 @@ function BookingWidget({
   totalBookings,
   availability,
   isRecurring,
+  cancellationPolicy,
   onBook,
 }: {
   price: number | null;
@@ -242,6 +244,7 @@ function BookingWidget({
   totalBookings: number;
   availability?: OccurrenceAvailability[];
   isRecurring: boolean;
+  cancellationPolicy: string | null;
   onBook: (date: string, guests: number) => void;
 }) {
   const [selectedDate, setSelectedDate] = useState(_eventDate);
@@ -381,6 +384,39 @@ function BookingWidget({
           <p className="mt-2 text-center text-sm text-gray-500">
             You won&apos;t be charged yet
           </p>
+
+          {/* Cancellation Policy */}
+          <div className="mt-6 border-t border-gray-100 pt-6">
+            <div className="flex items-center gap-2 mb-2">
+              <FiShield className="text-[#0094CA] h-4 w-4" />
+              <h4 className="text-sm font-bold text-gray-900">Cancellation policy</h4>
+            </div>
+            {cancellationPolicy === "flexible" && (
+              <p className="text-xs text-gray-500 leading-relaxed">
+                <span className="font-semibold text-gray-700">Flexible:</span> Full refund for cancellations made at least 24 hours before the experience start time.
+              </p>
+            )}
+            {cancellationPolicy === "moderate" && (
+              <p className="text-xs text-gray-500 leading-relaxed">
+                <span className="font-semibold text-gray-700">Moderate:</span> Full refund for cancellations made at least 5 days before the experience start time.
+              </p>
+            )}
+            {cancellationPolicy === "strict" && (
+              <p className="text-xs text-gray-500 leading-relaxed">
+                <span className="font-semibold text-gray-700">Strict:</span> 50% refund for cancellations made at least 1 week before the experience start time.
+              </p>
+            )}
+            {cancellationPolicy === "no_refund" && (
+              <p className="text-xs text-gray-500 leading-relaxed">
+                <span className="font-semibold text-gray-700">No Refund:</span> This experience is non-refundable once booked.
+              </p>
+            )}
+            {!cancellationPolicy && (
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Standard cancellation policy applies. Contact host for details.
+              </p>
+            )}
+          </div>
         </>
       )}
 
@@ -969,6 +1005,7 @@ export default function ExperienceDetailPage({
                 totalBookings={event.total_bookings}
                 availability={availability}
                 isRecurring={event.is_recurring}
+                cancellationPolicy={event.cancellation_policy}
                 onBook={handleBook}
               />
             </div>

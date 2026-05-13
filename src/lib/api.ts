@@ -707,6 +707,8 @@ export interface EventDTO {
   status: string;
   published_at: string | null;
   paused_at: string | null;
+  paused_from: string | null;
+  paused_dates: string[] | null;
   avg_rating: number | null;
   total_bookings: number;
   total_reviews: number;
@@ -721,6 +723,7 @@ export interface OccurrenceAvailability {
   capacity: number;
   remaining: number;
   is_fully_booked: boolean;
+  is_paused?: boolean;
 }
 
 /** GET /events/host/{hostID} */
@@ -741,6 +744,28 @@ export function getEvent(eventId: string) {
 /** GET /events/{eventID}/availability */
 export function getEventAvailability(eventId: string) {
   return apiFetch<OccurrenceAvailability[]>(`/events/${eventId}/availability`);
+}
+
+export interface ExperienceTemplateDTO {
+  id: string;
+  mood: string;
+  title: string;
+  hook_line: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/** GET /experience-templates?mood=<mood> — mood-keyed title/hook_line suggestions */
+export function listExperienceTemplates(mood?: string) {
+  const qs = mood ? `?mood=${encodeURIComponent(mood)}` : "";
+  return apiFetch<ExperienceTemplateDTO[]>(`/experience-templates${qs}`);
+}
+
+/** GET /events/{eventID}/occurrences?host_id=… — host pause-management view (includes paused) */
+export function getEventOccurrencesForHost(eventId: string, hostId: string) {
+  return apiFetch<OccurrenceAvailability[]>(
+    `/events/${eventId}/occurrences?host_id=${hostId}`,
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -913,10 +938,19 @@ export function publishEvent(eventId: string, hostId: string) {
 }
 
 /** POST /events/{eventID}/pause — pause a live event */
-export function pauseEvent(eventId: string, hostId: string) {
+export function pauseEvent(
+  eventId: string,
+  hostId: string,
+  pausedFrom?: string,
+  pausedDate?: string,
+) {
   return apiFetch<EventDTO>(`/events/${eventId}/pause`, {
     method: "POST",
-    data: { host_id: hostId },
+    data: {
+      host_id: hostId,
+      paused_from: pausedFrom,
+      paused_date: pausedDate,
+    },
   });
 }
 
@@ -954,6 +988,10 @@ export interface BookingDTO {
   created_at: string;
   updated_at: string;
   cancelled_at: string | null;
+  // Joined user fields — present only on the host attendees endpoint.
+  user_name?: string;
+  user_email?: string;
+  user_avatar_url?: string | null;
 }
 
 export interface CreateBookingPayload {

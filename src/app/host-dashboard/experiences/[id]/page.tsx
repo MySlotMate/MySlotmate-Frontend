@@ -11,7 +11,7 @@ import {
   useUploadFiles,
 } from "~/hooks/useApi";
 import { useDragDrop } from "~/hooks/useDragDrop";
-import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck } from "react-icons/fi";
+import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck, FiChevronDown, FiChevronRight, FiCalendar, FiUsers } from "react-icons/fi";
 import type { BookingDTO } from "~/lib/api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -217,7 +217,153 @@ function ImageUpload({
   );
 }
 
-function AttendeesList({ eventId }: { eventId: string }) {
+function AttendeeRow({ attendee }: { attendee: BookingDTO }) {
+  return (
+    <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 first:border-t-0">
+      <div className="flex min-w-0 items-center gap-3">
+        {attendee.user_avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={attendee.user_avatar_url}
+            alt={attendee.user_name ?? ""}
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0094CA]/10 text-sm font-semibold text-[#0094CA]">
+            {(attendee.user_name ?? "?").charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-gray-900">
+            {attendee.user_name ?? "Unknown user"}
+          </p>
+          {attendee.user_email && (
+            <p className="truncate text-xs text-gray-500">{attendee.user_email}</p>
+          )}
+          <p className="text-xs text-gray-500">
+            Qty: {attendee.quantity}
+            {attendee.amount_cents !== null && (
+              <span className="ml-2 text-gray-400">
+                ₹{(attendee.amount_cents / 100).toFixed(2)}
+              </span>
+            )}
+          </p>
+        </div>
+      </div>
+      <span
+        className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
+          attendee.status === "pending"
+            ? "bg-yellow-100 text-yellow-800"
+            : attendee.status === "confirmed"
+              ? "bg-green-100 text-green-800"
+              : attendee.status === "cancelled"
+                ? "bg-red-100 text-red-800"
+                : attendee.status === "refunded"
+                  ? "bg-orange-100 text-orange-800"
+                  : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1)}
+      </span>
+    </div>
+  );
+}
+
+function SessionGroup({
+  occurrenceDate,
+  bookings,
+  defaultOpen,
+  isRecurring,
+}: {
+  occurrenceDate: string;
+  bookings: BookingDTO[];
+  defaultOpen: boolean;
+  isRecurring: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  const activeBookings = bookings.filter(
+    (b) => b.status !== "cancelled" && b.status !== "refunded",
+  );
+  const totalGuests = activeBookings.reduce((sum, b) => sum + b.quantity, 0);
+  const revenueCents = activeBookings.reduce(
+    (sum, b) => sum + (b.amount_cents ?? 0),
+    0,
+  );
+
+  const dateLabel = new Date(occurrenceDate).toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  const isPast = new Date(occurrenceDate) < new Date();
+
+  // For non-recurring events with a single session, skip the collapsible chrome.
+  if (!isRecurring) {
+    return (
+      <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
+        {bookings.map((b) => (
+          <AttendeeRow key={b.id} attendee={b} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-gray-200">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-3 bg-gray-50 px-4 py-3 text-left transition hover:bg-gray-100"
+      >
+        {open ? (
+          <FiChevronDown className="h-4 w-4 text-gray-400" />
+        ) : (
+          <FiChevronRight className="h-4 w-4 text-gray-400" />
+        )}
+        <FiCalendar className="h-4 w-4 text-[#0094CA]" />
+        <span className="text-sm font-semibold text-gray-900">{dateLabel}</span>
+        {isPast && (
+          <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
+            past
+          </span>
+        )}
+        <span className="ml-auto flex items-center gap-3 text-xs text-gray-500">
+          <span className="inline-flex items-center gap-1">
+            <FiUsers className="h-3.5 w-3.5" />
+            {totalGuests} guest{totalGuests === 1 ? "" : "s"}
+          </span>
+          {revenueCents > 0 && (
+            <span className="font-medium text-gray-700">
+              ₹{(revenueCents / 100).toFixed(2)}
+            </span>
+          )}
+          <span className="text-gray-400">
+            {bookings.length} booking{bookings.length === 1 ? "" : "s"}
+          </span>
+        </span>
+      </button>
+      {open && (
+        <div className="bg-white">
+          {bookings.map((b) => (
+            <AttendeeRow key={b.id} attendee={b} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AttendeesList({
+  eventId,
+  isRecurring,
+}: {
+  eventId: string;
+  isRecurring: boolean;
+}) {
   const [attendees, setAttendees] = useState<BookingDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -252,41 +398,33 @@ function AttendeesList({ eventId }: { eventId: string }) {
     return <p className="py-8 text-center text-gray-500">No bookings yet</p>;
   }
 
+  // Group bookings by occurrence date (date+time keyed string)
+  const groups = new Map<string, BookingDTO[]>();
+  for (const b of attendees) {
+    const key = b.occurrence_date;
+    const arr = groups.get(key);
+    if (arr) arr.push(b);
+    else groups.set(key, [b]);
+  }
+
+  const sortedKeys = Array.from(groups.keys()).sort();
+
+  // Default-open the first upcoming session (or the last past one if all are past).
+  const now = Date.now();
+  const firstUpcomingKey =
+    sortedKeys.find((k) => new Date(k).getTime() >= now) ??
+    sortedKeys[sortedKeys.length - 1];
+
   return (
     <div className="space-y-3">
-      {attendees.map((attendee) => (
-        <div
-          key={attendee.id}
-          className="flex items-center justify-between rounded-lg border border-gray-200 p-4"
-        >
-          <div>
-            <p className="font-semibold text-gray-900">
-              User ID: {attendee.user_id}
-            </p>
-            <p className="text-sm text-gray-500">Qty: {attendee.quantity}</p>
-            {attendee.amount_cents !== null && (
-              <p className="text-xs text-gray-400">
-                ₹{(attendee.amount_cents / 100).toFixed(2)}
-              </p>
-            )}
-          </div>
-          <div className="text-right">
-            <span
-              className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                attendee.status === "pending"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : attendee.status === "confirmed"
-                    ? "bg-green-100 text-green-800"
-                    : attendee.status === "cancelled"
-                      ? "bg-red-100 text-red-800"
-                      : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              {attendee.status.charAt(0).toUpperCase() +
-                attendee.status.slice(1)}
-            </span>
-          </div>
-        </div>
+      {sortedKeys.map((key) => (
+        <SessionGroup
+          key={key}
+          occurrenceDate={key}
+          bookings={groups.get(key)!}
+          defaultOpen={key === firstUpcomingKey}
+          isRecurring={isRecurring}
+        />
       ))}
     </div>
   );
@@ -943,6 +1081,9 @@ export default function EditEventPage({
                     <option value="strict">
                       Strict - 50% refund up to 1 week before
                     </option>
+                    <option value="no_refund">
+                      No Refund - Non-refundable once booked
+                    </option>
                   </select>
                 </div>
 
@@ -1031,7 +1172,7 @@ export default function EditEventPage({
               <h2 className="mb-4 text-lg font-semibold text-gray-900">
                 Event Bookings
               </h2>
-              <AttendeesList eventId={id} />
+              <AttendeesList eventId={id} isRecurring={form.isRecurring} />
             </div>
           )}
         </div>

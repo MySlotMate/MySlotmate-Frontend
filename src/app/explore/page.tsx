@@ -57,7 +57,7 @@ type RatingFilter = "any" | "new" | "3_5_plus" | "4_0_plus" | "4_5_plus";
 
 const formatPrice = (priceCents: number | null | undefined) => {
   if (!priceCents) return "Free";
-  return `₹${Math.round(priceCents / 100)} / slot`;
+  return `₹${Math.round(priceCents / 100)}`;
 };
 
 const formatDuration = (mins: number | null | undefined) => {
@@ -712,7 +712,7 @@ export default function ExplorePage() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                 {visibleEvents.map((event) => (
                   <ExperienceCard
                     key={event.id}
@@ -734,6 +734,7 @@ export default function ExplorePage() {
                     }
                     price={formatPrice(event.price_cents)}
                     time={event.time}
+                    location={event.location}
                     isRecurring={event.is_recurring}
                     capacity={event.capacity}
                     totalBookings={event.total_bookings}

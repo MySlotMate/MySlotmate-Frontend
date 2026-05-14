@@ -529,10 +529,12 @@ function SuccessModal({
   isOpen,
   onClose: _onClose,
   experienceId,
+  isDraft,
 }: {
   isOpen: boolean;
   onClose: () => void;
   experienceId: string;
+  isDraft: boolean;
 }) {
   const router = useRouter();
 
@@ -541,35 +543,57 @@ function SuccessModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="animate-in fade-in zoom-in w-full max-w-md rounded-2xl bg-white p-8 text-center duration-200">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <FiCheck className="text-green-600" size={32} />
+        <div
+          className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
+            isDraft ? "bg-gray-100" : "bg-green-100"
+          }`}
+        >
+          <FiCheck
+            className={isDraft ? "text-gray-500" : "text-green-600"}
+            size={32}
+          />
         </div>
         <h2 className="mb-2 text-2xl font-bold text-gray-900">
-          Your Experience is Live! 🎉
+          {isDraft ? "Draft Saved" : "Your Experience is Live! 🎉"}
         </h2>
         <p className="mb-6 text-gray-500">
-          Congratulations! Your experience has been published and is now visible
-          to guests.
+          {isDraft
+            ? "Your draft is safe. Pick it up from the Drafts tab in My Experiences whenever you're ready to finish it."
+            : "Congratulations! Your experience has been published and is now visible to guests."}
         </p>
         <div className="flex flex-col gap-3">
-          <button
-            onClick={() => {
-              const url = `${window.location.origin}/experience/${experienceId}`;
-              void navigator.clipboard.writeText(url);
-              toast.success("Link copied to clipboard!");
-            }}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
-          >
-            <FiShare2 size={18} />
-            Share Experience
-          </button>
-          <button
-            onClick={() => router.push(`/experience/${experienceId}`)}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
-          >
-            <FiExternalLink size={18} />
-            View Live Page
-          </button>
+          {!isDraft && (
+            <>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/experience/${experienceId}`;
+                  void navigator.clipboard.writeText(url);
+                  toast.success("Link copied to clipboard!");
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
+              >
+                <FiShare2 size={18} />
+                Share Experience
+              </button>
+              <button
+                onClick={() => router.push(`/experience/${experienceId}`)}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
+              >
+                <FiExternalLink size={18} />
+                View Live Page
+              </button>
+            </>
+          )}
+          {isDraft && (
+            <button
+              onClick={() =>
+                router.push(`/host-dashboard/experiences/${experienceId}`)
+              }
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
+            >
+              Continue Editing
+            </button>
+          )}
           <button
             onClick={() => router.push("/host-dashboard/experiences")}
             className="w-full rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8]"
@@ -592,6 +616,7 @@ export default function CreateExperiencePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [savedAsDraft, setSavedAsDraft] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string>("");
   const [showMapPicker, setShowMapPicker] = useState(false);
 
@@ -805,8 +830,17 @@ export default function CreateExperiencePage() {
   /* ---------------------------------------------------------------- */
   /*  Form Submission                                                  */
   /* ---------------------------------------------------------------- */
-  const handleSubmit = async () => {
-    if (!validateStep2()) return;
+  const handleSubmit = async (asDraft = false) => {
+    // Drafts skip the strict validation so hosts can save work-in-progress.
+    // A draft still needs at least a title so the host can find it later.
+    if (asDraft) {
+      if (!form.title.trim()) {
+        toast.error("Add a title before saving as draft");
+        return;
+      }
+    } else if (!validateStep2()) {
+      return;
+    }
     if (!host?.id) {
       toast.error("Host credentials not found");
       return;
@@ -843,14 +877,17 @@ export default function CreateExperiencePage() {
         }
       }
 
-      // Construct datetime
-      const eventDateTime = new Date(`${form.eventDate}T${form.eventTime}`);
-      let endDateTime: Date | undefined;
-      if (form.endTime) {
+      // Construct datetime — drafts may be missing date/time, so fall back to now.
+      const hasDateTime = !!(form.eventDate && form.eventTime);
+      const eventDateTime = hasDateTime
+        ? new Date(`${form.eventDate}T${form.eventTime}`)
+        : new Date();
+      let endDateTime: Date;
+      if (form.endTime && form.eventDate) {
         endDateTime = new Date(`${form.eventDate}T${form.endTime}`);
       } else {
         endDateTime = new Date(
-          eventDateTime.getTime() + form.durationMinutes * 60 * 1000,
+          eventDateTime.getTime() + (form.durationMinutes || 60) * 60 * 1000,
         );
       }
 
@@ -880,21 +917,29 @@ export default function CreateExperiencePage() {
         is_recurring: form.isRecurring,
         recurrence_rule: form.isRecurring ? form.recurrenceRule : undefined,
         cancellation_policy: form.cancellationPolicy,
+        status: asDraft ? "draft" : "live",
       });
 
-      // Publish the event immediately
-      try {
-        await publishEvent.mutateAsync({
-          eventId: eventRes.data.id,
-          hostId: host.id,
-        });
-      } catch (publishErr) {
-        console.warn("Auto-publish failed, event saved as draft:", publishErr);
+      // Auto-publish only when the host clicked "Publish Experience".
+      if (!asDraft) {
+        try {
+          await publishEvent.mutateAsync({
+            eventId: eventRes.data.id,
+            hostId: host.id,
+          });
+        } catch (publishErr) {
+          console.warn("Auto-publish failed, event saved as draft:", publishErr);
+        }
       }
 
       setCreatedEventId(eventRes.data.id);
+      setSavedAsDraft(asDraft);
       setShowSuccess(true);
-      toast.success("Experience created successfully!");
+      toast.success(
+        asDraft
+          ? "Draft saved. Find it under Drafts in My Experiences."
+          : "Experience created successfully!",
+      );
     } catch (err) {
       console.error("Failed to create experience:", err);
       toast.error("Failed to create experience. Please try again.");
@@ -1388,11 +1433,19 @@ export default function CreateExperiencePage() {
                 </div>
               </div>
 
-              {/* Next Button */}
-              <div className="border-t border-gray-100 pt-6">
+              {/* Step 1 footer — draft save + continue */}
+              <div className="flex gap-3 border-t border-gray-100 pt-6">
+                <button
+                  onClick={() => void handleSubmit(true)}
+                  disabled={isSubmitting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmitting ? "Saving…" : "Save as Draft"}
+                </button>
                 <button
                   onClick={goToStep2}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8]"
+                  disabled={isSubmitting}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Continue to Schedule & Pricing
                   <FiArrowRight />
@@ -1636,13 +1689,20 @@ export default function CreateExperiencePage() {
                 <div className="flex gap-4 border-t border-gray-100 pt-6">
                   <button
                     onClick={goToStep1}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-200 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+                    className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 px-6 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
                   >
                     <FiArrowLeft />
                     Back
                   </button>
                   <button
-                    onClick={handleSubmit}
+                    onClick={() => void handleSubmit(true)}
+                    disabled={isSubmitting}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Save as Draft
+                  </button>
+                  <button
+                    onClick={() => void handleSubmit(false)}
                     disabled={isSubmitting}
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -1683,6 +1743,7 @@ export default function CreateExperiencePage() {
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}
         experienceId={createdEventId}
+        isDraft={savedAsDraft}
       />
 
       <MapPickerModal

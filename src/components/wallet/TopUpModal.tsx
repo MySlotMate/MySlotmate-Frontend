@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { LuX, LuWallet, LuLoader2 } from "react-icons/lu";
 import { useCreateTopupOrder, useVerifyTopupPayment } from "~/hooks/useApi";
 
@@ -64,11 +65,16 @@ export default function TopUpModal({
   userEmail,
   userPhone,
 }: TopUpModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [amount, setAmount] = useState(50000); // default ₹500
   const [customAmount, setCustomAmount] = useState("");
   const [isCustom, setIsCustom] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const createOrder = useCreateTopupOrder();
   const verifyPayment = useVerifyTopupPayment();
@@ -175,128 +181,123 @@ export default function TopUpModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <div className="flex min-h-full items-start justify-center p-4 pt-10 sm:pt-20">
 
-      {/* Modal */}
-      <div className="fixed top-1/2 left-1/2 z-50 max-h-[90vh] w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e6f8ff]">
-              <LuWallet className="h-5 w-5 text-[#0094CA]" />
+        {/* Modal */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="relative z-50 w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-5 text-left align-middle shadow-2xl transition-all sm:p-6"
+        >
+          {/* Header */}
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e6f8ff]">
+                <LuWallet className="h-5 w-5 text-[#0094CA]" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Add Money</h2>
+                <p className="text-sm text-gray-500">
+                  Balance: {formatCurrency(currentBalance)}
+                </p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900">Add Money</h2>
-              <p className="text-sm text-gray-500">
-                Balance: {formatCurrency(currentBalance)}
-              </p>
-            </div>
+            <button
+              onClick={onClose}
+              className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            >
+              <LuX className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-          >
-            <LuX className="h-5 w-5" />
-          </button>
-        </div>
 
-        {/* Preset amounts */}
-        <div className="mb-4">
-          <p className="mb-2 text-sm font-medium text-gray-700">Quick Select</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-2">
-            {PRESET_AMOUNTS.map((preset) => (
-              <button
-                key={preset}
-                onClick={() => handlePresetSelect(preset)}
-                className={`rounded-lg border-2 py-2 text-sm font-semibold transition ${
-                  !isCustom && amount === preset
+          {/* Preset amounts */}
+          <div className="mb-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-2">
+              {PRESET_AMOUNTS.map((preset) => (
+                <button
+                  key={preset}
+                  onClick={() => handlePresetSelect(preset)}
+                  className={`rounded-lg border-2 py-2 text-sm font-semibold transition ${!isCustom && amount === preset
                     ? "border-[#0094CA] bg-[#e6f8ff] text-[#0094CA]"
                     : "border-gray-200 text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {formatCurrency(preset)}
-              </button>
-            ))}
+                    }`}
+                >
+                  {formatCurrency(preset)}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Custom amount */}
-        <div className="mb-6">
-          <p className="mb-2 text-sm font-medium text-gray-700">
-            Or enter custom amount
-          </p>
-          <div className="relative">
-            <span className="absolute top-1/2 left-4 -translate-y-1/2 text-lg font-semibold text-gray-500">
-              ₹
-            </span>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="Enter amount"
-              value={customAmount}
-              onChange={(e) => handleCustomAmountChange(e.target.value)}
-              className={`w-full rounded-lg border-2 py-3 pr-4 pl-10 text-lg font-semibold transition outline-none ${
-                isCustom
+          {/* Custom amount */}
+          <div className="mb-4">
+            <div className="relative">
+              <span className="absolute top-1/2 left-4 -translate-y-1/2 text-lg font-semibold text-gray-500">
+                ₹
+              </span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter amount"
+                value={customAmount}
+                onChange={(e) => handleCustomAmountChange(e.target.value)}
+                className={`w-full rounded-lg border-2 py-3 pr-4 pl-10 text-lg font-semibold transition outline-none ${isCustom
                   ? "border-[#0094CA] ring-2 ring-[#0094CA]/20"
                   : "border-gray-200 focus:border-[#0094CA]"
-              }`}
-            />
+                  }`}
+              />
+            </div>
+            <p className="mt-1 text-xs text-gray-500">Min ₹100 • Max ₹1,00,000</p>
           </div>
-          <p className="mt-1 text-xs text-gray-500">Min ₹100 • Max ₹1,00,000</p>
-        </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
-
-        {/* Amount summary */}
-        <div className="mb-4 rounded-lg bg-gray-50 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Amount to add</span>
-            <span className="text-lg font-bold text-gray-900">
-              {formatCurrency(amount)}
-            </span>
-          </div>
-          <div className="mt-1 flex items-center justify-between border-t border-gray-200 pt-2">
-            <span className="text-sm text-gray-600">New balance</span>
-            <span className="text-sm font-semibold text-green-600">
-              {formatCurrency(currentBalance + amount)}
-            </span>
-          </div>
-        </div>
-
-        {/* Add Money button */}
-        <button
-          onClick={handleTopUp}
-          disabled={isProcessing || amount < 10000}
-          className="w-full rounded-xl bg-[#0094CA] py-3.5 text-base font-bold text-white transition hover:bg-[#007dab] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isProcessing ? (
-            <span className="flex items-center justify-center gap-2">
-              <LuLoader2 className="h-5 w-5 animate-spin" />
-              Processing...
-            </span>
-          ) : (
-            `Add ${formatCurrency(amount)}`
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
           )}
-        </button>
 
-        {/* Secure payment note */}
-        <p className="mt-4 text-center text-xs text-gray-400">
-          Secure payment via Razorpay • 100% Safe
-        </p>
+          {/* Amount summary */}
+          <div className="mb-4 rounded-lg bg-gray-50 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Amount to add</span>
+              <span className="text-lg font-bold text-gray-900">
+                {formatCurrency(amount)}
+              </span>
+            </div>
+            <div className="mt-1 flex items-center justify-between border-t border-gray-200 pt-2">
+              <span className="text-sm text-gray-600">New balance</span>
+              <span className="text-sm font-semibold text-green-600">
+                {formatCurrency(currentBalance + amount)}
+              </span>
+            </div>
+          </div>
+
+          {/* Add Money button */}
+          <button
+            onClick={handleTopUp}
+            disabled={isProcessing || amount < 10000}
+            className="w-full rounded-xl bg-[#0094CA] py-3.5 text-base font-bold text-white transition hover:bg-[#007dab] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isProcessing ? (
+              <span className="flex items-center justify-center gap-2">
+                <LuLoader2 className="h-5 w-5 animate-spin" />
+                Processing...
+              </span>
+            ) : (
+              `Add ${formatCurrency(amount)}`
+            )}
+          </button>
+
+          {/* Secure payment note */}
+          <p className="mt-4 text-center text-xs text-gray-400">
+            Secure payment via Razorpay • 100% Safe
+          </p>
+        </div>
       </div>
-    </>
+    </div>,
+    document.body
   );
 }

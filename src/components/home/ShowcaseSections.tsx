@@ -280,7 +280,7 @@ const ShowcaseSections = () => {
   const storyContainerRef = useRef<HTMLDivElement>(null);
   const formatPrice = (priceCents: number | null | undefined) => {
     if (!priceCents) return "Free";
-    return `\u20B9${Math.round(priceCents / 100)} / slot`;
+    return `₹${Math.round(priceCents / 100)}`;
   };
 
   useEffect(() => {
@@ -367,6 +367,7 @@ const ShowcaseSections = () => {
             : "NEW",
         price: formatPrice(event.price_cents),
         time: event.time,
+        location: event.location,
         isRecurring: event.is_recurring,
         capacity: event.capacity,
         totalBookings: event.total_bookings,
@@ -1235,7 +1236,7 @@ const ShowcaseSections = () => {
 
               <div
                 ref={curatedSessionsViewportRef}
-                className="hide-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2"
+                className="hide-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2"
               >
                 {curatedSessions.map((session, idx) => (
                   <ExperienceCard

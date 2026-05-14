@@ -9,6 +9,7 @@ import {
   useEvent,
   useUpdateEvent,
   useUploadFiles,
+  usePublishEvent,
 } from "~/hooks/useApi";
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck, FiChevronDown, FiChevronRight, FiCalendar, FiUsers } from "react-icons/fi";
@@ -478,6 +479,7 @@ export default function EditEventPage({
   const { data: host, isLoading: hostLoading } = useMyHost(userId);
   const { data: event, isLoading: eventLoading } = useEvent(id);
   const updateEvent = useUpdateEvent();
+  const publishEvent = usePublishEvent();
   const uploadFiles = useUploadFiles();
   const queryClient = useQueryClient();
 
@@ -560,10 +562,40 @@ export default function EditEventPage({
     );
   };
 
-  const handleUpdate = async () => {
+  // Returns the first validation error string, or null if the draft is
+  // complete enough to publish.
+  const validateForPublish = (): string | null => {
+    if (!form.title.trim()) return "Add a title before publishing";
+    if (!form.hookLine.trim()) return "Add a hook line before publishing";
+    if (!form.mood) return "Pick a mood before publishing";
+    if (!form.description.trim()) return "Add a description before publishing";
+    if (!form.eventDate || !form.eventTime)
+      return "Set a date and time before publishing";
+    if (!form.isFree && form.priceCents <= 0)
+      return "Set a price (or mark as free) before publishing";
+    if (!form.isOnline && !form.location.trim())
+      return "Add a location (or mark as online) before publishing";
+    if (form.isOnline && !form.meetingLink.trim())
+      return "Add a meeting link before publishing";
+    if (form.maxGroupSize < 1) return "Set a valid group size before publishing";
+    if (!form.cancellationPolicy)
+      return "Pick a cancellation policy before publishing";
+    return null;
+  };
+
+  const handleUpdate = async (publishAfter = false) => {
     if (!host?.id || !event?.id) {
       toast.error("Unable to update event");
       return;
+    }
+
+    // Only enforce completeness when the host is actually trying to publish.
+    if (publishAfter) {
+      const err = validateForPublish();
+      if (err) {
+        toast.error(err);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -646,7 +678,28 @@ export default function EditEventPage({
         },
       });
 
-      toast.success("Experience updated successfully!");
+      // Publish the event only when the host explicitly clicked "Publish Now"
+      // and validation passed. Otherwise the event keeps its current status
+      // (a draft stays a draft).
+      if (publishAfter) {
+        try {
+          await publishEvent.mutateAsync({
+            eventId: event.id,
+            hostId: host.id,
+          });
+        } catch (publishErr) {
+          console.warn("Publish failed after save:", publishErr);
+          toast.error("Saved, but publish failed. Try again.");
+          await queryClient.invalidateQueries({ queryKey: ["events"] });
+          return;
+        }
+      }
+
+      toast.success(
+        publishAfter
+          ? "Experience published! It's now visible to guests."
+          : "Changes saved.",
+      );
       await queryClient.invalidateQueries({ queryKey: ["events"] });
       router.push("/host-dashboard/experiences");
     } catch (err) {
@@ -1146,15 +1199,31 @@ export default function EditEventPage({
                 />
               </div>
 
-              <div className="flex gap-4 border-t border-gray-100 pt-6">
+              <div className="flex flex-wrap gap-4 border-t border-gray-100 pt-6">
                 <button
-                  onClick={handleUpdate}
+                  onClick={() => void handleUpdate(false)}
                   disabled={isSubmitting}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-3 font-semibold transition disabled:opacity-50 ${
+                    event?.status === "draft"
+                      ? "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                      : "bg-[#0094CA] text-white hover:bg-[#007ba8]"
+                  }`}
                 >
                   <FiCheck size={18} />
-                  Save Changes
+                  {event?.status === "draft" ? "Save Draft" : "Save Changes"}
                 </button>
+
+                {event?.status === "draft" && (
+                  <button
+                    onClick={() => void handleUpdate(true)}
+                    disabled={isSubmitting}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+                  >
+                    <FiCheck size={18} />
+                    Publish Now
+                  </button>
+                )}
+
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   className="flex items-center justify-center gap-2 rounded-lg bg-red-50 px-6 py-3 font-semibold text-red-600 transition hover:bg-red-100"

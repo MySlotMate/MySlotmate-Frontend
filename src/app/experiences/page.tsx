@@ -83,8 +83,8 @@ export default function ExperiencesPage() {
           items={[{ label: "Home", href: "/" }, { label: "Experiences" }]}
           className="mb-6"
         />
-        <div className="mb-8 flex flex-col gap-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-8 flex flex-col gap-6">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <h1 className="font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.05em] sm:text-5xl">
               Trending Now
             </h1>
@@ -104,7 +104,7 @@ export default function ExperiencesPage() {
           </div>
 
           {/* Mood Filters */}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-6">
             {moods.map((mood) => (
               <button
                 key={mood}
@@ -130,7 +130,7 @@ export default function ExperiencesPage() {
             No experiences found.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {filteredEvents.map((event) => (
               <ExperienceCard
                 key={event.id}
@@ -152,6 +152,7 @@ export default function ExperiencesPage() {
                 }
                 price={formatPrice(event.price_cents)}
                 time={event.time}
+                location={event.location}
                 isRecurring={event.is_recurring}
                 capacity={event.capacity}
                 totalBookings={event.total_bookings}

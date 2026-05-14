@@ -2,13 +2,24 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Clock3, Heart, Star, Users } from "lucide-react";
-import { toast } from "sonner";
 import {
   useIsExperienceSaved,
   useSaveExperience,
   useUnsaveExperience,
 } from "~/hooks/useApi";
+import {
+  Clock3,
+  Heart,
+  Star,
+  Users,
+  MapPin,
+  Calendar,
+  ArrowRight,
+  RotateCcw,
+  Ticket,
+  Palette,
+} from "lucide-react";
+import { toast } from "sonner";
 
 export type ExperienceCardItem = {
   id?: string;
@@ -19,6 +30,7 @@ export type ExperienceCardItem = {
   rating: string;
   price: string;
   time?: string;
+  location?: string | null;
   isRecurring?: boolean;
   capacity?: number;
   totalBookings?: number;
@@ -138,9 +150,10 @@ export const ExperienceCard = ({
   title,
   description,
   imageUrl,
-  rating,
+  rating: _rating,
   price,
   time,
+  location,
   isRecurring,
   capacity,
   totalBookings,
@@ -171,7 +184,6 @@ export const ExperienceCard = ({
   const nextDateLabel = nextDateLocal ? formatEventDate(nextDateLocal.toISOString()) : null;
 
   const displayDate = isShowingNext ? dateLabel : (nextDateLabel ?? dateLabel);
-  const useNextStyle = isShowingNext || (isFull && !!nextDateLabel);
 
   const spotsLeft =
     capacity !== undefined && totalBookings !== undefined
@@ -207,128 +219,196 @@ export const ExperienceCard = ({
     }
   };
 
+  // Split price into amount + unit (e.g. "Free" / "" or "₹50" / "/slot")
+  const priceAmount = price.split(/\s|\//)[0] ?? price;
+  const isFree = /free/i.test(priceAmount);
+  const priceUnit = price.includes("/")
+    ? `/${price.split("/").pop()?.trim()}`
+    : isFree
+      ? "session"
+      : "/slot";
+
+  // Helper to get badge content based on headline/mood
+  const getBadge = () => {
+    const text = (isRecurring ? "Recurring" : headline || "Experience").toLowerCase();
+    
+    if (text.includes("morning")) return { label: "MORNING", icon: Clock3 };
+    if (text.includes("beginner") || text.includes("friendly")) return { label: "BEGINNER FRIENDLY", icon: Star };
+    if (text.includes("social")) return { label: "SOCIAL", icon: Users };
+    if (text.includes("one-time") || !isRecurring) return { label: "ONE-TIME", icon: Ticket };
+    if (text.includes("creative")) return { label: "CREATIVE", icon: Palette };
+    if (isRecurring) return { label: "RECURRING", icon: RotateCcw };
+    
+    return { label: headline.toUpperCase() || "EXPERIENCE", icon: Star };
+  };
+
+  const badge = getBadge();
+
+  // Date label split into "Tue, 12 May" + "at 8:30 PM" stack
+  const renderDateLabel = (label: string) => {
+    const atIdx = label.lastIndexOf(" at ");
+    if (atIdx !== -1) {
+      return {
+        top: label.slice(0, atIdx).trim(),
+        bottom: label.slice(atIdx + 1).trim(),
+      };
+    }
+
+    // Fallback: split on comma. e.g. "Thu, May 15, 8:30 PM"
+    const commaSplit = label.split(", ");
+    if (commaSplit.length >= 3) {
+      const timePart = commaSplit.slice(2).join(", ");
+      return {
+        top: commaSplit.slice(0, 2).join(", ").trim(),
+        bottom: timePart.toLowerCase().startsWith("at") ? timePart : `at ${timePart}`,
+      };
+    }
+
+    return { top: label, bottom: "" };
+  };
+
+  const date = displayDate ? renderDateLabel(displayDate) : null;
+
   return (
-    <Link
-      href={href}
-      className={`group flex flex-col overflow-hidden rounded-[32px] border border-[#aeddf840] bg-white p-2.5 shadow-[0_16px_40px_rgba(72,128,173,0.06)] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(72,128,173,0.12)] ${className}`}
+    <div
+      className={`group relative flex flex-col overflow-hidden rounded-[24px] border border-[#eef3f8] bg-white shadow-[0_10px_30px_rgba(72,128,173,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(72,128,173,0.12)] ${className}`}
     >
-      <div className="relative aspect-[1.1/1] w-full shrink-0 overflow-hidden rounded-[24px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl || "/assets/home/hiking.jpg"}
-          alt={title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
-        />
+      {/* Image Container - with white framing padding */}
+      <div className="p-2.5 pb-0">
+        <Link 
+          href={href} 
+          className="relative block aspect-[1.55/1] w-full overflow-hidden rounded-[20px]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl || "/assets/home/hiking.jpg"}
+            alt={title}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
 
-        {id && (
-          <button
-            onClick={handleSave}
-            disabled={saveExperience.isPending || unsaveExperience.isPending}
-            className="absolute top-2.5 right-2.5 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 text-[#0094CA] shadow-lg backdrop-blur-md transition hover:scale-110 hover:bg-white active:scale-90 disabled:opacity-50"
-            aria-label={isSaved ? "Remove from saved" : "Save experience"}
-          >
-            <Heart
-              className="h-4 w-4 transition-colors"
-              fill={isSaved ? "#0094CA" : "none"}
-              stroke="#0094CA"
-              strokeWidth={2.5}
-            />
-          </button>
-        )}
+          {/* Top-left Badge */}
+          <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#16304c] uppercase shadow-sm">
+            <badge.icon className="h-3.5 w-3.5" strokeWidth={2.5} />
+            {badge.label}
+          </span>
 
-        <div className="absolute top-2.5 left-2.5 z-40 flex flex-col gap-1">
-          {isRecurring ? (
-            <span className="rounded-full bg-[#0e8ae0] px-2 py-0.5 text-[8px] font-black tracking-widest text-white uppercase shadow-md">
-              Recurring
-            </span>
-          ) : null}
-        </div>
+          {/* Top-right Save Button */}
+          {id && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                handleSave(e);
+              }}
+              disabled={saveExperience.isPending || unsaveExperience.isPending}
+              className="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#16304c] shadow-sm transition hover:scale-110 hover:bg-white active:scale-90 disabled:opacity-50"
+              aria-label={isSaved ? "Remove from saved" : "Save experience"}
+            >
+              <Heart
+                className="h-[17px] w-[17px] transition-colors"
+                fill={isSaved ? "#16304c" : "none"}
+                stroke="#16304c"
+                strokeWidth={2.5}
+              />
+            </button>
+          )}
+        </Link>
       </div>
 
-      <div className="flex flex-1 flex-col px-2 pt-2.5 pb-3">
-        <div className="flex h-5 items-center">
-          <span className="inline-block rounded-full bg-[#f0f9ff] px-2 py-0.5 text-[8px] font-black tracking-widest text-[#0e8ae0] uppercase truncate">
-            {headline}
-          </span>
-        </div>
-        
-        <div className="mt-1.5 h-11">
-          <h3 className="line-clamp-2 text-base font-black leading-tight tracking-tight text-[#16304c] group-hover:text-[#0e8ae0] transition-colors">
+      {/* Content Body */}
+      <div className="flex flex-1 flex-col px-4 pt-3 pb-3">
+        {/* Location Row */}
+        {location && (
+          <div className="flex items-center gap-1.5 text-[13px] font-medium text-[#16304c]">
+            <MapPin className="h-4 w-4 shrink-0 text-[#0060df]" strokeWidth={2.5} />
+            <span className="line-clamp-1">{location}</span>
+          </div>
+        )}
+
+        {/* Title */}
+        <Link href={href} className="mt-2 block">
+          <h3 className="line-clamp-1 text-[18px] font-bold leading-tight tracking-tight text-[#16304c] transition-colors group-hover:text-[#0060df]">
             {title}
           </h3>
-        </div>
-        
-        <div className="mt-1 h-9">
-          <p className="line-clamp-2 text-[12px] leading-relaxed text-[#5c84a5]">
-            {description}
-          </p>
-        </div>
+        </Link>
 
-        <div className="mt-3 flex flex-col gap-1.5 border-t border-slate-50 pt-2.5 h-[42px] justify-center">
-          <div className="flex items-center gap-1.5">
-            <Clock3 size={11} className="text-[#0e8ae0]" strokeWidth={2.5} />
-            {useNextStyle ? (
-              <p className="text-[10px] font-bold tracking-[0.02em] text-emerald-600 truncate">
-                Next: {displayDate}
-              </p>
-            ) : displayDate ? (
-              <p className="text-[10px] font-bold tracking-[0.02em] text-[#16304c] truncate">
-                {displayDate}
-              </p>
+        {/* Description */}
+        <p className="mt-1.5 line-clamp-2 min-h-[34px] text-[12px] leading-snug text-[#5c84a5]">
+          {description}
+        </p>
+
+        {/* Info Grid (Date & Spots) - Two Column with Divider */}
+        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#f0f4f8] pt-3">
+          <div className="flex items-start gap-3">
+            <Calendar
+              className="mt-0.5 h-4.5 w-4.5 shrink-0 text-[#0060df]"
+              strokeWidth={2.5}
+            />
+            {date ? (
+              <div className="min-w-0">
+                <p className="text-[12px] font-bold text-[#16304c]">
+                  {date.top}
+                </p>
+                <p className="text-[11px] font-medium text-[#5c84a5]">
+                  {date.bottom}
+                </p>
+              </div>
             ) : (
-              <p className="text-[10px] font-bold tracking-[0.02em] text-[#a0aec0] truncate">
-                Schedule TBD
-              </p>
+              <p className="text-[12px] font-bold text-[#a0aec0]">Schedule TBD</p>
             )}
           </div>
 
-          {spotsLeft !== null && !((isFull || isShowingNext) && isRecurring) && (
-            <div className="flex items-center gap-1.5">
-              <Users size={11} className={isFull ? "text-red-500" : "text-emerald-600"} strokeWidth={2.5} />
-              <p className={`text-[10px] font-bold tracking-[0.02em] ${
-                isFull ? "text-red-500" : "text-emerald-600"
-              } truncate`}>
-                {isFull
-                  ? "Fully Booked"
-                  : spotsLeft === 1
-                    ? "Last spot!"
-                    : `${spotsLeft} spots available`}
-              </p>
-            </div>
-          )}
-          {isRecurring && (isShowingNext || (isFull && !!nextDateLabel)) && (
-            <div className="flex items-center gap-1.5">
-              <Users size={11} className="text-emerald-600" strokeWidth={2.5} />
-              <p className="text-[10px] font-bold tracking-[0.02em] text-emerald-600 truncate">
-                Next session available
-              </p>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-auto pt-3">
-          <div className="flex items-center justify-between rounded-xl bg-[#fafcfe] p-1.5">
-            <div className="flex flex-col px-1">
-              <div className="flex items-baseline gap-0.5">
-                <span className="text-xs font-black text-[#16304c]">{price.split(' ')[0]}</span>
-                <span className="text-[9px] font-bold text-[#a0aec0]">
-                  {price.includes('/') ? `/${price.split('/').pop()?.trim()}` : '/ session'}
-                </span>
+          <div className="flex items-start gap-3 border-l border-[#f0f4f8] pl-4">
+            <Users
+              className={`mt-0.5 h-4.5 w-4.5 shrink-0 ${isFull ? "text-red-500" : "text-[#0060df]"}`}
+              strokeWidth={2.5}
+            />
+            {isRecurring && (isShowingNext || (isFull && !!nextDateLabel)) ? (
+              <div className="min-w-0">
+                <p className="truncate text-[12px] font-bold text-[#16304c]">Next session</p>
+                <p className="truncate text-[11px] font-medium text-[#0060df]">available</p>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-1 rounded-lg bg-white px-2 py-1 shadow-sm ring-1 ring-slate-100">
-              {rating !== "New" && (
-                <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />
-              )}
-              <span className="text-[10px] font-black text-[#16304c]">
-                {rating}
-              </span>
-            </div>
+            ) : spotsLeft !== null ? (
+              <div className="min-w-0">
+                <p
+                  className={`text-[12px] font-bold ${isFull ? "text-red-500" : "text-[#16304c]"}`}
+                >
+                  {isFull ? "Fully" : `${spotsLeft} spots`}
+                </p>
+                <p
+                  className={`text-[11px] font-medium ${isFull ? "text-red-500" : "text-[#5c84a5]"}`}
+                >
+                  {isFull ? "booked" : "available"}
+                </p>
+              </div>
+            ) : (
+              <p className="text-[12px] font-bold text-[#a0aec0]">—</p>
+            )}
           </div>
         </div>
       </div>
-    </Link>
+
+      {/* Pricing + Book Action — light pill row */}
+      <div className="mt-auto px-4 pb-3 pt-2">
+        <div className="flex items-center justify-between rounded-2xl bg-[#f3f7fc] px-3.5 py-2 ring-1 ring-[#e6eef7]">
+          <div className="flex items-baseline gap-1">
+            <span className="text-[15px] font-bold text-[#16304c]">
+              {priceAmount}
+            </span>
+            <span className="text-[10px] font-medium text-[#5c84a5]">
+              {priceUnit}
+            </span>
+          </div>
+
+          <Link
+            href={href}
+            className="inline-flex items-center gap-1 rounded-md bg-[#0060df] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-[#004bb1] active:scale-95"
+          >
+            Book Now
+            <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 };

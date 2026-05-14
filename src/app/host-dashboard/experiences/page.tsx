@@ -195,7 +195,7 @@ function ExperienceCard({
       <div className="relative h-44 bg-gray-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={event.cover_image_url ?? "/assets/home/cover.svg"}
+          src={event.cover_image_url ?? "/assets/home/hiking.jpg"}
           alt={event.title}
           loading="lazy"
           className="h-full w-full object-cover"
@@ -401,9 +401,23 @@ function ExperienceCard({
                     }
 
                     toast.success("Experience deleted successfully!");
-                    await queryClient.invalidateQueries({
-                      queryKey: ["events"],
-                    });
+                    // Invalidate every cache keyed off this host's events so
+                    // the list, calendar, filtered views, and "today" widget
+                    // all drop the deleted row immediately.
+                    await Promise.all([
+                      queryClient.invalidateQueries({
+                        queryKey: ["eventsByHost", _hostId],
+                      }),
+                      queryClient.invalidateQueries({
+                        queryKey: ["hostEventsFiltered", _hostId],
+                      }),
+                      queryClient.invalidateQueries({
+                        queryKey: ["calendarEvents", _hostId],
+                      }),
+                      queryClient.invalidateQueries({
+                        queryKey: ["todaySchedule", _hostId],
+                      }),
+                    ]);
                     setShowDeleteConfirm(false);
                   } catch (err) {
                     console.error("Delete failed:", err);

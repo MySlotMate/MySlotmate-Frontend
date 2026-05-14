@@ -872,6 +872,7 @@ export interface EventCreatePayload {
   ai_suggestion?: string;
   meeting_link?: string;
   google_maps_url?: string;
+  status?: "draft" | "live";
 }
 
 export interface EventUpdatePayload {

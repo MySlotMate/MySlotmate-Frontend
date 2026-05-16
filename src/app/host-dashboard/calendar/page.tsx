@@ -40,7 +40,13 @@ export default function HostCalendarPage() {
   }, []);
 
   const { data: host } = useMyHost(userId);
-  const { data: events, isLoading } = useCalendarEvents(host?.id ?? null);
+  const { data: allEvents, isLoading } = useCalendarEvents(host?.id ?? null);
+
+  // Drafts are work-in-progress — they shouldn't surface on the host calendar.
+  const events = useMemo(
+    () => (allEvents ?? []).filter((ev) => ev.status !== "draft"),
+    [allEvents],
+  );
 
   const [cursorMonth, setCursorMonth] = useState<Date>(() => new Date());
   const [selectedDay, setSelectedDay] = useState<Date>(() => new Date());

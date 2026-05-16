@@ -17,7 +17,7 @@ export const env = createEnv({
    */
   client: {
     NEXT_PUBLIC_API_URL: z.string(),
-    NEXT_PUBLIC_ADMIN_EMAIL: z.string().email(),
+    NEXT_PUBLIC_ADMIN_EMAIL: z.string(),
     NEXT_PUBLIC_GEMINI_API_KEY: z.string().optional(),
   },
 

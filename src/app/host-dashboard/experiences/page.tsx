@@ -297,32 +297,43 @@ function ExperienceCard({
               </div>
             )}
 
-            {/* Pause/Resume button */}
-            {!isDraft && (
-              <div className="group relative">
-                <button
-                  onClick={togglePause}
-                  disabled={isProcessing}
-                  className={`rounded-lg p-2 transition ${
-                    isPaused
+            {/* Pause/Resume button — disabled (but visible) for drafts since a
+                draft is neither live nor paused. */}
+            <div className="group relative">
+              <button
+                onClick={togglePause}
+                disabled={isProcessing || isDraft}
+                className={`rounded-lg p-2 transition ${
+                  isDraft
+                    ? "cursor-not-allowed text-gray-300"
+                    : isPaused
                       ? "text-green-600 hover:bg-green-50"
                       : "text-amber-600 hover:bg-amber-50"
-                  } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
-                  title={isPaused ? "Resume" : "Pause"}
-                >
-                  {isProcessing ? (
-                    <LuRotateCcw className="h-4 w-4 animate-spin" />
-                  ) : isPaused ? (
-                    <FiPlay className="h-4 w-4" />
-                  ) : (
-                    <FiPause className="h-4 w-4" />
-                  )}
-                </button>
-                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                  {isPaused ? "Resume Experience" : "Pause Experience"}
-                </span>
-              </div>
-            )}
+                } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
+                title={
+                  isDraft
+                    ? "Publish the experience first"
+                    : isPaused
+                      ? "Resume"
+                      : "Pause"
+                }
+              >
+                {isProcessing ? (
+                  <LuRotateCcw className="h-4 w-4 animate-spin" />
+                ) : isPaused ? (
+                  <FiPlay className="h-4 w-4" />
+                ) : (
+                  <FiPause className="h-4 w-4" />
+                )}
+              </button>
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
+                {isDraft
+                  ? "Publish first to enable"
+                  : isPaused
+                    ? "Resume Experience"
+                    : "Pause Experience"}
+              </span>
+            </div>
 
             {/* Delete button */}
             <div className="group relative ml-auto">

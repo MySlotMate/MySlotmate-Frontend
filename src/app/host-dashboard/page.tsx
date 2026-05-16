@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
+import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   FiCalendar,
   FiStar,
   FiClock,
   FiMapPin,
   FiMoreHorizontal,
+  FiEye,
+  FiEdit2,
+  FiPause,
+  FiPlay,
 } from "react-icons/fi";
 import {
   LuCalendarDays,
@@ -24,7 +31,10 @@ import {
   useCalendarEvents,
   useTodaySchedule,
   usePayoutHistory,
+  usePauseEvent,
+  useResumeEvent,
 } from "~/hooks/useApi";
+import { PauseExperienceModal } from "~/components/PauseExperienceModal";
 
 /* ------------------------------------------------------------------ */
 /*  Attention items (dynamic + static hints)                             */
@@ -59,6 +69,166 @@ const STATIC_ATTENTION_ITEMS: AttentionItem[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/*  Schedule item dropdown menu (View / Edit / Pause)                  */
+/* ------------------------------------------------------------------ */
+
+function ScheduleItemMenu({
+  event,
+  hostId,
+}: {
+  event: {
+    id: string;
+    title: string;
+    is_recurring: boolean;
+    status: string;
+  };
+  hostId: string | null;
+}) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const pauseEvent = usePauseEvent();
+  const resumeEvent = useResumeEvent();
+  const [open, setOpen] = useState(false);
+  const [showPauseModal, setShowPauseModal] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const isPaused = event.status === "paused";
+
+  useEffect(() => {
+    if (!open) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [open]);
+
+  const invalidateAfterMutation = async () => {
+    if (!hostId) return;
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["eventsByHost", hostId] }),
+      queryClient.invalidateQueries({ queryKey: ["todaySchedule", hostId] }),
+      queryClient.invalidateQueries({ queryKey: ["calendarEvents", hostId] }),
+      queryClient.invalidateQueries({ queryKey: ["hostDashboard"] }),
+    ]);
+  };
+
+  const handlePauseConfirm = (options: {
+    pausedFrom?: string;
+    pausedDate?: string;
+  }) => {
+    if (!hostId) {
+      toast.error("Host id not found");
+      return;
+    }
+    // Close the modal immediately so the host gets instant feedback; the
+    // pause + cache invalidation run in the background.
+    setShowPauseModal(false);
+    pauseEvent.mutate(
+      { eventId: event.id, hostId, ...options },
+      {
+        onSuccess: () => {
+          toast.success("Experience paused");
+          void invalidateAfterMutation();
+        },
+        onError: (err) =>
+          toast.error(
+            err instanceof Error ? err.message : "Failed to pause",
+          ),
+      },
+    );
+  };
+
+  const handleResume = async () => {
+    if (!hostId) {
+      toast.error("Host id not found");
+      return;
+    }
+    setOpen(false);
+    try {
+      await resumeEvent.mutateAsync({ eventId: event.id, hostId });
+      toast.success("Experience resumed");
+      await invalidateAfterMutation();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to resume");
+    }
+  };
+
+  return (
+    <>
+      <div ref={menuRef} className="relative self-start">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="text-gray-400 transition hover:text-gray-600"
+          aria-label="More actions"
+          aria-expanded={open}
+        >
+          <FiMoreHorizontal className="h-5 w-5" />
+        </button>
+        {open && (
+          <div className="absolute right-0 z-20 mt-1 w-40 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+            <button
+              onClick={() => {
+                setOpen(false);
+                router.push(`/experience/${event.id}`);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-50"
+            >
+              <FiEye className="h-4 w-4 text-gray-500" />
+              View
+            </button>
+            <button
+              onClick={() => {
+                setOpen(false);
+                router.push(`/host-dashboard/experiences/${event.id}`);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-50"
+            >
+              <FiEdit2 className="h-4 w-4 text-gray-500" />
+              Edit
+            </button>
+            {isPaused ? (
+              <button
+                onClick={() => void handleResume()}
+                disabled={resumeEvent.isPending}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-green-700 transition hover:bg-green-50 disabled:opacity-50"
+              >
+                <FiPlay className="h-4 w-4" />
+                {resumeEvent.isPending ? "Resuming…" : "Resume"}
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  setShowPauseModal(true);
+                }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-amber-700 transition hover:bg-amber-50"
+              >
+                <FiPause className="h-4 w-4" />
+                Pause
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {hostId && (
+        <PauseExperienceModal
+          open={showPauseModal}
+          event={event}
+          hostId={hostId}
+          onClose={() => setShowPauseModal(false)}
+          onConfirm={handlePauseConfirm}
+        />
+      )}
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -90,18 +260,25 @@ export default function HostDashboardPage() {
       ? `Could not load dashboard. ${queryError instanceof Error ? queryError.message : "Please try again."}`
       : "";
 
-  /* Use todayScheduleData if available, otherwise filter from calendarEvents */
+  /* Use todayScheduleData if available, otherwise filter from calendarEvents.
+   * Drafts are excluded — they're work-in-progress and shouldn't surface on the
+   * dashboard's "today" list. */
   const todaySchedule = useMemo(() => {
     if (todayScheduleData && todayScheduleData.length > 0) {
-      return todayScheduleData.sort(
-        (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
-      );
+      return todayScheduleData
+        .filter((ev) => ev.status !== "draft")
+        .sort(
+          (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
+        );
     }
     if (!calendarEvents) return [];
     const now = new Date();
     const todayStr = now.toISOString().slice(0, 10);
     return calendarEvents
-      .filter((ev) => ev.time.slice(0, 10) === todayStr)
+      .filter(
+        (ev) =>
+          ev.status !== "draft" && ev.time.slice(0, 10) === todayStr,
+      )
       .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
   }, [todayScheduleData, calendarEvents]);
 
@@ -150,6 +327,7 @@ export default function HostDashboardPage() {
       sub: "Events",
       badge: "All time",
       badgeColor: "bg-[#0094CA] text-white",
+      href: "/host-dashboard/experiences",
     },
     {
       icon: <LuCalendarDays className="h-5 w-5 text-[#0094CA]" />,
@@ -158,6 +336,7 @@ export default function HostDashboardPage() {
       sub: "Booked",
       badge: "All time",
       badgeColor: "bg-green-100 text-green-700",
+      href: "/host-dashboard/bookings",
     },
     {
       icon: (
@@ -168,6 +347,7 @@ export default function HostDashboardPage() {
       sub: "",
       badge: "All time",
       badgeColor: "bg-green-100 text-green-700",
+      href: "/host-dashboard/earnings",
     },
     {
       icon: <FiStar className="h-5 w-5 text-[#0094CA]" />,
@@ -176,6 +356,7 @@ export default function HostDashboardPage() {
       sub: avgRating !== "–" ? "★★★★★" : "",
       badge: `${dashboard?.total_reviews ?? 0} reviews`,
       badgeColor: "bg-gray-100 text-gray-600",
+      href: "/host-dashboard/experiences",
     },
   ] as const;
 
@@ -239,14 +420,14 @@ export default function HostDashboardPage() {
               </div>
             </div>
 
-            {/* ── Stats cards ── */}
+            {/* ── Stats cards (each tile drills into the matching detail page) ── */}
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {STATS.map((s, i) => (
-                <div
+                <Link
                   key={i}
-                  className="relative rounded-xl border border-gray-200 bg-white px-5 py-5"
+                  href={s.href}
+                  className="group relative block rounded-xl border border-gray-200 bg-white px-5 py-5 transition hover:-translate-y-0.5 hover:border-[#0094CA] hover:shadow-md"
                 >
-                  {/* badge */}
                   <span
                     className={`absolute top-4 right-4 rounded-full px-2 py-0.5 text-[10px] font-semibold ${s.badgeColor}`}
                   >
@@ -260,7 +441,10 @@ export default function HostDashboardPage() {
                       {s.sub}
                     </span>
                   </p>
-                </div>
+                  <p className="mt-2 text-[11px] font-semibold text-[#0094CA] opacity-0 transition group-hover:opacity-100">
+                    View details →
+                  </p>
+                </Link>
               ))}
             </div>
 
@@ -364,16 +548,25 @@ export default function HostDashboardPage() {
                               {item.total_bookings} booked / {item.capacity}{" "}
                               capacity
                             </span>
-                            <button className="text-sm font-medium text-[#0094CA] hover:underline">
+                            <Link
+                              href={`/host-dashboard/experiences/${item.id}`}
+                              className="text-sm font-medium text-[#0094CA] hover:underline"
+                            >
                               Manage Session
-                            </button>
+                            </Link>
                           </div>
                         </div>
 
-                        {/* More btn */}
-                        <button className="self-start text-gray-400 hover:text-gray-600">
-                          <FiMoreHorizontal className="h-5 w-5" />
-                        </button>
+                        {/* More menu — View / Edit / Pause */}
+                        <ScheduleItemMenu
+                          event={{
+                            id: item.id,
+                            title: item.title,
+                            is_recurring: item.is_recurring ?? false,
+                            status: item.status,
+                          }}
+                          hostId={storedHostId}
+                        />
                       </div>
                     );
                   })}
@@ -422,9 +615,12 @@ export default function HostDashboardPage() {
                     Adding video to your experience page increases bookings by
                     20% on average.
                   </p>
-                  <button className="mt-4 w-full rounded-lg bg-white py-2.5 text-sm font-semibold text-[#0094CA] transition hover:bg-white/90">
-                    Add Video
-                  </button>
+                  <Link
+                    href="/host-dashboard/experiences"
+                    className="mt-4 block w-full rounded-lg bg-white py-2.5 text-center text-sm font-semibold text-[#0094CA] transition hover:bg-white/90"
+                  >
+                    Edit Experiences
+                  </Link>
                 </div>
               </div>
             </div>

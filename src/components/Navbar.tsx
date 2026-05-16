@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { signOut } from "firebase/auth";
@@ -118,10 +118,14 @@ export default function Navbar() {
 
   const hostStatus = hostData?.status?.application_status ?? null;
 
-  const isAdminUser =
-    !!user?.email &&
-    user.email.toLowerCase() ===
-      String(env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").toLowerCase();
+  const isAdminUser = useMemo(() => {
+    if (!user?.email) return false;
+    const adminEmails = String(env.NEXT_PUBLIC_ADMIN_EMAIL ?? "")
+      .toLowerCase()
+      .split(",")
+      .map((e) => e.trim());
+    return adminEmails.includes(user.email.toLowerCase());
+  }, [user?.email]);
 
   const showBecomeHostButton = !hostLoading && !!validUserId && !hostStatus;
 
@@ -192,6 +196,9 @@ export default function Navbar() {
               className="transition hover:text-[#0e8ae0]"
             >
               Community
+            </Link>
+            <Link href="/blogs" className="transition hover:text-[#0e8ae0]">
+              Blog
             </Link>
           </div>
 
@@ -586,11 +593,11 @@ export default function Navbar() {
         {/* Mobile drawer */}
         {mobileOpen && (
           <div className="site-x max-h-[80vh] overflow-y-auto border-t border-gray-100 bg-white pt-2 pb-4 shadow-lg [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
-            <div className="mb-2 grid grid-cols-3 gap-4">
+            <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Link
                 href="/#how-it-works"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0] sm:py-2"
+                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
               >
                 How it works
               </Link>
@@ -607,6 +614,13 @@ export default function Navbar() {
                 className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
               >
                 Community
+              </Link>
+              <Link
+                href="/blogs"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+              >
+                Blog
               </Link>
             </div>
 

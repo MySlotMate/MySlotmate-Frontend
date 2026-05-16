@@ -60,13 +60,6 @@ const formatPrice = (priceCents: number | null | undefined) => {
   return `₹${Math.round(priceCents / 100)}`;
 };
 
-const formatDuration = (mins: number | null | undefined) => {
-  if (!mins) return "—";
-  if (mins < 60) return `${mins} mins`;
-  const hours = mins / 60;
-  const rounded = Math.round(hours * 10) / 10;
-  return `${rounded} Hours`;
-};
 
 const matchesNormalizedQuery = (
   normalizedQuery: string,

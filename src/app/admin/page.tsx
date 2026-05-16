@@ -129,10 +129,14 @@ export default function AdminPage() {
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   // Check if user is admin
-  const isAdmin =
-    !!user?.email &&
-    user.email.toLowerCase() ===
-      String(env.NEXT_PUBLIC_ADMIN_EMAIL ?? "").toLowerCase();
+  const isAdmin = useMemo(() => {
+    if (!user?.email) return false;
+    const adminEmails = String(env.NEXT_PUBLIC_ADMIN_EMAIL ?? "")
+      .toLowerCase()
+      .split(",")
+      .map((e) => e.trim());
+    return adminEmails.includes(user.email.toLowerCase());
+  }, [user?.email]);
 
   // Get Firebase ID token for admin requests
   useEffect(() => {

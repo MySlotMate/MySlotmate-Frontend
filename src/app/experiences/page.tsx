@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
 import { useListPublicEvents } from "~/hooks/useApi";
 import {
   getSavedLocation,
@@ -28,13 +27,6 @@ export default function ExperiencesPage() {
     return `₹${(priceCents / 100).toFixed(0)}`;
   };
 
-  const formatDuration = (mins: number | null | undefined) => {
-    if (!mins) return "—";
-    if (mins < 60) return `${mins} mins`;
-    const hours = mins / 60;
-    const rounded = Math.round(hours * 10) / 10;
-    return `${rounded} Hours`;
-  };
 
   const filteredEvents = useMemo(() => {
     if (!events) return [];

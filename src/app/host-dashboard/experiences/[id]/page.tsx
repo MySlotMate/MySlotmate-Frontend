@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
+import { RichTextEditor } from "~/components/RichTextEditor";
 import {
   useMyHost,
   useEvent,
@@ -872,12 +873,10 @@ export default function EditEventPage({
                 <label className="block text-sm font-medium text-gray-700">
                   Description
                 </label>
-                <textarea
+                <RichTextEditor
                   value={form.description}
-                  onChange={(e) => updateForm("description", e.target.value)}
+                  onChange={(html) => updateForm("description", html)}
                   placeholder="Describe your experience..."
-                  rows={5}
-                  className="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                   maxLength={2000}
                 />
               </div>

@@ -16,6 +16,7 @@ import { useContentModeration } from "~/hooks/useContentModeration";
 import { useSuggestions } from "~/hooks/useSuggestions";
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { SuggestionChips } from "~/components/SuggestionChips";
+import { RichTextEditor } from "~/components/RichTextEditor";
 import {
   FiArrowLeft,
   FiArrowRight,
@@ -670,43 +671,11 @@ export default function CreateExperiencePage() {
   const [descriptionWarning, setDescriptionWarning] = useState<string | null>(
     null,
   );
+  // Plain-text length of the rich-text description, for char counter & maxLength.
+  const [descriptionTextLength, setDescriptionTextLength] = useState(0);
   const [isSummarizing, setIsSummarizing] = useState(false);
 
-  // Fetch exact location coordinates from Google Maps API
-  const fetchExactLocation = async (locationName: string) => {
-    try {
-      // Call our own API endpoint (which calls Nominatim server-side to avoid CORS issues)
-      const response = await fetch(
-        `/api/get-location-coordinates?q=${encodeURIComponent(locationName)}`,
-      );
 
-      interface LocationResponse {
-        mapsUrl?: string;
-        display_name?: string;
-        fallback?: boolean;
-        error?: string;
-      }
-
-      const data = (await response.json()) as LocationResponse;
-
-      if (response.ok && data.mapsUrl) {
-        updateForm("googleMapsUrl", data.mapsUrl);
-        toast.success(`Location pinned: ${data.display_name ?? "Location"}`);
-      } else if (data.fallback) {
-        // Fallback to search URL if exact location not found
-        const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(locationName)}`;
-        updateForm("googleMapsUrl", mapsUrl);
-        toast.info("Using search-based location link");
-      } else {
-        throw new Error(data.error ?? "Failed to fetch location");
-      }
-    } catch (error) {
-      console.error("Location lookup error:", error);
-      // Fallback to search URL on error
-      const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(locationName)}`;
-      updateForm("googleMapsUrl", mapsUrl);
-    }
-  };
 
   useEffect(() => {
     if (isHydrated && !userId && !hostLoading) {
@@ -1337,12 +1306,14 @@ export default function CreateExperiencePage() {
                       Description <span className="text-red-500">*</span>
                     </label>
                   </div>
-                  <textarea
+                  <RichTextEditor
                     value={form.description}
-                    onChange={(e) => {
-                      handleDescriptionChange(e.target.value);
+                    onChange={(html) => {
+                      handleDescriptionChange(html);
+                      // AI suggestions work better on plain text — strip tags before sending.
+                      const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
                       void descriptionSuggestions.generateSuggestions(
-                        e.target.value,
+                        plain,
                         "description",
                         {
                           title: form.title,
@@ -1351,19 +1322,14 @@ export default function CreateExperiencePage() {
                         },
                       );
                     }}
-                    onBlur={() => descriptionSuggestions.clearSuggestions()}
+                    onLengthChange={setDescriptionTextLength}
                     placeholder="Describe what guests will experience, what they'll learn, and what makes your experience special..."
-                    rows={5}
-                    className={`w-full resize-none rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-                      showErrors && !form.description.trim()
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-200 focus:border-transparent"
-                    }`}
                     maxLength={2000}
+                    error={showErrors && !form.description.trim()}
                   />
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-gray-400">
-                      {form.description.length}/2000 characters
+                      {descriptionTextLength}/2000 characters
                     </p>
                   </div>
                   {descriptionWarning && (

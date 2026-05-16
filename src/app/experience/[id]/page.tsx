@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "~/components/Navbar";
 import Breadcrumb from "~/components/Breadcrumb";
+import { RichTextView } from "~/components/RichTextEditor";
 import { Footer } from "~/components/home";
 import {
   useEvent,
@@ -959,9 +960,11 @@ export default function ExperienceDetailPage({
                 <h2 className="mb-4 text-2xl font-bold">
                   About the experience
                 </h2>
-                <p className="whitespace-pre-line text-gray-600">
-                  {event.description ?? "No description available."}
-                </p>
+                {event.description ? (
+                  <RichTextView html={event.description} className="text-gray-600" />
+                ) : (
+                  <p className="text-gray-600">No description available.</p>
+                )}
                 {event.hook_line && (
                   <p className="mt-4 text-gray-600 italic">{event.hook_line}</p>
                 )}

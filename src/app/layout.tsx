@@ -183,7 +183,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geist.variable} ${manrope.variable} ${outfit.variable} max-w-screen overflow-x-hidden`}
+      className={`${geist.variable} ${manrope.variable} ${outfit.variable} max-w-screen overflow-x-clip`}
       suppressHydrationWarning
     >
       <head>
@@ -216,7 +216,7 @@ export default function RootLayout({
         />
         <meta name="apple-mobile-web-app-title" content="MySlotMate" />
       </head>
-      <body className="max-w-screen overflow-x-hidden">
+      <body className="max-w-screen overflow-x-clip">
         <Providers>
           <PreloaderGate>{children}</PreloaderGate>
         </Providers>

@@ -23,14 +23,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
   } = useListTimeAction();
 
   useEffect(() => {
-    if (document.readyState === "complete") {
-      setIsPageLoaded(true);
-      return;
-    }
-
-    const handleWindowLoad = () => setIsPageLoaded(true);
-    window.addEventListener("load", handleWindowLoad);
-    return () => window.removeEventListener("load", handleWindowLoad);
+    setIsPageLoaded(true);
   }, []);
 
   const upcomingEvents: EventDTO[] = useMemo(() => {
@@ -48,7 +41,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
       ? {
           id: upcomingEvents[0].id,
           photo:
-            upcomingEvents[0].cover_image_url ?? "/assets/home/heropic1.png",
+            upcomingEvents[0].cover_image_url ?? "/assets/home/heropic1.webp",
           type: upcomingEvents[0].mood ?? "Adventure",
           title: upcomingEvents[0].title,
           description:
@@ -57,7 +50,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
           duration: `${upcomingEvents[0].duration_minutes ?? 0} mins`,
         }
       : {
-          photo: "/assets/home/heropic1.png",
+          photo: "/assets/home/heropic1.webp",
           type: "Adventure",
           title: "Mountain Trekking",
           description: "Sunrise hikes with local experts.",
@@ -67,7 +60,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
       ? {
           id: upcomingEvents[1].id,
           photo:
-            upcomingEvents[1].cover_image_url ?? "/assets/home/heropic2.png",
+            upcomingEvents[1].cover_image_url ?? "/assets/home/heropic2.webp",
           type: upcomingEvents[1].mood ?? "Social",
           title: upcomingEvents[1].title,
           description:
@@ -76,7 +69,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
           duration: `${upcomingEvents[1].duration_minutes ?? 0} mins`,
         }
       : {
-          photo: "/assets/home/heropic2.png",
+          photo: "/assets/home/heropic2.webp",
           type: "Creative",
           title: "Scuba Diving",
           description: "Dive into curated local adventures.",
@@ -86,7 +79,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
       ? {
           id: upcomingEvents[2].id,
           photo:
-            upcomingEvents[2].cover_image_url ?? "/assets/home/heropic3.png",
+            upcomingEvents[2].cover_image_url ?? "/assets/home/heropic3.webp",
           type: upcomingEvents[2].mood ?? "Relaxing",
           title: upcomingEvents[2].title,
           description:
@@ -94,7 +87,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
           duration: `${upcomingEvents[2].duration_minutes ?? 0} mins`,
         }
       : {
-          photo: "/assets/home/heropic3.png",
+          photo: "/assets/home/heropic3.webp",
           type: "Wellness",
           title: "Urban Photography Walk",
           description: "Capture city stories with a host.",
@@ -113,7 +106,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
           duration: `${upcomingEvents[3].duration_minutes ?? 0} mins`,
         }
       : {
-          photo: "/assets/home/heropic1.png",
+          photo: "/assets/home/heropic1.webp",
           type: "Cultural",
           title: "Heritage Walk",
           description: "Uncover hidden stories around your city.",

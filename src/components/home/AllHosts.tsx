@@ -31,7 +31,7 @@ const HostCard = ({
       <div className="relative aspect-square w-full overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={imageUrl || "/assets/home/people1.png"}
+          src={imageUrl || "/assets/home/people1.webp"}
           alt={name}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -155,7 +155,7 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
                   `${host.first_name} ${host.last_name}`.trim() ||
                   host.first_name
                 }
-                imageUrl={host.avatar_url ?? "/assets/home/people1.png"}
+                imageUrl={host.avatar_url ?? "/assets/home/people1.webp"}
                 rating={(host.avg_rating ?? 4.5).toFixed(1)}
                 city={host.city}
                 isVerified={host.is_identity_verified}

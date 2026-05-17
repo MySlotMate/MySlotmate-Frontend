@@ -11,7 +11,7 @@ const appUrl = "https://www.myslotmate.com";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "MySlotMate - Book People's Time.",
+    default: "Myslotmate - Book People's Time.",
     template: "%s | MySlotMate",
   },
   description:
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: appUrl,
     siteName: "MySlotMate",
-    title: "MySlotMate - Book People's Time.",
+    title: "Myslotmate - Book People's Time.",
     description:
       "From coffee chats to travel experiences —book people for real-life moments, anytime.",
     images: [

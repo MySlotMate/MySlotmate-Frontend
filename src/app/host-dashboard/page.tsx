@@ -501,7 +501,7 @@ export default function HostDashboardPage() {
                           <>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={item.cover_image_url || "/assets/home/hiking.jpg"}
+                              src={item.cover_image_url || "/assets/home/hiking.webp"}
                               alt={item.title}
                               loading="lazy"
                               className="hidden h-28 w-40 shrink-0 rounded-lg object-cover sm:block"

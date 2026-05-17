@@ -17,6 +17,10 @@ export default function PreloaderGate({
     return () => clearTimeout(id);
   }, []);
 
-  if (isPreloading) return <Preloader />;
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {isPreloading && <Preloader />}
+    </>
+  );
 }

@@ -134,7 +134,7 @@ export default function ExperiencesPage() {
                   event.description ??
                   "Discover a hosted experience near you."
                 }
-                imageUrl={event.cover_image_url ?? "/assets/home/hiking.jpg"}
+                imageUrl={event.cover_image_url ?? "/assets/home/hiking.webp"}
                 rating={
                   event.avg_rating !== null &&
                   event.avg_rating !== undefined &&

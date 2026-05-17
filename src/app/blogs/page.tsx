@@ -55,7 +55,7 @@ const DEFAULT_FORM_STATE: BlogFormState = {
   title: "",
 };
 
-export const FALLBACK_BLOG_IMAGE = "/assets/home/hiking.jpg";
+export const FALLBACK_BLOG_IMAGE = "/assets/home/hiking.webp";
 
 // Helper functions for block management
 function generateBlockId() {

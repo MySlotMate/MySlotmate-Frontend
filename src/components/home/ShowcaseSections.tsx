@@ -320,7 +320,7 @@ const ShowcaseSections = () => {
           event.avg_rating !== 0
             ? event.avg_rating.toFixed(1)
             : "NEW",
-        image: event.cover_image_url ?? "/assets/home/hiking.jpg",
+        image: event.cover_image_url ?? "/assets/home/hiking.webp",
         overlayTitle: event.title,
         overlaySubtitle: event.location
           ? `In ${event.location}`
@@ -358,7 +358,7 @@ const ShowcaseSections = () => {
           event.hook_line ??
           event.description ??
           "Discover a hosted experience near you.",
-        imageUrl: event.cover_image_url ?? "/assets/home/hiking.jpg",
+        imageUrl: event.cover_image_url ?? "/assets/home/hiking.webp",
         rating:
           event.avg_rating !== null &&
           event.avg_rating !== undefined &&

@@ -37,7 +37,7 @@ const PeopleCard = ({
     >
       {/* Changed h-[272px] w-[272px] to aspect-square w-full */}
       <div className="relative aspect-square w-full overflow-hidden rounded-[28px] bg-[#f8fbff]">
-        {imageUrl && !imageUrl.includes("people1.png") ? (
+        {imageUrl && !imageUrl.includes("people1.") ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={imageUrl}
@@ -276,7 +276,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
                   `${host.first_name} ${host.last_name}`.trim() ||
                   host.first_name
                 }
-                imageUrl={host.avatar_url ?? "/assets/home/people1.png"}
+                imageUrl={host.avatar_url ?? "/assets/home/people1.webp"}
                 rating={
                   host.avg_rating && host.avg_rating > 0
                     ? host.avg_rating.toFixed(1)

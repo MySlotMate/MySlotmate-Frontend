@@ -46,7 +46,7 @@ const HostCard = ({
       <div className="relative">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={imageUrl || "/assets/home/people1.png"}
+          src={imageUrl || "/assets/home/people1.webp"}
           alt={name}
           loading="lazy"
           className="h-[214px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -227,7 +227,7 @@ export default function HostsPage() {
                   `${host.first_name} ${host.last_name}`.trim() ||
                   host.first_name
                 }
-                imageUrl={host.avatar_url ?? "/assets/home/people1.png"}
+                imageUrl={host.avatar_url ?? "/assets/home/people1.webp"}
                 rating={
                   host.avg_rating && host.avg_rating > 0
                     ? host.avg_rating.toFixed(1)

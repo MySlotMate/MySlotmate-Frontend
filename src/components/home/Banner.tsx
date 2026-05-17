@@ -10,7 +10,7 @@ const Banner = () => {
         <div className="relative mx-auto w-full max-w-[360px] overflow-hidden rounded-3xl">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/assets/home/cover.svg"
+            src="/assets/home/cover.webp"
             alt="Featured experience"
             loading="lazy"
             className="h-full w-full object-cover"

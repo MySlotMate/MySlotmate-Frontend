@@ -281,7 +281,7 @@ export const ExperienceCard = ({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={imageUrl || "/assets/home/hiking.jpg"}
+            src={imageUrl || "/assets/home/hiking.webp"}
             alt={title}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"

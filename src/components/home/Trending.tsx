@@ -80,7 +80,7 @@ const TrendingCard = ({
       <div className="relative aspect-square w-full overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={imageUrl || "/assets/home/hiking.jpg"}
+          src={imageUrl || "/assets/home/hiking.webp"}
           alt={title}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -246,7 +246,7 @@ const Trending = () => {
                 key={event.id}
                 id={event.id}
                 title={event.title}
-                imageUrl={event.cover_image_url ?? "/assets/home/hiking.jpg"}
+                imageUrl={event.cover_image_url ?? "/assets/home/hiking.webp"}
                 pricing={formatPrice(event.price_cents)}
                 duration={`${event.duration_minutes ?? 0} mins`}
                 mood={event.mood ?? "Experience"}

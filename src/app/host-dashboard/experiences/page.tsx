@@ -195,7 +195,7 @@ function ExperienceCard({
       <div className="relative h-44 bg-gray-100">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={event.cover_image_url ?? "/assets/home/hiking.jpg"}
+          src={event.cover_image_url ?? "/assets/home/hiking.webp"}
           alt={event.title}
           loading="lazy"
           className="h-full w-full object-cover"

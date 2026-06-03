@@ -17,6 +17,7 @@ import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck, FiChevronDown, FiChevron
 import type { BookingDTO } from "~/lib/api";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { ImageCropModal } from "~/components/ImageCropModal";
 
 export const runtime = "edge";
 
@@ -83,6 +84,14 @@ function ImageUpload({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDropZoneRef = useRef<HTMLDivElement>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Safely adjust slide index when images are added/removed
+  useEffect(() => {
+    if (currentImageIndex >= previews.length) {
+      setCurrentImageIndex(Math.max(0, previews.length - 1));
+    }
+  }, [previews.length, currentImageIndex]);
 
   const processFiles = useCallback(
     (files: File[]) => {
@@ -156,25 +165,88 @@ function ImageUpload({
       )}
 
       {multiple && previews.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2">
-          {previews.map((p, i) => (
-            <div key={i} className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+        <div className="space-y-4">
+          <div className="group relative">
+            <div className="relative h-96 overflow-hidden rounded-xl bg-gray-100">
+              {/* Main Image */}
               <img
-                src={p}
-                alt={`Gallery ${i + 1}`}
+                src={previews[currentImageIndex]}
+                alt={`Cover photo preview ${currentImageIndex + 1}`}
                 loading="lazy"
-                className="h-20 w-20 rounded-lg object-cover"
+                className="h-full w-full object-cover transition-opacity duration-300"
               />
-              <button
-                type="button"
-                onClick={() => onRemoveMultiple?.(i)}
-                className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white"
-              >
-                <FiX size={12} />
-              </button>
+
+              {/* Navigation Arrows */}
+              {previews.length > 1 && (
+                <>
+                  {/* Left Arrow */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex((prev) => (prev === 0 ? previews.length - 1 : prev - 1));
+                    }}
+                    className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
+                    aria-label="Previous image"
+                  >
+                    <svg className="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+
+                  {/* Right Arrow */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex((prev) => (prev === previews.length - 1 ? 0 : prev + 1));
+                    }}
+                    className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
+                    aria-label="Next image"
+                  >
+                    <svg className="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+
+                  {/* Image Counter */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-xs font-medium text-white opacity-0 transition group-hover:opacity-100">
+                    {currentImageIndex + 1} / {previews.length}
+                  </div>
+                </>
+              )}
             </div>
-          ))}
+          </div>
+
+          {/* Thumbnail list with delete actions */}
+          <div className="flex flex-wrap gap-2">
+            {previews.map((p, i) => (
+              <div
+                key={i}
+                onClick={() => setCurrentImageIndex(i)}
+                className={`relative cursor-pointer rounded-lg border-2 transition overflow-hidden ${
+                  currentImageIndex === i ? "border-[#0094CA]" : "border-transparent"
+                }`}
+              >
+                <img
+                  src={p}
+                  alt={`Thumbnail ${i + 1}`}
+                  loading="lazy"
+                  className="h-16 w-16 object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRemoveMultiple?.(i);
+                  }}
+                  className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition shadow"
+                >
+                  <FiX size={10} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -446,6 +518,10 @@ export default function EditEventPage({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Image Crop states
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [cropTarget, setCropTarget] = useState<"profile" | "cover">("profile");
+
   const [form, setForm] = useState<EventFormData>({
     title: "",
     hookLine: "",
@@ -540,19 +616,43 @@ export default function EditEventPage({
   const handleCoverUpload = (files: File[]) => {
     const file = files[0];
     if (file) {
-      updateForm("coverImage", file);
-      updateForm("coverImagePreview", URL.createObjectURL(file));
+      setCropTarget("profile");
+      setCropQueue([file]);
     }
   };
 
   const handleGalleryUpload = (files: File[]) => {
-    const newPreviews = files.map((f) => URL.createObjectURL(f));
-    updateForm("galleryImages", [...form.galleryImages, ...files]);
-    updateForm("galleryPreviews", [...form.galleryPreviews, ...newPreviews]);
+    if (files.length > 0) {
+      setCropTarget("cover");
+      setCropQueue(files);
+    }
+  };
+
+  const handleCropConfirm = (blob: Blob, originalName: string) => {
+    const ext = blob.type === "image/png" ? "png" : "jpg";
+    const baseName = originalName.replace(/\.[^.]+$/, "") || "image";
+    const croppedFile = new File([blob], `${baseName}-cropped.${ext}`, {
+      type: blob.type,
+    });
+
+    if (cropTarget === "profile") {
+      updateForm("coverImage", croppedFile);
+      updateForm("coverImagePreview", URL.createObjectURL(croppedFile));
+    } else {
+      const newPreview = URL.createObjectURL(croppedFile);
+      updateForm("galleryImages", [...form.galleryImages, croppedFile]);
+      updateForm("galleryPreviews", [...form.galleryPreviews, newPreview]);
+    }
+
+    // Move to next image in queue
+    setCropQueue((prev) => prev.slice(1));
   };
 
   const removeGalleryImage = (index: number) => {
-    URL.revokeObjectURL(form.galleryPreviews[index]!);
+    const preview = form.galleryPreviews[index];
+    if (preview?.startsWith("blob:")) {
+      URL.revokeObjectURL(preview);
+    }
     updateForm(
       "galleryImages",
       form.galleryImages.filter((_, i) => i !== index),
@@ -1179,8 +1279,8 @@ export default function EditEventPage({
 
               <div className="grid gap-6 md:grid-cols-2">
                 <ImageUpload
-                  label="Cover Image"
-                  helpText="This will be the main image shown to guests"
+                  label="Profile Image"
+                  helpText="This will be the main profile image shown on cards"
                   preview={form.coverImagePreview}
                   onUpload={handleCoverUpload}
                   onRemove={() => {
@@ -1189,8 +1289,8 @@ export default function EditEventPage({
                   }}
                 />
                 <ImageUpload
-                  label="Gallery Images"
-                  helpText="Add more photos to showcase your experience"
+                  label="Cover Image"
+                  helpText="Add cover and gallery photos for the experience"
                   multiple
                   previews={form.galleryPreviews}
                   onUpload={handleGalleryUpload}
@@ -1278,6 +1378,13 @@ export default function EditEventPage({
           </div>
         </div>
       )}
+
+      <ImageCropModal
+        file={cropQueue.length > 0 ? cropQueue[0]! : null}
+        aspect={1.55}
+        onClose={() => setCropQueue([])}
+        onConfirm={handleCropConfirm}
+      />
     </>
   );
 }

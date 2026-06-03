@@ -1078,8 +1078,8 @@ const ShowcaseSections = () => {
                     >
                       <Heart
                         className="h-4.5 w-4.5 transition-colors"
-                        fill={isFeaturedSaved ? "#0094CA" : "none"}
-                        stroke="#0094CA"
+                        fill={isFeaturedSaved ? "#ef3838" : "none"}
+                        stroke={isFeaturedSaved ? "#f02f2f" : "#0094CA"}
                         strokeWidth={2.5}
                       />
                     </button>

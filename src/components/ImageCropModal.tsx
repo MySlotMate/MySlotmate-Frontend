@@ -46,6 +46,7 @@ export function ImageCropModal({
   const [rotation, setRotation] = useState(0);
   const [busy, setBusy] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const [dimensions, setDimensions] = useState<{ width: number; height: number; ratioLabel: string } | null>(null);
 
   // Read file → data URL whenever a new file is supplied.
   useEffect(() => {
@@ -54,12 +55,45 @@ export function ImageCropModal({
       setCrop(undefined);
       setCompletedCrop(null);
       setRotation(0);
+      setDimensions(null);
       return;
     }
     const reader = new FileReader();
     reader.onload = () => setImageSrc(reader.result as string);
     reader.readAsDataURL(file);
   }, [file]);
+
+  // Recalculate dimensions dynamically as the crop area changes
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img || !completedCrop || !file) {
+      return;
+    }
+    const scaleX = img.naturalWidth / img.width;
+    const scaleY = img.naturalHeight / img.height;
+    
+    let width = Math.round(completedCrop.width * scaleX);
+    let height = Math.round(completedCrop.height * scaleY);
+    
+    const largest = Math.max(width, height);
+    if (largest > maxDimension) {
+      const scale = maxDimension / largest;
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+
+    if (width > 0 && height > 0) {
+      const ratio = width / height;
+      let ratioLabel = ratio.toFixed(2);
+      if (Math.abs(ratio - 1.55) < 0.02) ratioLabel = "1.55:1";
+      else if (Math.abs(ratio - 16 / 9) < 0.02) ratioLabel = "16:9";
+      else if (Math.abs(ratio - 4 / 3) < 0.02) ratioLabel = "4:3";
+      else if (Math.abs(ratio - 3 / 2) < 0.02) ratioLabel = "3:2";
+      else if (Math.abs(ratio - 1) < 0.02) ratioLabel = "1:1";
+      
+      setDimensions({ width, height, ratioLabel });
+    }
+  }, [completedCrop, rotation, file, maxDimension, imageSrc]);
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -117,20 +151,29 @@ export function ImageCropModal({
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div className="flex h-full max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+        <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-bold text-gray-900">Crop image</h2>
             <p className="text-xs text-gray-500">
               Drag the corners or edges to resize the crop area.
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Close"
-          >
-            <FiX size={18} />
-          </button>
+          <div className="flex items-center gap-3">
+            {dimensions && (
+              <div className="flex items-center gap-2 rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-semibold text-[#0094CA] border border-sky-100">
+                <span>{dimensions.width} × {dimensions.height} px</span>
+                <span className="text-sky-200">|</span>
+                <span>Aspect: {dimensions.ratioLabel}</span>
+              </div>
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Close"
+            >
+              <FiX size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-1 items-center justify-center overflow-auto bg-[#1f2937] p-4">

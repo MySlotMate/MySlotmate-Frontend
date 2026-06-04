@@ -146,13 +146,13 @@ function ImageUpload({
       {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
 
       {!multiple && preview && (
-        <div className="relative inline-block">
+        <div className="relative inline-block w-full max-w-md">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={preview}
             alt="Preview"
             loading="lazy"
-            className="h-40 w-full max-w-xs rounded-lg object-cover"
+            className="aspect-[16/9] w-full rounded-lg object-cover"
           />
           <button
             type="button"
@@ -167,7 +167,7 @@ function ImageUpload({
       {multiple && previews.length > 0 && (
         <div className="space-y-4">
           <div className="group relative">
-            <div className="relative h-96 overflow-hidden rounded-xl bg-gray-100">
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
               {/* Main Image */}
               <img
                 src={previews[currentImageIndex]}
@@ -1381,7 +1381,7 @@ export default function EditEventPage({
 
       <ImageCropModal
         file={cropQueue.length > 0 ? cropQueue[0]! : null}
-        aspect={1.55}
+        aspect={16 / 9}
         onClose={() => setCropQueue([])}
         onConfirm={handleCropConfirm}
       />

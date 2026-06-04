@@ -17,6 +17,21 @@ const moodColorMap: Record<string, string> = {
   nightlife: "#9B59B6",
 };
 
+/** Strip HTML tags from rich-text content for plain-text previews. */
+function toPlainText(html: string | null | undefined): string {
+  if (!html) return "";
+  return html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Format cents → "₹45 / person" */
 function formatPrice(cents: number | null, isFree: boolean): string {
   if (isFree || cents === null || cents === 0) return "Free";
@@ -46,6 +61,11 @@ function ExperienceCard({ event }: { event: EventDTO }) {
     ? (moodColorMap[event.mood] ?? "#0094CA")
     : "#0094CA";
 
+  const plainTextDescription = toPlainText(event.description);
+  const displayDescription = plainTextDescription !== ""
+    ? plainTextDescription
+    : (event.hook_line ?? "");
+
   return (
     <div className="flex w-full min-w-65 flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm sm:w-[48%]">
       {/* Image */}
@@ -56,6 +76,8 @@ function ExperienceCard({ event }: { event: EventDTO }) {
           alt={event.title}
           loading="lazy"
           className="h-full w-full object-cover"
+          width={400}
+          height={300}
         />
         {/* Price badge */}
         <span className="absolute top-3 right-3 rounded-full bg-[#0094CA] px-3 py-1 text-xs font-semibold text-white">
@@ -86,7 +108,7 @@ function ExperienceCard({ event }: { event: EventDTO }) {
         </div>
         <h4 className="text-base font-bold text-gray-900">{event.title}</h4>
         <p className="line-clamp-2 text-sm text-gray-500">
-          {event.description ?? event.hook_line ?? ""}
+          {displayDescription}
         </p>
         <Link
           href={`/experience/${event.id}`}

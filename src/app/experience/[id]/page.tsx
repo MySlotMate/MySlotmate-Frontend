@@ -61,7 +61,7 @@ function PhotoGallery({
 
   if (images.length === 0) {
     return (
-      <div className="flex h-96 items-center justify-center rounded-xl bg-gray-200">
+      <div className="flex aspect-[16/9] w-full items-center justify-center rounded-xl bg-gray-200">
         <span className="text-gray-500">No photos available</span>
       </div>
     );
@@ -77,7 +77,7 @@ function PhotoGallery({
 
   return (
     <div className="group relative">
-      <div className="relative h-96 overflow-hidden rounded-xl bg-gray-100">
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
         {/* Main Image */}
         <img
           src={images[currentImageIndex]}

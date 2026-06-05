@@ -61,7 +61,7 @@ function PhotoGallery({
 
   if (images.length === 0) {
     return (
-      <div className="flex aspect-[16/9] w-full items-center justify-center rounded-xl bg-gray-200">
+      <div className="flex h-[200px] sm:h-[250px] md:h-[300px] w-full items-center justify-center rounded-xl bg-gray-200">
         <span className="text-gray-500">No photos available</span>
       </div>
     );
@@ -77,7 +77,7 @@ function PhotoGallery({
 
   return (
     <div className="group relative">
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
+      <div className="relative h-[200px] sm:h-[250px] md:h-[300px] w-full overflow-hidden rounded-xl bg-gray-100">
         {/* Main Image */}
         <img
           src={images[currentImageIndex]}
@@ -352,13 +352,19 @@ function BookingWidget({
         {/* Stats Row */}
         <div className="mb-3 flex items-center justify-start gap-4 border-b border-[#dbeaf5] pb-3 text-xs">
           <div className="flex items-center gap-2">
-            <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-bold text-[#16304c]">
-              {rating !== null && rating > 0 ? rating.toFixed(1) : "4.8"}
-            </span>
-            <span className="text-[#6f8daa]">
-              ({totalReviews > 0 ? totalReviews : 128} reviews)
-            </span>
+            {rating !== null && rating > 0 && totalReviews > 0 ? (
+              <>
+                <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-bold text-[#16304c]">
+                  {rating.toFixed(1)}
+                </span>
+                <span className="text-[#6f8daa]">
+                  ({totalReviews} reviews)
+                </span>
+              </>
+            ) : (
+              <span className="font-bold text-[#0094CA] uppercase">NEW</span>
+            )}
           </div>
           <div className="h-4 w-px bg-[#dbeaf5]" />
           <div className="flex items-center gap-2">
@@ -1008,9 +1014,7 @@ export default function ExperienceDetailPage({
     );
   }
 
-  const allImages = event.cover_image_url
-    ? [event.cover_image_url, ...(event.gallery_urls ?? [])]
-    : (event.gallery_urls ?? []);
+  const allImages = event.gallery_urls ?? [];
 
   return (
     <>
@@ -1059,8 +1063,8 @@ export default function ExperienceDetailPage({
                       size={14}
                     />
                     <span className="font-semibold">
-                      {ratingData.avg_rating && ratingData.avg_rating > 0
-                        ? ratingData.avg_rating.toFixed(1)
+                      {ratingData.average_rating && ratingData.average_rating > 0
+                        ? ratingData.average_rating.toFixed(1)
                         : "NEW"}
                     </span>
                     {ratingData.total_reviews > 0 && (
@@ -1096,7 +1100,7 @@ export default function ExperienceDetailPage({
 
           {/* Photo Gallery */}
           <PhotoGallery
-            coverImage={event.cover_image_url}
+            coverImage={null}
             gallery={event.gallery_urls}
             onShowAll={() => setShowAllPhotos(true)}
           />
@@ -1149,7 +1153,7 @@ export default function ExperienceDetailPage({
               {/* Guest Reviews */}
               <GuestReviews
                 reviews={reviews ?? []}
-                rating={ratingData?.avg_rating ?? null}
+                rating={ratingData?.average_rating ?? null}
                 totalReviews={ratingData?.total_reviews ?? 0}
                 onShowAll={() => toast.info("All reviews modal coming soon!")}
               />
@@ -1160,7 +1164,7 @@ export default function ExperienceDetailPage({
               <BookingWidget
                 price={event.price_cents}
                 isFree={event.is_free}
-                rating={ratingData?.avg_rating ?? null}
+                rating={ratingData?.average_rating ?? null}
                 totalReviews={ratingData?.total_reviews ?? 0}
                 eventId={event.id}
                 eventDate={event.time}

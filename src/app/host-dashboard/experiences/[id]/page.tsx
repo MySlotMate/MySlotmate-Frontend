@@ -1381,7 +1381,7 @@ export default function EditEventPage({
 
       <ImageCropModal
         file={cropQueue.length > 0 ? cropQueue[0]! : null}
-        aspect={16 / 9}
+        aspect={cropTarget === "profile" ? 16 / 9 : 4}
         onClose={() => setCropQueue([])}
         onConfirm={handleCropConfirm}
       />

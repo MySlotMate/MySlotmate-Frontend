@@ -640,14 +640,12 @@ function PreviewCard({ form }: { form: FormData }) {
         {/* Stats Row */}
         <div className="mb-3 flex items-center justify-start gap-4 border-b border-[#dbeaf5] pb-3 text-xs">
           <div className="flex items-center gap-2">
-            <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-bold text-[#16304c]">4.8</span>
-            <span className="text-[#6f8daa]">(128 reviews)</span>
+            <span className="font-bold text-[#0094CA] uppercase">NEW</span>
           </div>
           <div className="h-4 w-px bg-[#dbeaf5]" />
           <div className="flex items-center gap-2">
             <FiUsers className="h-4 w-4 text-[#0094CA]" />
-            <span className="font-bold text-[#16304c]">45</span>
+            <span className="font-bold text-[#16304c]">0</span>
             <span className="text-[#6f8daa]">people joined</span>
           </div>
         </div>
@@ -2231,7 +2229,7 @@ export default function CreateExperiencePage() {
 
       <ImageCropModal
         file={cropQueue.length > 0 ? cropQueue[0]! : null}
-        aspect={16 / 9}
+        aspect={cropTarget === "profile" ? 16 / 9 : 4}
         onClose={() => setCropQueue([])}
         onConfirm={handleCropConfirm}
       />

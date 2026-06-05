@@ -766,6 +766,11 @@ export function listPublicEvents() {
   return apiFetch<EventDTO[]>("/events/");
 }
 
+/** GET /platform-settings/{key} — get a platform setting by key (public) */
+export function getPlatformSetting<T = unknown>(key: string) {
+  return apiFetch<T>(`/platform-settings/${encodeURIComponent(key)}`);
+}
+
 /** GET /events/{eventID} */
 export function getEvent(eventId: string) {
   return apiFetch<EventDTO>(`/events/${eventId}`);
@@ -823,7 +828,7 @@ export function getReviewsByEvent(eventId: string) {
 
 /** GET /reviews/event/{eventID}/rating */
 export function getEventRating(eventId: string) {
-  return apiFetch<{ avg_rating: number; total_reviews: number }>(
+  return apiFetch<{ average_rating: number; total_reviews: number }>(
     `/reviews/event/${eventId}/rating`,
   );
 }

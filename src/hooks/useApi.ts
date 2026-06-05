@@ -161,6 +161,15 @@ export function useListPublicEvents() {
   });
 }
 
+export function usePlatformSetting<T = unknown>(key: string) {
+  return useQuery({
+    queryKey: ["platformSetting", key],
+    queryFn: () => api.getPlatformSetting<T>(key),
+    staleTime: 5 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
 export function useListBlogs(pagination?: { limit?: number; offset?: number }) {
   return useQuery({
     queryKey: [...queryKeys.blogs, pagination] as const,

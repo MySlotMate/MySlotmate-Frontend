@@ -27,6 +27,7 @@ import {
   useIsExperienceSaved,
   useSaveExperience,
   useUnsaveExperience,
+  usePlatformSetting,
 } from "~/hooks/useApi";
 import {
   POPULAR_CITIES,
@@ -245,6 +246,29 @@ const formatStat = (value: number, target: number) => {
   return Math.round(value).toString();
 };
 
+const stripHtml = (html: string, maxLength?: number) => {
+  if (!html) return "";
+  const clean = html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+
+  if (maxLength && clean.length > maxLength) {
+    return clean.slice(0, maxLength) + "...";
+  }
+  return clean;
+};
+
+interface HomepageMarketingConfig {
+  featured_limit?: number;
+  curated_limit?: number;
+  featured_event_ids?: string[];
+  curated_event_ids?: string[];
+}
+
 const ShowcaseSections = () => {
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredId, setFeaturedId] = useState<string | null>(null);
@@ -266,6 +290,7 @@ const ShowcaseSections = () => {
     featuredId,
     userId,
   );
+  const { data: marketingConfig } = usePlatformSetting<HomepageMarketingConfig>("homepage_marketing_config");
   const saveExperience = useSaveExperience();
   const unsaveExperience = useUnsaveExperience();
   const curatedSessionsViewportRef = useRef<HTMLDivElement>(null);
@@ -301,17 +326,28 @@ const ShowcaseSections = () => {
     }
 
     const now = new Date();
-    const upcoming = events
-      .filter((event) => new Date(event.time) > now)
-      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
-      .slice(0, 3)
+    const limit = marketingConfig?.featured_limit ?? 3;
+    let upcoming = events.filter((event) => new Date(event.time) > now);
+
+    const specificIds = marketingConfig?.featured_event_ids ?? [];
+    if (specificIds.length > 0) {
+      upcoming = upcoming.filter((event) => specificIds.includes(event.id));
+      upcoming.sort((a, b) => specificIds.indexOf(a.id) - specificIds.indexOf(b.id));
+    } else {
+      upcoming.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+    }
+
+    const mapped = upcoming
+      .slice(0, limit)
       .map((event) => ({
         id: event.id,
         title: event.title,
-        copy:
+        copy: stripHtml(
           event.description ??
           event.hook_line ??
           "Discover a hosted experience near you.",
+          220
+        ),
         duration: `${event.duration_minutes ?? 0} mins`,
         price: formatPrice(event.price_cents),
         rating:
@@ -327,8 +363,8 @@ const ShowcaseSections = () => {
           : "Hosted on MySlotMate",
       }));
 
-    return upcoming.length > 0 ? upcoming : FEATURED_FALLBACK_DATA;
-  }, [events]);
+    return mapped.length > 0 ? mapped : FEATURED_FALLBACK_DATA;
+  }, [events, marketingConfig]);
 
   const curatedSessions = useMemo<CuratedSessionItem[]>(() => {
     const fallback: CuratedSessionItem[] = FEATURED_FALLBACK_DATA.map(
@@ -346,18 +382,29 @@ const ShowcaseSections = () => {
     if (!events) return fallback;
 
     const now = new Date();
-    const upcoming = events
-      .filter((event) => new Date(event.time) > now)
-      .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime())
-      .slice(0, 8)
+    const limit = marketingConfig?.curated_limit ?? 8;
+    let upcoming = events.filter((event) => new Date(event.time) > now);
+
+    const specificIds = marketingConfig?.curated_event_ids ?? [];
+    if (specificIds.length > 0) {
+      upcoming = upcoming.filter((event) => specificIds.includes(event.id));
+      upcoming.sort((a, b) => specificIds.indexOf(a.id) - specificIds.indexOf(b.id));
+    } else {
+      upcoming.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+    }
+
+    const mapped = upcoming
+      .slice(0, limit)
       .map((event) => ({
         id: event.id,
         headline: event.location ? `In ${event.location}` : "Curated Session",
         title: event.title,
-        description:
+        description: stripHtml(
           event.hook_line ??
           event.description ??
           "Discover a hosted experience near you.",
+          160
+        ),
         imageUrl: event.cover_image_url ?? "/assets/home/hiking.webp",
         rating:
           event.avg_rating !== null &&
@@ -375,8 +422,8 @@ const ShowcaseSections = () => {
         nextAvailableDate: event.next_available_date,
       }));
 
-    return upcoming.length > 0 ? upcoming : fallback;
-  }, [events]);
+    return mapped.length > 0 ? mapped : fallback;
+  }, [events, marketingConfig]);
 
   const storyData = useMemo<StoryItem[]>(() => {
     if (!hosts) {
@@ -822,226 +869,6 @@ const ShowcaseSections = () => {
   }, []);
   return (
     <>
-      <section className="site-x w-full border-y border-[#aeddf847] bg-[linear-gradient(180deg,#edf8ff,#f7fcff)]">
-        <div className="mx-auto w-full max-w-[1120px] pt-14 pb-20">
-          <div className="mx-auto mb-14 max-w-[760px] text-center">
-            {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-              Explore Experiences
-            </span> */}
-            <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
-              Experiences Built Around Real People
-            </h2>
-            <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
-              From deep conversations to creative sessions —discover experiences
-              hosted by people around you.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            {WAY_CARDS.map((card, idx) => {
-              const Icon = card.icon;
-              return (
-                <article
-                  key={card.title}
-                  tabIndex={0}
-                  onMouseEnter={() => playCardVideo(idx)}
-                  onMouseLeave={() => stopCardVideo(idx)}
-                  onFocus={() => playCardVideo(idx)}
-                  onBlur={() => stopCardVideo(idx)}
-                  className="group relative min-h-[260px] overflow-hidden rounded-3xl border border-[#aeddf89e] bg-[#dff3ff] shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
-                >
-                  <video
-                    ref={(el) => {
-                      wayVideoRefs.current[idx] = el;
-                    }}
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    poster={card.image}
-                    className="absolute inset-0 h-full w-full object-cover transition duration-500"
-                  >
-                    <source
-                      src={card.video}
-                      type={
-                        card.video.endsWith(".mov")
-                          ? "video/quicktime"
-                          : "video/mp4"
-                      }
-                    />
-                  </video>
-                  {/* Branded light blue gradient overlay for legibility */}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(31,167,255,0.05)_40%,rgba(31,167,255,0.8)_100%)] transition-opacity duration-500 group-hover:opacity-0" />
-
-                  <div className="relative z-10 flex h-full flex-col p-4 transition-all duration-500 group-hover:opacity-0">
-                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/85 text-[#0e8ae0] shadow-[0_10px_18px_rgba(56,116,169,0.12)] transition-transform group-hover:scale-110">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <div className="mt-auto">
-                      <span className="inline-flex rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase shadow-sm">
-                        {card.tag}
-                      </span>
-                      <h3 className="mt-2 text-[15px] font-bold text-white drop-shadow-md">
-                        {card.title}
-                      </h3>
-                      <p className="text-xs text-white/90 drop-shadow-sm">
-                        {card.desc}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="how-it-works"
-        ref={howSectionRef}
-        className="site-x w-full scroll-mt-[calc(var(--navbar-height)+3rem)]"
-      >
-        <div className="mx-auto w-full max-w-[1120px] py-14">
-          <div className="mx-auto mb-14 max-w-[760px] text-center">
-            {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" />
-              How it works
-            </span> */}
-            <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
-              Turn Your Mood Into A Real Experience
-            </h2>
-            <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
-              Discover someone. Book a moment. Experience something real.
-            </p>
-          </div>
-
-          <div className="relative">
-            <div className="pointer-events-none absolute top-8 right-20 left-20 z-0 hidden h-[2px] lg:block">
-              <div
-                ref={howProgressRef}
-                className="h-full w-full origin-left scale-x-0 rounded-full bg-[linear-gradient(90deg,#1fa7ff,#83d9ff)] opacity-0"
-              />
-            </div>
-            <div className="relative z-10 md:hidden">
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-1/2 top-[37px] bottom-[109px] z-0 w-[300px] -translate-x-1/2"
-              >
-                <svg
-                  className="h-full w-full overflow-visible"
-                  viewBox="0 0 220 348"
-                  preserveAspectRatio="none"
-                  fill="none"
-                >
-                  <defs>
-                    <linearGradient
-                      id="how-it-works-mobile-gradient"
-                      x1="110"
-                      y1="0"
-                      x2="110"
-                      y2="348"
-                      gradientUnits="userSpaceOnUse"
-                    >
-                      <stop offset="0%" stopColor="#1fa7ff" />
-                      <stop offset="55%" stopColor="#69d4ff" />
-                      <stop offset="100%" stopColor="#83d9ff" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    d={HOW_IT_WORKS_MOBILE_PATH}
-                    vectorEffect="non-scaling-stroke"
-                    stroke="#d7eefb"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    ref={howMobileProgressRef}
-                    d={HOW_IT_WORKS_MOBILE_PATH}
-                    pathLength={1}
-                    vectorEffect="non-scaling-stroke"
-                    stroke="url(#how-it-works-mobile-gradient)"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    style={{
-                      strokeDasharray: 1,
-                      strokeDashoffset: 1,
-                      opacity: 0,
-                    }}
-                  />
-                  <path
-                    ref={howMobileFlowRef}
-                    d={HOW_IT_WORKS_MOBILE_PATH}
-                    pathLength={1}
-                    vectorEffect="non-scaling-stroke"
-                    stroke="#9ee9ff"
-                    strokeWidth="4"
-                    strokeLinecap="round"
-                    style={{
-                      strokeDasharray: "0.16 0.84",
-                      strokeDashoffset: 0,
-                      opacity: 0,
-                    }}
-                    className="how-it-works-mobile-flow"
-                  />
-                </svg>
-              </div>
-
-              <div className="relative z-10 flex flex-col items-center gap-7">
-                {stepItems.map((step, idx) => (
-                  <article
-                    key={`${step.title}-mobile`}
-                    className="relative z-10 flex min-h-[146px] w-full max-w-[240px] flex-col items-center text-center"
-                  >
-                    <div className="relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#0094CA] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
-                      <img
-                        src={STEPS_ICONS[idx]}
-                        alt={step.title}
-                        loading="lazy"
-                        className="h-5 w-5"
-                      />
-                    </div>
-                    <h3 className="max-w-[170px] text-base font-bold text-[#16304c]">
-                      {step.title}
-                    </h3>
-                    <p className="mx-auto mt-1 max-w-[190px] text-sm text-[#6f8daa]">
-                      {step.desc}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative z-10 hidden gap-5 md:grid md:grid-cols-3">
-              {stepItems.map((step, idx) => (
-                <article
-                  key={`${step.title}-desktop`}
-                  ref={(el) => {
-                    howStepRefs.current[idx] = el;
-                  }}
-                  className="relative z-10 text-center"
-                >
-                  <div className="step-icon-container relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#0094CA] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
-                    <img
-                      src={STEPS_ICONS[idx]}
-                      alt={step.title}
-                      loading="lazy"
-                      className="h-5 w-5"
-                    />
-                  </div>
-                  <h3 className="text-base font-bold text-[#16304c]">
-                    {step.title}
-                  </h3>
-                  <p className="mx-auto mt-1 max-w-[260px] text-sm text-[#6f8daa]">
-                    {step.desc}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section className="site-x w-full">
         <div className="mx-auto w-full max-w-[1120px] py-14">
           <div className="flex w-full flex-col gap-14">
@@ -1255,6 +1082,217 @@ const ShowcaseSections = () => {
                   View All
                 </Link>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="site-x w-full border-y border-[#aeddf847] bg-[linear-gradient(180deg,#edf8ff,#f7fcff)]">
+        <div className="mx-auto w-full max-w-[1120px] pt-14 pb-20">
+          <div className="mx-auto mb-14 max-w-[760px] text-center">
+            <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
+              Experiences Built Around Real People
+            </h2>
+            <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
+              From deep conversations to creative sessions —discover experiences
+              hosted by people around you.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {WAY_CARDS.map((card, idx) => {
+              const Icon = card.icon;
+              return (
+                <article
+                  key={card.title}
+                  tabIndex={0}
+                  onMouseEnter={() => playCardVideo(idx)}
+                  onMouseLeave={() => stopCardVideo(idx)}
+                  onFocus={() => playCardVideo(idx)}
+                  onBlur={() => stopCardVideo(idx)}
+                  className="group relative min-h-[260px] overflow-hidden rounded-3xl border border-[#aeddf89e] bg-[#dff3ff] shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
+                >
+                  <video
+                    ref={(el) => {
+                      wayVideoRefs.current[idx] = el;
+                    }}
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    poster={card.image}
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500"
+                  >
+                    <source
+                      src={card.video}
+                      type={
+                        card.video.endsWith(".mov")
+                          ? "video/quicktime"
+                          : "video/mp4"
+                      }
+                    />
+                  </video>
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(31,167,255,0.05)_40%,rgba(31,167,255,0.8)_100%)] transition-opacity duration-500 group-hover:opacity-0" />
+
+                  <div className="relative z-10 flex h-full flex-col p-4 transition-all duration-500 group-hover:opacity-0">
+                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/85 text-[#0e8ae0] shadow-[0_10px_18px_rgba(56,116,169,0.12)] transition-transform group-hover:scale-110">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div className="mt-auto">
+                      <span className="inline-flex rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase shadow-sm">
+                        {card.tag}
+                      </span>
+                      <h3 className="mt-2 text-[15px] font-bold text-white drop-shadow-md">
+                        {card.title}
+                      </h3>
+                      <p className="text-xs text-white/90 drop-shadow-sm">
+                        {card.desc}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="how-it-works"
+        ref={howSectionRef}
+        className="site-x w-full scroll-mt-[calc(var(--navbar-height)+3rem)]"
+      >
+        <div className="mx-auto w-full max-w-[1120px] py-14">
+          <div className="mx-auto mb-14 max-w-[760px] text-center">
+            <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
+              Turn Your Mood Into A Real Experience
+            </h2>
+            <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
+              Discover someone. Book a moment. Experience something real.
+            </p>
+          </div>
+
+          <div className="relative">
+            <div className="pointer-events-none absolute top-8 right-20 left-20 z-0 hidden h-[2px] lg:block">
+              <div
+                ref={howProgressRef}
+                className="h-full w-full origin-left scale-x-0 rounded-full bg-[linear-gradient(90deg,#1fa7ff,#83d9ff)] opacity-0"
+              />
+            </div>
+            <div className="relative z-10 md:hidden">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-1/2 top-[37px] bottom-[109px] z-0 w-[300px] -translate-x-1/2"
+              >
+                <svg
+                  className="h-full w-full overflow-visible"
+                  viewBox="0 0 220 348"
+                  preserveAspectRatio="none"
+                  fill="none"
+                >
+                  <defs>
+                    <linearGradient
+                      id="how-it-works-mobile-gradient"
+                      x1="110"
+                      y1="0"
+                      x2="110"
+                      y2="348"
+                      gradientUnits="userSpaceOnUse"
+                    >
+                      <stop offset="0%" stopColor="#1fa7ff" />
+                      <stop offset="55%" stopColor="#69d4ff" />
+                      <stop offset="100%" stopColor="#83d9ff" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d={HOW_IT_WORKS_MOBILE_PATH}
+                    vectorEffect="non-scaling-stroke"
+                    stroke="#d7eefb"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    ref={howMobileProgressRef}
+                    d={HOW_IT_WORKS_MOBILE_PATH}
+                    pathLength={1}
+                    vectorEffect="non-scaling-stroke"
+                    stroke="url(#how-it-works-mobile-gradient)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    style={{
+                      strokeDasharray: 1,
+                      strokeDashoffset: 1,
+                      opacity: 0,
+                    }}
+                  />
+                  <path
+                    ref={howMobileFlowRef}
+                    d={HOW_IT_WORKS_MOBILE_PATH}
+                    pathLength={1}
+                    vectorEffect="non-scaling-stroke"
+                    stroke="#9ee9ff"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    style={{
+                      strokeDasharray: "0.16 0.84",
+                      strokeDashoffset: 0,
+                      opacity: 0,
+                    }}
+                    className="how-it-works-mobile-flow"
+                  />
+                </svg>
+              </div>
+
+              <div className="relative z-10 flex flex-col items-center gap-7">
+                {stepItems.map((step, idx) => (
+                  <article
+                    key={`${step.title}-mobile`}
+                    className="relative z-10 flex min-h-[146px] w-full max-w-[240px] flex-col items-center text-center"
+                  >
+                    <div className="relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#0094CA] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
+                      <img
+                        src={STEPS_ICONS[idx]}
+                        alt={step.title}
+                        loading="lazy"
+                        className="h-5 w-5"
+                      />
+                    </div>
+                    <h3 className="max-w-[170px] text-base font-bold text-[#16304c]">
+                      {step.title}
+                    </h3>
+                    <p className="mx-auto mt-1 max-w-[190px] text-sm text-[#6f8daa]">
+                      {step.desc}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative z-10 hidden gap-5 md:grid md:grid-cols-3">
+              {stepItems.map((step, idx) => (
+                <article
+                  key={`${step.title}-desktop`}
+                  ref={(el) => {
+                    howStepRefs.current[idx] = el;
+                  }}
+                  className="relative z-10 text-center"
+                >
+                  <div className="step-icon-container relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#0094CA] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
+                    <img
+                      src={STEPS_ICONS[idx]}
+                      alt={step.title}
+                      loading="lazy"
+                      className="h-5 w-5"
+                    />
+                  </div>
+                  <h3 className="text-base font-bold text-[#16304c]">
+                    {step.title}
+                  </h3>
+                  <p className="mx-auto mt-1 max-w-[260px] text-sm text-[#6f8daa]">
+                    {step.desc}
+                  </p>
+                </article>
+              ))}
             </div>
           </div>
         </div>

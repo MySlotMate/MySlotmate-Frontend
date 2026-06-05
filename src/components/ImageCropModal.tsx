@@ -85,7 +85,8 @@ export function ImageCropModal({
     if (width > 0 && height > 0) {
       const ratio = width / height;
       let ratioLabel = ratio.toFixed(2);
-      if (Math.abs(ratio - 1.55) < 0.02) ratioLabel = "1.55:1";
+      if (Math.abs(ratio - 4) < 0.02) ratioLabel = "4:1 (Banner)";
+      else if (Math.abs(ratio - 1.55) < 0.02) ratioLabel = "1.55:1";
       else if (Math.abs(ratio - 16 / 9) < 0.02) ratioLabel = "16:9";
       else if (Math.abs(ratio - 4 / 3) < 0.02) ratioLabel = "4:3";
       else if (Math.abs(ratio - 3 / 2) < 0.02) ratioLabel = "3:2";

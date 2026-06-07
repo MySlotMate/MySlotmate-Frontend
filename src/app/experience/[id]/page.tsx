@@ -1033,7 +1033,7 @@ export default function ExperienceDetailPage({
           />
 
           {/* Title and Actions */}
-          <div className="mt-6 mb-6 flex items-start justify-between">
+          <div className="mt-10 mb-6 flex items-start justify-between">
             <div>
               <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-4xl">
                 {event.title}

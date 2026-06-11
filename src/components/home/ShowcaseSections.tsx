@@ -986,9 +986,9 @@ const ShowcaseSections = () => {
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
-                        <span className="text-xs font-bold text-[#0e8ae0]">
+                        {/* <span className="text-xs font-bold text-[#0e8ae0]">
                           $
-                        </span>
+                        </span> */}
                         <span className="text-xs font-bold text-[#16304c]">
                           {featured.price}
                         </span>

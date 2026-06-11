@@ -1698,6 +1698,10 @@ export default function CreateExperiencePage() {
                     />
                   </div>
                 </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  <span className="font-medium">Max group size</span> = total spots
+                  that can book this session (the event capacity).
+                </p>
 
                 {/* Languages */}
                 <div className="mt-4 space-y-2">

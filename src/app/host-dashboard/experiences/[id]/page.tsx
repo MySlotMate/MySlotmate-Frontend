@@ -1116,7 +1116,7 @@ export default function EditEventPage({
                 )}
 
                 {/* Group Size */}
-                <div className="mb-4 grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Min Group Size
@@ -1152,6 +1152,10 @@ export default function EditEventPage({
                     />
                   </div>
                 </div>
+                <p className="mt-2 mb-4 text-xs text-gray-500">
+                  <span className="font-medium">Max group size</span> = total spots
+                  that can book this session (the event capacity).
+                </p>
 
                 {/* Location Type */}
                 <div className="mb-4 space-y-2">

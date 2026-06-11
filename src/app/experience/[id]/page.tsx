@@ -196,9 +196,9 @@ function InfoPills({
           <FiUsers className="text-[#0094CA]" size={18} />
         </div>
         <div>
-          <p className="text-xs text-gray-500">Group Size</p>
+          <p className="text-xs text-gray-500">Capacity</p>
           <p className="text-sm font-semibold">
-            Max {groupSize.max ?? 10} People
+            Up to {groupSize.max ?? 10} guests
           </p>
         </div>
       </div>

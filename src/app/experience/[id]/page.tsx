@@ -77,13 +77,15 @@ function PhotoGallery({
 
   return (
     <div className="group relative">
-      <div className="relative h-[200px] sm:h-[250px] md:h-[300px] w-full overflow-hidden rounded-xl bg-gray-100">
+      {/* No fixed height — the image sets its own height so the full cover shows
+          at its real aspect ratio (covers are cropped to 4:1 on upload), no crop. */}
+      <div className="relative w-full overflow-hidden rounded-xl bg-gray-100">
         {/* Main Image */}
         <img
           src={images[currentImageIndex]}
           alt={`Experience gallery ${currentImageIndex + 1}`}
           loading="lazy"
-          className="h-full w-full transition-opacity duration-300"
+          className="block h-auto w-full transition-opacity duration-300"
         />
 
         {/* Navigation Arrows */}

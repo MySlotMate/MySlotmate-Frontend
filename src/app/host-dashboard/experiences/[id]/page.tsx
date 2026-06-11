@@ -168,13 +168,16 @@ function ImageUpload({
       {multiple && previews.length > 0 && (
         <div className="space-y-4">
           <div className="group relative">
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
+            {/* Show the whole cover image at its own aspect ratio (covers are
+                cropped to 4:1 on upload) — no cropping, distortion, or letterbox.
+                w-full + h-auto lets the image set the height. */}
+            <div className="relative w-full overflow-hidden rounded-xl bg-gray-100">
               {/* Main Image */}
               <img
                 src={previews[currentImageIndex]}
                 alt={`Cover photo preview ${currentImageIndex + 1}`}
                 loading="lazy"
-                className="h-full w-full transition-opacity duration-300"
+                className="block h-auto w-full transition-opacity duration-300"
               />
 
               {/* Navigation Arrows */}

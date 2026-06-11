@@ -875,8 +875,16 @@ const ShowcaseSections = () => {
             <div className="w-full">
               <div
                 ref={featuredContainerRef}
-                className="group/card grid gap-6 rounded-[28px] border border-[#aeddf840] bg-white p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[0.85fr_1.15fr] md:items-center"
+                className="group/card relative isolate grid cursor-pointer gap-6 rounded-[28px] border border-[#aeddf840] bg-white p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[0.85fr_1.15fr] md:items-center"
               >
+                {/* Stretched link — makes the whole card (image, title, info)
+                    clickable. Interactive controls below sit above it via z-20+. */}
+                <Link
+                  href={featuredHref}
+                  aria-label={`View ${featured.title}`}
+                  className="absolute inset-0 z-10 rounded-[28px]"
+                />
+
                 <div className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-[20px] shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -925,7 +933,7 @@ const ShowcaseSections = () => {
                 </div>
 
                 <div className="flex h-full flex-col py-1">
-                  <div className="flex items-center justify-end gap-3">
+                  <div className="relative z-20 flex items-center justify-end gap-3">
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
@@ -997,7 +1005,7 @@ const ShowcaseSections = () => {
 
                     <Link
                       href={featuredHref}
-                      className="group/btn relative mt-6 flex w-full items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-6 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(31,167,255,0.2)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(31,167,255,0.3)]"
+                      className="group/btn relative z-20 mt-6 flex w-full items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-6 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(31,167,255,0.2)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(31,167,255,0.3)]"
                     >
                       <span className="relative z-10">
                         Book This Experience

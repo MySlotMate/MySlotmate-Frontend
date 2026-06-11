@@ -15,6 +15,7 @@ import {
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck, FiChevronDown, FiChevronRight, FiCalendar, FiUsers } from "react-icons/fi";
 import type { BookingDTO } from "~/lib/api";
+import { istInputToUTCISO, utcToISTInputs } from "~/lib/datetime";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImageCropModal } from "~/components/ImageCropModal";
@@ -173,7 +174,7 @@ function ImageUpload({
                 src={previews[currentImageIndex]}
                 alt={`Cover photo preview ${currentImageIndex + 1}`}
                 loading="lazy"
-                className="h-full w-full object-cover transition-opacity duration-300"
+                className="h-full w-full transition-opacity duration-300"
               />
 
               {/* Navigation Arrows */}
@@ -563,14 +564,9 @@ export default function EditEventPage({
   // Populate form when event loads
   useEffect(() => {
     if (event) {
-      const [dateStr, timeStr] = (event.time ?? "").split("T");
-      const endTime = event.end_time
-        ? new Date(event.end_time).toLocaleTimeString("en-GB", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-          })
-        : "";
+      // event.time / end_time are stored as UTC; the form inputs are IST.
+      const { date: dateStr, time: timeStr } = utcToISTInputs(event.time);
+      const endTime = event.end_time ? utcToISTInputs(event.end_time).time : "";
 
       setForm({
         title: event.title ?? "",
@@ -590,9 +586,9 @@ export default function EditEventPage({
         maxGroupSize: event.max_group_size ?? 10,
         isFree: event.is_free ?? false,
         priceCents: event.price_cents ?? 0,
-        eventDate: dateStr ?? "",
-        eventTime: timeStr?.slice(0, 5) ?? "",
-        endTime: endTime ?? "",
+        eventDate: dateStr,
+        eventTime: timeStr,
+        endTime: endTime,
         isRecurring: event.is_recurring ?? false,
         recurrenceRule: event.recurrence_rule ?? "",
         cancellationPolicy: event.cancellation_policy ?? "flexible",
@@ -737,10 +733,13 @@ export default function EditEventPage({
         }
       }
 
-      const eventDateTime = new Date(`${form.eventDate}T${form.eventTime}`);
+      // Form inputs are IST; anchor to +05:30 so the stored UTC instant is stable.
+      const eventDateTime = new Date(
+        istInputToUTCISO(form.eventDate, form.eventTime),
+      );
       let endDateTime: Date | undefined;
       if (form.endTime) {
-        endDateTime = new Date(`${form.eventDate}T${form.endTime}`);
+        endDateTime = new Date(istInputToUTCISO(form.eventDate, form.endTime));
       } else {
         endDateTime = new Date(
           eventDateTime.getTime() + form.durationMinutes * 60 * 1000,

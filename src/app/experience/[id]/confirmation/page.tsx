@@ -13,7 +13,7 @@ import {
   useBooking,
 } from "~/hooks/useApi";
 import { FiCheck, FiCalendar, FiMessageCircle } from "react-icons/fi";
-import { format } from "date-fns";
+import { formatIST } from "~/lib/datetime";
 import { getRecommendedEventSync } from "~/lib/recommendations";
 import type { EventDTO } from "~/lib/api";
 
@@ -118,10 +118,10 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
               </h3>
               <div className="mb-2 flex items-center gap-2 text-sm text-gray-600">
                 <FiCalendar size={14} className="text-gray-400" />
-                <span>{format(eventDate, "EEEE, MMM d")}</span>
+                <span>{formatIST(eventDate, "EEEE, MMM d")}</span>
               </div>
               <div className="mb-2 text-sm text-gray-500">
-                {format(eventDate, "h:mm a")} - Duration:{" "}
+                {formatIST(eventDate, "h:mm a")} - Duration:{" "}
                 {event.duration_minutes ?? 60} min
               </div>
 

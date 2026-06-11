@@ -40,6 +40,7 @@ import {
 } from "react-icons/fi";
 import { LuLanguages, LuBadgeCheck, LuSparkles, LuTicket } from "react-icons/lu";
 import { format } from "date-fns";
+import { istInputToUTCISO } from "~/lib/datetime";
 import { toast } from "sonner";
 import { MapPickerModal, LocationSearchInput } from "~/components";
 import { ImageCropModal } from "~/components/ImageCropModal";
@@ -285,7 +286,7 @@ function ImageUpload({
                 src={previews[currentImageIndex]}
                 alt={`Cover photo preview ${currentImageIndex + 1}`}
                 loading="lazy"
-                className="h-full w-full object-cover transition-opacity duration-300"
+                className="h-full w-full transition-opacity duration-300"
               />
 
               {/* Navigation Arrows */}
@@ -1191,13 +1192,15 @@ export default function CreateExperiencePage() {
       }
 
       // Construct datetime — drafts may be missing date/time, so fall back to now.
+      // Host-entered date/time are India-local (IST); anchor them to +05:30 so the
+      // stored UTC instant doesn't drift with the host's browser timezone.
       const hasDateTime = !!(form.eventDate && form.eventTime);
       const eventDateTime = hasDateTime
-        ? new Date(`${form.eventDate}T${form.eventTime}`)
+        ? new Date(istInputToUTCISO(form.eventDate, form.eventTime))
         : new Date();
       let endDateTime: Date;
       if (form.endTime && form.eventDate) {
-        endDateTime = new Date(`${form.eventDate}T${form.endTime}`);
+        endDateTime = new Date(istInputToUTCISO(form.eventDate, form.endTime));
       } else {
         endDateTime = new Date(
           eventDateTime.getTime() + (form.durationMinutes || 60) * 60 * 1000,

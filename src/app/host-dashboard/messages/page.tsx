@@ -18,6 +18,7 @@ import { createSocket } from "~/lib/socket";
 import type { EventDTO, InboxMessageDTO } from "~/lib/api";
 import { FiSearch, FiSend, FiVolume2 } from "react-icons/fi";
 import { format } from "date-fns";
+import { formatIST } from "~/lib/datetime";
 
 export default function HostMessagesPage() {
   const qc = useQueryClient();
@@ -264,8 +265,8 @@ export default function HostMessagesPage() {
                           {ev.title}
                         </p>
                         <p className="mt-0.5 text-xs text-gray-500">
-                          {format(new Date(ev.time), "EEE, MMM d")} •{" "}
-                          {format(new Date(ev.time), "h:mm a")}
+                          {formatIST(ev.time, "EEE, MMM d")} •{" "}
+                          {formatIST(ev.time, "h:mm a")}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-1">

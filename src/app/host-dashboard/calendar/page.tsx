@@ -13,6 +13,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
+import { formatIST } from "~/lib/datetime";
 import {
   FiChevronLeft,
   FiChevronRight,
@@ -252,7 +253,7 @@ export default function HostCalendarPage() {
                           {/* Event pills */}
                           <div className="mt-1 space-y-1">
                             {dayEvents.slice(0, 2).map((ev) => {
-                              const time = format(new Date(ev.time), "h:mm a");
+                              const time = formatIST(ev.time, "h:mm a");
                               const bgColor =
                                 ev.status === "live"
                                   ? "bg-[#e6f8ff] text-[#0094CA]"
@@ -319,9 +320,9 @@ export default function HostCalendarPage() {
                   <div className="mt-2 space-y-1.5">
                     <p className="flex items-center gap-2 text-xs text-gray-500">
                       <FiClock className="h-3.5 w-3.5" />
-                      {format(new Date(selectedEvent.time), "MMM d, h:mm a")}
+                      {formatIST(selectedEvent.time, "MMM d, h:mm a")}
                       {selectedEvent.end_time &&
-                        ` - ${format(new Date(selectedEvent.end_time), "h:mm a")}`}
+                        ` - ${formatIST(selectedEvent.end_time, "h:mm a")}`}
                     </p>
                     {selectedEvent.location && (
                       <p className="flex items-center gap-2 text-xs text-gray-500">

@@ -17,6 +17,7 @@ import {
 import { FiCalendar, FiUsers, FiClock, FiShield } from "react-icons/fi";
 import { LuWallet, LuLoader2 } from "react-icons/lu";
 import { format } from "date-fns";
+import { formatIST } from "~/lib/datetime";
 import { toast } from "sonner";
 
 export const runtime = "edge";
@@ -137,13 +138,13 @@ function ExperienceSummaryCard({
           <div className="flex items-center gap-2 text-sm">
             <FiCalendar className="text-gray-400" size={14} />
             <span className="font-medium">
-              {isValidDate ? format(eventDate, "EEEE, MMM d") : "Date TBD"}
+              {isValidDate ? formatIST(eventDate, "EEEE, MMM d") : "Date TBD"}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <FiClock className="text-gray-400" size={14} />
             <span>
-              {isValidDate ? format(eventDate, "h:mm a") : "Time TBD"} (
+              {isValidDate ? formatIST(eventDate, "h:mm a") : "Time TBD"} (
               {event.duration_minutes ?? 60} min)
             </span>
           </div>

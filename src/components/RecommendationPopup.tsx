@@ -14,7 +14,7 @@ import {
   FiClock,
   FiArrowRight,
 } from "react-icons/fi";
-import { format } from "date-fns";
+import { formatIST } from "~/lib/datetime";
 import type { EventDTO } from "~/lib/api";
 
 interface RecommendationPopupProps {
@@ -118,12 +118,12 @@ export function RecommendationPopup({
           <div className="mb-4 space-y-2">
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <FiCalendar size={14} className="text-[#0094CA]" />
-              <span>{format(eventDate, "EEE, MMM d")}</span>
+              <span>{formatIST(eventDate, "EEE, MMM d")}</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <FiClock size={14} className="text-[#0094CA]" />
               <span>
-                {format(eventDate, "h:mm a")} • {event.duration_minutes ?? 60}{" "}
+                {formatIST(eventDate, "h:mm a")} • {event.duration_minutes ?? 60}{" "}
                 min
               </span>
             </div>

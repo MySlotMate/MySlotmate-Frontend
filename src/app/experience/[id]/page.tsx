@@ -4,7 +4,6 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "~/components/Navbar";
-import Breadcrumb from "~/components/Breadcrumb";
 import { RichTextView } from "~/components/RichTextEditor";
 import { Footer } from "~/components/home";
 import {
@@ -37,6 +36,7 @@ import {
 import { LuLanguages, LuBadgeCheck, LuSparkles, LuTicket } from "react-icons/lu";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { formatIST } from "~/lib/datetime";
 import type { OccurrenceAvailability } from "~/lib/api";
 import { GoogleLogin } from "~/components";
 
@@ -83,7 +83,7 @@ function PhotoGallery({
           src={images[currentImageIndex]}
           alt={`Experience gallery ${currentImageIndex + 1}`}
           loading="lazy"
-          className="h-full w-full object-cover transition-opacity duration-300"
+          className="h-full w-full transition-opacity duration-300"
         />
 
         {/* Navigation Arrows */}
@@ -396,7 +396,6 @@ function BookingWidget({
               {sessionDates.map((occ) => {
                 const isSelected = selectedDate === occ.date;
                 const isDisabled = occ.is_fully_booked;
-                const dateObj = new Date(occ.date);
                 const isSingle = sessionDates.length === 1;
 
                 if (isSingle) {
@@ -417,13 +416,13 @@ function BookingWidget({
                       />
                       <div className="flex flex-1 items-baseline gap-2">
                         <span className="text-sm font-bold">
-                          {format(dateObj, "eee d")},
+                          {formatIST(occ.date, "eee d")},
                         </span>
                         <span
                           className={`text-sm ${isSelected ? "text-white/90" : "text-[#6f8daa]"
                             }`}
                         >
-                          {format(dateObj, "h:mm a")}
+                          {formatIST(occ.date, "h:mm a")}
                         </span>
                       </div>
                       {isSelected && (
@@ -451,13 +450,13 @@ function BookingWidget({
                         }`}
                     />
                     <div className="text-sm font-bold leading-tight">
-                      {format(dateObj, "eee d")}
+                      {formatIST(occ.date, "eee d")}
                     </div>
                     <div
                       className={`text-sm leading-tight ${isSelected ? "text-white/90" : "text-[#6f8daa]"
                         }`}
                     >
-                      {format(dateObj, "h:mm a")}
+                      {formatIST(occ.date, "h:mm a")}
                     </div>
                     {isSelected && (
                       <div className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-sm">
@@ -1022,18 +1021,8 @@ export default function ExperienceDetailPage({
 
       <main className="min-h-screen bg-white">
         <div className="site-x mx-auto w-full max-w-[77rem] px-4 py-8 md:px-6 lg:px-8">
-          {/* Breadcrumb */}
-          <Breadcrumb
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Experiences", href: "/experiences" },
-              { label: event.title ?? "Experience" },
-            ]}
-            className="mb-6"
-          />
-
           {/* Title and Actions */}
-          <div className="mt-10 mb-6 flex items-start justify-between">
+          <div className="mt-16 mb-6 flex items-start justify-between">
             <div>
               <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-4xl">
                 {event.title}
@@ -1106,8 +1095,11 @@ export default function ExperienceDetailPage({
           />
 
           {/* Main Content Grid */}
-          <div className="mt-10 grid gap-8 lg:grid-cols-12">
-            {/* Left Column - Details */}
+          {/* lg:gap-y-0 keeps the two stacked left-column blocks tight on desktop
+              (their own margins handle spacing) while the mobile stack still gets
+              the gap-8 between Intro → Booking widget → Host/details. */}
+          <div className="mt-10 grid gap-8 lg:grid-cols-12 lg:gap-y-0">
+            {/* Left Column (top) — Intro + About; stays above the widget on mobile */}
             <div className="lg:col-span-7">
               <InfoPills
                 duration={event.duration_minutes}
@@ -1133,8 +1125,30 @@ export default function ExperienceDetailPage({
                   <p className="mt-4 text-gray-600 italic">{event.hook_line}</p>
                 )}
               </div>
+            </div>
 
+            {/* Booking Widget — right sidebar on desktop (spans both left rows via
+                lg:row-span-2); on mobile it stacks above the host/contact section. */}
+            <div className="lg:col-span-5 lg:row-span-2">
+              <BookingWidget
+                price={event.price_cents}
+                isFree={event.is_free}
+                rating={ratingData?.average_rating ?? null}
+                totalReviews={ratingData?.total_reviews ?? 0}
+                eventId={event.id}
+                eventDate={event.time}
+                capacity={event.capacity}
+                totalBookings={event.total_bookings}
+                bookingsLastWeek={event.bookings_last_week ?? 0}
+                availability={availability}
+                isRecurring={event.is_recurring}
+                cancellationPolicy={event.cancellation_policy}
+                onBook={handleBook}
+              />
+            </div>
 
+            {/* Left Column (bottom) — Host, location, reviews */}
+            <div className="lg:col-span-7">
               {/* Meet Your Host */}
               <MeetYourHost
                 host={host ?? null}
@@ -1156,25 +1170,6 @@ export default function ExperienceDetailPage({
                 rating={ratingData?.average_rating ?? null}
                 totalReviews={ratingData?.total_reviews ?? 0}
                 onShowAll={() => toast.info("All reviews modal coming soon!")}
-              />
-            </div>
-
-            {/* Right Column - Booking Widget */}
-            <div className="lg:col-span-5">
-              <BookingWidget
-                price={event.price_cents}
-                isFree={event.is_free}
-                rating={ratingData?.average_rating ?? null}
-                totalReviews={ratingData?.total_reviews ?? 0}
-                eventId={event.id}
-                eventDate={event.time}
-                capacity={event.capacity}
-                totalBookings={event.total_bookings}
-                bookingsLastWeek={event.bookings_last_week ?? 0}
-                availability={availability}
-                isRecurring={event.is_recurring}
-                cancellationPolicy={event.cancellation_policy}
-                onBook={handleBook}
               />
             </div>
           </div>

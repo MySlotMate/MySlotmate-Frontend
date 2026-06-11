@@ -53,14 +53,32 @@ export default function Navbar() {
       setLocation(saved);
       return;
     }
+    // Auto-detect at most ONCE per device. The navbar re-mounts on every route
+    // change; if the reverse-geocode below fails (or the browser is set to
+    // "ask every time"), nothing gets persisted — so without this guard the
+    // permission prompt reappears on every navigation. The flag stops that, and
+    // the user can still set their city manually via the location button.
+    if (localStorage.getItem("msm_geo_asked")) {
+      return;
+    }
     if (navigator.geolocation) {
+      localStorage.setItem("msm_geo_asked", "1");
       navigator.geolocation.getCurrentPosition(
         (pos) => {
+          // Persist coordinates immediately so a failed reverse-geocode can't
+          // leave us with nothing saved (which would re-trigger the prompt).
+          const baseLoc: CityLocation = {
+            city: "Select City",
+            state: "",
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          saveLocation(baseLoc);
+          setLocation(baseLoc);
           void (async () => {
             try {
               const res = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&addressdetails=1`,
-                { headers: { "User-Agent": "MySlotMate/1.0" } },
               );
               const data = (await res.json()) as {
                 address?: {
@@ -91,12 +109,12 @@ export default function Navbar() {
                 setLocation(loc);
               }
             } catch {
-              /* silently fail */
+              /* keep baseLoc coords; user can refine via the location modal */
             }
           })();
         },
         () => {
-          /* permission denied */
+          /* permission denied — flag is set, so we won't prompt again */
         },
         { enableHighAccuracy: false, timeout: 10_000 },
       );
@@ -152,6 +170,7 @@ export default function Navbar() {
   const handleLogout = async () => {
     clearStoredAuth();
     localStorage.removeItem("msm_location");
+    localStorage.removeItem("msm_geo_asked");
 
     // Clear query cache
     void queryClient.clear();
@@ -556,11 +575,13 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Location button — mobile and tablet */}
+          {/* Location button — mobile and tablet.
+              ml-auto pushes it (and the hamburger after it) to the right edge,
+              so location sits directly to the left of the burger menu. */}
           <button
             onClick={() => setLocationOpen(true)}
             suppressHydrationWarning
-            className="mr-auto flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition hover:bg-gray-50 lg:hidden"
+            className="ml-auto mr-1 flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition hover:bg-gray-50 lg:hidden"
           >
             <IoLocationSharp className="h-4 w-4 text-[#0094CA]" />
             <div className="hidden text-left text-xs leading-tight sm:block">

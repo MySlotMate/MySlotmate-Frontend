@@ -7,6 +7,7 @@ import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
 import { useEventsByHost, useMyHost } from "~/hooks/useApi";
 import * as api from "~/lib/api";
+import { IST_TIMEZONE } from "~/lib/datetime";
 import type { BookingDTO } from "~/lib/api";
 import {
   FiCalendar,
@@ -229,6 +230,7 @@ function EventBookingsGroup({
             <span className="flex items-center gap-1">
               <FiCalendar className="h-3 w-3" />
               {new Date(event.time).toLocaleDateString("en-US", {
+                timeZone: IST_TIMEZONE,
                 weekday: "short",
                 month: "short",
                 day: "numeric",
@@ -238,6 +240,7 @@ function EventBookingsGroup({
             <span className="flex items-center gap-1">
               <FiClock className="h-3 w-3" />
               {new Date(event.time).toLocaleTimeString("en-US", {
+                timeZone: IST_TIMEZONE,
                 hour: "numeric",
                 minute: "2-digit",
               })}

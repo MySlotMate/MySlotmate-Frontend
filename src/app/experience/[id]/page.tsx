@@ -32,6 +32,9 @@ import {
   FiCheck,
   FiArrowRight,
   FiMessageCircle,
+  FiPlus,
+  FiMinus,
+  FiX,
 } from "react-icons/fi";
 import { LuLanguages, LuBadgeCheck, LuSparkles, LuTicket } from "react-icons/lu";
 import { format } from "date-fns";
@@ -262,6 +265,7 @@ function BookingWidget({
 }) {
   const [selectedDate, setSelectedDate] = useState(_eventDate);
   const [guests, setGuests] = useState(1);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   // Find the selected occurrence availability
   const currentOccurrence = availability?.find((a) => a.date === selectedDate);
@@ -320,286 +324,525 @@ function BookingWidget({
             : { label: "Standard", sub: "policy" };
 
   return (
-    <div className="sticky top-20 h-max w-full pl-4 max-w-[360px] mx-auto lg:ml-auto">
-      <div className="relative overflow-hidden rounded-3xl border border-[#cfe8fa] bg-gradient-to-br from-white via-[#f4faff] to-[#e9f5ff] p-5 shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
-        {/* Header */}
-        <div className="mb-3 flex items-start gap-2.5">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[#cfe8fa] bg-white shadow-[0_8px_20px_rgba(31,167,255,0.18)]">
-            <LuTicket className="h-4 w-4 -rotate-12 text-[#0094CA]" />
-          </div>
-          <div className="flex-1">
-            <h2 className="font-outfit text-xl font-extrabold leading-none tracking-tight text-[#16304c]">
-              {isFree ? (
-                "FREE EXPERIENCE"
-              ) : (
-                <>
-                  ₹{((price ?? 0) / 100).toFixed(0)}
-                  <span className="text-sm font-medium text-[#6f8daa]">
-                    /person
-                  </span>
-                </>
-              )}
-            </h2>
-            <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#5f7e9a]">
-              Hosted by verified host
-              <LuBadgeCheck
-                className="h-3.5 w-3.5 text-[#0094CA]"
-                fill="#0094CA"
-                stroke="#ffffff"
-              />
+    <>
+      {/* Desktop Widget */}
+      <div className="hidden lg:block sticky top-20 h-max w-full pl-4 max-w-[360px] mx-auto lg:ml-auto">
+        <div className="relative overflow-hidden rounded-3xl border border-[#cfe8fa] bg-gradient-to-br from-white via-[#f4faff] to-[#e9f5ff] p-5 shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
+          {/* Header */}
+          <div className="mb-3 flex items-start gap-2.5">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[#cfe8fa] bg-white shadow-[0_8px_20px_rgba(31,167,255,0.18)]">
+              <LuTicket className="h-4 w-4 -rotate-12 text-[#0094CA]" />
+            </div>
+            <div className="flex-1">
+              <h2 className="font-outfit text-xl font-extrabold leading-none tracking-tight text-[#16304c]">
+                {isFree ? (
+                  "FREE EXPERIENCE"
+                ) : (
+                  <>
+                    ₹{((price ?? 0) / 100).toFixed(0)}
+                    <span className="text-sm font-medium text-[#6f8daa]">
+                      /person
+                    </span>
+                  </>
+                )}
+              </h2>
+              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#5f7e9a]">
+                Hosted by verified host
+                <LuBadgeCheck
+                  className="h-3.5 w-3.5 text-[#0094CA]"
+                  fill="#0094CA"
+                  stroke="#ffffff"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Stats Row */}
-        <div className="mb-3 flex items-center justify-start gap-4 border-b border-[#dbeaf5] pb-3 text-xs">
-          <div className="flex items-center gap-2">
-            {rating !== null && rating > 0 && totalReviews > 0 ? (
-              <>
-                <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-bold text-[#16304c]">
-                  {rating.toFixed(1)}
-                </span>
-                <span className="text-[#6f8daa]">
-                  ({totalReviews} reviews)
-                </span>
-              </>
-            ) : (
-              <span className="font-bold text-[#0094CA] uppercase">NEW</span>
-            )}
+          {/* Stats Row */}
+          <div className="mb-3 flex items-center justify-start gap-4 border-b border-[#dbeaf5] pb-3 text-xs">
+            <div className="flex items-center gap-2">
+              {rating !== null && rating > 0 && totalReviews > 0 ? (
+                <>
+                  <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span className="font-bold text-[#16304c]">
+                    {rating.toFixed(1)}
+                  </span>
+                  <span className="text-[#6f8daa]">
+                    ({totalReviews} reviews)
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold text-[#0094CA] uppercase">NEW</span>
+              )}
+            </div>
+            <div className="h-4 w-px bg-[#dbeaf5]" />
+            <div className="flex items-center gap-2">
+              <FiUsers className="h-4 w-4 text-[#0094CA]" />
+              <span className="font-bold text-[#16304c]">{totalBookings}</span>
+              <span className="text-[#6f8daa]">people joined</span>
+            </div>
           </div>
-          <div className="h-4 w-px bg-[#dbeaf5]" />
-          <div className="flex items-center gap-2">
-            <FiUsers className="h-4 w-4 text-[#0094CA]" />
-            <span className="font-bold text-[#16304c]">{totalBookings}</span>
-            <span className="text-[#6f8daa]">people joined</span>
-          </div>
-        </div>
 
-        {/* Choose Your Session */}
-        <div className="mb-3">
-          <div className="flex items-center gap-1.5">
-            <FiCalendar className="h-4 w-4 text-[#0094CA]" />
-            <h3 className="text-sm font-bold text-[#16304c]">
-              Choose your session
-            </h3>
-          </div>
-          <p className="mb-4 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
-            Pick a time 
-          </p>
+          {/* Choose Your Session */}
+          {isRecurring && (
+            <div className="mb-3">
+              <div className="flex items-center gap-1.5">
+                <FiCalendar className="h-4 w-4 text-[#0094CA]" />
+                <h3 className="text-sm font-bold text-[#16304c]">
+                  Choose your session
+                </h3>
+              </div>
+              <p className="mb-4 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
+                Pick a time 
+              </p>
 
-          {sessionDates.length > 0 ? (
-            <div
-              className={`${sessionDates.length === 1
-                ? "flex"
-                : "flex gap-3 overflow-x-auto hide-scrollbar -mx-1 px-1 pb-1"
-                }`}
-            >
-              {sessionDates.map((occ) => {
-                const isSelected = selectedDate === occ.date;
-                const isDisabled = occ.is_fully_booked;
-                const isSingle = sessionDates.length === 1;
+              {sessionDates.length > 0 ? (
+                <div
+                  className={`${sessionDates.length === 1
+                    ? "flex"
+                    : "flex gap-3 overflow-x-auto hide-scrollbar -mx-1 px-1 pb-1"
+                    }`}
+                >
+                  {sessionDates.map((occ) => {
+                    const isSelected = selectedDate === occ.date;
+                    const isDisabled = occ.is_fully_booked;
+                    const isSingle = sessionDates.length === 1;
 
-                if (isSingle) {
-                  return (
-                    <button
-                      key={occ.date}
-                      type="button"
-                      onClick={() => !isDisabled && setSelectedDate(occ.date)}
-                      disabled={isDisabled}
-                      className={`relative flex w-full items-center gap-2.5 rounded-2xl border-2 px-3.5 py-2.5 text-left transition ${isSelected
-                        ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_14px_30px_rgba(31,167,255,0.35)]"
-                        : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
-                        } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
-                    >
-                      <FiClock
-                        className={`h-4 w-4 flex-shrink-0 ${isSelected ? "text-white/90" : "text-[#6f8daa]"
-                          }`}
-                      />
-                      <div className="flex flex-1 items-baseline gap-2">
-                        <span className="text-sm font-bold">
-                          {formatIST(occ.date, "eee d")},
-                        </span>
-                        <span
-                          className={`text-sm ${isSelected ? "text-white/90" : "text-[#6f8daa]"
+                    if (isSingle) {
+                      return (
+                        <button
+                          key={occ.date}
+                          type="button"
+                          onClick={() => !isDisabled && setSelectedDate(occ.date)}
+                          disabled={isDisabled}
+                          className={`relative flex w-full items-center gap-2.5 rounded-2xl border-2 px-3.5 py-2.5 text-left transition ${isSelected
+                            ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_14px_30px_rgba(31,167,255,0.35)]"
+                            : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
+                            } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
+                        >
+                          <FiClock
+                            className={`h-4 w-4 flex-shrink-0 ${isSelected ? "text-white/90" : "text-[#6f8daa]"
+                              }`}
+                          />
+                          <div className="flex flex-1 items-baseline gap-2">
+                            <span className="text-sm font-bold">
+                              {formatIST(occ.date, "eee d")},
+                            </span>
+                            <span
+                              className={`text-sm ${isSelected ? "text-white/90" : "text-[#6f8daa]"
+                                }`}
+                            >
+                              {formatIST(occ.date, "h:mm a")}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white">
+                              <FiCheck className="h-3 w-3 stroke-[3] text-[#0094CA]" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={occ.date}
+                        type="button"
+                        onClick={() => !isDisabled && setSelectedDate(occ.date)}
+                        disabled={isDisabled}
+                        className={`relative flex min-w-[95px] flex-shrink-0 flex-col items-start gap-1 rounded-2xl border-2 p-3 text-left transition ${isSelected
+                          ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_14px_30px_rgba(31,167,255,0.35)]"
+                          : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
+                          } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
+                      >
+                        <FiClock
+                          className={`h-4 w-4 ${isSelected ? "text-white/90" : "text-[#6f8daa]"
+                            }`}
+                        />
+                        <div className="text-sm font-bold leading-tight">
+                          {formatIST(occ.date, "eee d")}
+                        </div>
+                        <div
+                          className={`text-sm leading-tight ${isSelected ? "text-white/90" : "text-[#6f8daa]"
                             }`}
                         >
                           {formatIST(occ.date, "h:mm a")}
-                        </span>
-                      </div>
-                      {isSelected && (
-                        <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white">
-                          <FiCheck className="h-3 w-3 stroke-[3] text-[#0094CA]" />
                         </div>
-                      )}
-                    </button>
-                  );
-                }
+                        {isSelected && (
+                          <div className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-sm">
+                            <FiCheck className="h-2.5 w-2.5 stroke-[3] text-[#0094CA]" />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm text-[#6f8daa]">
+                  No upcoming sessions
+                </div>
+              )}
+            </div>
+          )}
 
-                return (
-                  <button
-                    key={occ.date}
-                    type="button"
-                    onClick={() => !isDisabled && setSelectedDate(occ.date)}
-                    disabled={isDisabled}
-                    className={`relative flex min-w-[95px] flex-shrink-0 flex-col items-start gap-1 rounded-2xl border-2 p-3 text-left transition ${isSelected
-                      ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_14px_30px_rgba(31,167,255,0.35)]"
-                      : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
-                      } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
+          {/* Guests */}
+          {!eventHasPassed && (
+            <div className="mb-3">
+              <div className="flex items-center gap-1.5">
+                <FiUser className="h-4 w-4 text-[#0094CA]" />
+                <h3 className="text-sm font-bold text-[#16304c]">Guests</h3>
+              </div>
+              <p className="mb-2 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
+                How many are joining?
+              </p>
+              {guestOptions.length > 0 ? (
+                <div className="relative">
+                  <select
+                    value={guests}
+                    onChange={(e) => setGuests(Number(e.target.value))}
+                    className="w-full appearance-none rounded-2xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
                   >
-                    <FiClock
-                      className={`h-4 w-4 ${isSelected ? "text-white/90" : "text-[#6f8daa]"
-                        }`}
-                    />
-                    <div className="text-sm font-bold leading-tight">
-                      {formatIST(occ.date, "eee d")}
-                    </div>
-                    <div
-                      className={`text-sm leading-tight ${isSelected ? "text-white/90" : "text-[#6f8daa]"
-                        }`}
-                    >
-                      {formatIST(occ.date, "h:mm a")}
-                    </div>
-                    {isSelected && (
-                      <div className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-sm">
-                        <FiCheck className="h-2.5 w-2.5 stroke-[3] text-[#0094CA]" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+                    {guestOptions.map((n) => (
+                      <option key={n} value={n}>
+                        {n} Guest{n > 1 ? "s" : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-[#6f8daa]" />
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm font-medium text-[#6f8daa]">
+                  No guest slots available
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Reserve Button or Event Passed */}
+          {eventHasPassed ? (
+            <div className="rounded-2xl bg-[#f0f6fb] p-3.5 text-center text-sm font-medium text-[#6f8daa]">
+              Event has passed
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm text-[#6f8daa]">
-              No upcoming sessions
+            <button
+              type="button"
+              onClick={() => onBook(selectedDate, guests)}
+              disabled={!selectedDate || spotsLeft <= 0}
+              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.4)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+            >
+              <span>
+                {spotsLeft <= 0 ? "Fully Booked" : "Reserve My Spot"}
+              </span>
+              {spotsLeft > 0 && (
+                <FiArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              )}
+            </button>
+          )}
+
+          {/* Booking activity hint */}
+          {!eventHasPassed && bookingsLastWeek > 0 && (
+            <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-[#5f7e9a]">
+              <span aria-hidden>🔥</span>
+              <span>
+                {bookingsLastWeek} {bookingsLastWeek === 1 ? "person" : "people"}{" "}
+                booked this week
+              </span>
+            </div>
+          )}
+
+          {/* Trust Badges */}
+          <div className="mt-3 grid grid-cols-3 gap-1 border-t border-[#dbeaf5] pt-3">
+            <div className="flex flex-col items-center gap-1 px-1 text-center">
+              <FiShield className="h-4 w-4 text-[#0094CA]" />
+              <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
+                {cancellationBadge.label}
+                <br />
+                {cancellationBadge.sub}
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-1 border-x border-[#dbeaf5] px-1 text-center">
+              <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
+                Verified
+                <br />
+                host
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-1 px-1 text-center">
+              <FiMessageCircle className="h-4 w-4 text-[#0094CA]" />
+              <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
+                Instant
+                <br />
+                confirmation
+              </span>
+            </div>
+          </div>
+
+          {/* Footer Note */}
+          <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px] text-[#5f7e9a]">
+            <svg
+              aria-hidden
+              viewBox="0 0 24 24"
+              className="h-3.5 w-3.5 flex-shrink-0 text-[#5fc781]"
+            >
+              <path
+                fill="currentColor"
+                d="M17 3c-4 0-9 3-11 9-1.4 4.2.4 7.4 3 9 2-5 5.5-8 10-9-3 2-5 5-6 9 5 0 9-4 9-9V3h-5Z"
+              />
+            </svg>
+            <span>{cancellationCopy}</span>
+          </div>
+
+          {/* Rare find banner */}
+          {!eventHasPassed && spotsLeft <= 3 && spotsLeft > 0 && (
+            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 p-3">
+              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-500">
+                <LuSparkles className="text-white" size={12} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-red-600">Rare find</p>
+                <p className="text-xs text-red-500">
+                  Only {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} left!
+                </p>
+              </div>
             </div>
           )}
         </div>
+      </div>
 
-        {/* Guests */}
-        {!eventHasPassed && (
-          <div className="mb-3">
-            <div className="flex items-center gap-1.5">
-              <FiUser className="h-4 w-4 text-[#0094CA]" />
-              <h3 className="text-sm font-bold text-[#16304c]">Guests</h3>
+      {/* Mobile Floating Bottom Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-[#dbeaf5]/60 bg-white/90 backdrop-blur-xl p-4.5 pb-safe-bottom shadow-[0_-12px_40px_rgba(22,48,76,0.06)] flex justify-between items-center transition-all duration-300">
+        <div className="flex flex-col items-start">
+          <div className="flex items-baseline gap-1">
+            <span className="font-outfit text-2xl font-black text-[#16304c] tracking-tight">
+              {isFree ? (
+                "FREE"
+              ) : (
+                <>₹{((price ?? 0) / 100).toFixed(0)}</>
+              )}
+            </span>
+            {!isFree && (
+              <span className="text-xs font-semibold text-[#6f8daa]">/person</span>
+            )}
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+            {rating !== null && rating > 0 && totalReviews > 0 ? (
+              <span className="flex items-center gap-1 font-bold text-gray-700">
+                <FiStar className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
+                <span>{rating.toFixed(1)}</span>
+                <span className="text-[10px] font-normal text-[#6f8daa]">({totalReviews})</span>
+              </span>
+            ) : (
+              <span className="font-extrabold text-[#0094CA] text-[9px] bg-[#e6f6fd] px-1.5 py-0.5 rounded-md uppercase tracking-wider">
+                NEW
+              </span>
+            )}
+            
+            {selectedDate && (
+              <>
+                <span className="h-2.5 w-px bg-gray-200" />
+                <span className="font-semibold text-[#16304c]">
+                  {formatIST(selectedDate, "MMM d")}
+                </span>
+              </>
+            )}
+
+            {!eventHasPassed && spotsLeft <= 3 && spotsLeft > 0 && (
+              <span className="text-[9px] font-bold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md leading-none animate-pulse">
+                Only {spotsLeft} left!
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div>
+          {eventHasPassed ? (
+            <div className="rounded-xl bg-gray-100 px-6 py-3 text-center text-sm font-bold text-gray-400">
+              Passed
             </div>
-            <p className="mb-2 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
-              How many are joining?
-            </p>
-            {guestOptions.length > 0 ? (
-              <div className="relative">
-                <select
-                  value={guests}
-                  onChange={(e) => setGuests(Number(e.target.value))}
-                  className="w-full appearance-none rounded-2xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                >
-                  {guestOptions.map((n) => (
-                    <option key={n} value={n}>
-                      {n} Guest{n > 1 ? "s" : ""}
-                    </option>
-                  ))}
-                </select>
-                <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-[#6f8daa]" />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsMobileDrawerOpen(true)}
+              disabled={spotsLeft <= 0}
+              className="group flex items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-[#1fa7ff] via-[#00a8e8] to-[#0094CA] px-7 py-3 text-sm font-bold text-white shadow-[0_8px_24px_rgba(0,148,202,0.22)] active:scale-95 transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+            >
+              <span>{spotsLeft <= 0 ? "Fully Booked" : "Book Now"}</span>
+              {spotsLeft > 0 && (
+                <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Mobile Booking Drawer (Modal Bottom Sheet) */}
+      {isMobileDrawerOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end justify-center">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300"
+            onClick={() => setIsMobileDrawerOpen(false)}
+          />
+
+          {/* Drawer Content */}
+          <div className="relative w-full max-h-[85vh] overflow-y-auto rounded-t-[32px] bg-gradient-to-b from-white via-[#f4faff] to-[#e9f5ff] p-6 pb-8 shadow-[0_-10px_40px_rgba(31,167,255,0.15)] border-t border-[#cfe8fa] animate-slide-up">
+            {/* Header */}
+            <div className="mb-5 flex items-center justify-between border-b border-[#dbeaf5] pb-3">
+              <div>
+                <h3 className="font-outfit text-lg font-extrabold text-[#16304c]">
+                  Select Booking Details
+                </h3>
+                <p className="text-xs text-[#6f8daa]">
+                  {isFree ? "Free Experience" : `₹${((price ?? 0) / 100).toFixed(0)} per person`}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-[#dbeaf5] text-gray-500 shadow-sm transition hover:bg-gray-50 active:scale-95"
+              >
+                <FiX className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Choose Date (Conditional for recurring event) */}
+            {isRecurring && (
+              <div className="mb-5">
+                <div className="mb-2 flex items-center gap-1.5">
+                  <FiCalendar className="h-4 w-4 text-[#0094CA]" />
+                  <h4 className="text-sm font-bold text-[#16304c]">
+                    Choose your session
+                  </h4>
+                </div>
+                {sessionDates.length > 0 ? (
+                  <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-2 px-2 pb-2">
+                    {sessionDates.map((occ) => {
+                      const isSelected = selectedDate === occ.date;
+                      const isDisabled = occ.is_fully_booked;
+
+                      return (
+                        <button
+                          key={occ.date}
+                          type="button"
+                          onClick={() => !isDisabled && setSelectedDate(occ.date)}
+                          disabled={isDisabled}
+                          className={`relative flex min-w-[105px] flex-shrink-0 flex-col items-start gap-1 rounded-2xl border-2 p-3 text-left transition ${isSelected
+                            ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_10px_20px_rgba(31,167,255,0.25)]"
+                            : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
+                            } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
+                        >
+                          <FiClock
+                            className={`h-4 w-4 ${isSelected ? "text-white/90" : "text-[#6f8daa]"
+                              }`}
+                          />
+                          <div className="text-sm font-bold leading-tight">
+                            {formatIST(occ.date, "eee d")}
+                          </div>
+                          <div
+                            className={`text-[11px] leading-tight ${isSelected ? "text-white/90" : "text-[#6f8daa]"
+                              }`}
+                          >
+                            {formatIST(occ.date, "h:mm a")}
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-sm">
+                              <FiCheck className="h-2.5 w-2.5 stroke-[3] text-[#0094CA]" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm text-[#6f8daa]">
+                    No upcoming sessions
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Guest Count selector with plus/minus buttons */}
+            {!eventHasPassed && (
+              <div className="mb-6 rounded-2xl border border-[#dbeaf5] bg-white p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 rounded-lg bg-[#eef7ff] p-2 text-[#0094CA]">
+                      <FiUser className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-[#16304c]">Number of Guests</h4>
+                      <p className="text-[11px] text-[#6f8daa]">
+                        {spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft > 1 ? "s" : ""} left` : "No slots left"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {maxGuests > 0 ? (
+                    <div className="flex items-center gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setGuests((prev) => Math.max(1, prev - 1))}
+                        disabled={guests <= 1}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbeaf5] bg-white text-[#16304c] transition hover:bg-gray-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 shadow-sm"
+                      >
+                        <FiMinus className="h-4 w-4" />
+                      </button>
+                      <span className="font-outfit text-base font-bold text-[#16304c] min-w-[20px] text-center">
+                        {guests}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setGuests((prev) => Math.min(maxGuests, prev + 1))}
+                        disabled={guests >= maxGuests}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbeaf5] bg-white text-[#16304c] transition hover:bg-gray-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30 shadow-sm"
+                      >
+                        <FiPlus className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs font-semibold text-red-500">Fully Booked</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Total summary info */}
+            {!eventHasPassed && !isFree && price && (
+              <div className="mb-6 flex justify-between items-center px-2">
+                <span className="text-sm font-medium text-[#5f7e9a]">Total booking price:</span>
+                <span className="font-outfit text-xl font-extrabold text-[#16304c]">
+                  ₹{((price * guests) / 100).toFixed(0)}
+                </span>
+              </div>
+            )}
+
+            {/* Final Book Button */}
+            {eventHasPassed ? (
+              <div className="rounded-2xl bg-gray-100 p-4 text-center text-sm font-medium text-gray-400">
+                Event has passed
               </div>
             ) : (
-              <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm font-medium text-[#6f8daa]">
-                No guest slots available
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileDrawerOpen(false);
+                  onBook(selectedDate, guests);
+                }}
+                disabled={!selectedDate || spotsLeft <= 0}
+                className="w-full rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-3.5 text-center text-base font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.3)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.38)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {spotsLeft <= 0 ? "Fully Booked" : "Reserve My Spot"}
+              </button>
             )}
-          </div>
-        )}
 
-        {/* Reserve Button or Event Passed */}
-        {eventHasPassed ? (
-          <div className="rounded-2xl bg-[#f0f6fb] p-3.5 text-center text-sm font-medium text-[#6f8daa]">
-            Event has passed
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => onBook(selectedDate, guests)}
-            disabled={!selectedDate || spotsLeft <= 0}
-            className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.4)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-          >
-            <span>
-              {spotsLeft <= 0 ? "Fully Booked" : "Reserve My Spot"}
-            </span>
-            {spotsLeft > 0 && (
-              <FiArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-            )}
-          </button>
-        )}
-
-        {/* Booking activity hint */}
-        {!eventHasPassed && bookingsLastWeek > 0 && (
-          <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-[#5f7e9a]">
-            <span aria-hidden>🔥</span>
-            <span>
-              {bookingsLastWeek} {bookingsLastWeek === 1 ? "person" : "people"}{" "}
-              booked this week
-            </span>
-          </div>
-        )}
-
-        {/* Trust Badges */}
-        <div className="mt-3 grid grid-cols-3 gap-1 border-t border-[#dbeaf5] pt-3">
-          <div className="flex flex-col items-center gap-1 px-1 text-center">
-            <FiShield className="h-4 w-4 text-[#0094CA]" />
-            <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
-              {cancellationBadge.label}
-              <br />
-              {cancellationBadge.sub}
-            </span>
-          </div>
-          <div className="flex flex-col items-center gap-1 border-x border-[#dbeaf5] px-1 text-center">
-            <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
-              Verified
-              <br />
-              host
-            </span>
-          </div>
-          <div className="flex flex-col items-center gap-1 px-1 text-center">
-            <FiMessageCircle className="h-4 w-4 text-[#0094CA]" />
-            <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
-              Instant
-              <br />
-              confirmation
-            </span>
-          </div>
-        </div>
-
-        {/* Footer Note */}
-        <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px] text-[#5f7e9a]">
-          <svg
-            aria-hidden
-            viewBox="0 0 24 24"
-            className="h-3.5 w-3.5 flex-shrink-0 text-[#5fc781]"
-          >
-            <path
-              fill="currentColor"
-              d="M17 3c-4 0-9 3-11 9-1.4 4.2.4 7.4 3 9 2-5 5.5-8 10-9-3 2-5 5-6 9 5 0 9-4 9-9V3h-5Z"
-            />
-          </svg>
-          <span>{cancellationCopy}</span>
-        </div>
-
-        {/* Rare find banner */}
-        {!eventHasPassed && spotsLeft <= 3 && spotsLeft > 0 && (
-          <div className="mt-4 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 p-3">
-            <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-500">
-              <LuSparkles className="text-white" size={12} />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-red-600">Rare find</p>
-              <p className="text-xs text-red-500">
-                Only {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} left!
-              </p>
+            {/* Cancellation info */}
+            <div className="mt-4 flex items-center justify-center gap-1.5 text-center text-[10px] text-[#5f7e9a] px-4">
+              <span>{cancellationCopy}</span>
             </div>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -1021,7 +1264,7 @@ export default function ExperienceDetailPage({
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white pb-28 lg:pb-0">
         <div className="site-x mx-auto w-full max-w-[77rem] px-4 py-8 md:px-6 lg:px-8">
           {/* Title and Actions */}
           <div className="mt-16 mb-6 flex items-start justify-between">

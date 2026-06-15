@@ -1,6 +1,6 @@
 "use client";
 
-import { use, Suspense, useState, useEffect } from "react";
+import { use, Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "~/components/Navbar";
@@ -18,8 +18,285 @@ import { formatIST } from "~/lib/datetime";
 import { getRecommendedEventSync } from "~/lib/recommendations";
 import type { EventDTO } from "~/lib/api";
 import { toast } from "sonner";
+import { env } from "~/env";
 
 export const runtime = "edge";
+
+/* ------------------------------------------------------------------ */
+/*  PDF Document Generator Helper                                      */
+/* ------------------------------------------------------------------ */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument */
+function buildPdfDocument(
+  doc: any,
+  event: any,
+  booking: any,
+  bookingUser: any,
+  coverBase64: string,
+  qrBase64: string,
+  bookingId: string | null
+) {
+  const eventDate = new Date(booking?.occurrence_date ?? event?.time ?? "");
+
+  // Outer Card Dimensions
+  const startX = 55;
+  const startY = 30;
+  const width = 100;
+  const height = 165; // ends at 195
+
+  // Draw outer card background
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(243, 244, 246); // border gray-100
+  doc.roundedRect(startX, startY, width, height, 6, 6, "FD");
+
+  // Subtle outer shadow line
+  doc.setDrawColor(229, 231, 235); // gray-200
+  doc.setLineWidth(0.3);
+  doc.roundedRect(startX - 0.2, startY - 0.2, width + 0.4, height + 0.4, 6.2, 6.2, "D");
+  doc.setLineWidth(0.2); // reset
+
+  // 1. Top Brand Stripe
+  doc.setFillColor(22, 48, 76); // #16304c deep slate
+  doc.roundedRect(startX + 0.1, startY + 0.1, width - 0.2, 8, 5.8, 5.8, "F");
+  doc.rect(startX + 0.1, startY + 5, width - 0.2, 3.2, "F"); // keep bottom edge straight
+
+  // Top Brand Stripe Text
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(255, 255, 255);
+  doc.text("M Y S L O T M A T E", startX + width / 2, startY + 5.5, { align: "center" });
+
+  // 2. Header Content (Image & Text details)
+  // Draw Event Cover Image on Left
+  const imgX = startX + 5;
+  const imgY = startY + 12;
+  const imgW = 20;
+  const imgH = 26;
+
+  if (coverBase64) {
+    doc.addImage(coverBase64, "PNG", imgX, imgY, imgW, imgH);
+  } else {
+    // Beautiful dark placeholder card
+    doc.setFillColor(22, 48, 76); // slate blue
+    doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(255, 255, 255);
+    doc.text("SLOT", imgX + imgW / 2, imgY + 11, { align: "center" });
+    doc.text("MATE", imgX + imgW / 2, imgY + 16, { align: "center" });
+  }
+
+  // Draw Event Details on Right
+  const textX = startX + 28;
+  let textY = startY + 16;
+  
+  // Event Title (Uppercase, Bold, Black)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(17, 24, 39); // gray-900
+  const titleText = (event?.title ?? "EXPERIENCE TICKET").toUpperCase();
+  const titleLines = doc.splitTextToSize(titleText, 52); // fits within right block width
+  doc.text(titleLines, textX, textY);
+  
+  const titleHeight = titleLines.length * 4.2;
+  textY += titleHeight + 0.5;
+
+  // Subtitle (Mood & Language)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(107, 114, 128); // gray-500
+  const subtitleText = `${event?.mood ?? "Experience"} | ${event?.languages?.join("/") ?? "English"}`;
+  doc.text(subtitleText, textX, textY);
+  textY += 4.5;
+
+  // Date and Time
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.setTextColor(17, 24, 39); // gray-900
+  const dateText = formatIST(eventDate, "EEE, d MMM | hh:mm a");
+  doc.text(dateText, textX, textY);
+  textY += 4;
+
+  // Venue Location (Truncated)
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(107, 114, 128); // gray-500
+  const venueText = (event?.is_online ? "Online Meet Link" : (event?.location ?? "TBD")).toUpperCase();
+  const venueLines = doc.splitTextToSize(venueText, 52);
+  doc.text(venueLines, textX, textY);
+
+  // Draw Vertical "M-Ticket" on the far right
+  const verticalX = startX + width - 6;
+  // Border left of M-Ticket
+  doc.setDrawColor(243, 244, 246); // gray-100
+  doc.line(verticalX - 3.5, startY + 12, verticalX - 3.5, startY + 38);
+
+  // M-Ticket Text
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(156, 163, 175); // slate-400
+  const mTicketLetters = ["M", "-", "T", "I", "C", "K", "E", "T"];
+  let letterY = startY + 14.5;
+  for (const letter of mTicketLetters) {
+    doc.text(letter, verticalX, letterY, { align: "center" });
+    letterY += 3.2;
+  }
+
+  // 3. Notch Divider
+  const dividerY = startY + 43;
+  
+  // Circular cuts on left and right border
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(229, 231, 235); // matches card outer border
+  
+  // Left notch
+  doc.circle(startX, dividerY, 3.5, "FD");
+  doc.setFillColor(255, 255, 255);
+  doc.rect(startX - 5, dividerY - 5, 5, 10, "F"); // Mask left outer half
+  
+  // Right notch
+  doc.circle(startX + width, dividerY, 3.5, "FD");
+  doc.setFillColor(255, 255, 255);
+  doc.rect(startX + width, dividerY - 5, 5, 10, "F"); // Mask right outer half
+
+  // Dashed Divider line
+  doc.setLineDashPattern([2, 2], 0);
+  doc.setDrawColor(229, 231, 235); // gray-200
+  doc.line(startX + 4, dividerY, startX + width - 4, dividerY);
+  doc.setLineDashPattern([], 0); // Reset to solid
+
+  // 4. Instruction Pill
+  const pillY = dividerY + 5;
+  doc.setFillColor(249, 250, 251); // gray-50
+  doc.roundedRect(startX + 5, pillY, width - 10, 7, 3.5, 3.5, "F");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(75, 85, 99); // gray-600
+  doc.text("SHOW THIS MOBILE TICKET AT CHECK-IN", startX + width / 2, pillY + 4.8, { align: "center" });
+
+  // 5. Nested Inner Card (QR Code & Info)
+  const innerY = pillY + 11;
+  const innerH = 38;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(229, 231, 235); // gray-200
+  doc.roundedRect(startX + 5, innerY, width - 10, innerH, 4, 4, "FD");
+
+  // Inner Left: QR Code
+  const qrX = startX + 9;
+  const qrY = innerY + 4;
+  const qrSize = 22;
+  if (qrBase64) {
+    doc.addImage(qrBase64, "PNG", qrX, qrY, qrSize, qrSize);
+  } else {
+    // fallback placeholder box
+    doc.setFillColor(243, 244, 246);
+    doc.rect(qrX, qrY, qrSize, qrSize, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(6);
+    doc.setTextColor(156, 163, 175);
+    doc.text("[QR CODE]", qrX + qrSize/2, qrY + qrSize/2 + 2, { align: "center" });
+  }
+
+  // Red Line Decoration under QR Code
+  doc.setFillColor(239, 68, 68); // bg-red-500
+  doc.rect(qrX, qrY + qrSize + 1.5, qrSize, 0.8, "F");
+
+  // Inner Right: Metadata
+  const infoX = startX + 37;
+  const infoCenter = infoX + (width - 10 - 32) / 2; // centered in right area
+
+  // Guest count
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(156, 163, 175); // gray-400
+  const guestText = `${booking?.quantity ?? 1} Guest${(booking?.quantity ?? 1) > 1 ? "s" : ""} · Myslotmate Pass`;
+  doc.text(guestText, infoCenter, innerY + 9, { align: "center" });
+
+  // Booking Person Name
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(17, 24, 39); // gray-900
+  const guestName = (bookingUser?.name ?? "Guest").toUpperCase();
+  doc.text(guestName, infoCenter, innerY + 13.5, { align: "center" });
+
+  // Booking ID
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(17, 24, 39); // gray-900
+  const displayBookingId = bookingId ? `XXXX${bookingId.slice(-6).toUpperCase()}` : "N/A";
+  doc.text(`BOOKING ID: ${displayBookingId}`, infoCenter, innerY + 18.5, { align: "center" });
+
+  // Confirmed Badge (Green Pill shape)
+  const badgeW = 20;
+  const badgeH = 5;
+  const badgeX = infoCenter - badgeW / 2;
+  const badgeY = innerY + 23.5;
+
+  doc.setFillColor(240, 253, 250); // green-50
+  doc.setDrawColor(187, 247, 208); // green-200
+  doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1, 1, "FD");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.0);
+  doc.setTextColor(21, 128, 61); // green-700
+  doc.text("CONFIRMED", infoCenter, badgeY + 3.6, { align: "center" });
+
+  // 6. Realistic Barcode Decoration
+  const barcodeY = innerY + innerH + 4;
+  doc.setDrawColor(22, 48, 76);
+  let barX = startX + 39.5;
+  const barWidths = [0.3, 0.6, 0.2, 0.8, 0.3, 0.5, 0.2, 0.7, 0.3, 0.4, 0.8, 0.2, 0.5, 0.3, 0.7, 0.2, 0.6, 0.4, 0.3, 0.8];
+  for (const w of barWidths) {
+    doc.setLineWidth(w);
+    doc.line(barX, barcodeY, barX, barcodeY + 4);
+    barX += w + 0.6;
+  }
+  doc.setLineWidth(0.2); // reset
+
+  // 7. Cancellation Banner
+  const cancelY = barcodeY + 8;
+  doc.setFillColor(249, 250, 251); // gray-50
+  doc.rect(startX + 0.1, cancelY, width - 0.2, 8, "F");
+  
+  // top & bottom border for banner
+  doc.setDrawColor(243, 244, 246); // gray-100
+  doc.line(startX + 0.1, cancelY, startX + width - 0.1, cancelY);
+  doc.line(startX + 0.1, cancelY + 8, startX + width - 0.1, cancelY + 8);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(107, 114, 128); // gray-500
+  doc.text("CANCELLATION POLICY RULES APPLY FOR BOOKINGS", startX + width / 2, cancelY + 5.2, { align: "center" });
+
+  // 8. Total Amount Paid Row
+  const amountY = cancelY + 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.setTextColor(107, 114, 128); // gray-500
+  doc.text("Total Amount", startX + 5, amountY + 7);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.5);
+  doc.setTextColor(17, 24, 39); // gray-900
+  const priceText = `Rs. ${booking?.amount_cents ? ((booking.amount_cents) / 100).toFixed(2) : "0.00"}`;
+  doc.text(priceText, startX + width - 5, amountY + 7, { align: "right" });
+
+  // 9. Gold Footer
+  const footerY = startY + height - 12;
+  doc.setFillColor(254, 243, 199); // amber-100/60
+  doc.roundedRect(startX + 0.1, footerY, width - 0.2, 11.9, 5.8, 5.8, "F");
+  doc.rect(startX + 0.1, footerY, width - 0.2, 5, "F"); // keep top flat
+
+  // border top line for gold footer
+  doc.setDrawColor(253, 230, 138); // amber-200
+  doc.line(startX + 0.1, footerY, startX + width - 0.1, footerY);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(146, 64, 14); // amber-800
+  doc.text("Scan QR code at the entrance to gain entry.", startX + width / 2, footerY + 7, { align: "center" });
+}
+/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
 /* ------------------------------------------------------------------ */
 /*  Confirmation Content Component                                     */
@@ -33,6 +310,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
   );
   const [reason, setReason] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
+  const sentNotificationRef = useRef<Record<string, boolean>>({});
 
   // Can use booking ID for additional details if needed
   const bookingId = searchParams.get("booking");
@@ -71,8 +349,6 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           format: "a4",
         });
 
-        const eventDate = new Date(booking?.occurrence_date ?? event?.time ?? "");
-
         // Fetch image as blob and convert to base64 to avoid canvas tainting
         const getBase64FromUrl = async (url: string): Promise<string> => {
           try {
@@ -99,268 +375,8 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`;
         const qrBase64 = await getBase64FromUrl(qrUrl);
  
-        // Outer Card Dimensions
-        const startX = 55;
-        const startY = 30;
-        const width = 100;
-        const height = 165; // ends at 195
- 
-        // Draw outer card background
-        doc.setFillColor(255, 255, 255);
-        doc.setDrawColor(243, 244, 246); // border gray-100
-        doc.roundedRect(startX, startY, width, height, 6, 6, "FD");
- 
-        // Subtle outer shadow line
-        doc.setDrawColor(229, 231, 235); // gray-200
-        doc.setLineWidth(0.3);
-        doc.roundedRect(startX - 0.2, startY - 0.2, width + 0.4, height + 0.4, 6.2, 6.2, "D");
-        doc.setLineWidth(0.2); // reset
- 
-        // 1. Top Brand Stripe
-        doc.setFillColor(22, 48, 76); // #16304c deep slate
-        doc.roundedRect(startX + 0.1, startY + 0.1, width - 0.2, 8, 5.8, 5.8, "F");
-        doc.rect(startX + 0.1, startY + 5, width - 0.2, 3.2, "F"); // keep bottom edge straight
- 
-        // Top Brand Stripe Text
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7.5);
-        doc.setTextColor(255, 255, 255);
-        doc.text("M Y S L O T M A T E", startX + width / 2, startY + 5.5, { align: "center" });
- 
-        // 2. Header Content (Image & Text details)
-        // Draw Event Cover Image on Left
-        const imgX = startX + 5;
-        const imgY = startY + 12;
-        const imgW = 20;
-        const imgH = 26;
- 
-        if (coverBase64) {
-          doc.addImage(coverBase64, "PNG", imgX, imgY, imgW, imgH);
-        } else {
-          // Beautiful dark placeholder card
-          doc.setFillColor(22, 48, 76); // slate blue
-          doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, "F");
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(7);
-          doc.setTextColor(255, 255, 255);
-          doc.text("SLOT", imgX + imgW / 2, imgY + 11, { align: "center" });
-          doc.text("MATE", imgX + imgW / 2, imgY + 16, { align: "center" });
-        }
- 
-        // Draw Event Details on Right
-        const textX = startX + 28;
-        let textY = startY + 16;
-        
-        // Event Title (Uppercase, Bold, Black)
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9.5);
-        doc.setTextColor(17, 24, 39); // gray-900
-        const titleText = (event?.title ?? "EXPERIENCE TICKET").toUpperCase();
-        const titleLines = doc.splitTextToSize(titleText, 52); // fits within right block width
-        doc.text(titleLines, textX, textY);
-        
-        const titleHeight = titleLines.length * 4.2;
-        textY += titleHeight + 0.5;
- 
-        // Subtitle (Mood & Language)
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5);
-        doc.setTextColor(107, 114, 128); // gray-500
-        const subtitleText = `${event?.mood ?? "Experience"} | ${event?.languages?.join("/") ?? "English"}`;
-        doc.text(subtitleText, textX, textY);
-        textY += 4.5;
- 
-        // Date and Time
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8);
-        doc.setTextColor(17, 24, 39); // gray-900
-        const dateText = formatIST(eventDate, "EEE, d MMM | hh:mm a");
-        doc.text(dateText, textX, textY);
-        textY += 4;
- 
-        // Venue Location (Truncated)
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5);
-        doc.setTextColor(107, 114, 128); // gray-500
-        const venueText = (event?.is_online ? "Online Meet Link" : (event?.location ?? "TBD")).toUpperCase();
-        const venueLines = doc.splitTextToSize(venueText, 52);
-        doc.text(venueLines, textX, textY);
-
-        // Draw Vertical "M-Ticket" on the far right
-        const verticalX = startX + width - 6;
-        // Border left of M-Ticket
-        doc.setDrawColor(243, 244, 246); // gray-100
-        doc.line(verticalX - 3.5, startY + 12, verticalX - 3.5, startY + 38);
-
-        // M-Ticket Text
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5);
-        doc.setTextColor(156, 163, 175); // slate-400
-        const mTicketLetters = ["M", "-", "T", "I", "C", "K", "E", "T"];
-        let letterY = startY + 14.5;
-        for (const letter of mTicketLetters) {
-          doc.text(letter, verticalX, letterY, { align: "center" });
-          letterY += 3.2;
-        }
-
-        // 3. Notch Divider
-        const dividerY = startY + 43;
-        
-        // Circular cuts on left and right border
-        doc.setFillColor(255, 255, 255);
-        doc.setDrawColor(229, 231, 235); // matches card outer border
-        
-        // Left notch
-        doc.circle(startX, dividerY, 3.5, "FD");
-        doc.setFillColor(255, 255, 255);
-        doc.rect(startX - 5, dividerY - 5, 5, 10, "F"); // Mask left outer half
-        
-        // Right notch
-        doc.circle(startX + width, dividerY, 3.5, "FD");
-        doc.setFillColor(255, 255, 255);
-        doc.rect(startX + width, dividerY - 5, 5, 10, "F"); // Mask right outer half
-
-        // Dashed Divider line
-        doc.setLineDashPattern([2, 2], 0);
-        doc.setDrawColor(229, 231, 235); // gray-200
-        doc.line(startX + 4, dividerY, startX + width - 4, dividerY);
-        doc.setLineDashPattern([], 0); // Reset to solid
-
-        // 4. Instruction Pill
-        const pillY = dividerY + 5;
-        doc.setFillColor(249, 250, 251); // gray-50
-        doc.roundedRect(startX + 5, pillY, width - 10, 7, 3.5, 3.5, "F");
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5);
-        doc.setTextColor(75, 85, 99); // gray-600
-        doc.text("SHOW THIS MOBILE TICKET AT CHECK-IN", startX + width / 2, pillY + 4.8, { align: "center" });
-
-        // 5. Nested Inner Card (QR Code & Info)
-        const innerY = pillY + 11;
-        const innerH = 38;
-        doc.setFillColor(255, 255, 255);
-        doc.setDrawColor(229, 231, 235); // gray-200
-        doc.roundedRect(startX + 5, innerY, width - 10, innerH, 4, 4, "FD");
-
-        // Inner Left: QR Code
-        const qrX = startX + 9;
-        const qrY = innerY + 4;
-        const qrSize = 22;
-        if (qrBase64) {
-          doc.addImage(qrBase64, "PNG", qrX, qrY, qrSize, qrSize);
-        } else {
-          // fallback placeholder box
-          doc.setFillColor(243, 244, 246);
-          doc.rect(qrX, qrY, qrSize, qrSize, "F");
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(6);
-          doc.setTextColor(156, 163, 175);
-          doc.text("[QR CODE]", qrX + qrSize/2, qrY + qrSize/2 + 2, { align: "center" });
-        }
-
-        // Red Line Decoration under QR Code
-        doc.setFillColor(239, 68, 68); // bg-red-500
-        doc.rect(qrX, qrY + qrSize + 1.5, qrSize, 0.8, "F");
-
-        // Inner Right: Metadata
-        const infoX = startX + 37;
-        const infoCenter = infoX + (width - 10 - 32) / 2; // centered in right area
-
-        // Guest count
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7);
-        doc.setTextColor(156, 163, 175); // gray-400
-        // Guest count
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7);
-        doc.setTextColor(156, 163, 175); // gray-400
-        const guestText = `${booking?.quantity ?? 1} Guest${(booking?.quantity ?? 1) > 1 ? "s" : ""} · Slotmate Pass`;
-        doc.text(guestText, infoCenter, innerY + 9, { align: "center" });
-
-        // Booking Person Name
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7.5);
-        doc.setTextColor(17, 24, 39); // gray-900
-        const guestName = (bookingUser?.name ?? "Guest").toUpperCase();
-        doc.text(guestName, infoCenter, innerY + 13.5, { align: "center" });
-
-        // Booking ID
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(8.5);
-        doc.setTextColor(17, 24, 39); // gray-900
-        const displayBookingId = bookingId ? `XXXX${bookingId.slice(-6).toUpperCase()}` : "N/A";
-        doc.text(`BOOKING ID: ${displayBookingId}`, infoCenter, innerY + 18.5, { align: "center" });
-
-        // Confirmed Badge (Green Pill shape)
-        const badgeW = 20;
-        const badgeH = 5;
-        const badgeX = infoCenter - badgeW / 2;
-        const badgeY = innerY + 23.5;
-
-        doc.setFillColor(240, 253, 250); // green-50
-        doc.setDrawColor(187, 247, 208); // green-200
-        doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1, 1, "FD");
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.0);
-        doc.setTextColor(21, 128, 61); // green-700
-        doc.text("CONFIRMED", infoCenter, badgeY + 3.6, { align: "center" });
-
-        // 6. Realistic Barcode Decoration
-        const barcodeY = innerY + innerH + 4;
-        doc.setDrawColor(22, 48, 76);
-        let barX = startX + 39.5;
-        const barWidths = [0.3, 0.6, 0.2, 0.8, 0.3, 0.5, 0.2, 0.7, 0.3, 0.4, 0.8, 0.2, 0.5, 0.3, 0.7, 0.2, 0.6, 0.4, 0.3, 0.8];
-        for (const w of barWidths) {
-          doc.setLineWidth(w);
-          doc.line(barX, barcodeY, barX, barcodeY + 4);
-          barX += w + 0.6;
-        }
-        doc.setLineWidth(0.2); // reset
-
-        // 7. Cancellation Banner
-        const cancelY = barcodeY + 8;
-        doc.setFillColor(249, 250, 251); // gray-50
-        doc.rect(startX + 0.1, cancelY, width - 0.2, 8, "F");
-        
-        // top & bottom border for banner
-        doc.setDrawColor(243, 244, 246); // gray-100
-        doc.line(startX + 0.1, cancelY, startX + width - 0.1, cancelY);
-        doc.line(startX + 0.1, cancelY + 8, startX + width - 0.1, cancelY + 8);
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5);
-        doc.setTextColor(107, 114, 128); // gray-500
-        doc.text("CANCELLATION POLICY RULES APPLY FOR BOOKINGS", startX + width / 2, cancelY + 5.2, { align: "center" });
-
-        // 8. Total Amount Paid Row
-        const amountY = cancelY + 8;
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7.5);
-        doc.setTextColor(107, 114, 128); // gray-500
-        doc.text("Total Amount", startX + 5, amountY + 7);
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(9.5);
-        doc.setTextColor(17, 24, 39); // gray-900
-        const priceText = `Rs. ${booking?.amount_cents ? ((booking.amount_cents) / 100).toFixed(2) : "0.00"}`;
-        doc.text(priceText, startX + width - 5, amountY + 7, { align: "right" });
-
-        // 9. Gold Footer
-        const footerY = startY + height - 12;
-        doc.setFillColor(254, 243, 199); // amber-100/60
-        doc.roundedRect(startX + 0.1, footerY, width - 0.2, 11.9, 5.8, 5.8, "F");
-        doc.rect(startX + 0.1, footerY, width - 0.2, 5, "F"); // keep top flat
-
-        // border top line for gold footer
-        doc.setDrawColor(253, 230, 138); // amber-200
-        doc.line(startX + 0.1, footerY, startX + width - 0.1, footerY);
-
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(7);
-        doc.setTextColor(146, 64, 14); // amber-800
-        doc.text("Scan QR code at the entrance to gain entry.", startX + width / 2, footerY + 7, { align: "center" });
+        // Generate the PDF contents using the helper function
+        buildPdfDocument(doc, event, booking, bookingUser, coverBase64, qrBase64, bookingId);
 
         // Save PDF
         const ticketSuffix = bookingId ? bookingId.slice(-6).toUpperCase() : "booking";
@@ -389,6 +405,106 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
     }
     /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
   };
+
+  // Auto-send booking confirmation via WhatsApp using Kapso AI
+  useEffect(() => {
+    if (!booking || !event || !bookingUser?.phn_number) return;
+
+    const sentKey = `sent_wa_${booking.id}`;
+    if (localStorage.getItem(sentKey)) return;
+    if (sentNotificationRef.current[booking.id]) return;
+    sentNotificationRef.current[booking.id] = true;
+
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+    const runSendNotification = async () => {
+      try {
+        const loadJsPdf = async (): Promise<any> => {
+          if ((window as any).jspdf) {
+            return (window as any).jspdf.jsPDF;
+          }
+          return new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+            script.onload = () => {
+              if ((window as any).jspdf) {
+                resolve((window as any).jspdf.jsPDF);
+              } else {
+                reject(new Error("jsPDF loaded but not found on window"));
+              }
+            };
+            script.onerror = () => reject(new Error("Failed to load jsPDF script"));
+            document.body.appendChild(script);
+          });
+        };
+
+        const jsPDFClass = await loadJsPdf();
+        const doc = new jsPDFClass({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4",
+        });
+
+        const getBase64FromUrl = async (url: string): Promise<string> => {
+          try {
+            const res = await fetch(url);
+            const blob = await res.blob();
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result as string);
+              reader.onerror = () => resolve("");
+              reader.readAsDataURL(blob);
+            });
+          } catch (err) {
+            console.warn("Failed to fetch image base64 from URL:", url, err);
+            return "";
+          }
+        };
+
+        const coverUrl = event?.cover_image_url ?? "/assets/home/cover.webp";
+        const proxiedCoverUrl = coverUrl.startsWith("http")
+          ? `/api/proxy-image?url=${encodeURIComponent(coverUrl)}`
+          : coverUrl;
+        const coverBase64 = await getBase64FromUrl(proxiedCoverUrl);
+
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`;
+        const qrBase64 = await getBase64FromUrl(qrUrl);
+
+        // Draw PDF layout
+        buildPdfDocument(doc, event, booking, bookingUser, coverBase64, qrBase64, booking.id);
+
+        // Convert doc to a blob and create file
+        const pdfBlob = doc.output("blob") as Blob;
+        const ticketSuffix = booking.id.slice(-6).toUpperCase();
+        const pdfFile = new File([pdfBlob], `slotmate-ticket-${ticketSuffix}.pdf`, {
+          type: "application/pdf",
+        });
+
+        const sendFormData = new FormData();
+        sendFormData.append("file", pdfFile);
+        sendFormData.append("phone", bookingUser.phn_number);
+        sendFormData.append("eventName", event.title);
+        sendFormData.append("bookingId", booking.id);
+
+        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/bookings/${booking.id}/ticket-notification`, {
+          method: "POST",
+          body: sendFormData,
+        });
+
+        if (response.ok) {
+          console.log("[WhatsApp Notification] Successfully sent!");
+          localStorage.setItem(sentKey, "true");
+        } else {
+          const errData = (await response.json()) as { error?: string };
+          console.error("[WhatsApp Notification] Send failed:", errData?.error);
+        }
+      } catch (err) {
+        console.error("[WhatsApp Notification] Error generating/sending PDF:", err);
+      }
+    };
+
+    void runSendNotification();
+    /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+  }, [booking, event, bookingUser, verifyUrl]);
 
   if (eventLoading || bookingLoading) {
     return (
@@ -503,7 +619,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
               {/* Booking metadata */}
               <div className="flex-1 text-center pr-2 flex flex-col justify-center items-center gap-0.5">
                 <span className="text-[10px] text-gray-400 font-semibold block">
-                  {booking?.quantity ?? 1} Guest{(booking?.quantity ?? 1) > 1 ? "s" : ""} · Slotmate Pass
+                  {booking?.quantity ?? 1} Guest{(booking?.quantity ?? 1) > 1 ? "s" : ""} · Myslotmate Pass
                 </span>
                 <span className="text-xs font-extrabold text-gray-950 block uppercase tracking-wide">
                   {bookingUser?.name ?? "Guest"}

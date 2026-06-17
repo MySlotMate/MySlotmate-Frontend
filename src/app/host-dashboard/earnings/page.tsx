@@ -167,7 +167,7 @@ export default function HostEarningsPage() {
     if (authUser) {
       void authUser.getIdToken().then(setIdToken);
     } else {
-      setIdToken(null);
+      setIdToken(localStorage.getItem("msm_auth_token"));
     }
   }, [authUser]);
 

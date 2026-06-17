@@ -40,5 +40,6 @@ export const clearStoredAuth = () => {
 
   localStorage.removeItem("msm_user_id");
   localStorage.removeItem("msm_host_id");
+  localStorage.removeItem("msm_auth_token");
   emitAuthStorageChange();
 };

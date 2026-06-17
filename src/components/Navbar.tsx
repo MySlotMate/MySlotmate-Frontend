@@ -33,7 +33,7 @@ import { env } from "~/env";
 import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
 
 export default function Navbar() {
-  const [user] = useAuthState(auth);
+  const [firebaseUser] = useAuthState(auth);
   const [showLogin, setShowLogin] = useState(false);
   const [showBecomeHost, setShowBecomeHost] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -130,7 +130,27 @@ export default function Navbar() {
   const validUserId =
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
 
-  useMyProfile(validUserId);
+  const { data: dbProfile } = useMyProfile(validUserId);
+
+  const user = useMemo(() => {
+    if (firebaseUser) {
+      return {
+        displayName: firebaseUser.displayName,
+        email: firebaseUser.email,
+        photoURL: firebaseUser.photoURL,
+        phoneNumber: firebaseUser.phoneNumber,
+      };
+    }
+    if (dbProfile) {
+      return {
+        displayName: dbProfile.name,
+        email: dbProfile.email || "",
+        photoURL: dbProfile.avatar_url ?? null,
+        phoneNumber: dbProfile.phn_number || null,
+      };
+    }
+    return null;
+  }, [firebaseUser, dbProfile]);
   const { data: hostData, isLoading: hostLoading } =
     useApplicationStatus(validUserId);
 

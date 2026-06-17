@@ -35,7 +35,8 @@ export default function BlogDetailPage({
   useEffect(() => {
     let active = true;
     if (!user) {
-      setIdToken(null);
+      const storedToken = localStorage.getItem("msm_auth_token");
+      if (active) setIdToken(storedToken);
       return;
     }
     void user

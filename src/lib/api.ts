@@ -128,6 +128,33 @@ export function verifyPhoneOTP(userId: string, otp: string) {
   });
 }
 
+export interface PhoneLoginSendResponse {
+  session_id: string;
+  message: string;
+}
+
+export interface PhoneLoginVerifyResponse {
+  user: UserDTO;
+  token: string;
+  firebase_custom_token?: string;
+}
+
+/** POST /auth/otp/login/send */
+export function sendLoginOTP(phone: string) {
+  return apiFetch<PhoneLoginSendResponse>("/auth/otp/login/send", {
+    method: "POST",
+    data: { phone },
+  });
+}
+
+/** POST /auth/otp/login/verify */
+export function verifyLoginOTP(phone: string, sessionID: string, otp: string) {
+  return apiFetch<PhoneLoginVerifyResponse>("/auth/otp/login/verify", {
+    method: "POST",
+    data: { phone, session_id: sessionID, otp },
+  });
+}
+
 /* ── User Profile ──────────────────────────────────────────────── */
 
 export interface UserProfileUpdatePayload {

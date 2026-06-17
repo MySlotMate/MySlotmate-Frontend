@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -20,7 +20,7 @@ import {
   LuUser,
 } from "react-icons/lu";
 import { auth } from "~/utils/firebase";
-import { useApplicationStatus } from "~/hooks/useApi";
+import { useMyProfile, useApplicationStatus } from "~/hooks/useApi";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
 import { WalletDisplay } from "../wallet";
@@ -34,7 +34,7 @@ const NAV_LINKS = [
 
 export default function HostNavbar() {
   const pathname = usePathname();
-  const [user] = useAuthState(auth);
+  const [firebaseUser] = useAuthState(auth);
   const [profileOpen, setProfileOpen] = useState(false);
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -42,12 +42,60 @@ export default function HostNavbar() {
   const queryClient = useQueryClient();
   const { userId: storedUserId } = useStoredAuth();
 
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (Math.abs(currentScrollY - lastScrollY) < 10) {
+        return;
+      }
+      if (currentScrollY > 80) {
+        if (currentScrollY > lastScrollY) {
+          setIsScrolledDown(true);
+        } else {
+          setIsScrolledDown(false);
+        }
+      } else {
+        setIsScrolledDown(false);
+      }
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   useEffect(() => {
     setPortalTarget(document.body);
   }, []);
 
   const validUserId =
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
+
+  const { data: dbProfile } = useMyProfile(validUserId);
+
+  const user = useMemo(() => {
+    if (firebaseUser) {
+      return {
+        displayName: firebaseUser.displayName,
+        email: firebaseUser.email,
+        photoURL: firebaseUser.photoURL,
+        phoneNumber: firebaseUser.phoneNumber,
+      };
+    }
+    if (dbProfile) {
+      return {
+        displayName: dbProfile.name,
+        email: dbProfile.email || "",
+        photoURL: dbProfile.avatar_url ?? null,
+        phoneNumber: dbProfile.phn_number || null,
+      };
+    }
+    return null;
+  }, [firebaseUser, dbProfile]);
+
   const { data: hostData } = useApplicationStatus(validUserId);
   const hostStatus = hostData?.status?.application_status ?? null;
 
@@ -84,7 +132,9 @@ export default function HostNavbar() {
 
   return (
     <>
-      <nav className="relative sticky top-0 z-[200] w-full border-b border-gray-200/80 bg-white/95 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl">
+      <nav className={`relative sticky top-0 z-[200] w-full border-b border-gray-200/80 bg-white/95 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-transform duration-300 ${
+        isScrolledDown ? "-translate-y-full md:translate-y-0" : "translate-y-0"
+      }`}>
         <div className="h-[3px] w-full bg-[#0094CA]" />
         <div className="site-x mx-auto flex h-16 max-w-7xl items-center justify-between">
           <Link href="/" className="shrink-0">
@@ -333,21 +383,25 @@ export default function HostNavbar() {
           </div>
         </div>
 
-        <div className="border-t border-[#e6eef5] bg-white/95 md:hidden">
-          <div className="site-x mx-auto max-w-7xl py-3">
-            <div className="grid grid-cols-2 gap-2">
+        <div className="border-t border-gray-100 bg-white/95 md:hidden">
+          <div className="site-x mx-auto max-w-7xl">
+            <div className="flex justify-around items-center h-12">
               {NAV_LINKS.map(({ label, href }) => {
                 const active = isNavActive(href);
                 return (
                   <Link
                     key={href}
                     href={href}
-                    className={`rounded-xl border px-3 py-3 text-center text-sm font-semibold transition ${active
-                        ? "border-[#0094CA] bg-[#e6f8ff] text-[#0094CA] shadow-[0_10px_24px_rgba(0,148,202,0.14)]"
-                        : "border-[#d6ebf7] bg-[#f7fcff] text-[#5d87a8] hover:bg-[#f0f9ff] hover:text-[#0e8ae0]"
-                      }`}
+                    className={`flex flex-col items-center justify-center w-full h-full text-xs font-semibold transition-all relative ${
+                      active
+                        ? "text-[#0094CA]"
+                        : "text-gray-500 hover:text-gray-900"
+                    }`}
                   >
-                    {label}
+                    <span>{label}</span>
+                    {active && (
+                      <span className="absolute bottom-0 left-[20%] right-[20%] h-[3px] rounded-t-full bg-[#0094CA]" />
+                    )}
                   </Link>
                 );
               })}

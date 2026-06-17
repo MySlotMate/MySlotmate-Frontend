@@ -241,7 +241,7 @@ export default function HostDashboardPage() {
     if (user) {
       void user.getIdToken().then(setIdToken);
     } else {
-      setIdToken(null);
+      setIdToken(localStorage.getItem("msm_auth_token"));
     }
   }, [user]);
 

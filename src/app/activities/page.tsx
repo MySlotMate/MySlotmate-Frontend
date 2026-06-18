@@ -6,8 +6,10 @@ import {
   useBookingsByUser,
   useListPublicEvents,
   useCancelBooking,
+  useUserProfile,
 } from "~/hooks/useApi";
 import { type BookingDTO, type EventDTO } from "~/lib/api";
+import { downloadTicketPdf } from "~/lib/ticket";
 import * as components from "~/components";
 import { InboxSidebar, ReviewModal } from "~/components/activities";
 import {
@@ -19,6 +21,7 @@ import {
   FiStar,
   FiX,
   FiAlertCircle,
+  FiDownload,
 } from "react-icons/fi";
 import Breadcrumb from "~/components/Breadcrumb";
 import { toast } from "sonner";
@@ -47,6 +50,23 @@ export default function ActivitiesPage() {
   const [refundDestination, setRefundDestination] = useState<
     "wallet" | "source"
   >("wallet");
+
+  const [downloadingTicketId, setDownloadingTicketId] = useState<string | null>(
+    null,
+  );
+
+  // Fetch user profile for ticket PDF generation
+  const { data: bookingUser } = useUserProfile(userId);
+
+  const handleDownloadTicket = async (booking: BookingDTO, event: EventDTO) => {
+    if (!bookingUser) {
+      toast.error("User profile not loaded yet. Please try again.");
+      return;
+    }
+    setDownloadingTicketId(booking.id);
+    await downloadTicketPdf(booking, event, bookingUser);
+    setDownloadingTicketId(null);
+  };
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("msm_user_id");
@@ -192,17 +212,34 @@ export default function ActivitiesPage() {
                     <div>
                       <div className="mb-3 flex items-start justify-between">
                         <Link href={`/experience/${event.id}`}>
-                          <h3 className="text-lg font-semibold text-gray-900 transition hover:text-[#0094CA]">
+                          <h3 className="text-lg font-semibold text-gray-900 transition hover:text-[#0094CA] pr-2">
                             {event.title}
                           </h3>
                         </Link>
-                        <span
-                          className={`flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(booking.status)}`}
-                        >
-                          {getStatusIcon(booking.status)}
-                          {booking.status.charAt(0).toUpperCase() +
-                            booking.status.slice(1)}
-                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {booking.status === "confirmed" && (
+                            <button
+                              onClick={() => void handleDownloadTicket(booking, event)}
+                              disabled={downloadingTicketId === booking.id}
+                              className="inline-flex items-center justify-center rounded-full border border-[#0094CA] bg-white px-2.5 py-1 text-xs font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5 active:bg-[#0094CA]/10 disabled:opacity-50"
+                              title="Download Ticket"
+                            >
+                              {downloadingTicketId === booking.id ? (
+                                <div className="h-3 w-3 animate-spin rounded-full border border-[#0094CA] border-t-transparent mr-1" />
+                              ) : (
+                                <FiDownload className="h-3.5 w-3.5 mr-1" />
+                              )}
+                              Ticket
+                            </button>
+                          )}
+                          <span
+                            className={`flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(booking.status)}`}
+                          >
+                            {getStatusIcon(booking.status)}
+                            {booking.status.charAt(0).toUpperCase() +
+                              booking.status.slice(1)}
+                          </span>
+                        </div>
                       </div>
 
                       <p className="mb-4 text-gray-600">

@@ -62,11 +62,13 @@ const DAYS = [
 
 export default function BecomeHostPage() {
   const router = useRouter();
-  const [user] = useAuthState(auth);
+  const [user, loadingAuth] = useAuthState(auth);
+  const [mounted, setMounted] = useState(false);
 
   // Read userId from localStorage
   const [storedUserId, setStoredUserId] = useState<string | null>(null);
   useEffect(() => {
+    setMounted(true);
     setStoredUserId(localStorage.getItem("msm_user_id"));
   }, []);
 
@@ -104,6 +106,17 @@ export default function BecomeHostPage() {
     groupSize: 5,
   });
 
+  // Pre-populate form from DB profile when it loads
+  useEffect(() => {
+    if (userProfile) {
+      setForm((prev) => ({
+        ...prev,
+        fullName: prev.fullName !== "" ? prev.fullName : (userProfile.name ?? ""),
+        city: prev.city !== "" ? prev.city : (userProfile.city ?? ""),
+      }));
+    }
+  }, [userProfile]);
+
   /* ---- helpers ---- */
 
   const updateField = <K extends keyof HostFormData>(
@@ -133,9 +146,17 @@ export default function BecomeHostPage() {
 
   const progress = 100;
 
-  /* ---- guard: must be logged in + verified ---- */
+  if (!mounted || loadingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+      </div>
+    );
+  }
 
-  if (!user) {
+  const isAuthenticated = !!user || !!validUserId;
+
+  if (!isAuthenticated) {
     return (
       <>
         <Navbar />
@@ -372,7 +393,7 @@ export default function BecomeHostPage() {
   /* ---- submit handlers ---- */
 
   const handleSaveDraft = async () => {
-    if (!user) return;
+    if (!isAuthenticated) return;
     if (!validUserId) {
       toast.error("Please complete your profile (signup) first.");
       return;
@@ -384,7 +405,7 @@ export default function BecomeHostPage() {
         first_name: nameParts[0] ?? "",
         last_name: nameParts.slice(1).join(" ") || "",
         city: form.city,
-        phn_number: user.phoneNumber ?? "",
+        phn_number: user?.phoneNumber ?? userProfile?.phn_number ?? "",
         experience_desc: form.experienceDesc || undefined,
         moods: form.moods.map((m) => m.toLowerCase()),
         description: form.description || undefined,

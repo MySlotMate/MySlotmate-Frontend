@@ -174,6 +174,12 @@ export default function Navbar() {
   }, [hostData?.status?.id]);
 
   useEffect(() => {
+    if (dbProfile && (dbProfile.name === "Guest User" || dbProfile.name === "")) {
+      setShowLogin(true);
+    }
+  }, [dbProfile]);
+
+  useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as Node;
       const clickedTrigger = profileRef.current?.contains(target) ?? false;

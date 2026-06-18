@@ -352,8 +352,8 @@ const ShowcaseSections = () => {
         price: formatPrice(event.price_cents),
         rating:
           event.avg_rating !== null &&
-          event.avg_rating !== undefined &&
-          event.avg_rating !== 0
+            event.avg_rating !== undefined &&
+            event.avg_rating !== 0
             ? event.avg_rating.toFixed(1)
             : "NEW",
         image: event.cover_image_url ?? "/assets/home/hiking.webp",
@@ -408,8 +408,8 @@ const ShowcaseSections = () => {
         imageUrl: event.cover_image_url ?? "/assets/home/hiking.webp",
         rating:
           event.avg_rating !== null &&
-          event.avg_rating !== undefined &&
-          event.avg_rating !== 0
+            event.avg_rating !== undefined &&
+            event.avg_rating !== 0
             ? event.avg_rating.toFixed(1)
             : "NEW",
         price: formatPrice(event.price_cents),
@@ -434,25 +434,25 @@ const ShowcaseSections = () => {
       !mounted || !location
         ? hosts.slice(0, 3)
         : hosts
-            .map((host) => {
-              const hostCity = POPULAR_CITIES.find(
-                (city) => city.city.toLowerCase() === host.city.toLowerCase(),
-              );
+          .map((host) => {
+            const hostCity = POPULAR_CITIES.find(
+              (city) => city.city.toLowerCase() === host.city.toLowerCase(),
+            );
 
-              const distance = hostCity
-                ? calculateDistance(
-                    location.lat,
-                    location.lng,
-                    hostCity.lat,
-                    hostCity.lng,
-                  )
-                : Number.POSITIVE_INFINITY;
+            const distance = hostCity
+              ? calculateDistance(
+                location.lat,
+                location.lng,
+                hostCity.lat,
+                hostCity.lng,
+              )
+              : Number.POSITIVE_INFINITY;
 
-              return { host, distance };
-            })
-            .sort((a, b) => a.distance - b.distance)
-            .slice(0, 3)
-            .map(({ host }) => host);
+            return { host, distance };
+          })
+          .sort((a, b) => a.distance - b.distance)
+          .slice(0, 3)
+          .map(({ host }) => host);
 
     const mappedStories = nearbyHosts.map((host) => {
       const fullName = `${host.first_name} ${host.last_name}`.trim();

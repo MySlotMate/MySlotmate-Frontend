@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { LuLoader2 } from "react-icons/lu";
@@ -114,22 +114,22 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
             </p>
           </div>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-2 md:flex">
             <button
               type="button"
               onClick={() => scrollCards("left")}
-              className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
               aria-label="Scroll hosts left"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ChevronLeft className="h-6 w-6" />
             </button>
             <button
               type="button"
               onClick={() => scrollCards("right")}
-              className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
               aria-label="Scroll hosts right"
             >
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-6 w-6" />
             </button>
           </div>
         </div>

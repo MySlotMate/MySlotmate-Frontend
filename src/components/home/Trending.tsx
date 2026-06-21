@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { LuLoader2 } from "react-icons/lu";
@@ -162,11 +162,11 @@ const Trending = () => {
         const distance =
           event.location_lat !== null && event.location_lng !== null
             ? calculateDistance(
-                location.lat,
-                location.lng,
-                event.location_lat,
-                event.location_lng,
-              )
+              location.lat,
+              location.lng,
+              event.location_lat,
+              event.location_lng,
+            )
             : Number.POSITIVE_INFINITY;
 
         return { event, distance };

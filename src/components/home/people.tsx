@@ -223,32 +223,32 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
           </div>
 
           {isOverflowing ? (
-            <div className="hidden items-center gap-3 md:flex">
+            <div className="hidden items-center gap-2 md:flex">
               <button
                 type="button"
                 onClick={() => scrollCards("left")}
-                className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
                 aria-label="Scroll hosts left"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-6 w-6" />
               </button>
               {isAtScrollEnd ? (
                 <Link
                   href="/hosts"
-                  className="inline-flex h-14 items-center justify-center gap-2 border border-[#bdddf4] bg-[#f7fcff] px-5 text-sm font-extrabold text-[#2f7eb5] transition hover:bg-white"
+                  className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#bdddf480] bg-[#eef8ff] px-6 text-sm font-black text-[#0e8ae0] transition-all hover:bg-[#0e8ae0] hover:text-white"
                   aria-label="See more hosts"
                 >
-                  See more
+                  Explore All
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               ) : (
                 <button
                   type="button"
                   onClick={() => scrollCards("right")}
-                  className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
                   aria-label="Scroll hosts right"
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  <ChevronRight className="h-6 w-6" />
                 </button>
               )}
             </div>

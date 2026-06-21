@@ -291,7 +291,7 @@ export default function ExplorePage() {
       .filter((event) =>
         byRating(event.avg_rating, event.total_reviews, ratingFilter),
       )
-      .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [
     events,
     priceFilter,

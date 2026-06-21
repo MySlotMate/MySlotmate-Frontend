@@ -78,40 +78,32 @@ const WAY_CARDS = [
     title: "Walk & Talk With a Stranger",
     desc: "Discover conversations on every walk",
     tag: "ADVENTURE",
-    video:
-      "https://res.cloudinary.com/dhry5xscm/video/upload/v1775498006/Adventure_jw6egk.mp4",
-    image:
-      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=900&q=80",
+    video: "/assets/home/Adventure.mp4",
+    image: "/assets/home/adventure_thumb.jpg",
     icon: Mountain,
   },
   {
     title: "Coffee & Real Conversations",
     desc: "No small talk. Just honest connection",
     tag: "SOCIAL",
-    video:
-      "https://res.cloudinary.com/dhry5xscm/video/upload/v1775497976/Social_tmueix.mp4",
-    image:
-      "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=900&q=80",
+    video: "/assets/home/Social.mp4",
+    image: "/assets/home/social_thumb.jpg",
     icon: Users,
   },
   {
     title: "Paint, Write, or Build Together",
     desc: "Learn by doing with real people",
     tag: "CREATIVITY",
-    video:
-      "https://res.cloudinary.com/dhry5xscm/video/upload/v1775497970/Creativity_jyuajd.mp4",
-    image:
-      "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=900&q=80",
+    video: "/assets/home/Creativity.mp4",
+    image: "/assets/home/creativity_thumb.jpg",
     icon: Palette,
   },
   {
     title: "Slow Down With Someone",
     desc: "Tea, music, mindful time",
     tag: "WELLNESS",
-    video:
-      "https://res.cloudinary.com/dhry5xscm/video/upload/v1775762349/WhatsApp_Video_2026-04-10_at_12.47.41_AM_rqlq4f.mp4",
-    image:
-      "https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=900&q=80",
+    video: "/assets/home/yoga.mp4",
+    image: "/assets/home/yoga_thumb.jpg",
     icon: Camera,
   },
 ];
@@ -1120,26 +1112,34 @@ const ShowcaseSections = () => {
                   onBlur={() => stopCardVideo(idx)}
                   className="group relative min-h-[260px] overflow-hidden rounded-3xl border border-[#aeddf89e] bg-[#dff3ff] shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
                 >
-                  <video
-                    ref={(el) => {
-                      wayVideoRefs.current[idx] = el;
-                    }}
-                    muted
-                    loop
-                    playsInline
-                    preload="auto"
-                    poster={card.image}
-                    className="absolute inset-0 h-full w-full object-cover transition duration-500"
-                  >
-                    <source
-                      src={card.video}
-                      type={
-                        card.video.endsWith(".mov")
-                          ? "video/quicktime"
-                          : "video/mp4"
-                      }
+                  {card.video ? (
+                    <video
+                      ref={(el) => {
+                        wayVideoRefs.current[idx] = el;
+                      }}
+                      muted
+                      loop
+                      playsInline
+                      preload="auto"
+                      poster={card.image}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-500"
+                    >
+                      <source
+                        src={card.video}
+                        type={
+                          card.video.endsWith(".mov")
+                            ? "video/quicktime"
+                            : "video/mp4"
+                        }
+                      />
+                    </video>
+                  ) : (
+                    <img
+                      src={card.image}
+                      alt={card.title}
+                      className="absolute inset-0 h-full w-full object-cover transition duration-500"
                     />
-                  </video>
+                  )}
                   <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(31,167,255,0.05)_40%,rgba(31,167,255,0.8)_100%)] transition-opacity duration-500 group-hover:opacity-0" />
 
                   <div className="relative z-10 flex h-full flex-col p-4 transition-all duration-500 group-hover:opacity-0">

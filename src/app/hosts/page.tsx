@@ -43,30 +43,49 @@ const HostCard = ({
       href={`/host/${id}`}
       className="group overflow-hidden rounded-[22px] border border-[#aeddf89e] bg-white shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
     >
-      <div className="relative">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl || "/assets/home/people1.webp"}
-          alt={name}
-          loading="lazy"
-          className="h-[214px] w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <span className="absolute top-3 right-3 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
+      <div className="relative h-[214px] w-full overflow-hidden bg-[#f8fbff]">
+        {imageUrl && !imageUrl.includes("people1.") ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src={imageUrl}
+            alt={name}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="relative flex h-full w-full items-center justify-center bg-[#E9EDF0]">
+            {/* WhatsApp Style Silhouette */}
+            <div className="relative flex h-full w-full items-center justify-center opacity-40">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-2/3 w-2/3 fill-[#ABB4BA]"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+              </svg>
+            </div>
+
+            {/* Subtle Gradient Overlay for Depth */}
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent to-black/5" />
+          </div>
+        )}
+        <span className="absolute top-3 right-3 z-10 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase shadow-sm">
           {rating === "0" ? "New" : rating}
         </span>
         {isVerified ? (
-          <span className="absolute right-3 bottom-3 z-10 rounded-full bg-[#0094CA] p-1.5 text-white shadow-sm">
-            <svg
-              className="h-3.5 w-3.5"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                clipRule="evenodd"
+          <span className="absolute right-3 bottom-3 z-10">
+            <div className="relative">
+              <div className="absolute inset-0 scale-150 animate-ping rounded-full bg-white opacity-20" />
+              {/* White background to fill the transparent tick, inset slightly to avoid outer border */}
+              <div className="absolute inset-[2px] rounded-full bg-white" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/assets/home/verified.svg"
+                alt="Verified"
+                loading="lazy"
+                className="relative h-7 w-7 drop-shadow-md"
               />
-            </svg>
+            </div>
           </span>
         ) : null}
       </div>

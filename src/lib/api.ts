@@ -701,14 +701,11 @@ export function getHostDashboard(hostId: string, userId: string) {
 }
 
 export interface AttentionItemDTO {
-  id: string;
+  /** "cancelled_booking" | "pending_review" | "unread_message" | "low_rating" */
   type: string;
-  title: string;
-  description: string;
-  severity: "info" | "warning" | "critical";
-  action_url?: string;
-  action_label?: string;
-  created_at: string;
+  count: number;
+  message: string;
+  data?: unknown;
 }
 
 export interface HostAttentionItemsDTO {

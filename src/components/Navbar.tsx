@@ -227,15 +227,16 @@ export default function Navbar() {
 
           {/* Desktop center nav (matches reference nav styles) */}
           <div className="hidden flex-1 items-center justify-center gap-[22px] text-[0.92rem] font-bold text-[#6f8daa] lg:flex">
+             <Link href="/#hosts" className="transition hover:text-[#0e8ae0]">
+              Hosts
+            </Link>
             <Link
               href="/#how-it-works"
               className="transition hover:text-[#0e8ae0]"
             >
               How it works
             </Link>
-            <Link href="/#hosts" className="transition hover:text-[#0e8ae0]">
-              Hosts
-            </Link>
+           
             <Link
               href="/#community"
               className="transition hover:text-[#0e8ae0]"
@@ -675,19 +676,20 @@ export default function Navbar() {
           <div className="flex-1 overflow-y-auto px-5 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="mb-4 grid grid-cols-2 gap-2">
               <Link
-                href="/#how-it-works"
-                onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
-              >
-                How it works
-              </Link>
-              <Link
                 href="/#hosts"
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
               >
                 Hosts
               </Link>
+              <Link
+                href="/#how-it-works"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+              >
+                How it works
+              </Link>
+              
               <Link
                 href="/#community"
                 onClick={() => setMobileOpen(false)}

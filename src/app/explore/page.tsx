@@ -285,7 +285,17 @@ export default function ExplorePage() {
       }
     };
 
+    // Hide one-off events that have already happened. Recurring events stay —
+    // they repeat, so a past `time` just reflects the first/last occurrence.
+    const now = Date.now();
+    const hasPassed = (event: (typeof list)[number]) => {
+      const ref = event.end_time ?? event.time;
+      const t = new Date(ref).getTime();
+      return Number.isFinite(t) && t < now;
+    };
+
     return list
+      .filter((event) => event.is_recurring || !hasPassed(event))
       .filter((event) => byPrice(event.price_cents, priceFilter))
       .filter((event) => byDuration(event.duration_minutes, durationFilter))
       .filter((event) =>

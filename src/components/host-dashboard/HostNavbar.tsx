@@ -14,23 +14,30 @@ import {
   LuCalendarDays,
   LuFileText,
   LuHome,
+  LuLayoutDashboard,
   LuLogOut,
   LuMessageSquare,
   LuShield,
   LuUser,
+  LuWallet,
 } from "react-icons/lu";
+import type { IconType } from "react-icons";
 import { auth } from "~/utils/firebase";
 import { useMyProfile, useApplicationStatus } from "~/hooks/useApi";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
 import { WalletDisplay } from "../wallet";
 
-const NAV_LINKS = [
-  { label: "Overview", href: "/host-dashboard" },
-  { label: "Calendar", href: "/host-dashboard/calendar" },
-  { label: "Messages", href: "/host-dashboard/messages" },
-  { label: "Earnings", href: "/host-dashboard/earnings" },
-] as const;
+const NAV_LINKS: {
+  label: string;
+  href: string;
+  icon: IconType;
+}[] = [
+  { label: "Overview", href: "/host-dashboard", icon: LuLayoutDashboard },
+  { label: "Calendar", href: "/host-dashboard/calendar", icon: LuCalendarDays },
+  { label: "Messages", href: "/host-dashboard/messages", icon: LuMessageSquare },
+  { label: "Earnings", href: "/host-dashboard/earnings", icon: LuWallet },
+];
 
 export default function HostNavbar() {
   const pathname = usePathname();
@@ -302,7 +309,7 @@ export default function HostNavbar() {
                               <span className="flex items-center gap-3">
                                 <LuCalendarDays className="h-5 w-5 text-gray-600" />
                                 View all bookings
-                              </span>ok
+                              </span>
                               <FiChevronRight className="h-4 w-4 text-gray-400" />
                             </Link>
                             <Link
@@ -385,23 +392,28 @@ export default function HostNavbar() {
 
         <div className="border-t border-gray-100 bg-white/95 md:hidden">
           <div className="site-x mx-auto max-w-7xl">
-            <div className="flex justify-around items-center h-12">
-              {NAV_LINKS.map(({ label, href }) => {
+            <div className="flex h-14 items-center justify-around">
+              {NAV_LINKS.map(({ label, href, icon: Icon }) => {
                 const active = isNavActive(href);
                 return (
                   <Link
                     key={href}
                     href={href}
-                    className={`flex flex-col items-center justify-center w-full h-full text-xs font-semibold transition-all relative ${
+                    aria-current={active ? "page" : undefined}
+                    className={`group relative flex h-full w-full flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition-colors ${
                       active
                         ? "text-[#0094CA]"
                         : "text-gray-500 hover:text-gray-900"
                     }`}
                   >
+                    <span
+                      className={`flex h-6 w-11 items-center justify-center rounded-full transition-colors ${
+                        active ? "bg-[#0094CA]/10" : "bg-transparent"
+                      }`}
+                    >
+                      <Icon className="h-[18px] w-[18px]" />
+                    </span>
                     <span>{label}</span>
-                    {active && (
-                      <span className="absolute bottom-0 left-[20%] right-[20%] h-[3px] rounded-t-full bg-[#0094CA]" />
-                    )}
                   </Link>
                 );
               })}

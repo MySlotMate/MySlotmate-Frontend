@@ -4,8 +4,10 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
-import { HostNavbar } from "~/components/host-dashboard";
+import { HostNavbar, EarningsChart } from "~/components/host-dashboard";
+import type { ChartPoint } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
+import { formatIST } from "~/lib/datetime";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -22,30 +24,102 @@ import {
 } from "react-icons/fi";
 import {
   LuCalendarDays,
+  LuCalendarX2,
   LuBookOpen,
+  LuStar,
+  LuMessageSquare,
+  LuAlertTriangle,
   LuWallet,
   LuLightbulb,
+  LuCheckCircle,
+  LuPlus,
+  LuChevronLeft,
+  LuChevronRight,
+  LuLoader2,
 } from "react-icons/lu";
 import {
   useHostDashboard,
   useCalendarEvents,
   useTodaySchedule,
   usePayoutHistory,
+  useHostSales,
+  useHostAttentionItems,
   usePauseEvent,
   useResumeEvent,
+  useEventsByHost,
 } from "~/hooks/useApi";
+import type { AttentionItemDTO } from "~/lib/api";
 import { PauseExperienceModal } from "~/components/PauseExperienceModal";
 
 /* ------------------------------------------------------------------ */
-/*  Attention items (dynamic + static hints)                             */
+/*  Attention items — driven by the /hosts/attention-items endpoint      */
 /* ------------------------------------------------------------------ */
 
 interface AttentionItem {
   icon: React.ReactNode;
+  iconBg: string;
   title: string;
   description: string;
   linkText: string;
   linkHref: string;
+}
+
+const TONE = {
+  info: "bg-[linear-gradient(135deg,#1fa7ff,#63ceff)]",
+  warn: "bg-[linear-gradient(135deg,#f4795b,#f9a26c)]",
+  amber: "bg-[linear-gradient(135deg,#f7b23b,#fcd271)]",
+} as const;
+
+/** Map a backend attention item ({ type, count, message }) to a UI card. */
+function mapAttentionItem(it: AttentionItemDTO): AttentionItem {
+  const many = (it.count ?? 0) > 1;
+  switch (it.type) {
+    case "cancelled_booking":
+      return {
+        icon: <LuCalendarX2 className="h-5 w-5 text-white" />,
+        iconBg: TONE.warn,
+        title: many ? "Cancelled bookings" : "Cancelled booking",
+        description: it.message,
+        linkText: "View bookings",
+        linkHref: "/host-dashboard/bookings",
+      };
+    case "pending_review":
+      return {
+        icon: <LuStar className="h-5 w-5 text-white" />,
+        iconBg: TONE.amber,
+        title: "Awaiting guest reviews",
+        description: it.message,
+        linkText: "View experiences",
+        linkHref: "/host-dashboard/experiences",
+      };
+    case "unread_message":
+      return {
+        icon: <LuMessageSquare className="h-5 w-5 text-white" />,
+        iconBg: TONE.info,
+        title: many ? "Unread messages" : "Unread message",
+        description: it.message,
+        linkText: "Open messages",
+        linkHref: "/host-dashboard/messages",
+      };
+    case "low_rating":
+      return {
+        icon: <LuAlertTriangle className="h-5 w-5 text-white" />,
+        iconBg: TONE.warn,
+        title: "Low average rating",
+        description: it.message,
+        linkText: "View profile",
+        linkHref: "/host-dashboard/profile",
+      };
+    default:
+      return {
+        icon: <LuBookOpen className="h-5 w-5 text-white" />,
+        iconBg: TONE.info,
+        title: "Needs attention",
+        description: it.message,
+        linkText: "View dashboard",
+        linkHref: "/host-dashboard",
+      };
+  }
 }
 
 function RupeeIcon({ className }: { className?: string }) {
@@ -56,17 +130,6 @@ function RupeeIcon({ className }: { className?: string }) {
 function fmtCurrency(cents: number): string {
   return `₹${(cents / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
-
-// Placeholder - will be replaced with dynamic version in component
-const STATIC_ATTENTION_ITEMS: AttentionItem[] = [
-  {
-    icon: <LuBookOpen className="h-5 w-5 text-white" />,
-    title: "2 Booking Received",
-    description: "Pending approval for next week.",
-    linkText: "View Experiences",
-    linkHref: "/host-dashboard/experiences",
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Schedule item dropdown menu (View / Edit / Pause)                  */
@@ -262,6 +325,68 @@ export default function HostDashboardPage() {
   const { data: calendarEvents } = useCalendarEvents(storedHostId);
   const { data: todayScheduleData } = useTodaySchedule(storedHostId);
   const { data: payoutHistory } = usePayoutHistory(storedHostId, idToken);
+  const { data: hostSales } = useHostSales(idToken, { limit: 250, offset: 0 });
+  const { data: attentionData } = useHostAttentionItems(storedHostId);
+  const { data: hostExperiences, isLoading: experiencesLoading } = useEventsByHost(storedHostId);
+
+  const [greeting, setGreeting] = useState("Hello");
+  useEffect(() => {
+    const hr = new Date().getHours();
+    if (hr < 12) setGreeting("Good morning");
+    else if (hr < 17) setGreeting("Good afternoon");
+    else setGreeting("Good evening");
+  }, []);
+
+  const [activeTab, setActiveTab] = useState<"today" | "all">("today");
+
+  const [tipIndex, setTipIndex] = useState(0);
+  const HOST_TIPS = [
+    {
+      title: "Add Visual Previews",
+      desc: "Adding video previews to your experience page increases booking conversion rate by up to 20% on average.",
+    },
+    {
+      title: "Optimize Session Timing",
+      desc: "Sessions scheduled in early mornings or evenings during weekends attract up to 35% higher attendance.",
+    },
+    {
+      title: "Be a Highly Responsive Host",
+      desc: "Replying to guest queries within 1 hour increases your chance of booking conversions by 3x.",
+    },
+  ];
+  const nextTip = () => setTipIndex((prev) => (prev + 1) % HOST_TIPS.length);
+  const prevTip = () => setTipIndex((prev) => (prev - 1 + HOST_TIPS.length) % HOST_TIPS.length);
+
+  /* Bucket sales into the trailing 6 months (IST) for the overview chart.
+   * Cancelled / refunded sales are excluded so the trend reflects real income.
+   * Each anchor sits mid-month at noon so IST conversion never spills into a
+   * neighbouring month. */
+  const chartPoints = useMemo<ChartPoint[]>(() => {
+    const now = new Date();
+    const buckets = Array.from({ length: 6 }, (_, idx) => {
+      const i = 5 - idx;
+      const anchor = new Date(now.getFullYear(), now.getMonth() - i, 15, 12);
+      return {
+        key: formatIST(anchor, "yyyy-MM"),
+        label: formatIST(anchor, "MMM"),
+        earnings: 0,
+        bookings: 0,
+      };
+    });
+    const indexByKey = new Map(buckets.map((b, i) => [b.key, i]));
+    for (const s of hostSales ?? []) {
+      if (s.Status === "cancelled" || s.Status === "refunded") continue;
+      const i = indexByKey.get(formatIST(s.CreatedAt, "yyyy-MM"));
+      if (i === undefined) continue;
+      buckets[i]!.earnings += s.NetEarningCents ?? s.AmountCents ?? 0;
+      buckets[i]!.bookings += 1;
+    }
+    return buckets.map(({ label, earnings, bookings }) => ({
+      label,
+      earnings,
+      bookings,
+    }));
+  }, [hostSales]);
 
   const error = !storedHostId
     ? "No host profile found. Please apply as a host first."
@@ -291,36 +416,32 @@ export default function HostDashboardPage() {
       .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
   }, [todayScheduleData, calendarEvents]);
 
-  /* Build dynamic attention items with recent payouts */
-  const attentionItems = useMemo(() => {
-    const items = [...STATIC_ATTENTION_ITEMS];
+  /* Build attention items from the backend feed + a recent-payout note. */
+  const attentionItems = useMemo<AttentionItem[]>(() => {
+    const items = (attentionData ?? []).map(mapAttentionItem);
 
-    // Find most recent completed payout
+    // Append the most recent completed payout as a positive note.
     if (payoutHistory && payoutHistory.length > 0) {
-      const completedPayouts = payoutHistory.filter(
-        (p) => p.status === "completed",
-      );
-      if (completedPayouts.length > 0) {
-        const recentPayout = completedPayouts[0];
-        if (recentPayout) {
-          items.push({
-            icon: <LuWallet className="h-5 w-5 text-white" />,
-            title: "Payout Processed",
-            description: `${fmtCurrency(recentPayout.amount_cents)} has been sent to your account.`,
-            linkText: "View History",
-            linkHref: "/host-dashboard/earnings",
-          });
-        }
+      const recentPayout = payoutHistory.find((p) => p.status === "completed");
+      if (recentPayout) {
+        items.push({
+          icon: <LuWallet className="h-5 w-5 text-white" />,
+          iconBg: "bg-[linear-gradient(135deg,#1fbe74,#5fd99e)]",
+          title: "Payout processed",
+          description: `${fmtCurrency(recentPayout.amount_cents)} has been sent to your account.`,
+          linkText: "View history",
+          linkHref: "/host-dashboard/earnings",
+        });
       }
     }
 
     return items;
-  }, [payoutHistory]);
+  }, [attentionData, payoutHistory]);
 
   /* Build stats from API data or fallback */
   const d = dashboard as unknown as Record<string, number | string | undefined>;
   const earningsCents = (d?.total_earnings_cents as number) || 0;
-  const totalEarnings = `₹${(earningsCents / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  const totalEarnings = `₹${(earningsCents / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
   const rating = (d?.avg_rating as number) || 0;
   const avgRating = rating > 0 ? rating.toFixed(1) : "–";
@@ -330,70 +451,115 @@ export default function HostDashboardPage() {
 
   const STATS = [
     {
-      icon: <FiCalendar className="h-5 w-5 text-[#0094CA]" />,
+      icon: <FiCalendar className="h-5 w-5 text-indigo-500" />,
+      iconBg: "bg-indigo-50",
       label: "Total Events",
       value: String(totalEvents),
       sub: "Events",
       badge: "All time",
-      badgeColor: "bg-[#0094CA] text-white",
+      badgeColor: "bg-indigo-50 text-indigo-600 border border-indigo-100",
+      glowColor: "hover:border-indigo-300 hover:shadow-[0_10px_25px_rgba(99,102,241,0.06)]",
       href: "/host-dashboard/experiences",
     },
     {
-      icon: <LuCalendarDays className="h-5 w-5 text-[#0094CA]" />,
+      icon: <LuCalendarDays className="h-5 w-5 text-sky-500" />,
+      iconBg: "bg-sky-50",
       label: "Total Bookings",
       value: String(totalBookings),
       sub: "Booked",
       badge: "All time",
-      badgeColor: "bg-green-100 text-green-700",
+      badgeColor: "bg-sky-50 text-sky-600 border border-sky-100",
+      glowColor: "hover:border-sky-300 hover:shadow-[0_10px_25px_rgba(56,189,248,0.06)]",
       href: "/host-dashboard/bookings",
     },
     {
       icon: (
-        <RupeeIcon className="inline-flex h-5 w-5 items-center justify-center text-[#0094CA]" />
+        <RupeeIcon className="inline-flex h-5 w-5 items-center justify-center text-emerald-500 font-semibold" />
       ),
+      iconBg: "bg-emerald-50",
       label: "Total Earnings",
       value: totalEarnings,
       sub: "",
       badge: "All time",
-      badgeColor: "bg-green-100 text-green-700",
+      badgeColor: "bg-emerald-50 text-emerald-600 border border-emerald-100",
+      glowColor: "hover:border-emerald-300 hover:shadow-[0_10px_25px_rgba(16,185,129,0.06)]",
       href: "/host-dashboard/earnings",
     },
     {
-      icon: <FiStar className="h-5 w-5 text-[#0094CA]" />,
+      icon: <FiStar className="h-5 w-5 text-amber-500" />,
+      iconBg: "bg-amber-50",
       label: "Avg Rating",
       value: avgRating,
       sub: avgRating !== "–" ? "★★★★★" : "",
       badge: `${dashboard?.total_reviews ?? 0} reviews`,
-      badgeColor: "bg-gray-100 text-gray-600",
+      badgeColor: "bg-slate-50 text-slate-600 border border-slate-100",
+      glowColor: "hover:border-amber-300 hover:shadow-[0_10px_25px_rgba(245,158,11,0.06)]",
       href: "/host-dashboard/experiences",
     },
   ] as const;
 
+  const QUICK_ACTIONS = [
+    {
+      title: "Create Experience",
+      desc: "Host a new session",
+      href: "/host-dashboard/experiences/new",
+      icon: <LuPlus className="h-5 w-5 text-emerald-500" />,
+      color: "bg-emerald-50/50 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 border-gray-100",
+    },
+    {
+      title: "Manage Bookings",
+      desc: "View guests & details",
+      href: "/host-dashboard/bookings",
+      icon: <LuBookOpen className="h-5 w-5 text-purple-500" />,
+      color: "bg-purple-50/50 text-purple-700 hover:bg-purple-50 hover:border-purple-200 border-gray-100",
+    },
+    {
+      title: "Host Calendar",
+      desc: "View schedules & dates",
+      href: "/host-dashboard/calendar",
+      icon: <LuCalendarDays className="h-5 w-5 text-sky-500" />,
+      color: "bg-sky-50/50 text-sky-700 hover:bg-sky-50 hover:border-sky-200 border-gray-100",
+    },
+    {
+      title: "Earnings History",
+      desc: "View payouts & bills",
+      href: "/host-dashboard/earnings",
+      icon: <LuWallet className="h-5 w-5 text-amber-500" />,
+      color: "bg-amber-50/50 text-amber-700 hover:bg-amber-50 hover:border-amber-200 border-gray-100",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f8fafc] font-manrope text-[#16304c]">
       <HostNavbar />
 
-      <main className="site-x mx-auto max-w-7xl py-8">
+      <main className="site-x mx-auto max-w-7xl py-6 sm:py-8">
         <Breadcrumb
           items={[{ label: "Home", href: "/" }, { label: "Dashboard" }]}
-          className="mb-6"
+          className="mb-5 sm:mb-6"
         />
 
         {/* Loading state */}
         {loading && (
-          <div className="flex min-h-[40vh] items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+          <div className="flex min-h-[45vh] items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <LuLoader2 className="h-10 w-10 animate-spin text-[#0e8ae0]" />
+              <p className="text-sm font-semibold text-gray-400">Loading your host portal...</p>
+            </div>
           </div>
         )}
 
         {/* Error banner */}
         {error && (
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            <span>{error}</span>
+          <div className="mb-6 flex items-center justify-between rounded-2xl bg-amber-50 border border-amber-100 px-5 py-4 text-sm text-amber-700 shadow-sm">
+            <div className="flex items-center gap-2">
+              <LuAlertTriangle className="h-5 w-5 shrink-0" />
+              <span>{error}</span>
+            </div>
             {queryError && (
               <button
                 onClick={() => refetch()}
-                className="ml-4 font-semibold underline hover:text-amber-900"
+                className="ml-4 font-bold underline hover:text-amber-900"
               >
                 Retry
               </button>
@@ -402,238 +568,544 @@ export default function HostDashboardPage() {
         )}
 
         {!loading && (
-          <>
-            {/* ── Greeting row ── */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                  Hello, {firstName} 👋
-                </h1>
-                <p className="mt-1 text-sm text-gray-500">
-                  Here&apos;s what&apos;s happening with your experiences today.
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/host-dashboard/profile"
-                  className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
-                >
-                  ✏️ Edit Profile
-                </Link>
-                <Link
-                  href="/host-dashboard/experiences"
-                  className="rounded-lg bg-[#0094CA] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab]"
-                >
-                  My Experiences
-                </Link>
+          <div className="space-y-6">
+            {/* ── Greeting hero ── */}
+            <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-[#0094CA] via-[#0e8ae0] to-[#38bdf8] p-6 text-white shadow-[0_20px_50px_rgba(0,148,202,0.15)] sm:p-8">
+              {/* glowing decorative blobs */}
+              <div className="pointer-events-none absolute -top-24 -right-12 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-24 left-1/4 h-48 w-48 rounded-full bg-white/5 blur-3xl" />
+              
+              <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={
+                        user?.photoURL ?? "/assets/home/avatar-placeholder.png"
+                      }
+                      alt={firstName}
+                      referrerPolicy="no-referrer"
+                      className="hidden h-16 w-16 shrink-0 rounded-2xl border-2 border-white/20 object-cover shadow-lg sm:block"
+                    />
+                    <span className="absolute bottom-0 right-0 hidden h-3.5 w-3.5 rounded-full border-2 border-[#0094CA] bg-emerald-400 sm:block animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
+                      {greeting} 👋
+                    </p>
+                    <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight sm:text-3xl">
+                      Welcome back, {firstName}
+                    </h1>
+                    <p className="mt-1 text-sm text-white/90 max-w-md">
+                      Let&apos;s check what needs your attention or review your schedule for today.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex w-full gap-3 sm:w-auto">
+                  <Link
+                    href="/host-dashboard/profile"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/20 sm:flex-initial"
+                  >
+                    Edit Profile
+                  </Link>
+                  <Link
+                    href="/host-dashboard/experiences/new"
+                    className="flex flex-1 items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-extrabold text-[#0094CA] shadow-md transition hover:-translate-y-0.5 hover:shadow-lg sm:flex-initial"
+                  >
+                    + Create Experience
+                  </Link>
+                </div>
               </div>
             </div>
 
-            {/* ── Stats cards (each tile drills into the matching detail page) ── */}
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* ── Stats cards ── */}
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
               {STATS.map((s, i) => (
                 <Link
                   key={i}
                   href={s.href}
-                  className="group relative block rounded-xl border border-gray-200 bg-white px-5 py-5 transition hover:-translate-y-0.5 hover:border-[#0094CA] hover:shadow-md"
+                  className={`group flex flex-col rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.01)] transition-all duration-300 hover:-translate-y-0.5 ${s.glowColor}`}
                 >
-                  <span
-                    className={`absolute top-4 right-4 rounded-full px-2 py-0.5 text-[10px] font-semibold ${s.badgeColor}`}
-                  >
-                    {s.badge}
-                  </span>
-                  <div className="mb-3">{s.icon}</div>
-                  <p className="text-xs font-medium text-gray-500">{s.label}</p>
-                  <p className="mt-1 text-2xl font-bold text-gray-900">
-                    {s.value}
-                    <span className="ml-1 text-sm font-normal text-gray-400">
-                      {s.sub}
+                  <div className="flex items-start justify-between gap-2">
+                    <span
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-105 ${s.iconBg}`}
+                    >
+                      {s.icon}
                     </span>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${s.badgeColor}`}
+                    >
+                      {s.badge}
+                    </span>
+                  </div>
+                  <p className="mt-4 text-xs font-semibold tracking-wider text-[#6f8daa] uppercase">
+                    {s.label}
                   </p>
-                  <p className="mt-2 text-[11px] font-semibold text-[#0094CA] opacity-0 transition group-hover:opacity-100">
-                    View details →
-                  </p>
+                  <div className="mt-1 flex items-baseline gap-1">
+                    <p className="text-2xl font-extrabold text-[#16304c] tracking-tight sm:text-3xl">
+                      {s.value}
+                    </p>
+                    {s.sub && (
+                      <span className="text-xs font-semibold text-[#9fb3c8] ml-1">
+                        {s.sub}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               ))}
             </div>
 
-            {/* ── Body: Schedule + Attention ── */}
-            <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Today's Schedule — 2/3 */}
-              <div className="lg:col-span-2">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-gray-900">
-                    Today&apos;s Schedule
-                  </h2>
+            {/* ── Quick Actions Hub ── */}
+            <div>
+              <h2 className="text-sm font-extrabold tracking-wider text-[#6f8daa] uppercase mb-3">Quick Actions</h2>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {QUICK_ACTIONS.map((act, i) => (
                   <Link
-                    href="/host-dashboard/calendar"
-                    className="text-sm font-medium text-[#0094CA] hover:underline"
+                    key={i}
+                    href={act.href}
+                    className={`flex items-center gap-3 rounded-2xl border p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(0,0,0,0.02)] ${act.color}`}
                   >
-                    View Calendar
-                  </Link>
-                </div>
-
-                <div className="mt-4 space-y-4">
-                  {todaySchedule.length === 0 && (
-                    <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center">
-                      <p className="text-sm text-gray-400">
-                        No events scheduled for today
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:scale-105">
+                      {act.icon}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-extrabold text-gray-800 tracking-tight leading-none">
+                        {act.title}
+                      </p>
+                      <p className="text-[10px] text-gray-400 font-semibold truncate mt-1">
+                        {act.desc}
                       </p>
                     </div>
-                  )}
-                  {todaySchedule.map((item) => {
-                    const startTime = new Date(item.time);
-                    const endTime = item.end_time
-                      ? new Date(item.end_time)
-                      : null;
-                    const fmt = (d: Date) =>
-                      d.toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      });
-                    const timeRange = endTime
-                      ? `${fmt(startTime)} – ${fmt(endTime)}`
-                      : fmt(startTime);
-                    const now = new Date();
-                    const diffMs = startTime.getTime() - now.getTime();
-                    const isStartingSoon =
-                      diffMs > 0 && diffMs < 60 * 60 * 1000;
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-                    return (
-                      <div
-                        key={item.id}
-                        className="flex gap-4 rounded-xl border border-gray-200 bg-white p-4"
-                      >
-                        {/* Thumbnail */}
-                        {item.cover_image_url && (
-                          <>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* ── Earnings / bookings trend chart ── */}
+            <div>
+              <EarningsChart points={chartPoints} />
+            </div>
+
+            {/* ── Main content grid: Sessions/Experiences vs Attention/Insights ── */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+              
+              {/* Left Side (2/3 width) - Tabbed Hub */}
+              <div className="lg:col-span-2 space-y-4">
+                
+                {/* Tab buttons */}
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2">
+                  <div className="flex gap-6">
+                    <button
+                      onClick={() => setActiveTab("today")}
+                      className={`relative pb-3 text-sm font-bold transition-all ${
+                        activeTab === "today"
+                          ? "text-[#0e8ae0]"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      Today&apos;s Sessions
+                      {todaySchedule.length > 0 && (
+                        <span className="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-600 font-extrabold">
+                          {todaySchedule.length}
+                        </span>
+                      )}
+                      {activeTab === "today" && (
+                        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[#0e8ae0] rounded-full" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("all")}
+                      className={`relative pb-3 text-sm font-bold transition-all ${
+                        activeTab === "all"
+                          ? "text-[#0e8ae0]"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      My Experiences
+                      {hostExperiences && hostExperiences.length > 0 && (
+                        <span className="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-600 font-extrabold">
+                          {hostExperiences.length}
+                        </span>
+                      )}
+                      {activeTab === "all" && (
+                        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[#0e8ae0] rounded-full" />
+                      )}
+                    </button>
+                  </div>
+                  
+                  {activeTab === "today" ? (
+                    <Link
+                      href="/host-dashboard/calendar"
+                      className="text-xs font-bold text-[#0e8ae0] hover:underline"
+                    >
+                      View Calendar →
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/host-dashboard/experiences"
+                      className="text-xs font-bold text-[#0e8ae0] hover:underline"
+                    >
+                      Manage All →
+                    </Link>
+                  )}
+                </div>
+
+                {/* Tab content panels */}
+                <div>
+                  {activeTab === "today" ? (
+                    /* Timeline Style */
+                    <div className="relative pl-6 border-l border-sky-100 space-y-6 py-2 ml-4">
+                      {todaySchedule.length === 0 && (
+                        <div className="-ml-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#cfe6f8] bg-white p-10 text-center shadow-[0_8px_24px_-14px_rgba(58,119,172,0.18)]">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f4ff]">
+                            <FiCalendar className="h-7 w-7 text-[#0e8ae0]" />
+                          </div>
+                          <p className="text-sm font-semibold text-gray-500">
+                            No events scheduled for today
+                          </p>
+                          <Link
+                            href="/host-dashboard/calendar"
+                            className="rounded-xl bg-[#eaf5fe] px-4 py-2 text-sm font-semibold text-[#0e8ae0] transition hover:bg-[#d9eefc]"
+                          >
+                            Open calendar
+                          </Link>
+                        </div>
+                      )}
+                      {todaySchedule.map((item) => {
+                        const startTime = new Date(item.time);
+                        const endTime = item.end_time ? new Date(item.end_time) : null;
+                        const fmt = (d: Date) =>
+                          d.toLocaleTimeString("en-US", {
+                            hour: "numeric",
+                            minute: "2-digit",
+                            hour12: true,
+                          });
+                        const timeRange = endTime
+                          ? `${fmt(startTime)} – ${fmt(endTime)}`
+                          : fmt(startTime);
+                        const now = new Date();
+                        const diffMs = startTime.getTime() - now.getTime();
+                        const isStartingSoon = diffMs > 0 && diffMs < 60 * 60 * 1000;
+                        const capacityPct = Math.min(((item.total_bookings ?? 0) / (item.capacity ?? 1)) * 100, 100);
+
+                        return (
+                          <div key={item.id} className="relative flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.03)]">
+                            {/* Timeline bullet node */}
+                            <div className="absolute -left-[31px] top-6 flex h-4 w-4 items-center justify-center rounded-full bg-white border-2 border-sky-400">
+                              <span className={`h-1.5 w-1.5 rounded-full ${
+                                isStartingSoon 
+                                  ? "bg-emerald-500 animate-pulse" 
+                                  : item.status === "live" 
+                                    ? "bg-sky-500" 
+                                    : "bg-gray-400"
+                              }`} />
+                            </div>
+
+                            {/* Thumbnail */}
                             <img
-                              src={item.cover_image_url || "/assets/home/hiking.webp"}
+                              src={item.cover_image_url ?? "/assets/home/hiking.webp"}
                               alt={item.title}
                               loading="lazy"
-                              className="hidden h-28 w-40 shrink-0 rounded-lg object-cover sm:block"
+                              className="hidden h-28 w-40 shrink-0 rounded-xl object-cover sm:block"
                             />
-                          </>
-                        )}
 
-                        {/* Info */}
-                        <div className="flex flex-1 flex-col justify-between">
-                          <div>
-                            {/* Status badge */}
-                            <span
-                              className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                                isStartingSoon
-                                  ? "bg-green-100 text-green-700"
-                                  : "bg-orange-100 text-orange-700"
-                              }`}
-                            >
-                              {isStartingSoon
-                                ? "● Starting Soon"
-                                : item.status === "live"
-                                  ? "Confirmed"
-                                  : item.status}
-                            </span>
-                            <h3 className="mt-1.5 text-base font-semibold text-gray-900">
-                              {item.title}
-                            </h3>
-                            <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                              <span className="flex items-center gap-1">
-                                <FiClock className="h-3.5 w-3.5" /> {timeRange}
-                              </span>
-                              {item.location && (
-                                <span className="flex items-center gap-1">
-                                  <FiMapPin className="h-3.5 w-3.5" />{" "}
-                                  {item.location}
-                                </span>
-                              )}
+                            {/* Info */}
+                            <div className="flex flex-1 flex-col justify-between">
+                              <div>
+                                <div className="flex items-center justify-between">
+                                  <span
+                                    className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                                      isStartingSoon
+                                        ? "bg-emerald-50 text-emerald-600 border border-emerald-100 animate-pulse"
+                                        : item.status === "live"
+                                          ? "bg-sky-50 text-sky-600 border border-sky-100"
+                                          : "bg-amber-50 text-amber-600 border border-amber-100"
+                                    }`}
+                                  >
+                                    {isStartingSoon
+                                      ? "● Starting Soon"
+                                      : item.status === "live"
+                                        ? "Confirmed"
+                                        : item.status}
+                                  </span>
+                                </div>
+                                <h3 className="mt-2 text-base font-bold text-[#16304c]">
+                                  {item.title}
+                                </h3>
+                                <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[#6f8daa]">
+                                  <span className="flex items-center gap-1 font-semibold">
+                                    <FiClock className="h-3.5 w-3.5 text-gray-400" /> {timeRange}
+                                  </span>
+                                  {item.location && (
+                                    <span className="flex items-center gap-1 font-semibold">
+                                      <FiMapPin className="h-3.5 w-3.5 text-gray-400" /> {item.location}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Progress bar */}
+                              <div className="mt-3">
+                                <div className="flex items-center justify-between text-[11px] text-[#6f8daa] font-semibold mb-1">
+                                  <span>Capacity booked</span>
+                                  <span>{item.total_bookings ?? 0} / {item.capacity ?? 0}</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full" 
+                                    style={{ width: `${capacityPct}%` }}
+                                  />
+                                </div>
+                              </div>
                             </div>
-                          </div>
 
-                          {/* Bottom row */}
-                          <div className="mt-3 flex items-center justify-between">
-                            <span className="text-xs text-gray-500">
-                              {item.total_bookings} booked / {item.capacity}{" "}
-                              capacity
-                            </span>
+                            {/* Actions menu */}
+                            <ScheduleItemMenu
+                              event={{
+                                id: item.id,
+                                title: item.title,
+                                is_recurring: item.is_recurring ?? false,
+                                status: item.status,
+                              }}
+                              hostId={storedHostId}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    /* My Experiences tab panel */
+                    <div className="space-y-4">
+                      {experiencesLoading && (
+                        <div className="flex justify-center items-center py-10">
+                          <LuLoader2 className="h-8 w-8 animate-spin text-sky-500" />
+                        </div>
+                      )}
+                      {!experiencesLoading && (!hostExperiences || hostExperiences.length === 0) && (
+                        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#cfe6f8] bg-white p-10 text-center shadow-[0_8px_24px_-14px_rgba(58,119,172,0.18)]">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f4ff]">
+                            <LuBookOpen className="h-7 w-7 text-[#0e8ae0]" />
+                          </div>
+                          <p className="text-sm font-semibold text-gray-500">
+                            No experiences created yet
+                          </p>
+                          <Link
+                            href="/host-dashboard/experiences/new"
+                            className="rounded-xl bg-[#eaf5fe] px-4 py-2 text-sm font-semibold text-[#0e8ae0] transition hover:bg-[#d9eefc]"
+                          >
+                            Create first experience
+                          </Link>
+                        </div>
+                      )}
+                      {!experiencesLoading && hostExperiences?.map((exp) => {
+                        const isPaused = exp.status === "paused";
+                        return (
+                          <div 
+                            key={exp.id} 
+                            className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.03)]"
+                          >
+                            <img
+                              src={exp.cover_image_url ?? "/assets/home/hiking.webp"}
+                              alt={exp.title}
+                              loading="lazy"
+                              className="hidden h-24 w-32 shrink-0 rounded-xl object-cover sm:block"
+                            />
+                            
+                            <div className="flex flex-1 flex-col justify-between">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  {exp.mood && (
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
+                                      {exp.mood}
+                                    </span>
+                                  )}
+                                  <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider ${
+                                    isPaused 
+                                      ? "bg-amber-50 text-amber-600 border border-amber-100" 
+                                      : exp.status === "live" 
+                                        ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
+                                        : "bg-slate-50 text-slate-600 border border-slate-100"
+                                  }`}>
+                                    {exp.status}
+                                  </span>
+                                </div>
+                                <h4 className="mt-1 text-sm font-extrabold text-[#16304c] line-clamp-1">
+                                  {exp.title}
+                                </h4>
+                                <p className="mt-1 text-xs text-[#6f8daa] line-clamp-1 font-medium">
+                                  {exp.hook_line ?? exp.description ?? "No description provided."}
+                                </p>
+                              </div>
+
+                              <div className="mt-2 flex items-center justify-between gap-4">
+                                <span className="text-xs font-semibold text-gray-500">
+                                  {exp.price_cents ? `₹${Math.round(exp.price_cents / 100)}` : "Free"} / slot
+                                </span>
+                                
+                                <div className="flex items-center gap-3">
+                                  <Link
+                                    href={`/experience/${exp.id}`}
+                                    className="text-xs font-bold text-[#6f8daa] hover:text-[#0e8ae0] transition"
+                                  >
+                                    View Page
+                                  </Link>
+                                  <Link
+                                    href={`/host-dashboard/experiences/${exp.id}`}
+                                    className="text-xs font-bold text-[#0e8ae0] hover:underline"
+                                  >
+                                    Edit Experience
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <ScheduleItemMenu
+                              event={{
+                                id: exp.id,
+                                title: exp.title,
+                                is_recurring: exp.is_recurring ?? false,
+                                status: exp.status,
+                              }}
+                              hostId={storedHostId}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Side (1/3 width) - Needs Attention, Target Goals & Tips */}
+              <div className="space-y-6">
+                
+                {/* Needs Attention Panel */}
+                <div>
+                  <h2 className="text-sm font-extrabold tracking-wider text-[#6f8daa] uppercase mb-3">Needs Attention</h2>
+                  <div className="space-y-3">
+                    {attentionItems.length === 0 ? (
+                      <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
+                          <LuCheckCircle className="h-5 w-5 text-emerald-500" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#16304c]">
+                            You&apos;re all caught up
+                          </p>
+                          <p className="text-xs text-[#6f8daa] font-semibold">
+                            No items need attention right now.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      attentionItems.map((item, i) => (
+                        <div
+                          key={i}
+                          className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_24px_rgba(0,0,0,0.02)]"
+                        >
+                          <div
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.iconBg}`}
+                          >
+                            {item.icon}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-[#16304c]">
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-[#6f8daa] font-medium mt-0.5 leading-normal">
+                              {item.description}
+                            </p>
                             <Link
-                              href={`/host-dashboard/experiences/${item.id}`}
-                              className="text-sm font-medium text-[#0094CA] hover:underline"
+                              href={item.linkHref}
+                              className="mt-1.5 inline-flex items-center gap-0.5 text-xs font-extrabold text-[#0e8ae0] hover:underline"
                             >
-                              Manage Session
+                              {item.linkText} →
                             </Link>
                           </div>
                         </div>
+                      ))
+                    )}
+                  </div>
+                </div>
 
-                        {/* More menu — View / Edit / Pause */}
-                        <ScheduleItemMenu
-                          event={{
-                            id: item.id,
-                            title: item.title,
-                            is_recurring: item.is_recurring ?? false,
-                            status: item.status,
-                          }}
-                          hostId={storedHostId}
+                {/* Target Progress Card */}
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
+                  <h3 className="text-sm font-extrabold text-[#16304c] flex items-center justify-between mb-4">
+                    <span>PRO HOST TARGETS</span>
+                    <span className="text-[10px] bg-sky-50 text-[#0e8ae0] border border-sky-100 px-2 py-0.5 rounded-full font-bold">Tier 1</span>
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
+                        <span>Experiences Hosted</span>
+                        <span>{totalEvents} / 10</span>
+                      </div>
+                      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-sky-400 to-indigo-500 rounded-full" 
+                          style={{ width: `${Math.min((totalEvents / 10) * 100, 100)}%` }}
                         />
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Needs Attention — 1/3 */}
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">
-                  Needs Attention
-                </h2>
-                <div className="mt-4 space-y-3">
-                  {attentionItems.map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4"
-                    >
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#0094CA]">
-                        {item.icon}
+                    </div>
+                    <div>
+                      <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
+                        <span>Earnings Target</span>
+                        <span>{fmtCurrency(earningsCents)} / ₹10,000</span>
                       </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {item.title}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {item.description}
-                        </p>
-                        <Link
-                          href={item.linkHref}
-                          className="mt-1 inline-block text-xs font-medium text-[#0094CA] hover:underline"
-                        >
-                          {item.linkText}
-                        </Link>
+                      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full" 
+                          style={{ width: `${Math.min(((earningsCents / 100) / 10000) * 100, 100)}%` }}
+                        />
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
 
-                {/* Host Tip card */}
-                <div className="mt-4 rounded-xl bg-[#0094CA] p-5 text-white">
-                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
-                    <LuLightbulb className="h-5 w-5" />
+                {/* Host Tip card slider */}
+                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0094CA] via-[#0e8ae0] to-[#57c7ff] p-5 text-white shadow-[0_18px_40px_-14px_rgba(0,148,202,0.25)]">
+                  <div className="pointer-events-none absolute -top-10 -right-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                        <LuLightbulb className="h-5 w-5 text-amber-300" />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={prevTip}
+                          className="p-1 rounded-lg hover:bg-white/10 text-white/80 transition"
+                          aria-label="Previous tip"
+                        >
+                          <LuChevronLeft className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={nextTip}
+                          className="p-1 rounded-lg hover:bg-white/10 text-white/80 transition"
+                          aria-label="Next tip"
+                        >
+                          <LuChevronRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-white/70">Host Tip</h3>
+                    <h4 className="mt-1 text-sm font-extrabold">{HOST_TIPS[tipIndex]?.title}</h4>
+                    <p className="mt-2 text-xs text-white/90 leading-normal min-h-[50px]">
+                      {HOST_TIPS[tipIndex]?.desc}
+                    </p>
+                    <Link
+                      href="/host-dashboard/experiences"
+                      className="mt-4 block w-full rounded-xl bg-white py-2 text-center text-xs font-bold text-[#0094CA] shadow-sm transition hover:bg-sky-50"
+                    >
+                      Update Experiences
+                    </Link>
                   </div>
-                  <h3 className="text-base font-bold">Host Tip</h3>
-                  <p className="mt-1 text-sm text-white/80">
-                    Adding video to your experience page increases bookings by
-                    20% on average.
-                  </p>
-                  <Link
-                    href="/host-dashboard/experiences"
-                    className="mt-4 block w-full rounded-lg bg-white py-2.5 text-center text-sm font-semibold text-[#0094CA] transition hover:bg-white/90"
-                  >
-                    Edit Experiences
-                  </Link>
                 </div>
+
               </div>
+
             </div>
-          </>
+          </div>
         )}
       </main>
     </div>

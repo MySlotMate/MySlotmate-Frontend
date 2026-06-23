@@ -14,7 +14,7 @@ import { ExperienceCard } from "~/components/ExperienceCard";
 
 export default function ExperiencesPage() {
   const [location, setLocation] = useState<CityLocation | null>(null);
-  const [filterByLocation, setFilterByLocation] = useState(true);
+  const [filterByLocation, setFilterByLocation] = useState(false);
   const [moodFilter, setMoodFilter] = useState<string>("all");
   const { data: events, isLoading } = useListPublicEvents();
 

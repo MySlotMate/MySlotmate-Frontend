@@ -19,8 +19,11 @@ interface PeopleCardProps {
   headline: string;
   description: string;
   isVerified?: boolean;
+  // Layout classes for the card wrapper. Defaults to the home carousel sizing
+  // (fixed width + snap). Pass e.g. "w-full" to let a grid control the width.
+  className?: string;
 }
-const PeopleCard = ({
+export const PeopleCard = ({
   id,
   name,
   imageUrl,
@@ -28,12 +31,12 @@ const PeopleCard = ({
   headline,
   description,
   isVerified,
+  className = "w-[260px] shrink-0 snap-start",
 }: PeopleCardProps) => {
   return (
     <Link
       href={`/host/${id}`}
-      // Added w-[260px] to keep the card width consistent
-      className="group w-[260px] shrink-0 snap-start overflow-hidden rounded-[28px] border border-[#d6ebf7cc] bg-white shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1"
+      className={`group overflow-hidden rounded-[28px] border border-[#d6ebf7cc] bg-white shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1 ${className}`}
     >
       {/* Changed h-[272px] w-[272px] to aspect-square w-full */}
       <div className="relative aspect-square w-full overflow-hidden rounded-[28px] bg-[#f8fbff]">

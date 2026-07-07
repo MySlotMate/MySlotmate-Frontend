@@ -45,16 +45,16 @@ export default function HostProfilePage({
 
   // DEBUG: Console logs
 
-  // Derive gallery from all event cover images + gallery URLs
+  // Derive gallery from the host's own photos (scraped from Instagram at
+  // application time) + all event cover images + gallery URLs
   const galleryUrls = useMemo(() => {
-    if (!events) return [];
-    const urls: string[] = [];
-    for (const evt of events) {
+    const urls: string[] = [...(host?.gallery_urls ?? [])];
+    for (const evt of events ?? []) {
       if (evt.cover_image_url) urls.push(evt.cover_image_url);
       if (evt.gallery_urls) urls.push(...evt.gallery_urls);
     }
     return urls;
-  }, [events]);
+  }, [host, events]);
 
   // Derive aggregate stats from events
   const totalEvents = events?.length ?? 0;
@@ -119,7 +119,10 @@ export default function HostProfilePage({
         {/* Gallery */}
         {galleryUrls.length > 0 && (
           <div className="mt-6">
-            <PhotoGallery images={galleryUrls} />
+            <PhotoGallery
+              images={galleryUrls}
+              instagramUrls={host.gallery_urls ?? []}
+            />
           </div>
         )}
 

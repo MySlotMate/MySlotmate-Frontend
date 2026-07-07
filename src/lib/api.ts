@@ -244,6 +244,7 @@ export interface HostDTO {
   phn_number: string;
   city: string;
   avatar_url: string | null;
+  avatar_from_instagram: boolean;
   tagline: string | null;
   bio: string | null;
   application_status:
@@ -270,6 +271,9 @@ export interface HostDTO {
   social_instagram: string | null;
   social_linkedin: string | null;
   social_website: string | null;
+  /** Up to 3 recent Instagram post photos scraped once at application time (re-hosted on S3) */
+  gallery_urls: string[];
+  instagram_scraped_at: string | null;
   avg_rating: number | null;
   total_reviews: number;
   created_at: string;
@@ -389,6 +393,8 @@ export interface PublicHostProfileDTO {
   last_name: string;
   city: string;
   avatar_url: string | null;
+  /** true when avatar_url was pulled from the host's Instagram profile (shows an IG badge) */
+  avatar_from_instagram: boolean;
   tagline: string | null;
   bio: string | null;
   is_identity_verified: boolean;
@@ -398,6 +404,8 @@ export interface PublicHostProfileDTO {
   social_instagram: string | null;
   social_linkedin: string | null;
   social_website: string | null;
+  /** Up to 3 recent Instagram post photos scraped once at application time (re-hosted on S3) */
+  gallery_urls: string[];
   avg_rating: number | null;
   total_reviews: number;
 }

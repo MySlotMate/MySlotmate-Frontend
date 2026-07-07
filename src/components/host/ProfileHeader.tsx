@@ -56,6 +56,14 @@ export default function ProfileHeader({
           {host.is_identity_verified && (
             <MdVerified className="absolute right-0 bottom-0 h-6 w-6 text-[#0094CA]" />
           )}
+          {host.avatar_from_instagram && (
+            <span
+              title="Photo from Instagram"
+              className="absolute top-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#E1306C] shadow ring-1 ring-black/5"
+            >
+              <FaInstagram className="h-3.5 w-3.5" />
+            </span>
+          )}
         </div>
 
         {/* Name, tagline, location */}

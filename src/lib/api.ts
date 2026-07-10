@@ -271,7 +271,7 @@ export interface HostDTO {
   social_instagram: string | null;
   social_linkedin: string | null;
   social_website: string | null;
-  /** Up to 3 recent Instagram post photos scraped once at application time (re-hosted on S3) */
+  /** Up to 4 recent Instagram post photos scraped once at application time (re-hosted on S3) */
   gallery_urls: string[];
   instagram_scraped_at: string | null;
   avg_rating: number | null;
@@ -404,7 +404,7 @@ export interface PublicHostProfileDTO {
   social_instagram: string | null;
   social_linkedin: string | null;
   social_website: string | null;
-  /** Up to 3 recent Instagram post photos scraped once at application time (re-hosted on S3) */
+  /** Up to 4 recent Instagram post photos scraped once at application time (re-hosted on S3) */
   gallery_urls: string[];
   avg_rating: number | null;
   total_reviews: number;

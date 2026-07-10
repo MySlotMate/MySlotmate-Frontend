@@ -293,8 +293,11 @@ export default function HostEarningsPage() {
   const currentBalance = earnings?.current_balance_cents ?? 0;
   const inFlightPayouts = earnings?.in_flight_payouts_cents ?? 0;
 
-  const platformFeePercent = 30;
-  const hostPercent = 100 - platformFeePercent;
+  // Effective commission split for THIS host — the backend applies any
+  // admin-set per-host override on top of the platform default and returns it
+  // as `platform_fee`. Fall back to the 70/30 default only while loading.
+  const platformFeePercent = earnings?.platform_fee?.platform_percentage ?? 30;
+  const hostPercent = earnings?.platform_fee?.host_percentage ?? 100 - platformFeePercent;
   const avgBookingValue = 15000;
   const serviceFee = Math.round(avgBookingValue * (platformFeePercent / 100));
   const netEarning = avgBookingValue - serviceFee;

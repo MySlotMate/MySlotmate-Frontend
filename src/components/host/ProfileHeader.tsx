@@ -70,8 +70,8 @@ export default function ProfileHeader({
         <div className="text-center sm:text-left">
           <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
           {host.tagline && (
-            <p className="mt-1 flex items-center justify-center gap-1 text-sm text-gray-600 sm:justify-start">
-              <span className="text-[#0094CA]">✦</span>
+            <p className="mt-1 text-sm text-gray-600">
+              <span className="mr-1 text-[#0094CA]">✦</span>
               {host.tagline}
             </p>
           )}

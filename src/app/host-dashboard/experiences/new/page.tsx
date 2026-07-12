@@ -92,7 +92,7 @@ function getGeneratedDescription(value: unknown): string | null {
 }
 
 const MOODS = [
-  "Adventure",
+  "Adventurous",
   "Social",
   "Wellness",
   "Creative",

@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { LuLoader2 } from "react-icons/lu";
 import {
   ArrowRight,
+  BadgeCheck,
+  ChevronDown,
   Compass,
   MapPin,
   Search,
@@ -19,13 +21,6 @@ import {
   type CityLocation,
 } from "~/components/LocationModal";
 import Breadcrumb from "~/components/Breadcrumb";
-import {
-  buildUpcomingHostMoodMap,
-  getAvailableHostMoodFilters,
-  hostMatchesMood,
-} from "~/lib/hostMoodFilters";
-import { getMoodDisplayLabel } from "~/lib/moods";
-
 import { ExperienceCard } from "~/components/ExperienceCard";
 import { PeopleCard } from "~/components/home/people";
 
@@ -93,7 +88,7 @@ export default function ExplorePage() {
   const [query, setQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [pill, setPill] = useState<ExplorePill>("All");
-  const [hostMoodFilter, setHostMoodFilter] = useState("all");
+  const [professionalOnly, setProfessionalOnly] = useState(false);
   const [priceFilter, setPriceFilter] = useState<PriceFilter>("any");
   const [durationFilter, setDurationFilter] = useState<DurationFilter>("any");
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>("any");
@@ -114,23 +109,19 @@ export default function ExplorePage() {
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, []);
 
-  const hostMoodMap = useMemo(() => buildUpcomingHostMoodMap(events), [events]);
-  const hostMoodFilters = useMemo(
-    () => getAvailableHostMoodFilters(hostMoodMap),
-    [hostMoodMap],
-  );
   const deferredQuery = useDeferredValue(query);
   const normalizedQuery = deferredQuery.trim().toLowerCase();
 
   useEffect(() => {
     setVisibleExperiences(8);
-  }, [priceFilter, durationFilter, ratingFilter, normalizedQuery, pill]);
-
-  useEffect(() => {
-    if (!hostMoodFilters.includes(hostMoodFilter)) {
-      setHostMoodFilter("all");
-    }
-  }, [hostMoodFilter, hostMoodFilters]);
+  }, [
+    priceFilter,
+    durationFilter,
+    ratingFilter,
+    normalizedQuery,
+    pill,
+    professionalOnly,
+  ]);
 
   const hostSearchSuggestions = useMemo(() => {
     if (!normalizedQuery) return [];
@@ -171,8 +162,20 @@ export default function ExplorePage() {
     ).slice(0, 4);
   }, [normalizedQuery]);
 
+  // IDs of hosts flagged professional — used to gate both hosts and their
+  // events when the "Professionals only" toggle is on.
+  const professionalHostIds = useMemo(
+    () =>
+      new Set(
+        (hosts ?? []).filter((h) => h.is_professional).map((h) => h.id),
+      ),
+    [hosts],
+  );
+
   const filteredHosts = useMemo(() => {
-    const list = hosts ?? [];
+    const list = professionalOnly
+      ? (hosts ?? []).filter((h) => h.is_professional)
+      : (hosts ?? []);
 
     const searched = normalizedQuery
       ? list.filter((host) =>
@@ -198,15 +201,15 @@ export default function ExplorePage() {
             ]),
           );
 
-    const moodFiltered = pillFiltered.filter((host) =>
-      hostMatchesMood(host.id, hostMoodFilter, hostMoodMap),
-    );
-
-    return moodFiltered.slice(0, 4);
-  }, [hosts, normalizedQuery, pill, hostMoodFilter, hostMoodMap]);
+    return pillFiltered.slice(0, 4);
+  }, [hosts, normalizedQuery, pill, professionalOnly]);
 
   const filteredExperiences = useMemo(() => {
     let list = [...(events ?? [])];
+
+    if (professionalOnly) {
+      list = list.filter((event) => professionalHostIds.has(event.host_id));
+    }
 
     if (normalizedQuery) {
       list = list.filter((event) =>
@@ -309,6 +312,8 @@ export default function ExplorePage() {
     ratingFilter,
     normalizedQuery,
     pill,
+    professionalOnly,
+    professionalHostIds,
   ]);
 
   const visibleEvents = filteredExperiences.slice(0, visibleExperiences);
@@ -339,10 +344,44 @@ export default function ExplorePage() {
       <components.Navbar />
 
       <div className="site-x mx-auto w-full max-w-[77.5rem] py-8 pt-24">
-        <Breadcrumb
-          items={[{ label: "Home", href: "/" }, { label: "Explore" }]}
-          className="mb-6"
-        />
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <Breadcrumb
+            items={[{ label: "Home", href: "/" }, { label: "Explore" }]}
+          />
+
+          {/* Professional hosts toggle — mirrors the active category-pill style
+              (brand gradient + soft shadow) when switched on */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={professionalOnly}
+            aria-label="Show professional hosts only"
+            onClick={() => setProfessionalOnly((prev) => !prev)}
+            className={`inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-xs font-extrabold transition-all duration-200 ${
+              professionalOnly
+                ? "border-transparent bg-gradient-to-r from-[#0094CA] to-[#00b4ef] text-white shadow-[0_8px_20px_rgba(0,148,202,0.3)]"
+                : "border-[#bfe6f7] bg-gradient-to-r from-[#f2fbff] to-[#e9f6ff] text-[#0077a3] shadow-[0_10px_24px_rgba(74,141,194,0.12)] hover:-translate-y-px hover:border-[#7cd0f0] hover:shadow-[0_12px_28px_rgba(0,148,202,0.2)]"
+            }`}
+          >
+            <BadgeCheck
+              className={`h-[18px] w-[18px] ${
+                professionalOnly ? "text-white" : "text-[#0094CA]"
+              }`}
+            />
+            <span className="whitespace-nowrap">Professionals only</span>
+            <span
+              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
+                professionalOnly ? "bg-white/30" : "bg-slate-200"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                  professionalOnly ? "translate-x-4" : "translate-x-0.5"
+                }`}
+              />
+            </span>
+          </button>
+        </div>
 
         <section className="pb-2">
           {/* Search */}
@@ -483,92 +522,118 @@ export default function ExplorePage() {
             )}
           </div>
 
-          {/* Category pills */}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {EXPLORE_PILLS.map((item) => {
-              const isActive = pill === item;
-              return (
-                <button
-                  key={item}
-                  type="button"
-                  onClick={() => setPill(item)}
-                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${
-                    isActive
-                      ? "bg-[#dff3ff] text-[#0e8ae0]"
-                      : "bg-white/90 text-[#5a88ac]"
-                  }`}
-                >
-                  {item}
-                </button>
-              );
-            })}
-          </div>
+          {/* Filters — single compact row of dropdowns. Scrolls horizontally on
+              mobile, wraps on larger screens. */}
+          <div className="-mx-1 mt-4 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden">
+            <div className="relative shrink-0">
+              <label htmlFor="category-filter" className="sr-only">
+                Category
+              </label>
+              <select
+                id="category-filter"
+                value={pill}
+                onChange={(e) => setPill(e.target.value as ExplorePill)}
+                className={`h-8 appearance-none rounded-full border pr-7 pl-3.5 text-[11px] font-extrabold tracking-[0.06em] uppercase transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20 ${
+                  pill !== "All"
+                    ? "border-transparent bg-gradient-to-r from-[#0094CA] to-[#00b4ef] text-white shadow-[0_6px_16px_rgba(0,148,202,0.25)]"
+                    : "border-sky-200 bg-white/90 text-[#5a88ac]"
+                }`}
+              >
+                {EXPLORE_PILLS.map((item) => (
+                  <option key={item} value={item} className="text-[#16304c]">
+                    {item === "All" ? "All categories" : item}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className={`pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 ${
+                  pill !== "All" ? "text-white/80" : "text-[#9db8cf]"
+                }`}
+              />
+            </div>
 
-          {/* Event-only filter selects */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <div className="relative">
+            <span
+              aria-hidden="true"
+              className="mx-1 h-5 w-px shrink-0 bg-sky-200"
+            />
+
+            <div className="relative shrink-0">
               <label htmlFor="price-filter" className="sr-only">
-                Price range
+                Price range (applies to experiences only)
               </label>
               <select
                 id="price-filter"
                 value={priceFilter}
+                title="Applies to experiences only"
                 onChange={(e) => setPriceFilter(e.target.value as PriceFilter)}
-                className="h-9 rounded-full border border-sky-200 bg-white/90 px-4 text-[11px] font-extrabold tracking-[0.08em] text-[#5a88ac] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] outline-none"
+                className={`h-8 appearance-none rounded-full border pr-7 pl-3.5 text-[11px] font-extrabold tracking-[0.06em] uppercase transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20 ${
+                  priceFilter !== "any"
+                    ? "border-[#8fd4f2] bg-[#eef8ff] text-[#0e8ae0]"
+                    : "border-sky-200 bg-white/90 text-[#5a88ac]"
+                }`}
               >
-                <option value="any">Price: Any</option>
+                <option value="any">Price</option>
                 <option value="free">Free</option>
                 <option value="under_500">Under ₹500</option>
                 <option value="500_1500">₹500–₹1,500</option>
                 <option value="1500_3000">₹1,500–₹3,000</option>
                 <option value="3000_plus">₹3,000+</option>
               </select>
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#9db8cf]" />
             </div>
 
-            <div className="relative">
+            <div className="relative shrink-0">
               <label htmlFor="duration-filter" className="sr-only">
-                Duration
+                Duration (applies to experiences only)
               </label>
               <select
                 id="duration-filter"
                 value={durationFilter}
+                title="Applies to experiences only"
                 onChange={(e) =>
                   setDurationFilter(e.target.value as DurationFilter)
                 }
-                className="h-9 rounded-full border border-sky-200 bg-white/90 px-4 text-[11px] font-extrabold tracking-[0.08em] text-[#5a88ac] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] outline-none"
+                className={`h-8 appearance-none rounded-full border pr-7 pl-3.5 text-[11px] font-extrabold tracking-[0.06em] uppercase transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20 ${
+                  durationFilter !== "any"
+                    ? "border-[#8fd4f2] bg-[#eef8ff] text-[#0e8ae0]"
+                    : "border-sky-200 bg-white/90 text-[#5a88ac]"
+                }`}
               >
-                <option value="any">Duration: Any</option>
+                <option value="any">Duration</option>
                 <option value="under_60">Under 1 hour</option>
                 <option value="60_120">1–2 hours</option>
                 <option value="120_240">2–4 hours</option>
                 <option value="240_plus">4+ hours</option>
               </select>
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#9db8cf]" />
             </div>
 
-            <div className="relative">
+            <div className="relative shrink-0">
               <label htmlFor="rating-filter" className="sr-only">
-                Rating
+                Rating (applies to experiences only)
               </label>
               <select
                 id="rating-filter"
                 value={ratingFilter}
+                title="Applies to experiences only"
                 onChange={(e) =>
                   setRatingFilter(e.target.value as RatingFilter)
                 }
-                className="h-9 rounded-full border border-sky-200 bg-white/90 px-4 text-[11px] font-extrabold tracking-[0.08em] text-[#5a88ac] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] outline-none"
+                className={`h-8 appearance-none rounded-full border pr-7 pl-3.5 text-[11px] font-extrabold tracking-[0.06em] uppercase transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20 ${
+                  ratingFilter !== "any"
+                    ? "border-[#8fd4f2] bg-[#eef8ff] text-[#0e8ae0]"
+                    : "border-sky-200 bg-white/90 text-[#5a88ac]"
+                }`}
               >
-                <option value="any">Rating: Any</option>
+                <option value="any">Rating</option>
                 <option value="new">New</option>
                 <option value="3_5_plus">3.5+</option>
                 <option value="4_0_plus">4.0+</option>
                 <option value="4_5_plus">4.5+</option>
               </select>
+              <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 h-3.5 w-3.5 -translate-y-1/2 text-[#9db8cf]" />
             </div>
           </div>
-
-          <p className="mt-2 text-xs font-medium text-[#7da2c1]">
-            Price, duration, and rating filters apply to experiences only.
-          </p>
         </section>
 
         {/* Hosts section */}
@@ -586,25 +651,6 @@ export default function ExplorePage() {
             </Link>
           </div>
 
-          {hostMoodFilters.length > 1 && (
-            <div className="mb-4 flex flex-wrap gap-2">
-              {hostMoodFilters.map((mood) => (
-                <button
-                  key={mood}
-                  type="button"
-                  onClick={() => setHostMoodFilter(mood)}
-                  className={`inline-flex items-center justify-center rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] ${
-                    hostMoodFilter === mood
-                      ? "bg-[#dff3ff] text-[#0e8ae0]"
-                      : "bg-white/90 text-[#5a88ac]"
-                  }`}
-                >
-                  {getMoodDisplayLabel(mood)}
-                </button>
-              ))}
-            </div>
-          )}
-
           {hostsLoading ? (
             <div className="flex items-center justify-center py-14">
               <LuLoader2 className="h-8 w-8 animate-spin text-[#0094CA]" />
@@ -614,7 +660,7 @@ export default function ExplorePage() {
               No hosts found.
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {filteredHosts.map((host) => {
                 const fullName =
                   `${host.first_name} ${host.last_name}`.trim() ||

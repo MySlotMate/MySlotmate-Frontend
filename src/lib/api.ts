@@ -267,6 +267,7 @@ export interface HostDTO {
   is_phone_verified: boolean;
   is_super_host: boolean;
   is_community_champ: boolean;
+  is_professional: boolean;
   expertise_tags: string[];
   social_instagram: string | null;
   social_linkedin: string | null;
@@ -301,6 +302,7 @@ export interface HostApplicationPayload {
   social_instagram?: string | null;
   social_linkedin?: string | null;
   social_website?: string | null;
+  is_professional?: boolean;
 }
 
 /** POST /hosts/apply — submit host application (status → pending) */
@@ -400,6 +402,7 @@ export interface PublicHostProfileDTO {
   is_identity_verified: boolean;
   is_super_host: boolean;
   is_community_champ: boolean;
+  is_professional: boolean;
   expertise_tags: string[];
   social_instagram: string | null;
   social_linkedin: string | null;

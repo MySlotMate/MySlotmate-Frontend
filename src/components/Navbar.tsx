@@ -130,6 +130,20 @@ export default function Navbar() {
   const validUserId =
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
 
+  // Auto-prompt login: if the visitor is still not logged in 10s after the
+  // page loads, surface the login modal. Guarded by sessionStorage so it fires
+  // once per visit — the navbar remounts on every route change (see the geo
+  // comment above), which would otherwise re-trigger it on every navigation.
+  useEffect(() => {
+    if (!mounted || validUserId) return;
+    if (sessionStorage.getItem("msm_login_prompted")) return;
+    const timer = setTimeout(() => {
+      sessionStorage.setItem("msm_login_prompted", "1");
+      setShowLogin(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [mounted, validUserId]);
+
   const { data: dbProfile } = useMyProfile(validUserId);
 
   const user = useMemo(() => {

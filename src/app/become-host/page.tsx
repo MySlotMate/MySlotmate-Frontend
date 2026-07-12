@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
-import { Navbar, Breadcrumb } from "~/components";
+import { Navbar, Breadcrumb, GoogleLogin } from "~/components";
 import {
   HostApplicationSubmittedModal,
   OTPVerificationModal,
@@ -42,9 +42,19 @@ interface HostFormData {
   socialWebsite: string;
   preferredDays: string[];
   groupSize: number;
+  isProfessional: boolean;
 }
 
-const MOODS = ["Adventure"] as const;
+const MOODS = [
+  "Adventurous",
+  "Social",
+  "Wellness",
+  "Educational",
+  "Creative",
+  "Relaxing",
+  "Culinary",
+  "Cultural",
+] as const;
 
 const DAYS = [
   { key: "MON", label: "MON" },
@@ -97,13 +107,14 @@ export default function BecomeHostPage() {
     fullName: user?.displayName ?? "",
     city: "",
     experienceDesc: "",
-    moods: ["Adventure"],
+    moods: [],
     description: "",
     socialInstagram: "",
     socialLinkedin: "",
     socialWebsite: "",
     preferredDays: [],
     groupSize: 5,
+    isProfessional: false,
   });
 
   // Pre-populate form from DB profile when it loads
@@ -124,15 +135,6 @@ export default function BecomeHostPage() {
     value: HostFormData[K],
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const toggleMood = (mood: string) => {
-    setForm((prev) => ({
-      ...prev,
-      moods: prev.moods.includes(mood)
-        ? prev.moods.filter((m) => m !== mood)
-        : [...prev.moods, mood],
-    }));
   };
 
   const toggleDay = (day: string) => {
@@ -163,15 +165,22 @@ export default function BecomeHostPage() {
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
           <h1 className="text-2xl font-bold text-gray-900">Become a Host</h1>
           <p className="max-w-md text-gray-500">
-            You must be logged in to apply as a host.
+            Please log in to continue your host application.
           </p>
-          <button
-            onClick={() => router.push("/")}
-            className="rounded-full bg-[#0094CA] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab]"
-          >
-            Go Home
-          </button>
         </div>
+        <GoogleLogin
+          open
+          onClose={() => {
+            // Re-check auth after the modal closes: if they logged in, reveal
+            // the form; otherwise send them back home.
+            const id = localStorage.getItem("msm_user_id");
+            if (id && id !== "existing") {
+              setStoredUserId(id);
+            } else {
+              router.push("/");
+            }
+          }}
+        />
         <Home.Footer />
       </>
     );
@@ -271,11 +280,10 @@ export default function BecomeHostPage() {
                   <div className="relative flex gap-6">
                     <div className="absolute top-10 bottom-[-32px] left-[15px] w-[1px] bg-gray-100" />
                     <div
-                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
-                        status === "approved"
+                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${status === "approved"
                           ? "bg-green-500 text-white"
                           : "bg-[#0094CA] text-white shadow-lg ring-4 shadow-[#0094CA]/30 ring-[#0094CA]/5"
-                      }`}
+                        }`}
                     >
                       {status === "approved" ? (
                         <FiCheck className="h-4 w-4" />
@@ -305,11 +313,10 @@ export default function BecomeHostPage() {
                   {/* Step 3: Access */}
                   <div className="relative flex gap-6">
                     <div
-                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
-                        status === "approved"
+                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${status === "approved"
                           ? "bg-green-500 text-white"
                           : "border-2 border-gray-50 bg-white text-gray-200"
-                      }`}
+                        }`}
                     >
                       {status === "approved" ? (
                         <FiCheck className="h-4 w-4" />
@@ -414,6 +421,7 @@ export default function BecomeHostPage() {
         social_instagram: form.socialInstagram.trim() || null,
         social_linkedin: form.socialLinkedin.trim() || null,
         social_website: form.socialWebsite.trim() || null,
+        is_professional: form.isProfessional,
       });
       toast.success("Application saved as draft.");
     } catch (err) {
@@ -495,6 +503,7 @@ export default function BecomeHostPage() {
         social_instagram: form.socialInstagram.trim() || null,
         social_linkedin: form.socialLinkedin.trim() || null,
         social_website: form.socialWebsite.trim() || null,
+        is_professional: form.isProfessional,
       });
 
       setStoredHostId(res.data.id);
@@ -571,11 +580,10 @@ export default function BecomeHostPage() {
                   value={form.fullName}
                   onChange={(e) => updateField("fullName", e.target.value)}
                   placeholder="e.g. Alex Rivera"
-                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
-                    showErrors && !form.fullName.trim()
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.fullName.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                  }`}
+                    }`}
                 />
               </div>
               <div>
@@ -587,11 +595,10 @@ export default function BecomeHostPage() {
                   value={form.city}
                   onChange={(e) => updateField("city", e.target.value)}
                   placeholder="e.g. San Francisco"
-                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
-                    showErrors && !form.city.trim()
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.city.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                  }`}
+                    }`}
                 />
               </div>
             </div>
@@ -604,49 +611,81 @@ export default function BecomeHostPage() {
             </h2>
 
             <div className="mt-5 space-y-5">
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold text-gray-900">
-                  What Experiences will you Host?
-                </label>
-                <input
-                  type="text"
-                  value={form.experienceDesc}
-                  onChange={(e) =>
-                    updateField("experienceDesc", e.target.value)
-                  }
-                  placeholder="Write about all the activities you are planning to host"
-                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
-                    showErrors && !form.experienceDesc.trim()
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300 focus:border-[#0094CA]"
-                  }`}
-                />
-              </div>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                    What Experiences will you Host?
+                  </label>
+                  <input
+                    type="text"
+                    value={form.experienceDesc}
+                    onChange={(e) =>
+                      updateField("experienceDesc", e.target.value)
+                    }
+                    placeholder="Write about all the activities you are planning to host"
+                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.experienceDesc.trim()
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300 focus:border-[#0094CA]"
+                      }`}
+                  />
+                </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-900">
-                  Select Moods
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {MOODS.map((mood) => {
-                    const selected = form.moods.includes(mood);
-                    return (
-                      <button
-                        key={mood}
-                        type="button"
-                        onClick={() => toggleMood(mood)}
-                        className={`rounded-full border px-5 py-2 text-sm font-medium transition ${
-                          selected
-                            ? "border-[#0094CA] bg-[#0094CA] text-white"
-                            : "border-gray-300 bg-white text-gray-700 hover:border-[#0094CA] hover:text-[#0094CA]"
-                        }`}
-                      >
-                        ✦ {mood}
-                      </button>
-                    );
-                  })}
+                <div>
+                  <label className="mb-1.5 block text-sm font-semibold text-gray-900">
+                    Select Category
+                  </label>
+                  <select
+                    value={form.moods[0] ?? ""}
+                    onChange={(e) =>
+                      updateField(
+                        "moods",
+                        e.target.value ? [e.target.value] : [],
+                      )
+                    }
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && form.moods.length === 0
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300 focus:border-[#0094CA]"
+                      }`}
+                  >
+                    <option value="" disabled>
+                      Select a Category
+                    </option>
+                    {MOODS.map((mood) => (
+                      <option key={mood} value={mood}>
+                        {mood}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
+
+              {/* Professional host toggle */}
+              <label
+                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
+                  form.isProfessional
+                    ? "border-[#0094CA] bg-[#f0faff]"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={form.isProfessional}
+                  onChange={(e) =>
+                    updateField("isProfessional", e.target.checked)
+                  }
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-[#0094CA] accent-[#0094CA]"
+                />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-gray-900">
+                    I&apos;m a professional host
+                  </span>
+                  <span className="mt-0.5 block text-xs text-gray-500">
+                    Check this if you host experiences professionally (certified
+                    trainer, licensed guide, studio, etc.). Professional hosts
+                    are highlighted in Explore.
+                  </span>
+                </span>
+              </label>
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
@@ -667,11 +706,10 @@ export default function BecomeHostPage() {
                   maxLength={300}
                   rows={5}
                   placeholder="Describe the magic you're thinking of creating..."
-                  className={`w-full resize-none rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
-                    showErrors && !form.description.trim()
+                  className={`w-full resize-none rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.description.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                  }`}
+                    }`}
                 />
               </div>
 
@@ -697,14 +735,13 @@ export default function BecomeHostPage() {
                         updateField("socialInstagram", e.target.value)
                       }
                       placeholder="https://instagram.com/yourprofile"
-                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
-                        showErrors &&
-                        !form.socialInstagram.trim() &&
-                        !form.socialLinkedin.trim() &&
-                        !form.socialWebsite.trim()
+                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
+                          !form.socialInstagram.trim() &&
+                          !form.socialLinkedin.trim() &&
+                          !form.socialWebsite.trim()
                           ? "border-red-500 bg-red-50"
                           : "border-gray-300 focus:border-[#0094CA]"
-                      }`}
+                        }`}
                     />
                   </div>
                   <div>
@@ -718,14 +755,13 @@ export default function BecomeHostPage() {
                         updateField("socialLinkedin", e.target.value)
                       }
                       placeholder="https://linkedin.com/in/yourprofile"
-                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
-                        showErrors &&
-                        !form.socialInstagram.trim() &&
-                        !form.socialLinkedin.trim() &&
-                        !form.socialWebsite.trim()
+                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
+                          !form.socialInstagram.trim() &&
+                          !form.socialLinkedin.trim() &&
+                          !form.socialWebsite.trim()
                           ? "border-red-500 bg-red-50"
                           : "border-gray-300 focus:border-[#0094CA]"
-                      }`}
+                        }`}
                     />
                   </div>
                 </div>
@@ -740,14 +776,13 @@ export default function BecomeHostPage() {
                       updateField("socialWebsite", e.target.value)
                     }
                     placeholder="https://yourwebsite.com"
-                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
-                      showErrors &&
-                      !form.socialInstagram.trim() &&
-                      !form.socialLinkedin.trim() &&
-                      !form.socialWebsite.trim()
+                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
+                        !form.socialInstagram.trim() &&
+                        !form.socialLinkedin.trim() &&
+                        !form.socialWebsite.trim()
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300 focus:border-[#0094CA]"
-                    }`}
+                      }`}
                   />
                 </div>
               </div>
@@ -777,11 +812,10 @@ export default function BecomeHostPage() {
                         key={key}
                         type="button"
                         onClick={() => toggleDay(key)}
-                        className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${
-                          selected
+                        className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${selected
                             ? "border-[#0094CA] bg-[#0094CA] text-white"
                             : "border-gray-300 bg-white text-gray-700 hover:border-[#0094CA]"
-                        }`}
+                          }`}
                       >
                         {label}
                       </button>

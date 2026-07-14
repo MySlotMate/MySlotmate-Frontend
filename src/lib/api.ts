@@ -176,6 +176,55 @@ export function updateUserProfile(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Attendee profile (reusable per-user attendee details)              */
+/* ------------------------------------------------------------------ */
+
+export interface AttendeeProfileDTO {
+  user_id: string;
+  name: string | null;
+  age: number | null;
+  gender: string | null;
+  qualification: string | null;
+  occupation: string | null;
+  marital_status: string | null;
+  contact_number: string | null;
+  whatsapp_number: string | null;
+  registration_type: string | null;
+  govt_id_url: string | null;
+  travel: boolean | null;
+}
+
+export interface AttendeeProfileUpdatePayload {
+  user_id: string;
+  name?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  qualification?: string | null;
+  occupation?: string | null;
+  marital_status?: string | null;
+  contact_number?: string | null;
+  whatsapp_number?: string | null;
+  registration_type?: string | null;
+  govt_id_url?: string | null;
+  travel?: boolean | null;
+}
+
+/** GET /users/attendee-profile?user_id=<uuid> — null when none saved yet. */
+export function getAttendeeProfile(userId: string) {
+  return apiFetch<AttendeeProfileDTO | null>("/users/attendee-profile", {
+    params: { user_id: userId },
+  });
+}
+
+/** PUT /users/attendee-profile — upsert the user's attendee details. */
+export function updateAttendeeProfile(body: AttendeeProfileUpdatePayload) {
+  return apiFetch<AttendeeProfileDTO>("/users/attendee-profile", {
+    method: "PUT",
+    data: body,
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Upload                                                             */
 /* ------------------------------------------------------------------ */
 
@@ -197,7 +246,8 @@ export type UploadFolder =
   | "events/gallery"
   | "hosts/avatars"
   | "hosts/government-ids"
-  | "support/evidence";
+  | "support/evidence"
+  | "attendees/id-proofs";
 
 /**
  * POST /upload/?folder=<prefix>
@@ -739,6 +789,25 @@ export function getTodaySchedule(hostId: string) {
 /*  Events                                                             */
 /* ------------------------------------------------------------------ */
 
+/** A named ticket tier on an event (e.g. General / VIP). */
+export interface PriceTierDTO {
+  id: string;
+  event_id: string;
+  name: string;
+  price_cents: number;
+  capacity: number | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+/** Tier payload when creating/updating an event (no id — server assigns). */
+export interface PriceTierInput {
+  name: string;
+  price_cents: number;
+  capacity?: number | null;
+  sort_order?: number;
+}
+
 export interface EventDTO {
   id: string;
   host_id: string;
@@ -778,6 +847,9 @@ export interface EventDTO {
   total_reviews: number;
   next_available_date: string | null;
   bookings_last_week?: number;
+  price_tiers: PriceTierDTO[];
+  requires_attendee_details: boolean;
+  attendee_fields: string[];
   created_at: string;
   updated_at: string;
 }
@@ -945,6 +1017,9 @@ export interface EventCreatePayload {
   meeting_link?: string;
   google_maps_url?: string;
   status?: "draft" | "live";
+  price_tiers?: PriceTierInput[];
+  requires_attendee_details?: boolean;
+  attendee_fields?: string[];
 }
 
 export interface EventUpdatePayload {
@@ -974,6 +1049,9 @@ export interface EventUpdatePayload {
   cancellation_policy?: string;
   meeting_link?: string;
   google_maps_url?: string;
+  price_tiers?: PriceTierInput[];
+  requires_attendee_details?: boolean;
+  attendee_fields?: string[];
 }
 
 /** POST /events/ — create a new event */
@@ -1060,6 +1138,8 @@ export interface BookingDTO {
   amount_cents: number | null;
   service_fee_cents: number | null;
   net_earning_cents: number | null;
+  price_tier_id: string | null;
+  unit_price_cents: number | null;
   created_at: string;
   updated_at: string;
   cancelled_at: string | null;
@@ -1075,6 +1155,7 @@ export interface CreateBookingPayload {
   quantity: number;
   occurrence_date?: string;
   idempotency_key?: string;
+  price_tier_id?: string;
 }
 
 /** POST /bookings/ — create a booking */

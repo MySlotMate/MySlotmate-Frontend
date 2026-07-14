@@ -40,7 +40,7 @@ import { LuLanguages, LuBadgeCheck, LuSparkles, LuTicket } from "react-icons/lu"
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { formatIST } from "~/lib/datetime";
-import type { OccurrenceAvailability } from "~/lib/api";
+import type { OccurrenceAvailability, PriceTierDTO } from "~/lib/api";
 import { GoogleLogin } from "~/components";
 
 export const runtime = "edge";
@@ -237,6 +237,7 @@ function InfoPills({
 function BookingWidget({
   price,
   isFree,
+  priceTiers,
   rating,
   totalReviews,
   eventId: _eventId,
@@ -251,6 +252,7 @@ function BookingWidget({
 }: {
   price: number | null;
   isFree: boolean;
+  priceTiers: PriceTierDTO[];
   rating: number | null;
   totalReviews: number;
   eventId: string;
@@ -261,11 +263,22 @@ function BookingWidget({
   availability?: OccurrenceAvailability[];
   isRecurring: boolean;
   cancellationPolicy: string | null;
-  onBook: (date: string, guests: number) => void;
+  onBook: (date: string, guests: number, tierId?: string) => void;
 }) {
   const [selectedDate, setSelectedDate] = useState(_eventDate);
   const [guests, setGuests] = useState(1);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  // Ticket tiers: when present, the guest must pick one and its price drives the
+  // total. Falls back to the single `price` when the event has no tiers.
+  const hasTiers = priceTiers.length > 0;
+  const [selectedTierId, setSelectedTierId] = useState(
+    priceTiers[0]?.id ?? "",
+  );
+  const selectedTier = priceTiers.find((t) => t.id === selectedTierId);
+  const effectivePrice = hasTiers
+    ? (selectedTier?.price_cents ?? 0)
+    : (price ?? 0);
 
   // Find the selected occurrence availability
   const currentOccurrence = availability?.find((a) => a.date === selectedDate);
@@ -339,7 +352,7 @@ function BookingWidget({
                   "FREE EXPERIENCE"
                 ) : (
                   <>
-                    ₹{((price ?? 0) / 100).toFixed(0)}
+                    ₹{(effectivePrice / 100).toFixed(0)}
                     <span className="text-sm font-medium text-[#6f8daa]">
                       /person
                     </span>
@@ -425,7 +438,7 @@ function BookingWidget({
                           />
                           <div className="flex flex-1 items-baseline gap-2">
                             <span className="text-sm font-bold">
-                              {formatIST(occ.date, "eee d")},
+                              {formatIST(occ.date, "eee d MMM")},
                             </span>
                             <span
                               className={`text-sm ${isSelected ? "text-white/90" : "text-[#6f8daa]"
@@ -459,7 +472,7 @@ function BookingWidget({
                             }`}
                         />
                         <div className="text-sm font-bold leading-tight">
-                          {formatIST(occ.date, "eee d")}
+                          {formatIST(occ.date, "eee d MMM")}
                         </div>
                         <div
                           className={`text-sm leading-tight ${isSelected ? "text-white/90" : "text-[#6f8daa]"
@@ -481,6 +494,33 @@ function BookingWidget({
                   No upcoming sessions
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Ticket type */}
+          {!eventHasPassed && hasTiers && !isFree && (
+            <div className="mb-3">
+              <div className="flex items-center gap-1.5">
+                <LuTicket className="h-4 w-4 text-[#0094CA]" />
+                <h3 className="text-sm font-bold text-[#16304c]">Ticket type</h3>
+              </div>
+              <p className="mb-2 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
+                Choose your ticket
+              </p>
+              <div className="relative">
+                <select
+                  value={selectedTierId}
+                  onChange={(e) => setSelectedTierId(e.target.value)}
+                  className="w-full appearance-none rounded-2xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                >
+                  {priceTiers.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name} — ₹{(t.price_cents / 100).toFixed(0)}
+                    </option>
+                  ))}
+                </select>
+                <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-[#6f8daa]" />
+              </div>
             </div>
           )}
 
@@ -525,7 +565,9 @@ function BookingWidget({
           ) : (
             <button
               type="button"
-              onClick={() => onBook(selectedDate, guests)}
+              onClick={() =>
+                onBook(selectedDate, guests, hasTiers ? selectedTierId : undefined)
+              }
               disabled={!selectedDate || spotsLeft <= 0}
               className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.4)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
             >
@@ -617,7 +659,7 @@ function BookingWidget({
               {isFree ? (
                 "FREE"
               ) : (
-                <>₹{((price ?? 0) / 100).toFixed(0)}</>
+                <>₹{(effectivePrice / 100).toFixed(0)}</>
               )}
             </span>
             {!isFree && (
@@ -693,7 +735,7 @@ function BookingWidget({
                   Select Booking Details
                 </h3>
                 <p className="text-xs text-[#6f8daa]">
-                  {isFree ? "Free Experience" : `₹${((price ?? 0) / 100).toFixed(0)} per person`}
+                  {isFree ? "Free Experience" : `₹${(effectivePrice / 100).toFixed(0)} per person`}
                 </p>
               </div>
               <button
@@ -736,7 +778,7 @@ function BookingWidget({
                               }`}
                           />
                           <div className="text-sm font-bold leading-tight">
-                            {formatIST(occ.date, "eee d")}
+                            {formatIST(occ.date, "eee d MMM")}
                           </div>
                           <div
                             className={`text-[11px] leading-tight ${isSelected ? "text-white/90" : "text-[#6f8daa]"
@@ -758,6 +800,32 @@ function BookingWidget({
                     No upcoming sessions
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Ticket type selector (mobile drawer) */}
+            {!eventHasPassed && hasTiers && !isFree && (
+              <div className="mb-4 rounded-2xl border border-[#dbeaf5] bg-white p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="rounded-lg bg-[#eef7ff] p-2 text-[#0094CA]">
+                    <LuTicket className="h-5 w-5" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#16304c]">Ticket type</h4>
+                </div>
+                <div className="relative">
+                  <select
+                    value={selectedTierId}
+                    onChange={(e) => setSelectedTierId(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                  >
+                    {priceTiers.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} — ₹{(t.price_cents / 100).toFixed(0)}
+                      </option>
+                    ))}
+                  </select>
+                  <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-[#6f8daa]" />
+                </div>
               </div>
             )}
 
@@ -807,11 +875,11 @@ function BookingWidget({
             )}
 
             {/* Total summary info */}
-            {!eventHasPassed && !isFree && price && (
+            {!eventHasPassed && !isFree && effectivePrice > 0 && (
               <div className="mb-6 flex justify-between items-center px-2">
                 <span className="text-sm font-medium text-[#5f7e9a]">Total booking price:</span>
                 <span className="font-outfit text-xl font-extrabold text-[#16304c]">
-                  ₹{((price * guests) / 100).toFixed(0)}
+                  ₹{((effectivePrice * guests) / 100).toFixed(0)}
                 </span>
               </div>
             )}
@@ -826,7 +894,7 @@ function BookingWidget({
                 type="button"
                 onClick={() => {
                   setIsMobileDrawerOpen(false);
-                  onBook(selectedDate, guests);
+                  onBook(selectedDate, guests, hasTiers ? selectedTierId : undefined);
                 }}
                 disabled={!selectedDate || spotsLeft <= 0}
                 className="w-full rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-3.5 text-center text-base font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.3)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.38)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
@@ -1223,7 +1291,7 @@ export default function ExperienceDetailPage({
     }
   };
 
-  const handleBook = (date: string, guests: number) => {
+  const handleBook = (date: string, guests: number, tierId?: string) => {
     if (!userId) {
       setShowLogin(true);
       return;
@@ -1233,8 +1301,9 @@ export default function ExperienceDetailPage({
       return;
     }
     const encodedDate = encodeURIComponent(date);
+    const tierParam = tierId ? `&tier=${encodeURIComponent(tierId)}` : "";
     router.push(
-      `/experience/${resolvedParams.id}/book?date=${encodedDate}&guests=${guests}`,
+      `/experience/${resolvedParams.id}/book?date=${encodedDate}&guests=${guests}${tierParam}`,
     );
   };
 
@@ -1378,6 +1447,7 @@ export default function ExperienceDetailPage({
               <BookingWidget
                 price={event.price_cents}
                 isFree={event.is_free}
+                priceTiers={event.price_tiers ?? []}
                 rating={ratingData?.average_rating ?? null}
                 totalReviews={ratingData?.total_reviews ?? 0}
                 eventId={event.id}

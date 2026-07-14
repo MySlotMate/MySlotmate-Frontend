@@ -323,6 +323,11 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
   const { data: allEvents } = useListPublicEvents();
   const { data: bookingUser } = useUserProfile(booking?.user_id ?? null);
 
+  const bookedTierName = booking?.price_tier_id
+    ? (event?.price_tiers?.find((t) => t.id === booking.price_tier_id)?.name ??
+      null)
+    : null;
+
   // Get recommendation when event data is loaded
   useEffect(() => {
     if (event && allEvents && allEvents.length > 0) {
@@ -619,7 +624,8 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
               {/* Booking metadata */}
               <div className="flex-1 text-center pr-2 flex flex-col justify-center items-center gap-0.5">
                 <span className="text-[10px] text-gray-400 font-semibold block">
-                  {booking?.quantity ?? 1} Guest{(booking?.quantity ?? 1) > 1 ? "s" : ""} · Myslotmate Pass
+                  {booking?.quantity ?? 1} Guest{(booking?.quantity ?? 1) > 1 ? "s" : ""}
+                  {bookedTierName ? ` · ${bookedTierName}` : ""} · Myslotmate Pass
                 </span>
                 <span className="text-xs font-extrabold text-gray-950 block uppercase tracking-wide">
                   {bookingUser?.name ?? "Guest"}

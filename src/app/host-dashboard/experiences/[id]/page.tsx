@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HostNavbar } from "~/components/host-dashboard";
+import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
 import Breadcrumb from "~/components/Breadcrumb";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
@@ -40,12 +41,16 @@ interface EventFormData {
   maxGroupSize: number;
   isFree: boolean;
   priceCents: number;
+  useTiers: boolean;
+  priceTiers: { name: string; priceStr: string }[];
   eventDate: string;
   eventTime: string;
   endTime: string;
   isRecurring: boolean;
   recurrenceRule: string;
   cancellationPolicy: string;
+  requiresAttendeeDetails: boolean;
+  attendeeFields: string[];
 }
 
 const MOODS = [
@@ -544,12 +549,16 @@ export default function EditEventPage({
     maxGroupSize: 10,
     isFree: false,
     priceCents: 50000,
+    useTiers: false,
+    priceTiers: [{ name: "", priceStr: "" }],
     eventDate: "",
     eventTime: "",
     endTime: "",
     isRecurring: false,
     recurrenceRule: "",
     cancellationPolicy: "flexible",
+    requiresAttendeeDetails: false,
+    attendeeFields: [],
   });
 
   useEffect(() => {
@@ -589,12 +598,22 @@ export default function EditEventPage({
         maxGroupSize: event.max_group_size ?? 10,
         isFree: event.is_free ?? false,
         priceCents: event.price_cents ?? 0,
+        useTiers: (event.price_tiers?.length ?? 0) > 0,
+        priceTiers:
+          event.price_tiers && event.price_tiers.length > 0
+            ? event.price_tiers.map((t) => ({
+                name: t.name,
+                priceStr: (t.price_cents / 100).toString(),
+              }))
+            : [{ name: "", priceStr: "" }],
         eventDate: dateStr,
         eventTime: timeStr,
         endTime: endTime,
         isRecurring: event.is_recurring ?? false,
         recurrenceRule: event.recurrence_rule ?? "",
         cancellationPolicy: event.cancellation_policy ?? "flexible",
+        requiresAttendeeDetails: event.requires_attendee_details ?? false,
+        attendeeFields: event.attendee_fields ?? [],
       });
     }
   }, [event]);
@@ -610,6 +629,28 @@ export default function EditEventPage({
     value: EventFormData[K],
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const addPriceTier = () => {
+    updateForm("priceTiers", [...form.priceTiers, { name: "", priceStr: "" }]);
+  };
+  const removePriceTier = (index: number) => {
+    updateForm(
+      "priceTiers",
+      form.priceTiers.filter((_, i) => i !== index),
+    );
+  };
+  const updatePriceTier = (
+    index: number,
+    field: "name" | "priceStr",
+    value: string,
+  ) => {
+    updateForm(
+      "priceTiers",
+      form.priceTiers.map((t, i) =>
+        i === index ? { ...t, [field]: value } : t,
+      ),
+    );
   };
 
   const handleCoverUpload = (files: File[]) => {
@@ -671,8 +712,15 @@ export default function EditEventPage({
     if (!form.description.trim()) return "Add a description before publishing";
     if (!form.eventDate || !form.eventTime)
       return "Set a date and time before publishing";
-    if (!form.isFree && form.priceCents <= 0)
+    if (!form.isFree && !form.useTiers && form.priceCents <= 0)
       return "Set a price (or mark as free) before publishing";
+    if (
+      !form.isFree &&
+      form.useTiers &&
+      form.priceTiers.filter((t) => t.name.trim() && Number(t.priceStr) > 0)
+        .length === 0
+    )
+      return "Add at least one ticket type with a name and price";
     if (!form.isOnline && !form.location.trim())
       return "Add a location (or mark as online) before publishing";
     if (form.isOnline && !form.meetingLink.trim())
@@ -773,11 +821,24 @@ export default function EditEventPage({
           capacity: form.maxGroupSize,
           min_group_size: form.minGroupSize,
           max_group_size: form.maxGroupSize,
-          price_cents: form.isFree ? 0 : form.priceCents,
+          price_cents: form.isFree || form.useTiers ? 0 : form.priceCents,
           is_free: form.isFree,
+          price_tiers:
+            !form.isFree && form.useTiers
+              ? form.priceTiers
+                  .filter((t) => t.name.trim() && Number(t.priceStr) > 0)
+                  .map((t) => ({
+                    name: t.name.trim(),
+                    price_cents: Math.round(Number(t.priceStr) * 100),
+                  }))
+              : [],
           is_recurring: form.isRecurring,
           recurrence_rule: form.isRecurring ? form.recurrenceRule : undefined,
           cancellation_policy: form.cancellationPolicy,
+          requires_attendee_details: form.requiresAttendeeDetails,
+          attendee_fields: form.requiresAttendeeDetails
+            ? form.attendeeFields
+            : [],
         },
       });
 
@@ -1095,6 +1156,25 @@ export default function EditEventPage({
                 </div>
 
                 {!form.isFree && (
+                  <div className="mb-4 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updateForm("useTiers", false)}
+                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${!form.useTiers ? "bg-[#0094CA] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                    >
+                      Single price
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateForm("useTiers", true)}
+                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${form.useTiers ? "bg-[#0094CA] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                    >
+                      Multiple ticket types
+                    </button>
+                  </div>
+                )}
+
+                {!form.isFree && !form.useTiers && (
                   <div className="mb-4 space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
                       Price (₹)
@@ -1112,6 +1192,54 @@ export default function EditEventPage({
                       min="0"
                       className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                     />
+                  </div>
+                )}
+
+                {!form.isFree && form.useTiers && (
+                  <div className="mb-4 space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Ticket types
+                    </label>
+                    {form.priceTiers.map((tier, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={tier.name}
+                          onChange={(e) =>
+                            updatePriceTier(index, "name", e.target.value)
+                          }
+                          placeholder="e.g. General, VIP"
+                          className="flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        />
+                        <input
+                          type="number"
+                          value={tier.priceStr}
+                          onChange={(e) =>
+                            updatePriceTier(index, "priceStr", e.target.value)
+                          }
+                          placeholder="₹ Price"
+                          min="0"
+                          className="w-32 rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        />
+                        {form.priceTiers.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removePriceTier(index)}
+                            className="text-gray-400 transition hover:text-red-500"
+                            aria-label="Remove ticket type"
+                          >
+                            <FiX className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addPriceTier}
+                      className="text-sm font-semibold text-[#0094CA] hover:underline"
+                    >
+                      + Add ticket type
+                    </button>
                   </div>
                 )}
 
@@ -1243,6 +1371,20 @@ export default function EditEventPage({
                       No Refund - Non-refundable once booked
                     </option>
                   </select>
+                </div>
+
+                {/* Attendee Details */}
+                <div className="mb-4">
+                  <AttendeeDetailsConfig
+                    enabled={form.requiresAttendeeDetails}
+                    fields={form.attendeeFields}
+                    onToggle={(next) =>
+                      updateForm("requiresAttendeeDetails", next)
+                    }
+                    onFieldsChange={(next) =>
+                      updateForm("attendeeFields", next)
+                    }
+                  />
                 </div>
 
                 {/* Recurring */}

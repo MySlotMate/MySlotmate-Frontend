@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { HostNavbar } from "~/components/host-dashboard";
+import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
 import Breadcrumb from "~/components/Breadcrumb";
 import {
   useMyHost,
@@ -70,12 +71,19 @@ interface FormData {
   // Step 2 - Pricing & Schedule
   isFree: boolean;
   priceCents: number;
+  // Multiple ticket tiers. When useTiers is true, priceTiers drives pricing
+  // instead of the single priceCents. priceStr is the raw input mirror.
+  useTiers: boolean;
+  priceTiers: { name: string; priceStr: string }[];
   eventDate: string;
   eventTime: string;
   endTime: string;
   isRecurring: boolean;
   recurrenceRule: string;
   cancellationPolicy: string;
+  // Attendee details
+  requiresAttendeeDetails: boolean;
+  attendeeFields: string[];
 }
 
 function getGeneratedDescription(value: unknown): string | null {
@@ -596,7 +604,7 @@ function PreviewCard({ form }: { form: FormData }) {
     const month = parseInt(parts[1]!, 10) - 1;
     const day = parseInt(parts[2]!, 10);
     const dateObj = new Date(year, month, day);
-    return format(dateObj, "eee d");
+    return format(dateObj, "eee d MMM");
   };
 
   const getFormattedTime = (timeStr: string) => {
@@ -910,12 +918,16 @@ export default function CreateExperiencePage() {
     level: "Beginner Friendly",
     isFree: false,
     priceCents: 50000,
+    useTiers: false,
+    priceTiers: [{ name: "", priceStr: "" }],
     eventDate: "",
     eventTime: "",
     endTime: "",
     isRecurring: false,
     recurrenceRule: "",
     cancellationPolicy: "flexible",
+    requiresAttendeeDetails: false,
+    attendeeFields: [],
   });
 
   // Local string trackers for controlled numeric inputs to avoid leading-zero/clearing issues
@@ -1065,6 +1077,33 @@ export default function CreateExperiencePage() {
   };
 
   /* ---------------------------------------------------------------- */
+  /*  Ticket tiers                                                     */
+  /* ---------------------------------------------------------------- */
+  const addPriceTier = () => {
+    updateForm("priceTiers", [...form.priceTiers, { name: "", priceStr: "" }]);
+  };
+
+  const removePriceTier = (index: number) => {
+    updateForm(
+      "priceTiers",
+      form.priceTiers.filter((_, i) => i !== index),
+    );
+  };
+
+  const updatePriceTier = (
+    index: number,
+    field: "name" | "priceStr",
+    value: string,
+  ) => {
+    updateForm(
+      "priceTiers",
+      form.priceTiers.map((t, i) =>
+        i === index ? { ...t, [field]: value } : t,
+      ),
+    );
+  };
+
+  /* ---------------------------------------------------------------- */
   /*  Content Moderation                                               */
   /* ---------------------------------------------------------------- */
   const handleDescriptionChange = (value: string) => {
@@ -1136,10 +1175,20 @@ export default function CreateExperiencePage() {
       toast.error("Please select a start time");
       return false;
     }
-    if (!form.isFree && form.priceCents <= 0) {
+    if (!form.isFree && !form.useTiers && form.priceCents <= 0) {
       setShowErrors(true);
       toast.error("Please set a valid price");
       return false;
+    }
+    if (!form.isFree && form.useTiers) {
+      const valid = form.priceTiers.filter(
+        (t) => t.name.trim() && Number(t.priceStr) > 0,
+      );
+      if (valid.length === 0) {
+        setShowErrors(true);
+        toast.error("Add at least one ticket type with a name and price");
+        return false;
+      }
     }
     return true;
   };
@@ -1233,11 +1282,25 @@ export default function CreateExperiencePage() {
         max_group_size: form.maxGroupSize,
         languages: form.languages,
         level: form.level || undefined,
-        price_cents: form.isFree ? 0 : form.priceCents,
+        price_cents:
+          form.isFree || form.useTiers ? 0 : form.priceCents,
         is_free: form.isFree,
+        price_tiers:
+          !form.isFree && form.useTiers
+            ? form.priceTiers
+                .filter((t) => t.name.trim() && Number(t.priceStr) > 0)
+                .map((t) => ({
+                  name: t.name.trim(),
+                  price_cents: Math.round(Number(t.priceStr) * 100),
+                }))
+            : undefined,
         is_recurring: form.isRecurring,
         recurrence_rule: form.isRecurring ? form.recurrenceRule : undefined,
         cancellation_policy: form.cancellationPolicy,
+        requires_attendee_details: form.requiresAttendeeDetails,
+        attendee_fields: form.requiresAttendeeDetails
+          ? form.attendeeFields
+          : [],
         status: asDraft ? "draft" : "live",
       });
 
@@ -1961,8 +2024,34 @@ export default function CreateExperiencePage() {
                     </button>
                   </div>
 
-                  {/* Price Input */}
+                  {/* Pricing mode: single price vs. multiple ticket types */}
                   {!form.isFree && (
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateForm("useTiers", false)}
+                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${!form.useTiers
+                            ? "bg-[#0094CA] text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                      >
+                        Single price
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateForm("useTiers", true)}
+                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${form.useTiers
+                            ? "bg-[#0094CA] text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                      >
+                        Multiple ticket types
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Single Price Input */}
+                  {!form.isFree && !form.useTiers && (
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700">
                         Price per person (₹)
@@ -2008,6 +2097,72 @@ export default function CreateExperiencePage() {
                       <p className="text-xs text-gray-500">
                         Platform fee: 30% • You&apos;ll earn: ₹
                         {((form.priceCents / 100) * 0.7).toFixed(0)} per booking
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Ticket Tier Editor */}
+                  {!form.isFree && form.useTiers && (
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Ticket types
+                      </label>
+                      {form.priceTiers.map((tier, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <input
+                            type="text"
+                            value={tier.name}
+                            onChange={(e) =>
+                              updatePriceTier(index, "name", e.target.value)
+                            }
+                            placeholder="e.g. General, VIP"
+                            className={`flex-1 rounded-lg border py-2.5 px-3 text-sm transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !tier.name.trim()
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200 focus:border-transparent"
+                              }`}
+                          />
+                          <div className="relative w-32">
+                            <span className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500">
+                              ₹
+                            </span>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              value={tier.priceStr}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                                  updatePriceTier(index, "priceStr", val);
+                                }
+                              }}
+                              placeholder="Price"
+                              className={`w-full rounded-lg border py-2.5 pr-3 pl-7 text-sm transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !(Number(tier.priceStr) > 0)
+                                  ? "border-red-500 bg-red-50"
+                                  : "border-gray-200 focus:border-transparent"
+                                }`}
+                            />
+                          </div>
+                          {form.priceTiers.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removePriceTier(index)}
+                              className="mt-1.5 text-gray-400 transition hover:text-red-500"
+                              aria-label="Remove ticket type"
+                            >
+                              <FiX className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addPriceTier}
+                        className="text-sm font-semibold text-[#0094CA] hover:underline"
+                      >
+                        + Add ticket type
+                      </button>
+                      <p className="text-xs text-gray-500">
+                        Guests pick one ticket type when booking. Platform fee: 30%.
                       </p>
                     </div>
                   )}
@@ -2156,6 +2311,16 @@ export default function CreateExperiencePage() {
                     ))}
                   </div>
                 </div>
+
+                {/* Attendee Details */}
+                <AttendeeDetailsConfig
+                  enabled={form.requiresAttendeeDetails}
+                  fields={form.attendeeFields}
+                  onToggle={(next) =>
+                    updateForm("requiresAttendeeDetails", next)
+                  }
+                  onFieldsChange={(next) => updateForm("attendeeFields", next)}
+                />
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 border-t border-gray-100 pt-6">

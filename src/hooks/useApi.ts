@@ -1320,6 +1320,31 @@ export function useUpdateUserProfile() {
   });
 }
 
+/* ═══ Attendee profile (reusable per-user attendee details) ═════ */
+
+export function useAttendeeProfile(userId: string | null) {
+  return useQuery({
+    queryKey: ["attendeeProfile", userId ?? ""],
+    queryFn: () => api.getAttendeeProfile(userId!),
+    enabled: !!userId,
+    staleTime: 10 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
+export function useUpdateAttendeeProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: api.AttendeeProfileUpdatePayload) =>
+      api.updateAttendeeProfile(body),
+    onSuccess: (_res, body) => {
+      void qc.invalidateQueries({
+        queryKey: ["attendeeProfile", body.user_id],
+      });
+    },
+  });
+}
+
 /* ═══ Wallet Queries & Mutations ═══════════════════════════════ */
 
 export const walletKeys = {

@@ -13,7 +13,14 @@ import {
   useWalletBalance,
   useCreateTopupOrder,
   useVerifyTopupPayment,
+  useUserProfile,
+  useAttendeeProfile,
+  useUpdateAttendeeProfile,
 } from "~/hooks/useApi";
+import AttendeeDetailsForm, {
+  attendeeFormValid,
+  type AttendeeValues,
+} from "~/components/booking/AttendeeDetailsForm";
 import { FiCalendar, FiUsers, FiClock, FiShield } from "react-icons/fi";
 import { LuWallet, LuLoader2 } from "react-icons/lu";
 import { format } from "date-fns";
@@ -206,6 +213,7 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   const date = decodeURIComponent(searchParams.get("date") ?? "");
   const guests = parseInt(searchParams.get("guests") ?? "1");
+  const tierId = searchParams.get("tier") ?? undefined;
 
   useEffect(() => {
     setUserId(localStorage.getItem("msm_user_id"));
@@ -238,7 +246,57 @@ function BookingContent({ eventId }: { eventId: string }) {
   const createOrder = useCreateTopupOrder();
   const verifyPayment = useVerifyTopupPayment();
 
-  const pricePerPerson = event?.is_free ? 0 : (event?.price_cents ?? 0) / 100;
+  // Attendee details (only when the event requires them).
+  const requiresAttendee = !!event?.requires_attendee_details;
+  const attendeeFields = event?.attendee_fields ?? [];
+  const { data: userProfile } = useUserProfile(userId);
+  const { data: savedAttendee } = useAttendeeProfile(userId);
+  const updateAttendee = useUpdateAttendeeProfile();
+  const [attendeeValues, setAttendeeValues] = useState<AttendeeValues>({});
+  const [attendeePrefilled, setAttendeePrefilled] = useState(false);
+  const [showAttendeeErrors, setShowAttendeeErrors] = useState(false);
+
+  // Prefill the attendee form once from the saved profile, falling back to the
+  // user's known name/phone. Runs when the underlying data first arrives.
+  useEffect(() => {
+    if (attendeePrefilled || !userId) return;
+    if (savedAttendee === undefined) return; // query still loading
+    const p = savedAttendee;
+    setAttendeeValues({
+      name: p?.name ?? userProfile?.name ?? userName ?? "",
+      age: p?.age != null ? String(p.age) : "",
+      gender: p?.gender ?? "",
+      qualification: p?.qualification ?? "",
+      occupation: p?.occupation ?? "",
+      marital_status: p?.marital_status ?? "",
+      contact_number: p?.contact_number ?? userProfile?.phn_number ?? userPhone ?? "",
+      whatsapp_number: p?.whatsapp_number ?? "",
+      registration_type: p?.registration_type ?? "",
+      govt_id_url: p?.govt_id_url ?? "",
+      travel: p?.travel == null ? "" : p.travel ? "yes" : "no",
+    });
+    setAttendeePrefilled(true);
+  }, [
+    savedAttendee,
+    userProfile,
+    userId,
+    userName,
+    userPhone,
+    attendeePrefilled,
+  ]);
+
+  const setAttendeeValue = (key: string, value: string) =>
+    setAttendeeValues((prev) => ({ ...prev, [key]: value }));
+
+  // When a tier is selected, price comes from that tier; otherwise the single price.
+  const selectedTier = tierId
+    ? event?.price_tiers?.find((t) => t.id === tierId)
+    : undefined;
+  const pricePerPerson = event?.is_free
+    ? 0
+    : selectedTier
+      ? selectedTier.price_cents / 100
+      : (event?.price_cents ?? 0) / 100;
   const totalPrice = pricePerPerson * guests;
   const totalPriceCents = totalPrice * 100;
   const walletBalance = wallet?.balance_cents ?? 0;
@@ -276,6 +334,54 @@ function BookingContent({ eventId }: { eventId: string }) {
     if (!event) {
       toast.error("Event not found");
       return;
+    }
+
+    // Attendee-details gate: collect + save required details before booking.
+    if (requiresAttendee && attendeeFields.length > 0) {
+      if (!attendeeFormValid(attendeeFields, attendeeValues)) {
+        setShowAttendeeErrors(true);
+        toast.error("Please complete the attendee details");
+        return;
+      }
+      try {
+        await updateAttendee.mutateAsync({
+          user_id: userId,
+          ...(attendeeFields.includes("name") && { name: attendeeValues.name }),
+          ...(attendeeFields.includes("age") && {
+            age: Number(attendeeValues.age),
+          }),
+          ...(attendeeFields.includes("gender") && {
+            gender: attendeeValues.gender,
+          }),
+          ...(attendeeFields.includes("qualification") && {
+            qualification: attendeeValues.qualification,
+          }),
+          ...(attendeeFields.includes("occupation") && {
+            occupation: attendeeValues.occupation,
+          }),
+          ...(attendeeFields.includes("marital_status") && {
+            marital_status: attendeeValues.marital_status,
+          }),
+          ...(attendeeFields.includes("contact_number") && {
+            contact_number: attendeeValues.contact_number,
+          }),
+          ...(attendeeFields.includes("whatsapp_number") && {
+            whatsapp_number: attendeeValues.whatsapp_number,
+          }),
+          ...(attendeeFields.includes("registration_type") && {
+            registration_type: attendeeValues.registration_type,
+          }),
+          ...(attendeeFields.includes("govt_id_url") && {
+            govt_id_url: attendeeValues.govt_id_url,
+          }),
+          ...(attendeeFields.includes("travel") && {
+            travel: attendeeValues.travel === "yes",
+          }),
+        });
+      } catch {
+        toast.error("Could not save attendee details. Please try again.");
+        return;
+      }
     }
 
     const bookingDetails: BookingRequestDetails = {
@@ -419,6 +525,7 @@ function BookingContent({ eventId }: { eventId: string }) {
             quantity: quantity,
             occurrence_date: new Date(date || event.time).toISOString(),
             idempotency_key: idempotencyKey,
+            price_tier_id: tierId,
           });
 
           await confirmBooking.mutateAsync(bookingRes.data.id);
@@ -516,6 +623,18 @@ function BookingContent({ eventId }: { eventId: string }) {
             className="w-full resize-none rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
           />
         </div>
+
+        {/* Attendee details (only when the event requires them) */}
+        {requiresAttendee && attendeeFields.length > 0 && (
+          <div className="mt-6">
+            <AttendeeDetailsForm
+              fields={attendeeFields}
+              values={attendeeValues}
+              onChange={setAttendeeValue}
+              showErrors={showAttendeeErrors}
+            />
+          </div>
+        )}
 
         {/* Wallet Balance Section (for paid events) */}
         {!event.is_free && totalPriceCents > 0 && (

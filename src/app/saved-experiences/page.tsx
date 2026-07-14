@@ -8,6 +8,7 @@ import {
   useUnsaveExperience,
 } from "~/hooks/useApi";
 import { type EventDTO } from "~/lib/api";
+import { eventPriceLabel } from "~/lib/price";
 import * as components from "~/components";
 import { FiBookmark, FiTrash2, FiMapPin } from "react-icons/fi";
 import { useQueryClient } from "@tanstack/react-query";
@@ -56,10 +57,6 @@ export default function SavedExperiencesPage() {
     })
     .filter(({ event }) => event);
 
-  const formatPrice = (priceCents: number | null | undefined) => {
-    if (!priceCents) return "Free";
-    return `₹${(priceCents / 100).toFixed(0)}`;
-  };
 
   const handleUnsave = (eventId: string) => {
     if (!userId) return;
@@ -175,7 +172,7 @@ export default function SavedExperiencesPage() {
                         <span className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none font-bold">
                           ₹
                         </span>
-                        {formatPrice(event.price_cents)}
+                        {eventPriceLabel(event)}
                       </div>
                     </div>
                   </div>

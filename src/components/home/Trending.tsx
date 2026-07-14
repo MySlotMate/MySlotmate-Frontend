@@ -11,6 +11,7 @@ import {
   useUnsaveExperience,
 } from "~/hooks/useApi";
 import { normalizeMood, useMood } from "~/context/MoodContext";
+import { eventPriceLabel } from "~/lib/price";
 import {
   calculateDistance,
   getSavedLocation,
@@ -176,10 +177,6 @@ const Trending = () => {
       .map(({ event }) => event);
   }, [events, location, mounted, selectedMoodKey]);
 
-  const formatPrice = (priceCents: number | null | undefined) => {
-    if (!priceCents) return "Free";
-    return `\u20B9${Math.round(priceCents / 100)}`;
-  };
 
   const scrollCards = (direction: "left" | "right") => {
     const viewport = cardsViewportRef.current;
@@ -247,7 +244,7 @@ const Trending = () => {
                 id={event.id}
                 title={event.title}
                 imageUrl={event.cover_image_url ?? "/assets/home/hiking.webp"}
-                pricing={formatPrice(event.price_cents)}
+                pricing={eventPriceLabel(event)}
                 duration={`${event.duration_minutes ?? 0} mins`}
                 mood={event.mood ?? "Experience"}
               />

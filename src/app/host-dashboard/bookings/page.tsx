@@ -8,7 +8,8 @@ import Breadcrumb from "~/components/Breadcrumb";
 import { useEventsByHost, useMyHost } from "~/hooks/useApi";
 import * as api from "~/lib/api";
 import { IST_TIMEZONE } from "~/lib/datetime";
-import type { BookingDTO } from "~/lib/api";
+import type { BookingDTO, AttendeeProfileDTO } from "~/lib/api";
+import { ATTENDEE_FIELDS } from "~/lib/attendeeFields";
 import {
   FiCalendar,
   FiClock,
@@ -288,53 +289,120 @@ function EventBookingsGroup({
   );
 }
 
-function BookingRow({ booking }: { booking: BookingDTO }) {
-  const name = booking.user_name ?? "Unknown user";
+/** Renders the guest's submitted attendee details, if any. */
+function AttendeeDetails({ profile }: { profile: AttendeeProfileDTO }) {
+  const rows: { key: string; label: string; value: string }[] = [];
+  const values = profile as unknown as Record<
+    string,
+    string | number | boolean | null
+  >;
+  for (const f of ATTENDEE_FIELDS) {
+    const raw = values[f.key];
+    if (raw === null || raw === undefined || raw === "") continue;
+    const display =
+      f.key === "travel" ? (raw ? "Yes" : "No") : String(raw);
+    rows.push({ key: f.key, label: f.label, value: display });
+  }
+
+  if (rows.length === 0) {
+    return (
+      <p className="px-4 pb-3 text-xs text-gray-400">
+        No attendee details submitted.
+      </p>
+    );
+  }
+
   return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <div className="flex min-w-0 items-center gap-3">
-        {booking.user_avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={booking.user_avatar_url}
-            alt={name}
-            className="h-8 w-8 shrink-0 rounded-full object-cover"
-          />
-        ) : (
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0094CA]/10 text-xs font-bold text-[#0094CA]">
-            {name.charAt(0).toUpperCase()}
-          </div>
-        )}
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-gray-900">{name}</p>
-          {booking.user_email && (
-            <p className="truncate text-xs text-gray-500">
-              {booking.user_email}
-            </p>
+    <div className="grid gap-x-6 gap-y-2 px-4 pb-3 sm:grid-cols-2">
+      {rows.map((row) => (
+        <div key={row.key} className="flex items-start justify-between gap-3">
+          <span className="text-xs text-gray-500">{row.label}</span>
+          {row.key === "govt_id_url" ? (
+            <a
+              href={row.value}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold text-[#0094CA] hover:underline"
+            >
+              View ID
+            </a>
+          ) : (
+            <span className="text-right text-xs font-medium text-gray-800">
+              {row.value}
+            </span>
           )}
         </div>
-      </div>
-      <div className="flex items-center gap-3 text-xs">
-        <span className="text-gray-500">Qty {booking.quantity}</span>
-        {booking.amount_cents !== null && (
-          <span className="text-gray-700">
-            ₹{(booking.amount_cents / 100).toFixed(2)}
+      ))}
+    </div>
+  );
+}
+
+function BookingRow({ booking }: { booking: BookingDTO }) {
+  const name = booking.user_name ?? "Unknown user";
+  const [showDetails, setShowDetails] = useState(false);
+  const hasDetails = !!booking.attendee_profile;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          {booking.user_avatar_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={booking.user_avatar_url}
+              alt={name}
+              className="h-8 w-8 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0094CA]/10 text-xs font-bold text-[#0094CA]">
+              {name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-gray-900">{name}</p>
+            {booking.user_email && (
+              <p className="truncate text-xs text-gray-500">
+                {booking.user_email}
+              </p>
+            )}
+            {hasDetails && (
+              <button
+                type="button"
+                onClick={() => setShowDetails((s) => !s)}
+                className="mt-0.5 text-[11px] font-semibold text-[#0094CA] hover:underline"
+              >
+                {showDetails ? "Hide details" : "View details"}
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="text-gray-500">Qty {booking.quantity}</span>
+          {booking.amount_cents !== null && (
+            <span className="text-gray-700">
+              ₹{(booking.amount_cents / 100).toFixed(2)}
+            </span>
+          )}
+          <span
+            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+              booking.status === "pending"
+                ? "bg-yellow-100 text-yellow-800"
+                : booking.status === "confirmed"
+                  ? "bg-green-100 text-green-800"
+                  : booking.status === "cancelled"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-orange-100 text-orange-800"
+            }`}
+          >
+            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
           </span>
-        )}
-        <span
-          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-            booking.status === "pending"
-              ? "bg-yellow-100 text-yellow-800"
-              : booking.status === "confirmed"
-                ? "bg-green-100 text-green-800"
-                : booking.status === "cancelled"
-                  ? "bg-red-100 text-red-800"
-                  : "bg-orange-100 text-orange-800"
-          }`}
-        >
-          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-        </span>
+        </div>
       </div>
+      {hasDetails && showDetails && booking.attendee_profile && (
+        <div className="border-t border-gray-100 bg-gray-50/60 pt-3">
+          <AttendeeDetails profile={booking.attendee_profile} />
+        </div>
+      )}
     </div>
   );
 }

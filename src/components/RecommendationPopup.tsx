@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { formatIST } from "~/lib/datetime";
 import type { EventDTO } from "~/lib/api";
+import { eventPriceLabel } from "~/lib/price";
 
 interface RecommendationPopupProps {
   isOpen: boolean;
@@ -42,7 +43,6 @@ export function RecommendationPopup({
 
   const eventDate = new Date(event.time);
   const spotsLeft = event.capacity - event.total_bookings;
-  const pricePerPerson = event.is_free ? 0 : (event.price_cents ?? 0) / 100;
 
   const handleClose = () => {
     setIsAnimating(false);
@@ -145,7 +145,7 @@ export function RecommendationPopup({
             <div>
               <p className="text-xs text-gray-500">Price per person</p>
               <p className="text-xl font-bold text-[#0094CA]">
-                {event.is_free ? "Free" : `₹${pricePerPerson.toFixed(0)}`}
+                {eventPriceLabel(event)}
               </p>
             </div>
             <Link

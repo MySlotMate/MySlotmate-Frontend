@@ -1147,6 +1147,9 @@ export interface BookingDTO {
   user_name?: string;
   user_email?: string;
   user_avatar_url?: string | null;
+  // Submitted attendee details — present on the host attendees endpoint when
+  // the guest filled the attendee form.
+  attendee_profile?: AttendeeProfileDTO | null;
 }
 
 export interface CreateBookingPayload {

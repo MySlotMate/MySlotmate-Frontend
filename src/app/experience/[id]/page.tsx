@@ -279,6 +279,11 @@ function BookingWidget({
   const effectivePrice = hasTiers
     ? (selectedTier?.price_cents ?? 0)
     : (price ?? 0);
+  // For tiered events the headline price is a "From ₹<cheapest>" — a single
+  // "/person" figure would misrepresent a multi-tier event.
+  const minTierCents = hasTiers
+    ? Math.min(...priceTiers.map((t) => t.price_cents))
+    : 0;
 
   // Find the selected occurrence availability
   const currentOccurrence = availability?.find((a) => a.date === selectedDate);
@@ -350,6 +355,13 @@ function BookingWidget({
               <h2 className="font-outfit text-xl font-extrabold leading-none tracking-tight text-[#16304c]">
                 {isFree ? (
                   "FREE EXPERIENCE"
+                ) : hasTiers ? (
+                  <>
+                    <span className="text-sm font-medium text-[#6f8daa]">
+                      From{" "}
+                    </span>
+                    ₹{(minTierCents / 100).toFixed(0)}
+                  </>
                 ) : (
                   <>
                     ₹{(effectivePrice / 100).toFixed(0)}
@@ -658,11 +670,18 @@ function BookingWidget({
             <span className="font-outfit text-2xl font-black text-[#16304c] tracking-tight">
               {isFree ? (
                 "FREE"
+              ) : hasTiers ? (
+                <>
+                  <span className="text-xs font-semibold text-[#6f8daa]">
+                    From{" "}
+                  </span>
+                  ₹{(minTierCents / 100).toFixed(0)}
+                </>
               ) : (
                 <>₹{(effectivePrice / 100).toFixed(0)}</>
               )}
             </span>
-            {!isFree && (
+            {!isFree && !hasTiers && (
               <span className="text-xs font-semibold text-[#6f8daa]">/person</span>
             )}
           </div>
@@ -735,7 +754,11 @@ function BookingWidget({
                   Select Booking Details
                 </h3>
                 <p className="text-xs text-[#6f8daa]">
-                  {isFree ? "Free Experience" : `₹${(effectivePrice / 100).toFixed(0)} per person`}
+                  {isFree
+                    ? "Free Experience"
+                    : hasTiers
+                      ? `From ₹${(minTierCents / 100).toFixed(0)}`
+                      : `₹${(effectivePrice / 100).toFixed(0)} per person`}
                 </p>
               </div>
               <button

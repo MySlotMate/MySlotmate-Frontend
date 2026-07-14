@@ -20,6 +20,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { toast } from "sonner";
 import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { eventPriceLabel } from "~/lib/price";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import {
   useListHosts,
@@ -295,10 +296,6 @@ const ShowcaseSections = () => {
   const howStepRefs = useRef<Array<HTMLElement | null>>([]);
   const featuredContainerRef = useRef<HTMLDivElement>(null);
   const storyContainerRef = useRef<HTMLDivElement>(null);
-  const formatPrice = (priceCents: number | null | undefined) => {
-    if (!priceCents) return "Free";
-    return `₹${Math.round(priceCents / 100)}`;
-  };
 
   useEffect(() => {
     setLocation(getSavedLocation());
@@ -341,7 +338,7 @@ const ShowcaseSections = () => {
           220
         ),
         duration: `${event.duration_minutes ?? 0} mins`,
-        price: formatPrice(event.price_cents),
+        price: eventPriceLabel(event),
         rating:
           event.avg_rating !== null &&
             event.avg_rating !== undefined &&
@@ -404,7 +401,7 @@ const ShowcaseSections = () => {
             event.avg_rating !== 0
             ? event.avg_rating.toFixed(1)
             : "NEW",
-        price: formatPrice(event.price_cents),
+        price: eventPriceLabel(event),
         time: event.time,
         location: event.location,
         isRecurring: event.is_recurring,

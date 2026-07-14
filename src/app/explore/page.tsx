@@ -22,6 +22,7 @@ import {
 } from "~/components/LocationModal";
 import Breadcrumb from "~/components/Breadcrumb";
 import { ExperienceCard } from "~/components/ExperienceCard";
+import { eventPriceLabel } from "~/lib/price";
 import { PeopleCard } from "~/components/home/people";
 
 const EXPLORE_PILLS = [
@@ -50,10 +51,6 @@ type PriceFilter =
 type DurationFilter = "any" | "under_60" | "60_120" | "120_240" | "240_plus";
 type RatingFilter = "any" | "new" | "3_5_plus" | "4_0_plus" | "4_5_plus";
 
-const formatPrice = (priceCents: number | null | undefined) => {
-  if (!priceCents) return "Free";
-  return `₹${Math.round(priceCents / 100)}`;
-};
 
 
 const matchesNormalizedQuery = (
@@ -737,7 +734,7 @@ export default function ExplorePage() {
                         ? event.avg_rating.toFixed(1)
                         : "New"
                     }
-                    price={formatPrice(event.price_cents)}
+                    price={eventPriceLabel(event)}
                     time={event.time}
                     location={event.location}
                     isRecurring={event.is_recurring}

@@ -10,6 +10,7 @@ import * as components from "~/components";
 import Breadcrumb from "~/components/Breadcrumb";
 
 import { ExperienceCard } from "~/components/ExperienceCard";
+import { eventPriceLabel } from "~/lib/price";
 
 
 export default function ExperiencesPage() {
@@ -22,10 +23,6 @@ export default function ExperiencesPage() {
     setLocation(getSavedLocation());
   }, []);
 
-  const formatPrice = (priceCents: number | null | undefined) => {
-    if (!priceCents) return "Free";
-    return `₹${(priceCents / 100).toFixed(0)}`;
-  };
 
 
   const filteredEvents = useMemo(() => {
@@ -142,7 +139,7 @@ export default function ExperiencesPage() {
                     ? event.avg_rating.toFixed(1)
                     : "New"
                 }
-                price={formatPrice(event.price_cents)}
+                price={eventPriceLabel(event)}
                 time={event.time}
                 location={event.location}
                 isRecurring={event.is_recurring}

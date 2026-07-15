@@ -295,6 +295,42 @@ function buildPdfDocument(
   doc.setFontSize(7);
   doc.setTextColor(146, 64, 14); // amber-800
   doc.text("Scan QR code at the entrance to gain entry.", startX + width / 2, footerY + 7, { align: "center" });
+
+  // 10. Per-experience Terms & Conditions, printed below the ticket card.
+  // The card is fixed-height, so terms flow underneath and onto extra pages
+  // when long.
+  const terms = (event?.terms_and_conditions ?? "").trim();
+  if (terms) {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const bottomMargin = 15;
+    let y = startY + height + 12;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(22, 48, 76); // #16304c
+    doc.text("TERMS & CONDITIONS", startX, y);
+    y += 4;
+
+    doc.setDrawColor(229, 231, 235); // gray-200
+    doc.line(startX, y, startX + width, y);
+    y += 4;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(75, 85, 99); // gray-600
+    const lines: string[] = doc.splitTextToSize(terms, width);
+    for (const line of lines) {
+      if (y > pageHeight - bottomMargin) {
+        doc.addPage();
+        y = 20;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.5);
+        doc.setTextColor(75, 85, 99);
+      }
+      doc.text(line, startX, y);
+      y += 3.2;
+    }
+  }
 }
 /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
@@ -658,6 +694,18 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
             Scan QR code at the entrance to gain entry.
           </div>
         </div>
+
+        {/* Per-experience Terms & Conditions (mirrors the ticket PDF) */}
+        {event.terms_and_conditions?.trim() && (
+          <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-5">
+            <h3 className="text-xs font-black tracking-wide text-[#16304c] uppercase">
+              Terms &amp; Conditions
+            </h3>
+            <p className="mt-2 text-xs leading-relaxed whitespace-pre-wrap text-gray-600">
+              {event.terms_and_conditions.trim()}
+            </p>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-5">

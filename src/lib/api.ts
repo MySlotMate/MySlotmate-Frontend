@@ -850,6 +850,8 @@ export interface EventDTO {
   price_tiers: PriceTierDTO[];
   requires_attendee_details: boolean;
   attendee_fields: string[];
+  /** Per-experience terms, printed on the ticket PDF. */
+  terms_and_conditions: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -383,8 +383,8 @@ function BookingWidget({
           </div>
 
           {/* Stats Row */}
-          <div className="mb-3 flex items-center justify-start gap-4 border-b border-[#dbeaf5] pb-3 text-xs">
-            <div className="flex items-center gap-2">
+          {/* <div className="mb-3 flex items-center justify-start gap-4 border-b border-[#dbeaf5] pb-3 text-xs"> */}
+            {/* <div className="flex items-center gap-2">
               {rating !== null && rating > 0 && totalReviews > 0 ? (
                 <>
                   <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
@@ -398,14 +398,14 @@ function BookingWidget({
               ) : (
                 <span className="font-bold text-[#0094CA] uppercase">NEW</span>
               )}
-            </div>
-            <div className="h-4 w-px bg-[#dbeaf5]" />
-            <div className="flex items-center gap-2">
+            </div> */}
+            {/* <div className="h-4 w-px bg-[#dbeaf5]" /> */}
+            {/* <div className="flex items-center gap-2">
               <FiUsers className="h-4 w-4 text-[#0094CA]" />
               <span className="font-bold text-[#16304c]">{totalBookings}</span>
               <span className="text-[#6f8daa]">people joined</span>
-            </div>
-          </div>
+            </div> */}
+          {/* </div> */}
 
           {/* Choose Your Session */}
           {isRecurring && (
@@ -595,11 +595,11 @@ function BookingWidget({
           {/* Booking activity hint */}
           {!eventHasPassed && bookingsLastWeek > 0 && (
             <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-[#5f7e9a]">
-              <span aria-hidden>🔥</span>
-              <span>
+              {/* <span aria-hidden>🔥</span> */}
+              {/* <span>
                 {bookingsLastWeek} {bookingsLastWeek === 1 ? "person" : "people"}{" "}
                 booked this week
-              </span>
+              </span> */}
             </div>
           )}
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
 import { formatIST } from "./datetime";
+import { pdfSafe } from "./pdfText";
 import { toast } from "sonner";
 
 // Load jsPDF dynamically from CDN to keep initial bundle size small
@@ -50,7 +51,10 @@ function buildPdfDocument(
   const startX = 55;
   const startY = 30;
   const width = 100;
-  const height = 165; // ends at 195
+  // Sized so the gold footer sits just below the Total row. Content ends at
+  // startY+124 (the Total baseline) and the footer is pinned to
+  // startY+height-12, so height=142 leaves a ~6mm gap instead of ~29mm.
+  const height = 142; // ends at 172
 
   // Draw outer card background
   doc.setFillColor(255, 255, 255);
@@ -82,7 +86,26 @@ function buildPdfDocument(
   const imgH = 26;
 
   if (coverBase64) {
-    doc.addImage(coverBase64, "PNG", imgX, imgY, imgW, imgH);
+    // Draw at the image's own aspect ratio, scaled to sit inside the reserved
+    // slot — don't stretch it to imgW x imgH. Covers are cropped wide (4:1), so
+    // forcing them into the tall box squashed them.
+    let drawX = imgX;
+    let drawY = imgY;
+    let drawW = imgW;
+    let drawH = imgH;
+    try {
+      const props = doc.getImageProperties(coverBase64);
+      if (props?.width && props?.height) {
+        const scale = Math.min(imgW / props.width, imgH / props.height);
+        drawW = props.width * scale;
+        drawH = props.height * scale;
+        drawX = imgX + (imgW - drawW) / 2;
+        drawY = imgY + (imgH - drawH) / 2;
+      }
+    } catch {
+      /* couldn't read dimensions — fall back to the reserved box */
+    }
+    doc.addImage(coverBase64, "PNG", drawX, drawY, drawW, drawH);
   } else {
     // Beautiful dark placeholder card
     doc.setFillColor(22, 48, 76); // slate blue
@@ -90,7 +113,7 @@ function buildPdfDocument(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(7);
     doc.setTextColor(255, 255, 255);
-    doc.text("SLOT", imgX + imgW / 2, imgY + 11, { align: "center" });
+    doc.text("MYSLOT", imgX + imgW / 2, imgY + 11, { align: "center" });
     doc.text("MATE", imgX + imgW / 2, imgY + 16, { align: "center" });
   }
 
@@ -102,7 +125,7 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(17, 24, 39); // gray-900
-  const titleText = (event?.title ?? "EXPERIENCE TICKET").toUpperCase();
+  const titleText = pdfSafe(event?.title ?? "EXPERIENCE TICKET").toUpperCase();
   const titleLines = doc.splitTextToSize(titleText, 52); // fits within right block width
   doc.text(titleLines, textX, textY);
   
@@ -113,7 +136,9 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(107, 114, 128); // gray-500
-  const subtitleText = `${event?.mood ?? "Experience"} | ${event?.languages?.join("/") ?? "English"}`;
+  const subtitleText = pdfSafe(
+    `${event?.mood ?? "Experience"} | ${event?.languages?.join("/") ?? "English"}`,
+  );
   doc.text(subtitleText, textX, textY);
   textY += 4.5;
 
@@ -129,7 +154,9 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(107, 114, 128); // gray-500
-  const venueText = (event?.is_online ? "Online Meet Link" : (event?.location ?? "TBD")).toUpperCase();
+  const venueText = pdfSafe(
+    event?.is_online ? "Online Meet Link" : (event?.location ?? "TBD"),
+  ).toUpperCase();
   const venueLines = doc.splitTextToSize(venueText, 52);
   doc.text(venueLines, textX, textY);
 
@@ -225,7 +252,7 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(17, 24, 39); // gray-900
-  const guestName = (bookingUser?.name ?? "Guest").toUpperCase();
+  const guestName = pdfSafe(bookingUser?.name ?? "Guest").toUpperCase();
   doc.text(guestName, infoCenter, innerY + 13.5, { align: "center" });
 
   // Booking ID
@@ -303,6 +330,42 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
   doc.setTextColor(146, 64, 14); // amber-800
+
+  // 10. Per-experience Terms & Conditions, printed below the ticket card. The
+  // card is fixed-height, so terms flow underneath and onto extra pages when
+  // long. Mirrors the confirmation-page and admin ticket PDFs.
+  const terms = pdfSafe(event?.terms_and_conditions);
+  if (terms) {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const bottomMargin = 15;
+    let y = startY + height + 12;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setTextColor(22, 48, 76); // #16304c
+    doc.text("TERMS & CONDITIONS", startX, y);
+    y += 4;
+
+    doc.setDrawColor(229, 231, 235); // gray-200
+    doc.line(startX, y, startX + width, y);
+    y += 4;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(6.5);
+    doc.setTextColor(75, 85, 99); // gray-600
+    const lines: string[] = doc.splitTextToSize(terms, width);
+    for (const line of lines) {
+      if (y > pageHeight - bottomMargin) {
+        doc.addPage();
+        y = 20;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(6.5);
+        doc.setTextColor(75, 85, 99);
+      }
+      doc.text(line, startX, y);
+      y += 3.2;
+    }
+  }
 }
 
 export async function downloadTicketPdf(

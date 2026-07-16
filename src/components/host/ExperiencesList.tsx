@@ -56,7 +56,13 @@ function formatEventDate(iso: string): string {
   );
 }
 
-function ExperienceCard({ event }: { event: EventDTO }) {
+function ExperienceCard({
+  event,
+  isPast = false,
+}: {
+  event: EventDTO;
+  isPast?: boolean;
+}) {
   const moodColor = event.mood
     ? (moodColorMap[event.mood] ?? "#0094CA")
     : "#0094CA";
@@ -83,6 +89,11 @@ function ExperienceCard({ event }: { event: EventDTO }) {
         <span className="absolute top-3 right-3 rounded-full bg-[#0094CA] px-3 py-1 text-xs font-semibold text-white">
           {formatPrice(event.price_cents, event.is_free)}
         </span>
+        {isPast && (
+          <span className="absolute top-3 left-3 rounded-full bg-gray-900/70 px-3 py-1 text-xs font-semibold text-white">
+            Held
+          </span>
+        )}
         {/* Mood badge */}
         {event.mood && (
           <span
@@ -112,26 +123,61 @@ function ExperienceCard({ event }: { event: EventDTO }) {
         </p>
         <Link
           href={`/experience/${event.id}`}
-          className="mt-auto w-full rounded-full bg-[#0094CA] py-2.5 text-center text-sm font-semibold text-white transition hover:bg-[#007aa8]"
+          className={`mt-auto w-full rounded-full py-2.5 text-center text-sm font-semibold transition ${
+            isPast
+              ? "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+              : "bg-[#0094CA] text-white hover:bg-[#007aa8]"
+          }`}
         >
-          Book Experience
+          {isPast ? "View Experience" : "Book Experience"}
         </Link>
       </div>
     </div>
   );
 }
 
-export default function ExperiencesList({ events }: { events: EventDTO[] }) {
+/**
+ * True when an experience has already happened. Uses next_available_date when
+ * present (a recurring series still running has a future one) and falls back to
+ * the event's own time.
+ */
+export function isPastEvent(event: EventDTO): boolean {
+  const when = new Date(event.next_available_date ?? event.time).getTime();
+  if (Number.isNaN(when)) return false;
+  return when < Date.now();
+}
+
+/** Split a host's events into still-bookable and already-held, newest first. */
+export function splitEventsByTime(events: EventDTO[]): {
+  upcoming: EventDTO[];
+  past: EventDTO[];
+} {
+  const upcoming: EventDTO[] = [];
+  const past: EventDTO[] = [];
+  for (const e of events) (isPastEvent(e) ? past : upcoming).push(e);
+  past.sort(
+    (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
+  );
+  return { upcoming, past };
+}
+
+export default function ExperiencesList({
+  events,
+  title = "Live & Upcoming Experiences",
+  isPast = false,
+}: {
+  events: EventDTO[];
+  title?: string;
+  isPast?: boolean;
+}) {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">
-          Live & Upcoming Experiences
-        </h2>
+        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
       </div>
       <div className="mt-4 flex flex-col gap-4 overflow-x-scroll [scrollbar-width:none] sm:flex-row [&::-webkit-scrollbar]:hidden">
         {events.map((evt) => (
-          <ExperienceCard key={evt.id} event={evt} />
+          <ExperienceCard key={evt.id} event={evt} isPast={isPast} />
         ))}
       </div>
     </div>

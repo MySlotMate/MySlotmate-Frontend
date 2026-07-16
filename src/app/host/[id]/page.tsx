@@ -11,6 +11,7 @@ import {
   RatingsSection,
   ExperiencesList,
 } from "~/components/host";
+import { splitEventsByTime } from "~/components/host/ExperiencesList";
 import { Navbar, Breadcrumb } from "~/components";
 import { ReviewsModal } from "~/components/ReviewsModal";
 import { ReviewModal } from "~/components/activities";
@@ -60,6 +61,13 @@ export default function HostProfilePage({
   const totalEvents = events?.length ?? 0;
   const totalPeopleMet = useMemo(
     () => events?.reduce((sum, e) => sum + (e.total_bookings ?? 0), 0) ?? 0,
+    [events],
+  );
+
+  // Split into still-bookable vs already-held so past events don't sit under
+  // the "Live & Upcoming" heading.
+  const { upcoming: upcomingEvents, past: pastEvents } = useMemo(
+    () => splitEventsByTime(events ?? []),
     [events],
   );
 
@@ -157,10 +165,26 @@ export default function HostProfilePage({
           </div>
         </div>
 
-        {/* Live & Upcoming Experiences */}
-        {events && events.length > 0 && (
-          <div ref={experiencesRef} className="mt-10 mb-12">
-            <ExperiencesList events={events} />
+        {/* Experiences — the ref wraps both lists so "view experiences" still
+            scrolls here for a host whose events are all in the past. */}
+        {(upcomingEvents.length > 0 || pastEvents.length > 0) && (
+          <div ref={experiencesRef}>
+            {upcomingEvents.length > 0 && (
+              <div className="mt-10 mb-12">
+                <ExperiencesList events={upcomingEvents} />
+              </div>
+            )}
+
+            {/* Already held — kept separate so they don't look bookable */}
+            {pastEvents.length > 0 && (
+              <div className="mt-10 mb-12">
+                <ExperiencesList
+                  events={pastEvents}
+                  title="Past Experiences"
+                  isPast
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -17,6 +17,7 @@ import {
   LuLayoutDashboard,
   LuLogOut,
   LuMessageSquare,
+  LuScanLine,
   LuShield,
   LuUser,
   LuWallet,
@@ -35,6 +36,7 @@ const NAV_LINKS: {
 }[] = [
   { label: "Overview", href: "/host-dashboard", icon: LuLayoutDashboard },
   { label: "Calendar", href: "/host-dashboard/calendar", icon: LuCalendarDays },
+  { label: "Check-in", href: "/host-dashboard/scan", icon: LuScanLine },
   { label: "Messages", href: "/host-dashboard/messages", icon: LuMessageSquare },
   { label: "Earnings", href: "/host-dashboard/earnings", icon: LuWallet },
 ];

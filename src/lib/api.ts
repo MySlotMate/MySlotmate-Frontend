@@ -1128,6 +1128,81 @@ export function getEventAttendees(eventId: string, date?: string) {
 /*  Bookings                                                           */
 /* ------------------------------------------------------------------ */
 
+/* ------------------------------------------------------------------ */
+/*  Door check-in (host QR scanner)                                    */
+/* ------------------------------------------------------------------ */
+
+/** Why a scanned ticket was accepted or turned away. */
+export type ScanVerdict =
+  | "valid"
+  | "not_found"
+  | "wrong_event"
+  | "wrong_occurrence"
+  | "not_confirmed"
+  | "already_checked_in"
+  | "too_many"
+  | "not_your_event";
+
+export interface ScanResultDTO {
+  verdict: ScanVerdict;
+  /** Ready-to-show explanation — the door screen renders this verbatim. */
+  message: string;
+  booking_id?: string;
+  guest_name?: string;
+  guest_email?: string;
+  event_title?: string;
+  occurrence_date?: string;
+  quantity?: number;
+  checked_in_count: number;
+  remaining: number;
+  /** How many guests this particular scan admitted (0 for a plain verify). */
+  just_checked_in: number;
+}
+
+/** The door session: which host is scanning, for which event and date. */
+export interface ScanSession {
+  host_id: string;
+  event_id: string;
+  occurrence_date: string;
+}
+
+/** POST /hosts/scan/verify — judge a ticket without admitting anyone. */
+export function verifyScannedTicket(session: ScanSession, bookingId: string) {
+  return apiFetch<ScanResultDTO>("/hosts/scan/verify", {
+    method: "POST",
+    data: { ...session, booking_id: bookingId },
+  });
+}
+
+/** POST /hosts/scan/check-in — admit `count` guests against a ticket. */
+export function checkInScannedTicket(
+  session: ScanSession,
+  bookingId: string,
+  count: number,
+) {
+  return apiFetch<ScanResultDTO>("/hosts/scan/check-in", {
+    method: "POST",
+    data: { ...session, booking_id: bookingId, count },
+  });
+}
+
+/**
+ * Pull the booking id out of a scanned QR. Tickets encode a confirmation URL
+ * (`/experience/{eventId}/confirmation?booking={bookingId}`), so anything else
+ * — a random QR at the venue, a website, a bare string — is not a ticket and
+ * returns null rather than being sent to the server.
+ */
+export function parseTicketQr(raw: string): string | null {
+  const UUID_RE =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  try {
+    const bookingId = new URL(raw.trim()).searchParams.get("booking");
+    return bookingId && UUID_RE.test(bookingId) ? bookingId : null;
+  } catch {
+    return null; // not a URL at all
+  }
+}
+
 export interface BookingDTO {
   id: string;
   event_id: string;
@@ -1244,21 +1319,17 @@ export interface PaymentDTO {
   last_error: string | null;
   payout_method_id: string | null;
   display_reference: string | null;
-  gateway_order_id?: string | null;       // Razorpay order_xxxxx
-  gateway_payment_id?: string | null;     // Razorpay pay_xxxxx
-  gateway_refund_id?: string | null;      // Razorpay rfnd_xxxxx — set on source refunds
-  refund_of_payment_id?: string | null;   // the top-up this refund went against (source refund)
+  gateway_order_id?: string | null; // Razorpay order_xxxxx
+  gateway_payment_id?: string | null; // Razorpay pay_xxxxx
+  gateway_refund_id?: string | null; // Razorpay rfnd_xxxxx — set on source refunds
+  refund_of_payment_id?: string | null; // the top-up this refund went against (source refund)
   created_at: string;
   updated_at: string;
 }
 
 /** GET /users/wallet/transactions — user's wallet payment history.
  *  Returns top-ups, bookings, and refunds (both wallet and source). Newest first. */
-export function getWalletTransactions(
-  userId: string,
-  limit = 50,
-  offset = 0,
-) {
+export function getWalletTransactions(userId: string, limit = 50, offset = 0) {
   return apiFetch<PaymentDTO[]>(
     `/users/wallet/transactions?user_id=${userId}&limit=${limit}&offset=${offset}`,
   );
@@ -1271,10 +1342,7 @@ export function getWalletTransactions(
 // the auth token — but kept for backward compat with existing callers.
 
 /** POST /payouts/methods — add a payout method */
-export function addPayoutMethod(
-  body: AddPayoutMethodPayload,
-  idToken: string,
-) {
+export function addPayoutMethod(body: AddPayoutMethodPayload, idToken: string) {
   return apiFetch<PayoutMethodDTO>("/payouts/methods", {
     method: "POST",
     data: body,

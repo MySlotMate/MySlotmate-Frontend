@@ -327,6 +327,14 @@ export interface HostDTO {
   instagram_scraped_at: string | null;
   avg_rating: number | null;
   total_reviews: number;
+  /**
+   * Admin-set overrides for the three headline stats on the host profile. When
+   * non-null these replace the derived values (experiences hosted and people
+   * met counted from the host's events, rating averaged from reviews).
+   */
+  events_hosted_override: number | null;
+  people_met_override: number | null;
+  avg_rating_override: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -461,6 +469,13 @@ export interface PublicHostProfileDTO {
   gallery_urls: string[];
   avg_rating: number | null;
   total_reviews: number;
+  /**
+   * Admin-set overrides for the three headline profile stats. When non-null
+   * these replace the derived values.
+   */
+  events_hosted_override: number | null;
+  people_met_override: number | null;
+  avg_rating_override: number | null;
 }
 
 /** GET /hosts — list all approved hosts (public) */

@@ -280,11 +280,10 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
                   host.first_name
                 }
                 imageUrl={host.avatar_url ?? "/assets/home/people1.webp"}
-                rating={
-                  host.avg_rating && host.avg_rating > 0
-                    ? host.avg_rating.toFixed(1)
-                    : "0"
-                }
+                rating={(() => {
+                  const r = host.avg_rating_override ?? host.avg_rating;
+                  return r && r > 0 ? r.toFixed(1) : "0";
+                })()}
                 headline={(host.tagline ?? "Local Host").toUpperCase()}
                 description={
                   host.bio ??

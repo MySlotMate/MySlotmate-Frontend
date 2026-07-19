@@ -57,12 +57,17 @@ export default function HostProfilePage({
     return urls;
   }, [host, events]);
 
-  // Derive aggregate stats from events
-  const totalEvents = events?.length ?? 0;
+  // Derive aggregate stats from events, unless an admin has pinned a value for
+  // this host (set in the admin dashboard's host profile editor).
+  const totalEvents = host?.events_hosted_override ?? events?.length ?? 0;
   const totalPeopleMet = useMemo(
-    () => events?.reduce((sum, e) => sum + (e.total_bookings ?? 0), 0) ?? 0,
-    [events],
+    () =>
+      host?.people_met_override ??
+      events?.reduce((sum, e) => sum + (e.total_bookings ?? 0), 0) ??
+      0,
+    [host, events],
   );
+  const displayRating = host?.avg_rating_override ?? host?.avg_rating ?? 0;
 
   // Split into still-bookable vs already-held so past events don't sit under
   // the "Live & Upcoming" heading.
@@ -139,7 +144,7 @@ export default function HostProfilePage({
           <StatsBar
             total_events_hosted={totalEvents}
             total_people_met={totalPeopleMet}
-            avg_rating={host.avg_rating ?? 0}
+            avg_rating={displayRating}
           />
         </div>
 
@@ -155,7 +160,7 @@ export default function HostProfilePage({
           </div>
           <div className="lg:col-span-2">
             <RatingsSection
-              avg_rating={host.avg_rating ?? 0}
+              avg_rating={displayRating}
               total_reviews={host.total_reviews}
               reviews={reviews}
               hostId={currentUserHost?.id}

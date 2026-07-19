@@ -156,7 +156,11 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
                   host.first_name
                 }
                 imageUrl={host.avatar_url ?? "/assets/home/people1.webp"}
-                rating={(host.avg_rating ?? 4.5).toFixed(1)}
+                rating={(
+                  host.avg_rating_override ??
+                  host.avg_rating ??
+                  4.5
+                ).toFixed(1)}
                 city={host.city}
                 isVerified={host.is_identity_verified}
               />

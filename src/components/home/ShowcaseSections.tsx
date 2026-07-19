@@ -864,7 +864,7 @@ const ShowcaseSections = () => {
             <div className="w-full">
               <div
                 ref={featuredContainerRef}
-                className="group/card relative isolate grid cursor-pointer gap-6 rounded-[28px] border border-[#aeddf840] bg-white p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[0.85fr_1.15fr] md:items-center"
+                className="group/card relative isolate grid cursor-pointer gap-6 rounded-[28px] border border-[#aeddf840] bg-white p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[1.1fr_0.9fr] md:items-center"
               >
                 {/* Stretched link — makes the whole card (image, title, info)
                     clickable. Interactive controls below sit above it via z-20+. */}
@@ -874,7 +874,9 @@ const ShowcaseSections = () => {
                   className="absolute inset-0 z-10 rounded-[28px]"
                 />
 
-                <div className="relative mx-auto aspect-[4/3] w-full overflow-hidden rounded-[20px] shadow-sm">
+                {/* 16/9 matches the crop the uploader enforces on cover images,
+                    so object-cover fits exactly and nothing is shaved off the sides. */}
+                <div className="relative mx-auto aspect-[16/9] w-full overflow-hidden rounded-[20px] shadow-sm">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={featured.image}

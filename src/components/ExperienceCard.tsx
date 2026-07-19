@@ -264,9 +264,11 @@ export const ExperienceCard = ({
     >
       {/* Image Container - with white framing padding */}
       <div className="p-2.5 pb-0">
+        {/* 16/9 matches the crop the uploader enforces on cover images, so
+            object-cover fits exactly and nothing gets shaved off the sides. */}
         <Link
           href={href}
-          className="relative block aspect-[1.55/1] w-full overflow-hidden rounded-[20px]"
+          className="relative block aspect-[16/9] w-full overflow-hidden rounded-[20px]"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

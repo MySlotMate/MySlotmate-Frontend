@@ -145,7 +145,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
             }}
             className="text-[#16304c]"
           >
-            Book People&apos;s
+            Book People&apos;s{" "}
             <span className="block text-[#0e8ae0]">Time.</span>
           </h1>
 

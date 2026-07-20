@@ -18,7 +18,7 @@ import {
   getBlogExcerpt,
   FALLBACK_BLOG_IMAGE,
   type TOCItem,
-} from "../page";
+} from "../BlogsClient";
 
 export default function BlogDetailPage({
   params,

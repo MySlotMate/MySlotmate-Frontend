@@ -3,6 +3,7 @@ import "../styles/globals.css";
 import { type Metadata, type Viewport } from "next";
 import { Geist, Manrope, Outfit } from "next/font/google";
 import Providers from "~/components/Providers";
+import { env } from "~/env";
 import PreloaderGate from "~/components/PreloaderGate";
 import { Toaster } from "sonner";
 
@@ -11,7 +12,7 @@ const appUrl = "https://www.myslotmate.com";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Myslotmate - Book People's Time.",
+    default: "MySlotMate - Book People's Time.",
     template: "%s | MySlotMate",
   },
   description:
@@ -39,9 +40,9 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: appUrl,
     siteName: "MySlotMate",
-    title: "Myslotmate - Book People's Time.",
+    title: "MySlotMate - Book People's Time.",
     description:
-      "From coffee chats to travel experiences —book people for real-life moments, anytime.",
+      "From coffee chats to travel experiences — book people for real-life moments, anytime.",
     images: [
       {
         url: "/og-image.jpg",
@@ -65,9 +66,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@MySlotMate",
     creator: "@MySlotMate",
-    title: "MySlotMate - Book Unique Experiences with Amazing Hosts",
+    title: "MySlotMate - Book People's Time.",
     description:
-      "Discover and book unique experiences with expert hosts. Learn new skills, meet interesting people, and create unforgettable memories.",
+      "From coffee chats to travel experiences — book people for real-life moments, anytime.",
     images: ["/og-image.jpg"],
   },
 
@@ -83,10 +84,10 @@ export const metadata: Metadata = {
     },
   },
 
-  /* Verification Tags */
+  /* Verification Tags — set GOOGLE_SITE_VERIFICATION / YANDEX_VERIFICATION in env */
   verification: {
-    google: "google-site-verification-code",
-    yandex: "yandex-verification-code",
+    ...(env.GOOGLE_SITE_VERIFICATION && { google: env.GOOGLE_SITE_VERIFICATION }),
+    ...(env.YANDEX_VERIFICATION && { yandex: env.YANDEX_VERIFICATION }),
   },
 
   /* Icons */

@@ -264,18 +264,29 @@ export const ExperienceCard = ({
     >
       {/* Image Container - with white framing padding */}
       <div className="p-2.5 pb-0">
-        {/* 16/9 matches the crop the uploader enforces on cover images, so
-            object-cover fits exactly and nothing gets shaved off the sides. */}
+        {/* Event posters come in any ratio, so show the whole image
+            (object-contain) over a blurred, over-scaled copy of itself —
+            nothing on the poster is cropped, and the frame is filled instead of
+            showing empty bars. The backdrop is decorative; the foreground <img>
+            carries the alt text. */}
         <Link
           href={href}
-          className="relative block aspect-[16/9] w-full overflow-hidden rounded-[20px]"
+          className="relative block aspect-[16/9] w-full overflow-hidden rounded-[20px] bg-slate-100"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imageUrl || "/assets/home/hiking.webp"}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+          />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={imageUrl || "/assets/home/hiking.webp"}
             alt={title}
             loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="relative h-full w-full object-contain transition-transform duration-700 group-hover:scale-110"
           />
 
           {/* Top-left Badge */}

@@ -42,8 +42,21 @@ export default function HostProfileClient({
     usePublicHostProfile(_hostId);
   const host = fetchedHost ?? initialHost ?? undefined;
   const hostLoading = hostQueryLoading && !host;
-  const { data: events } = useEventsByHost(_hostId);
+  const { data: allEvents } = useEventsByHost(_hostId);
   const { data: currentUserHost } = useMyHost(user?.uid ?? null);
+
+  // Events shown anywhere on the public profile: exclude drafts (never
+  // published) and cancelled events (pulled/refunded). This keeps live and
+  // paused events — a paused event that has already happened still belongs in
+  // the host's history. The bookable "upcoming" list narrows further to live
+  // only (below), so a paused event can't be booked but still appears as past.
+  const events = useMemo(
+    () =>
+      allEvents?.filter(
+        (e) => e.status !== "draft" && e.status !== "cancelled",
+      ),
+    [allEvents],
+  );
 
   // Pick the first event's reviews as representative reviews for the host
   const firstEventId = events?.[0]?.id ?? null;
@@ -76,11 +89,16 @@ export default function HostProfileClient({
   const displayRating = host?.avg_rating_override ?? host?.avg_rating ?? 0;
 
   // Split into still-bookable vs already-held so past events don't sit under
-  // the "Live & Upcoming" heading.
-  const { upcoming: upcomingEvents, past: pastEvents } = useMemo(
-    () => splitEventsByTime(events ?? []),
-    [events],
-  );
+  // the "Live & Upcoming" heading. The upcoming (bookable) list is live-only —
+  // a paused event must not be bookable — while the past list keeps paused
+  // events so they remain visible as history.
+  const { upcoming: upcomingEvents, past: pastEvents } = useMemo(() => {
+    const { upcoming, past } = splitEventsByTime(events ?? []);
+    return {
+      upcoming: upcoming.filter((e) => e.status === "live"),
+      past,
+    };
+  }, [events]);
 
   // Derive moods from events
   const moods = useMemo(() => {

@@ -1087,7 +1087,14 @@ export function updateEvent(eventId: string, body: EventUpdatePayload) {
 /** GET /events/host/{hostID}/filtered */
 export function getHostEventsFiltered(
   hostId: string,
-  filters?: { status?: string; mood?: string; from?: string; to?: string },
+  filters?: {
+    status?: string;
+    mood?: string;
+    from?: string;
+    to?: string;
+    limit?: string;
+    offset?: string;
+  },
 ) {
   return apiFetch<EventDTO[]>(`/events/host/${hostId}/filtered`, {
     params: filters,

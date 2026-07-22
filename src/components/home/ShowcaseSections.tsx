@@ -607,17 +607,16 @@ const ShowcaseSections = () => {
 
     gsap.to(ref.current, {
       opacity: 0,
-      y: 8,
-      duration: 0.25,
-      ease: "power2.in",
+      y: 10,
+      duration: 0.4,
+      ease: "sine.inOut",
       onComplete: () => {
         setter((prev) => (prev + 1) % total);
         gsap.to(ref.current, {
           opacity: 1,
           y: 0,
-          duration: 0.35,
-          ease: "power2.out",
-          delay: 0.05,
+          duration: 0.55,
+          ease: "sine.inOut",
         });
       },
     });
@@ -911,7 +910,7 @@ const ShowcaseSections = () => {
                     </button>
                   )}
 
-                  <div className="absolute right-4 bottom-4 left-4 flex items-end justify-between gap-3">
+                  <div className="absolute right-4 bottom-4 left-4 hidden items-end justify-between gap-3 md:flex">
                     <div className="rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 text-white shadow-lg backdrop-blur-xl">
                       <p className="text-[9px] font-bold tracking-wider text-white/70 uppercase">
                         Host

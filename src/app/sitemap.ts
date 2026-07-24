@@ -40,24 +40,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const [events, hosts, blogs] = await Promise.all([
-    fetchList<{ id: string; updated_at?: string }>("/events/"),
-    fetchList<{ id: string }>("/hosts"),
+    fetchList<{ slug: string; updated_at?: string }>("/events/"),
+    fetchList<{ slug: string }>("/hosts"),
     fetchList<{
-      id: string;
+      slug: string;
       published_at: string | null;
       updated_at?: string;
     }>("/blogs?limit=1000"),
   ]);
 
   const eventRoutes: MetadataRoute.Sitemap = events.map((e) => ({
-    url: `${SITE_URL}/experience/${e.id}`,
+    url: `${SITE_URL}/experience/${e.slug}`,
     lastModified: e.updated_at ? new Date(e.updated_at) : now,
     changeFrequency: "weekly",
     priority: 0.8,
   }));
 
   const hostRoutes: MetadataRoute.Sitemap = hosts.map((h) => ({
-    url: `${SITE_URL}/host/${h.id}`,
+    url: `${SITE_URL}/host/${h.slug}`,
     lastModified: now,
     changeFrequency: "weekly",
     priority: 0.7,
@@ -66,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const blogRoutes: MetadataRoute.Sitemap = blogs
     .filter((b) => b.published_at)
     .map((b) => ({
-      url: `${SITE_URL}/blogs/${b.id}`,
+      url: `${SITE_URL}/blogs/${b.slug}`,
       lastModified: b.updated_at ? new Date(b.updated_at) : now,
       changeFrequency: "monthly",
       priority: 0.6,

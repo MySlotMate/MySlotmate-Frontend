@@ -9,11 +9,11 @@ function clamp(text: string, max = 160): string {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
   try {
-    const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/hosts/${id}`, {
+    const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/hosts/${slug}`, {
       next: { revalidate: 3600 },
     });
     if (!res.ok) return {};
@@ -41,11 +41,11 @@ export async function generateMetadata({
     return {
       title,
       description,
-      alternates: { canonical: `/host/${id}` },
+      alternates: { canonical: `/host/${slug}` },
       openGraph: {
         title: `${title} | MySlotMate`,
         description,
-        url: `/host/${id}`,
+        url: `/host/${slug}`,
         images: host.avatar_url ? [{ url: host.avatar_url }] : undefined,
       },
     };

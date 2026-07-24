@@ -40,6 +40,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
     upcomingEvents[0]
       ? {
           id: upcomingEvents[0].id,
+          slug: upcomingEvents[0].slug,
           photo:
             upcomingEvents[0].cover_image_url ?? "/assets/home/heropic1.webp",
           type: upcomingEvents[0].mood ?? "Adventure",
@@ -59,6 +60,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
     upcomingEvents[1]
       ? {
           id: upcomingEvents[1].id,
+          slug: upcomingEvents[1].slug,
           photo:
             upcomingEvents[1].cover_image_url ?? "/assets/home/heropic2.webp",
           type: upcomingEvents[1].mood ?? "Social",
@@ -78,6 +80,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
     upcomingEvents[2]
       ? {
           id: upcomingEvents[2].id,
+          slug: upcomingEvents[2].slug,
           photo:
             upcomingEvents[2].cover_image_url ?? "/assets/home/heropic3.webp",
           type: upcomingEvents[2].mood ?? "Relaxing",
@@ -96,6 +99,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
     upcomingEvents[3]
       ? {
           id: upcomingEvents[3].id,
+          slug: upcomingEvents[3].slug,
           photo:
             upcomingEvents[3].cover_image_url ?? "/assets/home/heropic4.png",
           type: upcomingEvents[3].mood ?? "Cultural",

@@ -9,6 +9,8 @@ interface CardProps {
   description: string;
   duration: string;
   id?: string;
+  /** Clean slug for the link; falls back to id (both resolve). */
+  slug?: string;
 }
 
 const HeroCard = ({
@@ -18,12 +20,14 @@ const HeroCard = ({
   description,
   duration,
   id,
+  slug,
 }: CardProps) => {
   const router = useRouter();
 
   const goToExperience = () => {
-    if (id) {
-      router.push(`/experience/${id}`);
+    const ref = slug ?? id;
+    if (ref) {
+      router.push(`/experience/${ref}`);
       return;
     }
 

@@ -211,7 +211,7 @@ export default function ActivitiesPage() {
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
                       <div className="mb-3 flex items-start justify-between">
-                        <Link href={`/experience/${event.id}`}>
+                        <Link href={`/experience/${event.slug}`}>
                           <h3 className="text-lg font-semibold text-gray-900 transition hover:text-[#0094CA] pr-2">
                             {event.title}
                           </h3>

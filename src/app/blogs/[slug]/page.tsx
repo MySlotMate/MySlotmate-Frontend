@@ -23,7 +23,7 @@ import {
 export default function BlogDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
@@ -52,7 +52,7 @@ export default function BlogDetailPage({
     };
   }, [user]);
 
-  const { data: blog, isLoading, error } = useBlog(resolvedParams.id, idToken);
+  const { data: blog, isLoading, error } = useBlog(resolvedParams.slug, idToken);
   const { data: allBlogs = [] } = useListBlogs();
 
   const [activeTocId, setActiveTocId] = useState<string>("");
@@ -153,9 +153,9 @@ export default function BlogDetailPage({
 
   const relatedBlogs = useMemo(() => {
     return allBlogs
-      .filter((b) => b.id !== resolvedParams.id)
+      .filter((b) => b.slug !== resolvedParams.slug && b.id !== blog?.id)
       .slice(0, 3);
-  }, [allBlogs, resolvedParams.id]);
+  }, [allBlogs, resolvedParams.slug, blog?.id]);
 
   if (isLoading) {
     return (
@@ -355,7 +355,7 @@ export default function BlogDetailPage({
                   {relatedBlogs.map((item) => (
                     <article
                       key={item.id}
-                      onClick={() => router.push(`/blogs/${item.id}`)}
+                      onClick={() => router.push(`/blogs/${item.slug}`)}
                       className="flex flex-col justify-between h-full p-5 rounded-[28px] bg-white/82 border border-[#aeddf899] shadow-[0_20px_42px_rgba(60,121,175,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_56px_rgba(60,121,175,0.16)] cursor-pointer group"
                     >
                       <div className="space-y-4 min-w-0">

@@ -40,6 +40,7 @@ import * as components from "../../components";
 
 type FeaturedItem = {
   id?: string;
+  slug?: string;
   title: string;
   copy: string;
   duration: string;
@@ -52,6 +53,7 @@ type FeaturedItem = {
 
 type StoryItem = {
   id?: string;
+  slug?: string;
   title: string;
   copy: string;
   statOne: string;
@@ -330,6 +332,7 @@ const ShowcaseSections = () => {
       .slice(0, limit)
       .map((event) => ({
         id: event.id,
+        slug: event.slug,
         title: event.title,
         copy: stripHtml(
           event.description ??
@@ -386,6 +389,7 @@ const ShowcaseSections = () => {
       .slice(0, limit)
       .map((event) => ({
         id: event.id,
+        slug: event.slug,
         headline: event.location ? `In ${event.location}` : "Curated Session",
         title: event.title,
         description: stripHtml(
@@ -447,6 +451,7 @@ const ShowcaseSections = () => {
       const fullName = `${host.first_name} ${host.last_name}`.trim();
       return {
         id: host.id,
+        slug: host.slug,
         title: `Meet ${fullName}`,
         copy:
           host.bio ??
@@ -475,10 +480,10 @@ const ShowcaseSections = () => {
   const featured = featuredData[featuredIndex] ?? featuredData[0]!;
   const story = storyData[storyIndex] ?? storyData[0]!;
   const community = COMMUNITY_SETS[communityIndex]!;
-  const featuredHref = featured.id
-    ? `/experience/${featured.id}`
+  const featuredHref = featured.slug
+    ? `/experience/${featured.slug}`
     : "/experiences";
-  const storyHref = story.id ? `/host/${story.id}` : "/hosts";
+  const storyHref = story.slug ? `/host/${story.slug}` : "/hosts";
 
   const isFeaturedSaved = featuredSavedStatus?.saved ?? false;
 

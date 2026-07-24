@@ -19,6 +19,8 @@ import { getMoodDisplayLabel } from "~/lib/moods";
 
 interface HostCardProps {
   id: string;
+  /** Clean slug for the link; falls back to id (both resolve). */
+  slug?: string;
   name: string;
   imageUrl: string;
   rating: string;
@@ -30,6 +32,7 @@ interface HostCardProps {
 
 const HostCard = ({
   id,
+  slug,
   name,
   imageUrl,
   rating,
@@ -40,7 +43,7 @@ const HostCard = ({
 }: HostCardProps) => {
   return (
     <Link
-      href={`/host/${id}`}
+      href={`/host/${slug ?? id}`}
       className="group overflow-hidden rounded-[22px] border border-[#aeddf89e] bg-white shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
     >
       <div className="relative h-[214px] w-full overflow-hidden bg-[#f8fbff]">
@@ -242,6 +245,7 @@ export default function HostsPage() {
               <HostCard
                 key={host.id}
                 id={host.id}
+                slug={host.slug}
                 name={
                   `${host.first_name} ${host.last_name}`.trim() ||
                   host.first_name

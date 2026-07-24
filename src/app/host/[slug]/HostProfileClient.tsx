@@ -27,22 +27,25 @@ export default function HostProfileClient({
   params,
   initialHost,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
   initialHost: PublicHostProfileDTO | null;
 }) {
-  const { id: _hostId } = use(params);
+  const { slug: _hostSlug } = use(params);
   const [user] = useAuthState(auth);
   const experiencesRef = useRef<HTMLDivElement>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showAllReviewsModal, setShowAllReviewsModal] = useState(false);
 
   // Server-rendered profile keeps the page content in the initial HTML; the
-  // client query takes over once it resolves.
+  // client query takes over once it resolves. The route param is a slug (or a
+  // legacy UUID) — the /hosts endpoint resolves either form.
   const { data: fetchedHost, isLoading: hostQueryLoading } =
-    usePublicHostProfile(_hostId);
+    usePublicHostProfile(_hostSlug);
   const host = fetchedHost ?? initialHost ?? undefined;
   const hostLoading = hostQueryLoading && !host;
-  const { data: allEvents } = useEventsByHost(_hostId);
+  // Listing a host's events keys off the real host UUID, not the slug.
+  const hostId = host?.id ?? "";
+  const { data: allEvents } = useEventsByHost(hostId);
   const { data: currentUserHost } = useMyHost(user?.uid ?? null);
 
   // Events shown anywhere on the public profile: exclude drafts (never
@@ -188,7 +191,7 @@ export default function HostProfileClient({
               total_reviews={host.total_reviews}
               reviews={reviews}
               hostId={currentUserHost?.id}
-              eventHostId={_hostId}
+              eventHostId={hostId}
               onReadAllReviews={handleReadAllReviews}
             />
           </div>
@@ -237,7 +240,7 @@ export default function HostProfileClient({
         reviews={reviews}
         avg_rating={host.avg_rating ?? 0}
         hostId={currentUserHost?.id}
-        eventHostId={_hostId}
+        eventHostId={hostId}
       />
     </main>
   );

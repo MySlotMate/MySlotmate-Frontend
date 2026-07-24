@@ -1271,7 +1271,7 @@ export default function ExperienceDetailClient({
   params,
   initialEvent,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
   initialEvent: EventDTO | null;
 }) {
   const resolvedParams = use(params);
@@ -1281,17 +1281,21 @@ export default function ExperienceDetailClient({
   const [showLogin, setShowLogin] = useState(false);
 
   // Server-rendered event keeps the page content in the initial HTML; the
-  // client query takes over once it resolves.
+  // client query takes over once it resolves. The route param is a slug (or a
+  // legacy UUID) — the /events endpoint resolves either form.
   const { data: fetchedEvent, isLoading: eventQueryLoading } = useEvent(
-    resolvedParams.id,
+    resolvedParams.slug,
   );
   const event = fetchedEvent ?? initialEvent ?? undefined;
   const eventLoading = eventQueryLoading && !event;
+  // Secondary lookups (reviews, ratings, availability, save) key off the real
+  // event UUID, not the slug — resolve it from the loaded event.
+  const eventId = event?.id ?? "";
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
-  const { data: reviews } = useReviewsByEvent(resolvedParams.id);
-  const { data: ratingData } = useEventRating(resolvedParams.id);
-  const { data: availability } = useEventAvailability(resolvedParams.id);
-  const { data: savedStatus } = useIsExperienceSaved(resolvedParams.id, userId);
+  const { data: reviews } = useReviewsByEvent(eventId);
+  const { data: ratingData } = useEventRating(eventId);
+  const { data: availability } = useEventAvailability(eventId);
+  const { data: savedStatus } = useIsExperienceSaved(eventId, userId);
 
   const saveExperience = useSaveExperience();
   const unsaveExperience = useUnsaveExperience();
@@ -1305,12 +1309,12 @@ export default function ExperienceDetailClient({
     }
     if (isSaved) {
       unsaveExperience.mutate(
-        { eventId: resolvedParams.id, userId },
+        { eventId, userId },
         { onSuccess: () => toast.success("Removed from saved") },
       );
     } else {
       saveExperience.mutate(
-        { user_id: userId, event_id: resolvedParams.id },
+        { user_id: userId, event_id: eventId },
         { onSuccess: () => toast.success("Saved to your list") },
       );
     }
@@ -1337,8 +1341,10 @@ export default function ExperienceDetailClient({
     }
     const encodedDate = encodeURIComponent(date);
     const tierParam = tierId ? `&tier=${encodeURIComponent(tierId)}` : "";
+    // Booking operates on the real event UUID (needed to create the booking),
+    // so carry that in the URL rather than the slug.
     router.push(
-      `/experience/${resolvedParams.id}/book?date=${encodedDate}&guests=${guests}${tierParam}`,
+      `/experience/${eventId}/book?date=${encodedDate}&guests=${guests}${tierParam}`,
     );
   };
 
@@ -1503,7 +1509,9 @@ export default function ExperienceDetailClient({
               <MeetYourHost
                 host={host ?? null}
                 onContact={() => toast.info("Contact feature coming soon!")}
-                onViewProfile={() => router.push(`/host/${event.host_id}`)}
+                onViewProfile={() =>
+                  router.push(`/host/${host?.slug ?? event.host_id}`)
+                }
               />
 
               {/* Where We'll Meet */}

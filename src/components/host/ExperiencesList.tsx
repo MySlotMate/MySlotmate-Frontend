@@ -50,6 +50,7 @@ export default function ExperiencesList({
             key={event.id}
             className="w-full shrink-0 sm:w-[340px]"
             id={event.id}
+            slug={event.slug}
             headline={event.mood ?? event.location ?? "Experience"}
             title={event.title}
             description={

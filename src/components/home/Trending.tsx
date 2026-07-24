@@ -20,6 +20,8 @@ import {
 
 interface TrendingCardProps {
   id: string;
+  /** Clean slug for the link; falls back to id (both resolve). */
+  slug?: string;
   title: string;
   imageUrl: string;
   pricing: string;
@@ -29,6 +31,7 @@ interface TrendingCardProps {
 
 const TrendingCard = ({
   id,
+  slug,
   title,
   imageUrl,
   pricing,
@@ -73,7 +76,7 @@ const TrendingCard = ({
   };
   return (
     <Link
-      href={`/experience/${id}`}
+      href={`/experience/${slug ?? id}`}
       // Added w-[260px] to match the PeopleCard width for consistency
       className="group w-[260px] shrink-0 snap-start overflow-hidden rounded-[28px] border border-[#b8dbf39c] bg-[#f8fcff] shadow-[0_16px_34px_rgba(72,128,173,0.1)] transition hover:-translate-y-1"
     >
@@ -242,6 +245,7 @@ const Trending = () => {
               <TrendingCard
                 key={event.id}
                 id={event.id}
+                slug={event.slug}
                 title={event.title}
                 imageUrl={event.cover_image_url ?? "/assets/home/hiking.webp"}
                 pricing={eventPriceLabel(event)}

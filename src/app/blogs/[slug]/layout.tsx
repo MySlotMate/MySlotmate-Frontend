@@ -12,11 +12,11 @@ function clamp(text: string, max = 160): string {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
   try {
-    const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/blogs/${id}`, {
+    const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/blogs/${slug}`, {
       next: { revalidate: 3600 },
     });
     if (!res.ok) return {};
@@ -42,12 +42,12 @@ export async function generateMetadata({
     return {
       title: blog.title,
       description,
-      alternates: { canonical: `/blogs/${id}` },
+      alternates: { canonical: `/blogs/${slug}` },
       openGraph: {
         type: "article",
         title: `${blog.title} | MySlotMate`,
         description,
-        url: `/blogs/${id}`,
+        url: `/blogs/${slug}`,
         publishedTime: blog.published_at ?? undefined,
         modifiedTime: blog.updated_at,
         images: blog.cover_image_url

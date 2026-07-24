@@ -415,7 +415,7 @@ export default function ExplorePage() {
                             <button
                               key={event.id}
                               type="button"
-                              onClick={() => handleExperienceSelect(event.id)}
+                              onClick={() => handleExperienceSelect(event.slug)}
                               className="flex w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[#16304c] outline-none hover:bg-[#eef8ff]"
                             >
                               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#eef8ff] text-[#0e8ae0]">
@@ -452,7 +452,7 @@ export default function ExplorePage() {
                               <button
                                 key={host.id}
                                 type="button"
-                                onClick={() => handleHostSelect(host.id)}
+                                onClick={() => handleHostSelect(host.slug)}
                                 className="flex w-full cursor-pointer items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[#16304c] outline-none hover:bg-[#eef8ff]"
                               >
                                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#eef8ff] text-[#0e8ae0]">
@@ -666,6 +666,7 @@ export default function ExplorePage() {
                   <PeopleCard
                     key={host.id}
                     id={host.id}
+                    slug={host.slug}
                     name={fullName}
                     imageUrl={host.avatar_url ?? "/assets/home/people1.webp"}
                     rating={
@@ -719,6 +720,7 @@ export default function ExplorePage() {
                   <ExperienceCard
                     key={event.id}
                     id={event.id}
+                    slug={event.slug}
                     headline={event.mood ?? event.location ?? "Experience"}
                     title={event.title}
                     description={

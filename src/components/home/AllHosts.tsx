@@ -7,6 +7,8 @@ import { useListHosts } from "~/hooks/useApi";
 
 interface HostCardProps {
   id: string;
+  /** Clean slug for the link; falls back to id (both resolve). */
+  slug?: string;
   name: string;
   imageUrl: string;
   rating: string;
@@ -15,6 +17,7 @@ interface HostCardProps {
 }
 const HostCard = ({
   id,
+  slug,
   name,
   imageUrl,
   rating,
@@ -23,7 +26,7 @@ const HostCard = ({
 }: HostCardProps) => {
   return (
     <Link
-      href={`/host/${id}`}
+      href={`/host/${slug ?? id}`}
       // Added w-[260px] to match the other sections
       className="group w-[260px] shrink-0 snap-start overflow-hidden rounded-[28px] border border-[#b8dbf39c] bg-[#f8fcff] shadow-[0_16px_34px_rgba(72,128,173,0.1)] transition hover:-translate-y-1"
     >
@@ -151,6 +154,7 @@ const AllHosts = ({ currentHostId }: { currentHostId?: string | null }) => {
               <HostCard
                 key={host.id}
                 id={host.id}
+                slug={host.slug}
                 name={
                   `${host.first_name} ${host.last_name}`.trim() ||
                   host.first_name

@@ -13,6 +13,8 @@ import {
 
 interface PeopleCardProps {
   id: string;
+  /** Clean slug for the link; falls back to id (both resolve). */
+  slug?: string;
   name: string;
   imageUrl: string;
   rating: string;
@@ -25,6 +27,7 @@ interface PeopleCardProps {
 }
 export const PeopleCard = ({
   id,
+  slug,
   name,
   imageUrl,
   rating,
@@ -35,7 +38,7 @@ export const PeopleCard = ({
 }: PeopleCardProps) => {
   return (
     <Link
-      href={`/host/${id}`}
+      href={`/host/${slug ?? id}`}
       className={`group overflow-hidden rounded-[28px] border border-[#d6ebf7cc] bg-white shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1 ${className}`}
     >
       {/* Changed h-[272px] w-[272px] to aspect-square w-full */}
@@ -275,6 +278,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
               <PeopleCard
                 key={host.id}
                 id={host.id}
+                slug={host.slug}
                 name={
                   `${host.first_name} ${host.last_name}`.trim() ||
                   host.first_name

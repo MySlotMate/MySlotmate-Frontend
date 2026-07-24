@@ -7,9 +7,9 @@ export const revalidate = 300;
 export default async function HostProfilePage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
-  const initialHost = await fetchPublic<PublicHostProfileDTO>(`/hosts/${id}`);
+  const { slug } = await params;
+  const initialHost = await fetchPublic<PublicHostProfileDTO>(`/hosts/${slug}`);
   return <HostProfileClient params={params} initialHost={initialHost} />;
 }

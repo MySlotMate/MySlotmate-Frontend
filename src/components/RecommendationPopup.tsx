@@ -149,7 +149,7 @@ export function RecommendationPopup({
               </p>
             </div>
             <Link
-              href={`/experience/${event.id}`}
+              href={`/experience/${event.slug}`}
               className="flex items-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2 font-semibold text-white transition hover:bg-[#007ba8]"
             >
               View <FiArrowRight size={16} />

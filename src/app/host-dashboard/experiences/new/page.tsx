@@ -792,11 +792,13 @@ function SuccessModal({
   isOpen,
   onClose: _onClose,
   experienceId,
+  experienceSlug,
   isDraft,
 }: {
   isOpen: boolean;
   onClose: () => void;
   experienceId: string;
+  experienceSlug: string;
   isDraft: boolean;
 }) {
   const router = useRouter();
@@ -828,7 +830,7 @@ function SuccessModal({
             <>
               <button
                 onClick={() => {
-                  const url = `${window.location.origin}/experience/${experienceId}`;
+                  const url = `${window.location.origin}/experience/${experienceSlug}`;
                   void navigator.clipboard.writeText(url);
                   toast.success("Link copied to clipboard!");
                 }}
@@ -838,7 +840,7 @@ function SuccessModal({
                 Share Experience
               </button>
               <button
-                onClick={() => router.push(`/experience/${experienceId}`)}
+                onClick={() => router.push(`/experience/${experienceSlug}`)}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
               >
                 <FiExternalLink size={18} />
@@ -881,6 +883,7 @@ export default function CreateExperiencePage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [savedAsDraft, setSavedAsDraft] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string>("");
+  const [createdEventSlug, setCreatedEventSlug] = useState<string>("");
   const [showMapPicker, setShowMapPicker] = useState(false);
 
   const [showErrors, setShowErrors] = useState(false);
@@ -1317,6 +1320,7 @@ export default function CreateExperiencePage() {
       }
 
       setCreatedEventId(eventRes.data.id);
+      setCreatedEventSlug(eventRes.data.slug);
       setSavedAsDraft(asDraft);
       setShowSuccess(true);
       toast.success(
@@ -2387,6 +2391,7 @@ export default function CreateExperiencePage() {
         isOpen={showSuccess}
         onClose={() => setShowSuccess(false)}
         experienceId={createdEventId}
+        experienceSlug={createdEventSlug}
         isDraft={savedAsDraft}
       />
 

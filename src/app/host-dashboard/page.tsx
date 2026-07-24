@@ -141,6 +141,7 @@ function ScheduleItemMenu({
 }: {
   event: {
     id: string;
+    slug: string;
     title: string;
     is_recurring: boolean;
     status: string;
@@ -236,7 +237,7 @@ function ScheduleItemMenu({
             <button
               onClick={() => {
                 setOpen(false);
-                router.push(`/experience/${event.id}`);
+                router.push(`/experience/${event.slug}`);
               }}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 transition hover:bg-gray-50"
             >
@@ -864,6 +865,7 @@ export default function HostDashboardPage() {
                             <ScheduleItemMenu
                               event={{
                                 id: item.id,
+                                slug: item.slug,
                                 title: item.title,
                                 is_recurring: item.is_recurring ?? false,
                                 status: item.status,
@@ -945,7 +947,7 @@ export default function HostDashboardPage() {
                                 
                                 <div className="flex items-center gap-3">
                                   <Link
-                                    href={`/experience/${exp.id}`}
+                                    href={`/experience/${exp.slug}`}
                                     className="text-xs font-bold text-[#6f8daa] hover:text-[#0e8ae0] transition"
                                   >
                                     View Page
@@ -963,6 +965,7 @@ export default function HostDashboardPage() {
                             <ScheduleItemMenu
                               event={{
                                 id: exp.id,
+                                slug: exp.slug,
                                 title: exp.title,
                                 is_recurring: exp.is_recurring ?? false,
                                 status: exp.status,

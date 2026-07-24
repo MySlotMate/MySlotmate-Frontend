@@ -130,6 +130,7 @@ export default function ExperiencesClient({
               <ExperienceCard
                 key={event.id}
                 id={event.id}
+                slug={event.slug}
                 headline={event.mood ?? event.location ?? "Experience"}
                 title={event.title}
                 description={

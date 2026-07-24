@@ -788,7 +788,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 export default function ConfirmationPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = use(params);
 
@@ -812,7 +812,7 @@ export default function ConfirmationPage({
           </div>
         }
       >
-        <ConfirmationContent eventId={resolvedParams.id} />
+        <ConfirmationContent eventId={resolvedParams.slug} />
       </Suspense>
     </>
   );

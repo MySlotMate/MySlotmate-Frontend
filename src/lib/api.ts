@@ -287,6 +287,8 @@ export async function uploadBlogCover(file: File) {
 
 export interface HostDTO {
   id: string;
+  /** Clean, URL-safe identifier for public links (/host/{slug}). */
+  slug: string;
   user_id: string;
   account_id: string | null;
   first_name: string;
@@ -449,6 +451,8 @@ export function disconnectSocialMedia(
 /** Public-facing host profile (no sensitive fields like phn_number, government_id_url, etc.) */
 export interface PublicHostProfileDTO {
   id: string;
+  /** Clean, URL-safe identifier for public links (/host/{slug}). */
+  slug: string;
   first_name: string;
   last_name: string;
   city: string;
@@ -613,6 +617,8 @@ export function withdrawPlatformFees(
 
 export interface BlogDTO {
   id: string;
+  /** Clean, URL-safe identifier for public links (/blogs/{slug}). */
+  slug: string;
   title: string | null;
   description: string | null;
   category: string | null;
@@ -633,6 +639,8 @@ export interface BlogPaginationParams {
 
 export interface BlogCreatePayload {
   title: string;
+  /** Optional custom URL slug; defaults to a slugified title on the server. */
+  slug?: string;
   description: string;
   category: string;
   content: string;
@@ -642,6 +650,8 @@ export interface BlogCreatePayload {
 
 export interface BlogUpdatePayload {
   title?: string;
+  /** Optional custom URL slug; when changed, updates the blog's public URL. */
+  slug?: string;
   description?: string;
   category?: string;
   content?: string;
@@ -825,6 +835,8 @@ export interface PriceTierInput {
 
 export interface EventDTO {
   id: string;
+  /** Clean, URL-safe identifier for public links (/experience/{slug}). */
+  slug: string;
   host_id: string;
   title: string;
   hook_line: string | null;

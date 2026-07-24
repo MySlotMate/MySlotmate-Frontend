@@ -149,7 +149,7 @@ export default function SavedExperiencesPage() {
                 <div className="flex flex-1 flex-col justify-between p-5">
                   {/* Title and Description */}
                   <div>
-                    <Link href={`/experience/${event.id}`}>
+                    <Link href={`/experience/${event.slug}`}>
                       <h3 className="line-clamp-2 text-base font-bold text-gray-900 transition hover:text-[#0094CA]">
                         {event.title}
                       </h3>
@@ -179,7 +179,7 @@ export default function SavedExperiencesPage() {
 
                   {/* CTA Button */}
                   <Link
-                    href={`/experience/${event.id}`}
+                    href={`/experience/${event.slug}`}
                     className="mt-5 w-full rounded-lg bg-[#0094CA] px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-[#0076a3] hover:shadow-md"
                   >
                     View Experience

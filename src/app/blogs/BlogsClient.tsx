@@ -46,6 +46,7 @@ type BlogFormState = {
   description: string;
   read_time_minutes: string;
   title: string;
+  slug: string;
 };
 
 const DEFAULT_FORM_STATE: BlogFormState = {
@@ -56,7 +57,17 @@ const DEFAULT_FORM_STATE: BlogFormState = {
   description: "",
   read_time_minutes: "5",
   title: "",
+  slug: "",
 };
+
+/** Client-side slugify — mirrors the server's slug.Make for a live preview. */
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 export const FALLBACK_BLOG_IMAGE = "/assets/home/hiking.webp";
 
@@ -161,6 +172,7 @@ function mapBlogToFormState(blog: BlogDTO): BlogFormState {
     description: getBlogValue(blog.description),
     read_time_minutes: String(blog.read_time_minutes ?? 5),
     title: getBlogValue(blog.title),
+    slug: blog.slug ?? "",
   };
 }
 
@@ -477,7 +489,7 @@ function BlogCard({
       <div className="space-y-4">
         <div
           className="relative min-h-[220px] w-full overflow-hidden rounded-[28px] border border-[#addbf699] bg-[linear-gradient(145deg,#e5f7ff,#f9fdff)] group cursor-pointer"
-          onClick={() => onOpen(blog.id)}
+          onClick={() => onOpen(blog.slug)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -501,7 +513,7 @@ function BlogCard({
           </div>
           <h3 className="font-outfit text-[1.08rem] font-semibold leading-[1.24] tracking-[-0.04em] text-[#16304c] m-0">
             <Link
-              href={`/blogs/${blog.id}`}
+              href={`/blogs/${blog.slug}`}
               className="cursor-pointer transition hover:text-[#0e8ae0]"
             >
               {title}
@@ -563,6 +575,8 @@ export default function BlogsClient({
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [editingBlog, setEditingBlog] = useState<BlogDTO | null>(null);
   const [formState, setFormState] = useState<BlogFormState>(DEFAULT_FORM_STATE);
+  // Once the admin edits the slug by hand, stop auto-syncing it from the title.
+  const [slugTouched, setSlugTouched] = useState(false);
 
   const isAdmin = useMemo(() => {
     if (!user?.email) return false;
@@ -740,6 +754,7 @@ export default function BlogsClient({
     });
     setEditingBlog(null);
     setFormState(DEFAULT_FORM_STATE);
+    setSlugTouched(false);
     if (coverImageInputRef.current) {
       coverImageInputRef.current.value = "";
     }
@@ -872,6 +887,9 @@ export default function BlogsClient({
       description: formState.description.trim(),
       read_time_minutes: readTime,
       title: formState.title.trim(),
+      // Send the slug only when set; the server slugifies + de-duplicates it,
+      // and falls back to the title when omitted.
+      ...(formState.slug.trim() ? { slug: formState.slug.trim() } : {}),
     };
 
     const mode = submitModeRef.current;
@@ -1075,12 +1093,53 @@ export default function BlogsClient({
                     <input
                       type="text"
                       value={formState.title}
-                      onChange={(event) =>
-                        handleFormChange("title", event.target.value)
-                      }
+                      onChange={(event) => {
+                        const nextTitle = event.target.value;
+                        setFormState((current) => ({
+                          ...current,
+                          title: nextTitle,
+                          // Auto-fill the slug from the title for a new,
+                          // untouched blog; never silently change an existing
+                          // blog's slug or one the admin has edited.
+                          slug:
+                            !editingBlog && !slugTouched
+                              ? slugify(nextTitle)
+                              : current.slug,
+                        }));
+                      }}
                       placeholder="How to Plan the Perfect Experience"
                       className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
                     />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium text-gray-700">
+                      URL slug
+                    </span>
+                    <input
+                      type="text"
+                      value={formState.slug}
+                      onChange={(event) => {
+                        setSlugTouched(true);
+                        // Lenient while typing (keep a trailing hyphen so word
+                        // boundaries work); the server slugifies again on save.
+                        handleFormChange(
+                          "slug",
+                          event.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9]+/g, "-")
+                            .replace(/^-+/, ""),
+                        );
+                      }}
+                      placeholder="how-to-plan-the-perfect-experience"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                    />
+                    <span className="mt-1 block text-xs text-gray-400">
+                      /blogs/{formState.slug || "your-blog-slug"}
+                      {editingBlog
+                        ? " — changing this changes the blog's public URL."
+                        : ""}
+                    </span>
                   </label>
 
                   <label className="block">
@@ -1293,7 +1352,7 @@ export default function BlogsClient({
                       </div>
                       <h2 className="font-outfit text-[clamp(1.5rem,2.45vw,2.1rem)] font-semibold leading-[1.16] tracking-[-0.04em] text-[#16304c] m-0">
                         <Link
-                          href={`/blogs/${featuredBlog.id}`}
+                          href={`/blogs/${featuredBlog.slug}`}
                           className="cursor-pointer transition hover:text-[#0e8ae0]"
                         >
                           {getBlogValue(featuredBlog.title, "Untitled blog")}
@@ -1318,7 +1377,7 @@ export default function BlogsClient({
                       </p>
                       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
                         <Link
-                          href={`/blogs/${featuredBlog.id}`}
+                          href={`/blogs/${featuredBlog.slug}`}
                           className="inline-flex items-center gap-2 bg-transparent border-0 p-0 font-outfit text-[0.92rem] font-bold text-[#0e8ae0] cursor-pointer hover:underline after:content-['>'] after:text-base"
                         >
                           Read article
@@ -1349,7 +1408,7 @@ export default function BlogsClient({
 
                     <div
                       className="relative min-h-[320px] w-full overflow-hidden rounded-[28px] border border-[#addbf699] bg-[linear-gradient(145deg,#e5f7ff,#f9fdff)] group cursor-pointer"
-                      onClick={() => router.push(`/blogs/${featuredBlog.id}`)}
+                      onClick={() => router.push(`/blogs/${featuredBlog.slug}`)}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img

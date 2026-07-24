@@ -20,6 +20,8 @@ import { toast } from "sonner";
 
 export type ExperienceCardItem = {
   id?: string;
+  /** Clean slug for the detail-page link; falls back to id (both resolve). */
+  slug?: string;
   headline: string;
   title: string;
   description: string;
@@ -143,6 +145,7 @@ interface ExperienceCardProps extends ExperienceCardItem {
 
 export const ExperienceCard = ({
   id,
+  slug,
   headline,
   title,
   description,
@@ -159,7 +162,8 @@ export const ExperienceCard = ({
   className = "",
 }: ExperienceCardProps) => {
   const [userId, setUserId] = useState<string | null>(null);
-  const href = id ? `/experience/${id}` : "/experiences";
+  const experienceRef = slug ?? id;
+  const href = experienceRef ? `/experience/${experienceRef}` : "/experiences";
   const effectiveDate = nextAvailableDate ?? time;
   const isShowingNext = !!nextAvailableDate && nextAvailableDate !== time;
   const dateLabel = formatEventDate(effectiveDate);

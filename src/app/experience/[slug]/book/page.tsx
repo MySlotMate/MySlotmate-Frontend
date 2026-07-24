@@ -737,7 +737,7 @@ function BookingContent({ eventId }: { eventId: string }) {
 export default function BookingReviewPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
   const resolvedParams = use(params);
 
@@ -761,7 +761,7 @@ export default function BookingReviewPage({
           </div>
         }
       >
-        <BookingContent eventId={resolvedParams.id} />
+        <BookingContent eventId={resolvedParams.slug} />
       </Suspense>
     </>
   );

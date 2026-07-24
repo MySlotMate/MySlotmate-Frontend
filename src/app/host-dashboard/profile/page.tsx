@@ -259,7 +259,7 @@ export default function HostProfileEditPage() {
             </div>
             {hostId ? (
               <Link
-                href={`/host/${hostId}`}
+                href={`/host/${hostData?.slug ?? hostId}`}
                 className="shrink-0 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
               >
                 Preview Public Profile

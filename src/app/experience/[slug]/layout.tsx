@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 import { env } from "~/env";
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
   children: React.ReactNode;
 };
 
@@ -14,11 +14,11 @@ function clamp(text: string, max = 160): string {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
+  const { slug } = await params;
   try {
-    const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/events/${id}`, {
+    const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/events/${slug}`, {
       next: { revalidate: 3600 },
     });
     if (!res.ok) return {};
@@ -42,11 +42,11 @@ export async function generateMetadata({
     return {
       title: event.title,
       description,
-      alternates: { canonical: `/experience/${id}` },
+      alternates: { canonical: `/experience/${slug}` },
       openGraph: {
         title: `${event.title} | MySlotMate`,
         description,
-        url: `/experience/${id}`,
+        url: `/experience/${slug}`,
         images: event.cover_image_url
           ? [{ url: event.cover_image_url }]
           : undefined,

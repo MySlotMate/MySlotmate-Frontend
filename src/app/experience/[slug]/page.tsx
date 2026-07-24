@@ -7,9 +7,9 @@ export const revalidate = 300;
 export default async function ExperienceDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
-  const initialEvent = await fetchPublic<EventDTO>(`/events/${id}`);
+  const { slug } = await params;
+  const initialEvent = await fetchPublic<EventDTO>(`/events/${slug}`);
   return <ExperienceDetailClient params={params} initialEvent={initialEvent} />;
 }

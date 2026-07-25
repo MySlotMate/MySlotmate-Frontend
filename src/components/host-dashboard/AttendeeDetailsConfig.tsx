@@ -54,7 +54,7 @@ export default function AttendeeDetailsConfig({
             return (
               <label
                 key={f.key}
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700"
+                className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700"
               >
                 <input
                   type="checkbox"
@@ -66,9 +66,9 @@ export default function AttendeeDetailsConfig({
                         : fields.filter((k) => k !== f.key),
                     )
                   }
-                  className="h-4 w-4 rounded border-gray-300 text-[#0094CA] focus:ring-[#0094CA]"
+                  className="h-4 w-4 shrink-0 rounded border-gray-300 text-[#0094CA] focus:ring-[#0094CA]"
                 />
-                {f.label}
+                <span className="min-w-0 break-words">{f.label}</span>
               </label>
             );
           })}

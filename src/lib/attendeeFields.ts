@@ -50,6 +50,11 @@ export const ATTENDEE_FIELDS: AttendeeFieldDef[] = [
   },
   { key: "govt_id_url", label: "Govt. ID proof", type: "file" },
   { key: "travel", label: "Travel", type: "bool" },
+  {
+    key: "social_link",
+    label: "Social Link (Facebook/Instagram)",
+    type: "text",
+  },
 ];
 
 export const ATTENDEE_FIELD_BY_KEY: Record<string, AttendeeFieldDef> =

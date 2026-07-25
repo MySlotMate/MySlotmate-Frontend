@@ -192,6 +192,7 @@ export interface AttendeeProfileDTO {
   registration_type: string | null;
   govt_id_url: string | null;
   travel: boolean | null;
+  social_link: string | null;
 }
 
 export interface AttendeeProfileUpdatePayload {
@@ -207,6 +208,7 @@ export interface AttendeeProfileUpdatePayload {
   registration_type?: string | null;
   govt_id_url?: string | null;
   travel?: boolean | null;
+  social_link?: string | null;
 }
 
 /** GET /users/attendee-profile?user_id=<uuid> — null when none saved yet. */
@@ -915,6 +917,68 @@ export function getEvent(eventId: string) {
 /** GET /events/{eventID}/availability */
 export function getEventAvailability(eventId: string) {
   return apiFetch<OccurrenceAvailability[]>(`/events/${eventId}/availability`);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Host on-spot ("walk-in") booking                                   */
+/* ------------------------------------------------------------------ */
+// A host books a guest onto their own event and collects payment via Razorpay
+// on-screen. Scoped by host_id (ownership verified server-side). Flow:
+// initiate → (paid: Razorpay checkout) → complete. Free events confirm on
+// initiate (paid === false).
+
+/** Attendee-profile answers collected at booking, without user_id (the guest is
+ *  created server-side). Mirrors the customer booking form's upsert payload. */
+export type WalkInAttendeeDetails = Omit<AttendeeProfileUpdatePayload, "user_id">;
+
+export interface HostWalkInInitiateBody {
+  host_id: string;
+  event_id: string;
+  guest_name: string;
+  guest_phone: string;
+  quantity: number;
+  occurrence_date?: string; // RFC3339; required for recurring events
+  attendee_details?: WalkInAttendeeDetails;
+}
+
+export interface HostWalkInInitiateResponse {
+  paid: boolean;
+  booking?: unknown;
+  guest_user_id: string;
+  occurrence_date: string;
+  // Razorpay checkout fields (paid path only).
+  order_id?: string;
+  key_id?: string;
+  amount_cents?: number;
+  currency?: string;
+  payment_id?: string;
+}
+
+export interface HostWalkInCompleteBody {
+  host_id: string;
+  event_id: string;
+  guest_user_id: string;
+  quantity: number;
+  occurrence_date?: string;
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+/** POST /host/bookings/walk-in/initiate */
+export function hostInitiateWalkIn(body: HostWalkInInitiateBody) {
+  return apiFetch<HostWalkInInitiateResponse>(
+    "/host/bookings/walk-in/initiate",
+    { method: "POST", data: body },
+  );
+}
+
+/** POST /host/bookings/walk-in/complete — returns the created booking. */
+export function hostCompleteWalkIn(body: HostWalkInCompleteBody) {
+  return apiFetch<BookingDTO>("/host/bookings/walk-in/complete", {
+    method: "POST",
+    data: body,
+  });
 }
 
 export interface ExperienceTemplateDTO {

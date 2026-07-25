@@ -18,10 +18,12 @@ import {
   FiPlay,
   FiShield,
   FiAlertTriangle,
+  FiUserPlus,
 } from "react-icons/fi";
 import { LuBookOpen, LuRotateCcw } from "react-icons/lu";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import HostOnSpotBookingModal from "~/components/host-dashboard/HostOnSpotBookingModal";
 
 /* ------------------------------------------------------------------ */
 /*  Helper: relative time formatting                                   */
@@ -134,6 +136,7 @@ function ExperienceCard({
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPauseConfirm, setShowPauseConfirm] = useState(false);
+  const [showOnSpot, setShowOnSpot] = useState(false);
   const [pauseOption, setPauseOption] = useState<"all" | "from" | "date">("all");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -142,6 +145,12 @@ function ExperienceCard({
   const isPaused = event.status === "paused";
   const isDraft = event.status === "draft";
   const isLive = event.status === "live";
+
+  // A non-recurring event whose start time has passed is expired — no on-spot
+  // booking. Recurring events keep generating future occurrences, so the modal's
+  // availability check (which only lists upcoming slots) guards those instead.
+  const isExpired =
+    !event.is_recurring && new Date(event.time).getTime() <= Date.now();
 
   // Active (pending/confirmed) bookings on this event — only fetched while
   // the Delete modal is open, to power the "you're about to refund N
@@ -322,6 +331,23 @@ function ExperienceCard({
               </div>
             )}
 
+            {/* On-spot booking button — only for LIVE, non-expired events,
+                where taking a walk-in guest makes sense. */}
+            {isLive && !isExpired && (
+              <div className="group relative">
+                <button
+                  onClick={() => setShowOnSpot(true)}
+                  className="rounded-lg p-2 text-gray-400 transition hover:bg-[#e6f8ff] hover:text-[#0094CA]"
+                  title="On-spot booking"
+                >
+                  <FiUserPlus className="h-4 w-4" />
+                </button>
+                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
+                  On-spot Booking
+                </span>
+              </div>
+            )}
+
             {/* Pause/Resume button — disabled (but visible) for drafts since a
                 draft is neither live nor paused. */}
             <div className="group relative">
@@ -381,6 +407,36 @@ function ExperienceCard({
           </div>
         </div>
       </div>
+
+      {/* On-spot booking modal */}
+      {showOnSpot && (
+        <HostOnSpotBookingModal
+          eventId={event.id}
+          eventTitle={event.title}
+          hostId={_hostId}
+          isOpen={showOnSpot}
+          onClose={() => setShowOnSpot(false)}
+          onBooked={() => {
+            // Refresh the attendee list plus every host-events view so the
+            // booking count on the card updates immediately (mirrors delete).
+            void queryClient.invalidateQueries({
+              queryKey: ["eventAttendees", event.id],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["eventsByHost", _hostId],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["hostEventsFiltered", _hostId],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["calendarEvents", _hostId],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["todaySchedule", _hostId],
+            });
+          }}
+        />
+      )}
 
       {/* Pause Confirmation Modal */}
       {showPauseConfirm && (

@@ -274,6 +274,7 @@ function BookingContent({ eventId }: { eventId: string }) {
       registration_type: p?.registration_type ?? "",
       govt_id_url: p?.govt_id_url ?? "",
       travel: p?.travel == null ? "" : p.travel ? "yes" : "no",
+      social_link: p?.social_link ?? "",
     });
     setAttendeePrefilled(true);
   }, [
@@ -373,6 +374,9 @@ function BookingContent({ eventId }: { eventId: string }) {
           }),
           ...(attendeeFields.includes("govt_id_url") && {
             govt_id_url: attendeeValues.govt_id_url,
+          }),
+          ...(attendeeFields.includes("social_link") && {
+            social_link: attendeeValues.social_link,
           }),
           ...(attendeeFields.includes("travel") && {
             travel: attendeeValues.travel === "yes",

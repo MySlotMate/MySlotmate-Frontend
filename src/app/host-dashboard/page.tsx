@@ -33,6 +33,7 @@ import {
   LuLightbulb,
   LuCheckCircle,
   LuPlus,
+  LuUserPlus,
   LuChevronLeft,
   LuChevronRight,
   LuLoader2,
@@ -50,6 +51,7 @@ import {
 } from "~/hooks/useApi";
 import type { AttentionItemDTO } from "~/lib/api";
 import { PauseExperienceModal } from "~/components/PauseExperienceModal";
+import HostOnSpotPickerModal from "~/components/host-dashboard/HostOnSpotPickerModal";
 
 /* ------------------------------------------------------------------ */
 /*  Attention items — driven by the /hosts/attention-items endpoint      */
@@ -300,6 +302,8 @@ export default function HostDashboardPage() {
   const [user] = useAuthState(auth);
   const firstName = user?.displayName?.split(" ")[0] ?? "Host";
 
+  const queryClient = useQueryClient();
+
   const [idToken, setIdToken] = useState<string | null>(null);
   useEffect(() => {
     if (user) {
@@ -339,6 +343,8 @@ export default function HostDashboardPage() {
   }, []);
 
   const [activeTab, setActiveTab] = useState<"today" | "all">("today");
+
+  const [showOnSpotPicker, setShowOnSpotPicker] = useState(false);
 
   const [tipIndex, setTipIndex] = useState(0);
   const HOST_TIPS = [
@@ -680,6 +686,26 @@ export default function HostDashboardPage() {
                     </div>
                   </Link>
                 ))}
+
+                {/* On-spot booking — opens an event picker, then the booking
+                    modal. A button (not a link) since it's a per-event flow. */}
+                <button
+                  type="button"
+                  onClick={() => setShowOnSpotPicker(true)}
+                  className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-sky-50/50 p-4 text-left text-sky-700 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:shadow-[0_12px_24px_rgba(0,0,0,0.02)]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:scale-105">
+                    <LuUserPlus className="h-5 w-5 text-[#0094CA]" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-gray-800 tracking-tight leading-none">
+                      On-spot Booking
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-semibold truncate mt-1">
+                      Book a walk-in guest
+                    </p>
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -1111,6 +1137,24 @@ export default function HostDashboardPage() {
           </div>
         )}
       </main>
+
+      {/* On-spot booking — dashboard quick-action entry point. */}
+      {storedHostId && (
+        <HostOnSpotPickerModal
+          hostId={storedHostId}
+          events={hostExperiences ?? []}
+          isOpen={showOnSpotPicker}
+          onClose={() => setShowOnSpotPicker(false)}
+          onBooked={() => {
+            void queryClient.invalidateQueries({
+              queryKey: ["eventsByHost", storedHostId],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["todaySchedule", storedHostId],
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

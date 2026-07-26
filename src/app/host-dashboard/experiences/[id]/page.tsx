@@ -688,14 +688,21 @@ export default function EditEventPage({
   };
 
   const removeGalleryImage = (index: number) => {
+    // galleryPreviews mixes already-uploaded https URLs with blob: previews for
+    // not-yet-uploaded galleryImages files. Only blob previews have a matching
+    // File; its position in galleryImages is the number of blob previews before
+    // this index (not `index`, which also counts existing URLs).
     const preview = form.galleryPreviews[index];
     if (preview?.startsWith("blob:")) {
       URL.revokeObjectURL(preview);
+      const blobIndex = form.galleryPreviews
+        .slice(0, index)
+        .filter((p) => p.startsWith("blob:")).length;
+      updateForm(
+        "galleryImages",
+        form.galleryImages.filter((_, i) => i !== blobIndex),
+      );
     }
-    updateForm(
-      "galleryImages",
-      form.galleryImages.filter((_, i) => i !== index),
-    );
     updateForm(
       "galleryPreviews",
       form.galleryPreviews.filter((_, i) => i !== index),
@@ -804,8 +811,13 @@ export default function EditEventPage({
           hook_line: form.hookLine.trim(),
           mood: form.mood,
           description: form.description.trim(),
-          cover_image_url: coverImageUrl,
-          gallery_urls: galleryUrls.length > 0 ? galleryUrls : undefined,
+          // Send explicit values so removals persist: the backend keeps the
+          // existing image(s) when these fields are omitted, so a removed cover
+          // must be sent as "" and an emptied gallery as [].
+          cover_image_url: coverImageUrl ?? "",
+          // Guard against a failed upload leaving unresolved blob: previews in the
+          // list — only ever persist real hosted URLs.
+          gallery_urls: galleryUrls.filter((u) => !u.startsWith("blob:")),
           time: eventDateTime.toISOString(),
           end_time: endDateTime.toISOString(),
           is_online: form.isOnline,

@@ -68,7 +68,7 @@ function PhotoGallery({
 
   if (images.length === 0) {
     return (
-      <div className="flex h-[200px] sm:h-[250px] md:h-[300px] w-full items-center justify-center rounded-xl bg-gray-200">
+      <div className="flex aspect-[16/9] w-full items-center justify-center rounded-xl bg-gray-200">
         <span className="text-gray-500">No photos available</span>
       </div>
     );
@@ -84,15 +84,25 @@ function PhotoGallery({
 
   return (
     <div className="group relative">
-      {/* No fixed height — the image sets its own height so the full cover shows
-          at its real aspect ratio (covers are cropped to 4:1 on upload), no crop. */}
-      <div className="relative w-full overflow-hidden rounded-xl bg-gray-100">
-        {/* Main Image */}
+      {/* Fixed 16:9 frame so every event reads the same size and the image sits
+          flush beside the sticky booking card. Uploaded images vary in ratio
+          (flyers are often wider than 16:9), so a blurred copy fills the frame
+          while the foreground uses object-contain — the whole image shows, no
+          crop. Mirrors the ExperienceCard treatment. */}
+      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
+        {/* Blurred backdrop fill */}
+        <img
+          src={images[currentImageIndex]}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+        />
+        {/* Main Image (uncropped) */}
         <img
           src={images[currentImageIndex]}
           alt={`Experience gallery ${currentImageIndex + 1}`}
           loading="lazy"
-          className="block h-auto w-full transition-opacity duration-300"
+          className="relative z-[1] block h-full w-full object-contain transition-opacity duration-300"
         />
 
         {/* Navigation Arrows */}
@@ -1442,29 +1452,29 @@ export default function ExperienceDetailClient({
             </div>
           </div>
 
-          {/* Photo Gallery */}
-          <PhotoGallery
-            coverImage={null}
-            gallery={event.gallery_urls}
-            onShowAll={() => setShowAllPhotos(true)}
-          />
-
-          {/* Main Content Grid */}
-          {/* lg:gap-y-0 keeps the two stacked left-column blocks tight on desktop
-              (their own margins handle spacing) while the mobile stack still gets
-              the gap-8 between Intro → Booking widget → Host/details. */}
-          <div className="mt-10 grid gap-8 lg:grid-cols-12 lg:gap-y-0">
-            {/* Left Column (top) — Intro + About; stays above the widget on mobile */}
+          {/* Main Content Grid — hero image + all content on the left, the
+              sticky booking widget on the right (side by side from lg up). */}
+          <div className="mt-6 grid gap-8 lg:grid-cols-12">
+            {/* Left Column — image, details, host, location, reviews */}
             <div className="lg:col-span-7">
-              <InfoPills
-                duration={event.duration_minutes}
-                groupSize={{
-                  min: event.min_group_size,
-                  max: event.max_group_size,
-                }}
-                languages={event.languages}
-                level={event.level}
+              {/* Photo Gallery (16:9) */}
+              <PhotoGallery
+                coverImage={null}
+                gallery={event.gallery_urls}
+                onShowAll={() => setShowAllPhotos(true)}
               />
+
+              <div className="mt-8">
+                <InfoPills
+                  duration={event.duration_minutes}
+                  groupSize={{
+                    min: event.min_group_size,
+                    max: event.max_group_size,
+                  }}
+                  languages={event.languages}
+                  level={event.level}
+                />
+              </div>
 
               {/* About the Experience */}
               <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-transparent to-blue-50/20 px-4 py-8 md:px-6">
@@ -1480,31 +1490,7 @@ export default function ExperienceDetailClient({
                   <p className="mt-4 text-gray-600 italic">{event.hook_line}</p>
                 )}
               </div>
-            </div>
 
-            {/* Booking Widget — right sidebar on desktop (spans both left rows via
-                lg:row-span-2); on mobile it stacks above the host/contact section. */}
-            <div className="lg:col-span-5 lg:row-span-2">
-              <BookingWidget
-                price={event.price_cents}
-                isFree={event.is_free}
-                priceTiers={event.price_tiers ?? []}
-                rating={ratingData?.average_rating ?? null}
-                totalReviews={ratingData?.total_reviews ?? 0}
-                eventId={event.id}
-                eventDate={event.time}
-                capacity={event.capacity}
-                totalBookings={event.total_bookings}
-                bookingsLastWeek={event.bookings_last_week ?? 0}
-                availability={availability}
-                isRecurring={event.is_recurring}
-                cancellationPolicy={event.cancellation_policy}
-                onBook={handleBook}
-              />
-            </div>
-
-            {/* Left Column (bottom) — Host, location, reviews */}
-            <div className="lg:col-span-7">
               {/* Meet Your Host */}
               <MeetYourHost
                 host={host ?? null}
@@ -1528,6 +1514,28 @@ export default function ExperienceDetailClient({
                 rating={ratingData?.average_rating ?? null}
                 totalReviews={ratingData?.total_reviews ?? 0}
                 onShowAll={() => toast.info("All reviews modal coming soon!")}
+              />
+            </div>
+
+            {/* Booking Widget — sticky sidebar on desktop; on mobile it renders
+                the floating bottom bar (fixed-positioned, so its DOM slot here
+                is inert). */}
+            <div className="lg:col-span-5">
+              <BookingWidget
+                price={event.price_cents}
+                isFree={event.is_free}
+                priceTiers={event.price_tiers ?? []}
+                rating={ratingData?.average_rating ?? null}
+                totalReviews={ratingData?.total_reviews ?? 0}
+                eventId={event.id}
+                eventDate={event.time}
+                capacity={event.capacity}
+                totalBookings={event.total_bookings}
+                bookingsLastWeek={event.bookings_last_week ?? 0}
+                availability={availability}
+                isRecurring={event.is_recurring}
+                cancellationPolicy={event.cancellation_policy}
+                onBook={handleBook}
               />
             </div>
           </div>

@@ -173,16 +173,15 @@ function ImageUpload({
       {multiple && previews.length > 0 && (
         <div className="space-y-4">
           <div className="group relative">
-            {/* Show the whole cover image at its own aspect ratio (covers are
-                cropped to 4:1 on upload) — no cropping, distortion, or letterbox.
-                w-full + h-auto lets the image set the height. */}
-            <div className="relative w-full overflow-hidden rounded-xl bg-gray-100">
+            {/* Photos are cropped to 16:9 on upload, so this preview matches the
+                fixed 16:9 frame the live experience page renders them in. */}
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
               {/* Main Image */}
               <img
                 src={previews[currentImageIndex]}
                 alt={`Cover photo preview ${currentImageIndex + 1}`}
                 loading="lazy"
-                className="block h-auto w-full transition-opacity duration-300"
+                className="block h-full w-full object-cover transition-opacity duration-300"
               />
 
               {/* Navigation Arrows */}
@@ -1529,7 +1528,7 @@ export default function EditEventPage({
 
       <ImageCropModal
         file={cropQueue.length > 0 ? cropQueue[0]! : null}
-        aspect={cropTarget === "profile" ? 16 / 9 : 4}
+        aspect={16 / 9}
         onClose={() => setCropQueue([])}
         onConfirm={handleCropConfirm}
       />

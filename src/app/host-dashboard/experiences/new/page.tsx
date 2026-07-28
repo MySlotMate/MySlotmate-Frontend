@@ -2097,10 +2097,6 @@ export default function CreateExperiencePage() {
                             }`}
                         />
                       </div>
-                      <p className="text-xs text-gray-500">
-                        Platform fee: 30% • You&apos;ll earn: ₹
-                        {((form.priceCents / 100) * 0.7).toFixed(0)} per booking
-                      </p>
                     </div>
                   )}
 
@@ -2165,7 +2161,7 @@ export default function CreateExperiencePage() {
                         + Add ticket type
                       </button>
                       <p className="text-xs text-gray-500">
-                        Guests pick one ticket type when booking. Platform fee: 30%.
+                        Guests pick one ticket type when booking.
                       </p>
                     </div>
                   )}

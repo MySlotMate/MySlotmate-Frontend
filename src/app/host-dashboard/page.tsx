@@ -609,16 +609,16 @@ export default function HostDashboardPage() {
                   </div>
                 </div>
                 
-                <div className="flex w-full gap-3 sm:w-auto">
+                <div className="flex w-full items-center gap-2.5 sm:w-auto">
                   <Link
                     href="/host-dashboard/profile"
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-md transition hover:bg-white/20 sm:flex-initial"
+                    className="flex h-11 flex-1 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-3 text-center text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/20 whitespace-nowrap sm:flex-initial sm:px-5 sm:text-sm"
                   >
                     Edit Profile
                   </Link>
                   <Link
                     href="/host-dashboard/experiences/new"
-                    className="flex flex-1 items-center justify-center rounded-xl bg-white px-5 py-2.5 text-sm font-extrabold text-[#0094CA] shadow-md transition hover:-translate-y-0.5 hover:shadow-lg sm:flex-initial"
+                    className="flex h-11 flex-1 items-center justify-center rounded-xl bg-white px-3 text-center text-xs font-extrabold text-[#0094CA] shadow-md transition hover:-translate-y-0.5 hover:shadow-lg whitespace-nowrap sm:flex-initial sm:px-5 sm:text-sm"
                   >
                     + Create Experience
                   </Link>

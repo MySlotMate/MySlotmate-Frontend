@@ -11,7 +11,6 @@ import {
   Clock3,
   Heart,
   Star,
-  Users,
   MapPin,
   Calendar,
   ArrowRight,
@@ -355,7 +354,7 @@ export const ExperienceCard = ({
             </linearGradient>
           </defs>
         </svg>
-        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#f0f4f8] pt-3">
+        <div className="mt-3 border-t border-[#f0f4f8] pt-3">
           <div className="flex items-start gap-3">
             <Calendar
               className="mt-0.5 h-4.5 w-4.5 shrink-0"
@@ -373,35 +372,6 @@ export const ExperienceCard = ({
               </div>
             ) : (
               <p className="text-[12px] font-bold text-[#a0aec0]">Schedule TBD</p>
-            )}
-          </div>
-
-          <div className="flex items-start gap-3 border-l border-[#f0f4f8] pl-4">
-            <Users
-              className={`mt-0.5 h-4.5 w-4.5 shrink-0 ${isFull ? "text-red-500" : ""}`}
-              style={!isFull ? { stroke: `url(#icon-gradient-${id ?? "default"})` } : undefined}
-              strokeWidth={2.5}
-            />
-            {isRecurring && (isShowingNext || (isFull && !!nextDateLabel)) ? (
-              <div className="min-w-0">
-                <p className="truncate text-[12px] font-bold text-[#16304c]">Next session</p>
-                <p className="truncate text-[11px] font-medium text-[#0060df]">available</p>
-              </div>
-            ) : spotsLeft !== null ? (
-              <div className="min-w-0">
-                <p
-                  className={`text-[12px] font-bold ${isFull ? "text-red-500" : "text-[#16304c]"}`}
-                >
-                  {isFull ? "Fully" : `${spotsLeft} spots`}
-                </p>
-                <p
-                  className={`text-[11px] font-medium ${isFull ? "text-red-500" : "text-[#5c84a5]"}`}
-                >
-                  {isFull ? "booked" : "available"}
-                </p>
-              </div>
-            ) : (
-              <p className="text-[12px] font-bold text-[#a0aec0]">—</p>
             )}
           </div>
         </div>

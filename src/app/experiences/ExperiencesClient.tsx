@@ -150,6 +150,7 @@ export default function ExperiencesClient({
                 time={event.time}
                 location={event.location}
                 isRecurring={event.is_recurring}
+                isPrivate={event.is_private}
                 capacity={event.capacity}
                 totalBookings={event.total_bookings}
                 recurrenceRule={event.recurrence_rule}

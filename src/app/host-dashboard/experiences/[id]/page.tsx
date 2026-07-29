@@ -4,6 +4,8 @@ import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { HostNavbar } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
+import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
+import CouponsManager from "~/components/host/CouponsManager";
 import Breadcrumb from "~/components/Breadcrumb";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
@@ -15,7 +17,7 @@ import {
 } from "~/hooks/useApi";
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck, FiChevronDown, FiChevronRight, FiCalendar, FiUsers } from "react-icons/fi";
-import type { BookingDTO } from "~/lib/api";
+import { getEvent, type BookingDTO } from "~/lib/api";
 import { istInputToUTCISO, utcToISTInputs } from "~/lib/datetime";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -51,6 +53,9 @@ interface EventFormData {
   cancellationPolicy: string;
   requiresAttendeeDetails: boolean;
   attendeeFields: string[];
+  isPrivate: boolean;
+  accessPasskey: string;
+  passkeyGrantsFree: boolean;
 }
 
 const MOODS = [
@@ -558,6 +563,9 @@ export default function EditEventPage({
     cancellationPolicy: "flexible",
     requiresAttendeeDetails: false,
     attendeeFields: [],
+    isPrivate: false,
+    accessPasskey: "",
+    passkeyGrantsFree: false,
   });
 
   useEffect(() => {
@@ -613,9 +621,36 @@ export default function EditEventPage({
         cancellationPolicy: event.cancellation_policy ?? "flexible",
         requiresAttendeeDetails: event.requires_attendee_details ?? false,
         attendeeFields: event.attendee_fields ?? [],
+        isPrivate: event.is_private ?? false,
+        // access_passkey is stripped from the shared event fetch; the effect
+        // below refetches it with host_id so the host can view/re-share it.
+        accessPasskey: event.access_passkey ?? "",
+        passkeyGrantsFree: event.passkey_grants_free ?? false,
       });
     }
   }, [event]);
+
+  // For a private event, refetch with the owning host_id to load the passkey
+  // (the plain event fetch strips it) so the field prefills for re-sharing.
+  useEffect(() => {
+    if (!event?.is_private || !host?.id || !id) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await getEvent(id, host.id);
+        if (cancelled) return;
+        const passkey = res.data.access_passkey ?? "";
+        if (passkey) {
+          setForm((prev) => ({ ...prev, accessPasskey: passkey }));
+        }
+      } catch {
+        // Non-fatal: leave blank; host can set a new passkey.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [event?.is_private, host?.id, id]);
 
   useEffect(() => {
     if (isHydrated && !userId && !hostLoading) {
@@ -743,6 +778,12 @@ export default function EditEventPage({
       return;
     }
 
+    // A private event is unbookable without a passkey — block save either way.
+    if (form.isPrivate && !form.accessPasskey.trim()) {
+      toast.error("A private experience needs a passkey");
+      return;
+    }
+
     // Only enforce completeness when the host is actually trying to publish.
     if (publishAfter) {
       const err = validateForPublish();
@@ -850,6 +891,10 @@ export default function EditEventPage({
           attendee_fields: form.requiresAttendeeDetails
             ? form.attendeeFields
             : [],
+          is_private: form.isPrivate,
+          access_passkey: form.isPrivate ? form.accessPasskey.trim() : "",
+          passkey_grants_free:
+            form.isPrivate && !form.isFree ? form.passkeyGrantsFree : false,
         },
       });
 
@@ -1397,6 +1442,26 @@ export default function EditEventPage({
                     }
                   />
                 </div>
+
+                {/* Privacy & Access */}
+                <div className="mb-4">
+                  <PrivacyAccessSection
+                    isPrivate={form.isPrivate}
+                    accessPasskey={form.accessPasskey}
+                    passkeyGrantsFree={form.passkeyGrantsFree}
+                    isFree={form.isFree}
+                    onChange={(patch) =>
+                      setForm((prev) => ({ ...prev, ...patch }))
+                    }
+                  />
+                </div>
+
+                {/* Coupons — comp codes for this experience */}
+                {host?.id && event?.id && (
+                  <div className="mb-4 border-t border-gray-100 pt-6">
+                    <CouponsManager eventId={event.id} hostId={host.id} />
+                  </div>
+                )}
 
                 {/* Recurring */}
                 <div className="mb-4 space-y-2">

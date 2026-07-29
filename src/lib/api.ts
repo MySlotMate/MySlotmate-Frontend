@@ -881,6 +881,12 @@ export interface EventDTO {
   attendee_fields: string[];
   /** Per-experience terms, printed on the ticket PDF. */
   terms_and_conditions: string | null;
+  /** Private events are listed with a lock; booking needs the passkey. */
+  is_private: boolean;
+  /** True when the event's passkey also comps a paid booking to free. */
+  passkey_grants_free: boolean;
+  /** Only present when fetched with the owning host_id (see getEvent); else null. */
+  access_passkey: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -909,9 +915,12 @@ export function getPlatformSetting<T = unknown>(key: string) {
   return apiFetch<T>(`/platform-settings/${encodeURIComponent(key)}`);
 }
 
-/** GET /events/{eventID} */
-export function getEvent(eventId: string) {
-  return apiFetch<EventDTO>(`/events/${eventId}`);
+/** GET /events/{eventID}. Pass the owning hostId to also receive the private
+ *  event's access_passkey (stripped for everyone else) — used by the host edit
+ *  form so the host can view/re-share their passkey. */
+export function getEvent(eventId: string, hostId?: string) {
+  const qs = hostId ? `?host_id=${encodeURIComponent(hostId)}` : "";
+  return apiFetch<EventDTO>(`/events/${eventId}${qs}`);
 }
 
 /** GET /events/{eventID}/availability */
@@ -1113,6 +1122,11 @@ export interface EventCreatePayload {
   price_tiers?: PriceTierInput[];
   requires_attendee_details?: boolean;
   attendee_fields?: string[];
+  /** Private events are listed with a lock; booking needs the passkey. */
+  is_private?: boolean;
+  access_passkey?: string;
+  /** When true, the passkey also comps a paid booking to free. */
+  passkey_grants_free?: boolean;
 }
 
 export interface EventUpdatePayload {
@@ -1145,6 +1159,10 @@ export interface EventUpdatePayload {
   price_tiers?: PriceTierInput[];
   requires_attendee_details?: boolean;
   attendee_fields?: string[];
+  is_private?: boolean;
+  /** Omit to keep the current passkey; send a value to replace it. */
+  access_passkey?: string;
+  passkey_grants_free?: boolean;
 }
 
 /** POST /events/ — create a new event */
@@ -1334,11 +1352,89 @@ export interface CreateBookingPayload {
   occurrence_date?: string;
   idempotency_key?: string;
   price_tier_id?: string;
+  /** Passkey for a private event (also comps it when the event opts in). */
+  passkey?: string;
+  /** Comp code that waives the whole booking to free. */
+  coupon_code?: string;
 }
 
 /** POST /bookings/ — create a booking */
 export function createBooking(body: CreateBookingPayload) {
   return apiFetch<BookingDTO>("/bookings/", { method: "POST", data: body });
+}
+
+/** POST /events/{slugOrId}/unlock — dry-run check of a private event's passkey.
+ *  Returns whether the passkey is valid and whether it also comps the booking.
+ *  The passkey itself is never returned. Authoritative re-check happens at booking. */
+export function unlockEvent(slugOrId: string, passkey: string) {
+  return apiFetch<{ valid: boolean; grants_free: boolean }>(
+    `/events/${slugOrId}/unlock`,
+    { method: "POST", data: { passkey } },
+  );
+}
+
+/** POST /coupons/validate — dry-run check of a comp code for this event+user. */
+export function validateCoupon(eventId: string, userId: string, code: string) {
+  return apiFetch<{ valid: boolean; comps_booking: boolean; code: string }>(
+    "/coupons/validate",
+    { method: "POST", data: { event_id: eventId, user_id: userId, code } },
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Coupons (host comp codes — always full waivers)                    */
+/* ------------------------------------------------------------------ */
+
+export interface CouponDTO {
+  id: string;
+  host_id: string;
+  event_id: string | null;
+  code: string;
+  max_redemptions: number | null;
+  times_redeemed: number;
+  per_user_limit: number | null;
+  valid_from: string | null;
+  valid_until: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CouponPayload {
+  host_id: string;
+  event_id?: string | null;
+  code: string;
+  max_redemptions?: number | null;
+  per_user_limit?: number | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  is_active?: boolean;
+}
+
+/** GET /coupons/host/{hostID} */
+export function getHostCoupons(hostId: string) {
+  return apiFetch<CouponDTO[]>(`/coupons/host/${hostId}`);
+}
+
+/** POST /coupons/ — create a comp code */
+export function createCoupon(body: CouponPayload) {
+  return apiFetch<CouponDTO>("/coupons/", { method: "POST", data: body });
+}
+
+/** PUT /coupons/{id} — update a comp code (partial; omitted limits are kept) */
+export function updateCoupon(couponId: string, body: CouponPayload) {
+  return apiFetch<CouponDTO>(`/coupons/${couponId}`, {
+    method: "PUT",
+    data: body,
+  });
+}
+
+/** DELETE /coupons/{id}?host_id= */
+export function deleteCoupon(couponId: string, hostId: string) {
+  return apiFetch<{ deleted: boolean }>(
+    `/coupons/${couponId}?host_id=${encodeURIComponent(hostId)}`,
+    { method: "DELETE" },
+  );
 }
 
 /** POST /bookings/{bookingID}/confirm — confirm a pending booking */

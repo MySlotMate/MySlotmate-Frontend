@@ -14,6 +14,7 @@ import {
   MapPin,
   Calendar,
   ArrowRight,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,6 +35,8 @@ export type ExperienceCardItem = {
   totalBookings?: number;
   recurrenceRule?: string | null;
   nextAvailableDate?: string | null;
+  /** Private events show a lock badge; booking requires the host's passkey. */
+  isPrivate?: boolean;
 };
 
 export const formatEventDate = (iso?: string) => {
@@ -158,6 +161,7 @@ export const ExperienceCard = ({
   totalBookings,
   recurrenceRule,
   nextAvailableDate,
+  isPrivate,
   className = "",
 }: ExperienceCardProps) => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -246,6 +250,17 @@ export const ExperienceCard = ({
       };
     }
 
+    // Match comma followed by time (e.g. "Fri 31 Jul, 6:00 am" or "Fri, Jul 31, 6:00 AM")
+    const match = /^(.*?),\s*(\d{1,2}:\d{2}.*)$/.exec(label);
+    if (match?.[1] && match[2]) {
+      const top = match[1].trim();
+      const bottom = match[2].trim();
+      return {
+        top,
+        bottom: bottom.toLowerCase().startsWith("at") ? bottom : `at ${bottom}`,
+      };
+    }
+
     // Fallback: split on comma. e.g. "Thu, May 15, 8:30 PM"
     const commaSplit = label.split(", ");
     if (commaSplit.length >= 3) {
@@ -292,11 +307,19 @@ export const ExperienceCard = ({
             className="relative h-full w-full object-contain transition-transform duration-700 group-hover:scale-110"
           />
 
-          {/* Top-left Badge */}
-          <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#16304c] uppercase shadow-sm">
-            <badge.icon className="h-3 w-3 text-[#f59e0b] fill-[#f59e0b]" strokeWidth={2.5} />
-            {badge.label}
-          </span>
+          {/* Top-left Badges */}
+          <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-1.5">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#16304c] uppercase shadow-sm">
+              <badge.icon className="h-3 w-3 text-[#f59e0b] fill-[#f59e0b]" strokeWidth={2.5} />
+              {badge.label}
+            </span>
+            {isPrivate && (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#16304c]/90 px-3 py-1.5 text-[10px] font-bold tracking-wider text-white uppercase shadow-sm">
+                <Lock className="h-3 w-3" strokeWidth={2.5} />
+                Private
+              </span>
+            )}
+          </div>
 
           {/* Top-right Save Button */}
           {id && (
@@ -322,20 +345,8 @@ export const ExperienceCard = ({
 
       {/* Content Body */}
       <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
-        {/* Location Row */}
-        {location && (
-          <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#16304c]">
-            <MapPin
-              className="h-4 w-4 shrink-0"
-              style={{ stroke: `url(#icon-gradient-${id ?? "default"})` }}
-              strokeWidth={2.5}
-            />
-            <span className="line-clamp-1">{location}</span>
-          </div>
-        )}
-
         {/* Title */}
-        <Link href={href} className="mt-2 block">
+        <Link href={href} className="block">
           <h3 className="line-clamp-1 text-[15px] font-bold leading-tight tracking-tight text-[#16304c] transition-colors group-hover:bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] group-hover:bg-clip-text group-hover:text-transparent">
             {title}
           </h3>
@@ -354,7 +365,7 @@ export const ExperienceCard = ({
             </linearGradient>
           </defs>
         </svg>
-        <div className="mt-3 border-t border-[#f0f4f8] pt-3">
+        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#f0f4f8] pt-3">
           <div className="flex items-start gap-3">
             <Calendar
               className="mt-0.5 h-4.5 w-4.5 shrink-0"
@@ -372,6 +383,23 @@ export const ExperienceCard = ({
               </div>
             ) : (
               <p className="text-[12px] font-bold text-[#a0aec0]">Schedule TBD</p>
+            )}
+          </div>
+
+          <div className="flex items-start gap-2 border-l border-[#f0f4f8] pl-3">
+            <MapPin
+              className="mt-0.5 h-4.5 w-4.5 shrink-0"
+              style={{ stroke: `url(#icon-gradient-${id ?? "default"})` }}
+              strokeWidth={2.5}
+            />
+            {location ? (
+              <div className="min-w-0">
+                <p className="line-clamp-2 text-[12px] font-bold leading-snug text-[#16304c]">
+                  {location}
+                </p>
+              </div>
+            ) : (
+              <p className="text-[12px] font-bold text-[#a0aec0]">Location TBD</p>
             )}
           </div>
         </div>

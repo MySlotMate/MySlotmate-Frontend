@@ -870,15 +870,12 @@ function BookingWidget({
             {!eventHasPassed && (
               <div className="mb-6 rounded-2xl border border-[#dbeaf5] bg-white p-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="mt-0.5 rounded-lg bg-[#eef7ff] p-2 text-[#0094CA]">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-[#eef7ff] p-2 text-[#0094CA]">
                       <FiUser className="h-5 w-5" />
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-[#16304c]">Number of Guests</h4>
-                      <p className="text-[11px] text-[#6f8daa]">
-                        {spotsLeft > 0 ? `${spotsLeft} spot${spotsLeft > 1 ? "s" : ""} left` : "No slots left"}
-                      </p>
                     </div>
                   </div>
 

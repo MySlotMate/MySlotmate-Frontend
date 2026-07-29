@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { HostNavbar } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
+import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
 import Breadcrumb from "~/components/Breadcrumb";
 import {
   useMyHost,
@@ -84,6 +85,10 @@ interface FormData {
   // Attendee details
   requiresAttendeeDetails: boolean;
   attendeeFields: string[];
+  // Privacy & access
+  isPrivate: boolean;
+  accessPasskey: string;
+  passkeyGrantsFree: boolean;
 }
 
 function getGeneratedDescription(value: unknown): string | null {
@@ -930,6 +935,9 @@ export default function CreateExperiencePage() {
     cancellationPolicy: "flexible",
     requiresAttendeeDetails: false,
     attendeeFields: [],
+    isPrivate: false,
+    accessPasskey: "",
+    passkeyGrantsFree: false,
   });
 
   // Local string trackers for controlled numeric inputs to avoid leading-zero/clearing issues
@@ -1192,6 +1200,11 @@ export default function CreateExperiencePage() {
         return false;
       }
     }
+    if (form.isPrivate && !form.accessPasskey.trim()) {
+      setShowErrors(true);
+      toast.error("A private experience needs a passkey");
+      return false;
+    }
     return true;
   };
 
@@ -1303,6 +1316,10 @@ export default function CreateExperiencePage() {
         attendee_fields: form.requiresAttendeeDetails
           ? form.attendeeFields
           : [],
+        is_private: form.isPrivate,
+        access_passkey: form.isPrivate ? form.accessPasskey.trim() : "",
+        passkey_grants_free:
+          form.isPrivate && !form.isFree ? form.passkeyGrantsFree : false,
         status: asDraft ? "draft" : "live",
       });
 
@@ -2319,6 +2336,15 @@ export default function CreateExperiencePage() {
                     updateForm("requiresAttendeeDetails", next)
                   }
                   onFieldsChange={(next) => updateForm("attendeeFields", next)}
+                />
+
+                <PrivacyAccessSection
+                  isPrivate={form.isPrivate}
+                  accessPasskey={form.accessPasskey}
+                  passkeyGrantsFree={form.passkeyGrantsFree}
+                  isFree={form.isFree}
+                  showError={showErrors}
+                  onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
                 />
 
                 {/* Action Buttons */}

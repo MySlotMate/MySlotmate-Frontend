@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
+  CalendarDays,
   Camera,
   ChevronLeft,
   ChevronRight,
@@ -21,6 +22,7 @@ import { toast } from "sonner";
 import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 import { eventPriceLabel } from "~/lib/price";
+import { formatIST } from "~/lib/datetime";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import {
   useListHosts,
@@ -44,6 +46,8 @@ type FeaturedItem = {
   title: string;
   copy: string;
   duration: string;
+  /** IST date of the session — absent on the marketing fallback cards. */
+  dateLabel?: string;
   price: string;
   rating: string;
   image: string;
@@ -341,6 +345,13 @@ const ShowcaseSections = () => {
           220
         ),
         duration: `${event.duration_minutes ?? 0} mins`,
+        // Drop the year for this-year sessions to keep the badge row on one line.
+        dateLabel: formatIST(
+          event.time,
+          formatIST(event.time, "yyyy") === formatIST(now, "yyyy")
+            ? "EEE, d MMM"
+            : "d MMM yyyy",
+        ),
         price: eventPriceLabel(event),
         rating:
           event.avg_rating !== null &&
@@ -413,6 +424,7 @@ const ShowcaseSections = () => {
         totalBookings: event.total_bookings,
         recurrenceRule: event.recurrence_rule,
         nextAvailableDate: event.next_available_date,
+        isPrivate: event.is_private,
       }));
 
     return mapped.length > 0 ? mapped : fallback;
@@ -974,7 +986,17 @@ const ShowcaseSections = () => {
 
                   <div className="mt-auto pt-6">
                     <div className="flex flex-wrap gap-2">
-                      <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
+                      {featured.dateLabel && (
+                        <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
+                          <CalendarDays className="h-3.5 w-3.5 text-[#0e8ae0]" />
+                          <span className="text-xs font-bold text-[#16304c]">
+                            {featured.dateLabel}
+                          </span>
+                        </div>
+                      )}
+                      {/* Duration is the least important of the four — hidden on
+                          phones so the date, price and rating stay on one row. */}
+                      <div className="hidden items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5 sm:flex">
                         <Clock3 className="h-3.5 w-3.5 text-[#0e8ae0]" />
                         <span className="text-xs font-bold text-[#16304c]">
                           {featured.duration}

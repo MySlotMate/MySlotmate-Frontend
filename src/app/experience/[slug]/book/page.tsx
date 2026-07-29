@@ -21,10 +21,11 @@ import AttendeeDetailsForm, {
   attendeeFormValid,
   type AttendeeValues,
 } from "~/components/booking/AttendeeDetailsForm";
-import { FiCalendar, FiUsers, FiClock, FiShield } from "react-icons/fi";
+import { FiCalendar, FiUsers, FiClock, FiShield, FiLock } from "react-icons/fi";
 import { LuWallet, LuLoader2 } from "react-icons/lu";
 import { format } from "date-fns";
 import { formatIST } from "~/lib/datetime";
+import { unlockEvent, validateCoupon } from "~/lib/api";
 import { toast } from "sonner";
 
 export const runtime = "edge";
@@ -211,6 +212,19 @@ function BookingContent({ eventId }: { eventId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // Private-event passkey gate (listed but booking-locked).
+  const [passkey, setPasskey] = useState("");
+  const [passkeyValid, setPasskeyValid] = useState(false);
+  const [passkeyGrantsFree, setPasskeyGrantsFree] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+  const [passkeyError, setPasskeyError] = useState(false);
+
+  // Comp coupon (always a full waiver — no partial discounts).
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponChecking, setCouponChecking] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
   const date = decodeURIComponent(searchParams.get("date") ?? "");
   const guests = parseInt(searchParams.get("guests") ?? "1");
   const tierId = searchParams.get("tier") ?? undefined;
@@ -299,11 +313,66 @@ function BookingContent({ eventId }: { eventId: string }) {
       ? selectedTier.price_cents / 100
       : (event?.price_cents ?? 0) / 100;
   const totalPrice = pricePerPerson * guests;
-  const totalPriceCents = totalPrice * 100;
+  const grossPriceCents = totalPrice * 100;
+  // A matched passkey that comps, or an applied coupon, waives the whole booking.
+  const isComped =
+    (passkeyValid && passkeyGrantsFree) || appliedCoupon !== null;
+  const totalPriceCents = isComped ? 0 : grossPriceCents;
   const walletBalance = wallet?.balance_cents ?? 0;
   const hasInsufficientBalance =
     !event?.is_free && totalPriceCents > 0 && walletBalance < totalPriceCents;
   const shortfall = totalPriceCents - walletBalance;
+  // Private events are booking-locked until the passkey is verified.
+  const needsUnlock = !!event?.is_private && !passkeyValid;
+
+  const handleUnlock = async () => {
+    if (!passkey.trim() || !event) return;
+    setUnlocking(true);
+    setPasskeyError(false);
+    try {
+      const res = await unlockEvent(eventId, passkey.trim());
+      if (res.data.valid) {
+        setPasskeyValid(true);
+        setPasskeyGrantsFree(res.data.grants_free);
+      } else {
+        setPasskeyError(true);
+      }
+    } catch {
+      setPasskeyError(true);
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim() || !event) return;
+    if (!userId) {
+      toast.error("Please login to apply a coupon");
+      return;
+    }
+    setCouponChecking(true);
+    setCouponError(null);
+    try {
+      const res = await validateCoupon(eventId, userId, couponInput.trim());
+      if (res.data.valid) {
+        setAppliedCoupon(res.data.code);
+      } else {
+        setCouponError("This coupon can't be applied");
+      }
+    } catch (err) {
+      setCouponError(
+        err instanceof Error ? err.message : "This coupon can't be applied",
+      );
+    } finally {
+      setCouponChecking(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError(null);
+  };
 
   const waitForWalletBalance = async (
     requiredBalanceCents: number,
@@ -334,6 +403,13 @@ function BookingContent({ eventId }: { eventId: string }) {
 
     if (!event) {
       toast.error("Event not found");
+      return;
+    }
+
+    // Private-event gate: the passkey must be verified before booking.
+    if (needsUnlock) {
+      setPasskeyError(true);
+      toast.error("Enter the passkey to book this private experience");
       return;
     }
 
@@ -530,6 +606,10 @@ function BookingContent({ eventId }: { eventId: string }) {
             occurrence_date: new Date(date || event.time).toISOString(),
             idempotency_key: idempotencyKey,
             price_tier_id: tierId,
+            ...(event.is_private && passkey.trim()
+              ? { passkey: passkey.trim() }
+              : {}),
+            ...(appliedCoupon ? { coupon_code: appliedCoupon } : {}),
           });
 
           await confirmBooking.mutateAsync(bookingRes.data.id);
@@ -640,6 +720,118 @@ function BookingContent({ eventId }: { eventId: string }) {
           </div>
         )}
 
+        {/* Private-event passkey gate */}
+        {event.is_private && (
+          <div className="mt-6">
+            {passkeyValid ? (
+              <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
+                <FiLock size={16} /> Unlocked
+                {passkeyGrantsFree && " — this booking is free with your passkey"}
+              </div>
+            ) : (
+              <div className="rounded-xl border-2 border-gray-200 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <FiLock size={16} /> Private experience
+                </div>
+                <p className="mb-3 text-sm text-gray-500">
+                  Enter the passkey your host shared to book.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={passkey}
+                    onChange={(e) => {
+                      setPasskey(e.target.value);
+                      setPasskeyError(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void handleUnlock();
+                    }}
+                    placeholder="Passkey"
+                    className={`flex-1 rounded-lg border px-4 py-2.5 outline-none focus:ring-2 focus:ring-[#0094CA] ${
+                      passkeyError ? "border-red-400" : "border-gray-200"
+                    }`}
+                  />
+                  <button
+                    onClick={() => void handleUnlock()}
+                    disabled={unlocking || !passkey.trim()}
+                    className="rounded-lg bg-[#0094CA] px-5 py-2.5 font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+                  >
+                    {unlocking ? "…" : "Unlock"}
+                  </button>
+                </div>
+                {passkeyError && (
+                  <p className="mt-2 text-sm text-red-500">
+                    That passkey isn&apos;t right — try again.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Coupon field — for a paid booking not already comped by the passkey */}
+        {!event.is_free &&
+          grossPriceCents > 0 &&
+          !(passkeyValid && passkeyGrantsFree) &&
+          !needsUnlock && (
+            <div className="mt-6">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between rounded-xl border-2 border-green-200 bg-green-50 p-4">
+                  <span className="text-sm font-medium text-green-700">
+                    ✓ {appliedCoupon} applied — this booking is free
+                  </span>
+                  <button
+                    onClick={removeCoupon}
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Have a coupon?
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value.toUpperCase());
+                        setCouponError(null);
+                      }}
+                      placeholder="Coupon code"
+                      className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 uppercase outline-none focus:ring-2 focus:ring-[#0094CA]"
+                    />
+                    <button
+                      onClick={() => void handleApplyCoupon()}
+                      disabled={couponChecking || !couponInput.trim()}
+                      className="rounded-lg border border-[#0094CA] px-5 py-2.5 font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5 disabled:opacity-50"
+                    >
+                      {couponChecking ? "…" : "Apply"}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="mt-2 text-sm text-red-500">{couponError}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+        {/* Free-with-comp summary */}
+        {isComped && (
+          <div className="mt-6 rounded-xl border-2 border-green-200 bg-green-50 p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-500 line-through">
+                ₹{totalPrice.toLocaleString("en-IN")}
+              </span>
+              <span className="text-lg font-bold text-green-700">FREE</span>
+            </div>
+          </div>
+        )}
+
         {/* Wallet Balance Section (for paid events) */}
         {!event.is_free && totalPriceCents > 0 && (
           <div className="mt-6">
@@ -693,7 +885,7 @@ function BookingContent({ eventId }: { eventId: string }) {
         {/* Confirm Button */}
         <button
           onClick={handleConfirmBooking}
-          disabled={isSubmitting || isProcessingPayment}
+          disabled={isSubmitting || isProcessingPayment || needsUnlock}
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-4 font-semibold text-white transition hover:bg-[#007ba8] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting || isProcessingPayment ? (
@@ -701,8 +893,10 @@ function BookingContent({ eventId }: { eventId: string }) {
               <LuLoader2 className="h-4 w-4 animate-spin" />
               Processing...
             </>
-          ) : totalPrice === 0 ? (
-            "Confirm Booking"
+          ) : needsUnlock ? (
+            "Enter passkey to book"
+          ) : totalPriceCents === 0 ? (
+            isComped ? "Confirm free booking" : "Confirm Booking"
           ) : hasInsufficientBalance ? (
             `Pay ₹${(shortfall / 100).toFixed(0)} & Confirm (₹${(walletBalance / 100).toFixed(0)} from wallet)`
           ) : (

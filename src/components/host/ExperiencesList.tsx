@@ -74,6 +74,7 @@ export default function ExperiencesList({
             totalBookings={event.total_bookings}
             recurrenceRule={event.recurrence_rule}
             nextAvailableDate={event.next_available_date}
+            isPrivate={event.is_private}
           />
         ))}
       </div>

@@ -344,7 +344,13 @@ const ShowcaseSections = () => {
           "Discover a hosted experience near you.",
           220
         ),
-        duration: `${event.duration_minutes ?? 0} mins`,
+        duration: (() => {
+          const mins = event.duration_minutes ?? 0;
+          if (mins <= 0) return "1 Hour";
+          if (mins < 60) return `${mins} mins`;
+          const hrs = mins / 60;
+          return `${Number.isInteger(hrs) ? hrs : hrs.toFixed(1)} ${hrs === 1 ? "Hour" : "Hours"}`;
+        })(),
         // Drop the year for this-year sessions to keep the badge row on one line.
         dateLabel: formatIST(
           event.time,
@@ -926,17 +932,6 @@ const ShowcaseSections = () => {
                       />
                     </button>
                   )}
-
-                  <div className="absolute right-4 bottom-4 left-4 hidden items-end justify-between gap-3 md:flex">
-                    <div className="rounded-xl border border-white/20 bg-black/40 px-3 py-1.5 text-white shadow-lg backdrop-blur-xl">
-                      <p className="text-[9px] font-bold tracking-wider text-white/70 uppercase">
-                        Host
-                      </p>
-                      <p className="text-xs font-bold">
-                        {featured.overlayTitle}
-                      </p>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="flex h-full flex-col py-1">

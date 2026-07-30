@@ -54,6 +54,7 @@ interface EventFormData {
   requiresAttendeeDetails: boolean;
   attendeeFields: string[];
   isPrivate: boolean;
+  accessMode: "shared" | "unique";
   accessPasskey: string;
   passkeyGrantsFree: boolean;
 }
@@ -564,6 +565,7 @@ export default function EditEventPage({
     requiresAttendeeDetails: false,
     attendeeFields: [],
     isPrivate: false,
+    accessMode: "shared",
     accessPasskey: "",
     passkeyGrantsFree: false,
   });
@@ -622,6 +624,9 @@ export default function EditEventPage({
         requiresAttendeeDetails: event.requires_attendee_details ?? false,
         attendeeFields: event.attendee_fields ?? [],
         isPrivate: event.is_private ?? false,
+        // Corrected by the passkey refetch below (shared if a passkey exists,
+        // otherwise unique — access via per-guest codes).
+        accessMode: "shared",
         // access_passkey is stripped from the shared event fetch; the effect
         // below refetches it with host_id so the host can view/re-share it.
         accessPasskey: event.access_passkey ?? "",
@@ -640,9 +645,13 @@ export default function EditEventPage({
         const res = await getEvent(id, host.id);
         if (cancelled) return;
         const passkey = res.data.access_passkey ?? "";
-        if (passkey) {
-          setForm((prev) => ({ ...prev, accessPasskey: passkey }));
-        }
+        // A private event with a shared passkey is "shared" mode; one without is
+        // "unique" (access granted by the per-guest codes).
+        setForm((prev) => ({
+          ...prev,
+          accessPasskey: passkey,
+          accessMode: passkey ? "shared" : "unique",
+        }));
       } catch {
         // Non-fatal: leave blank; host can set a new passkey.
       }
@@ -778,8 +787,13 @@ export default function EditEventPage({
       return;
     }
 
-    // A private event is unbookable without a passkey — block save either way.
-    if (form.isPrivate && !form.accessPasskey.trim()) {
+    // A shared-passkey private event is unbookable without its passkey. (Unique
+    // mode needs no passkey — access comes from the per-guest codes.)
+    if (
+      form.isPrivate &&
+      form.accessMode === "shared" &&
+      !form.accessPasskey.trim()
+    ) {
       toast.error("A private experience needs a passkey");
       return;
     }
@@ -892,9 +906,11 @@ export default function EditEventPage({
             ? form.attendeeFields
             : [],
           is_private: form.isPrivate,
-          access_passkey: form.isPrivate ? form.accessPasskey.trim() : "",
-          passkey_grants_free:
-            form.isPrivate && !form.isFree ? form.passkeyGrantsFree : false,
+          // Unique mode clears the shared passkey (access via per-guest codes).
+          access_passkey:
+            form.isPrivate && form.accessMode === "shared"
+              ? form.accessPasskey.trim()
+              : "",
         },
       });
 
@@ -1447,19 +1463,34 @@ export default function EditEventPage({
                 <div className="mb-4">
                   <PrivacyAccessSection
                     isPrivate={form.isPrivate}
+                    accessMode={form.accessMode}
                     accessPasskey={form.accessPasskey}
-                    passkeyGrantsFree={form.passkeyGrantsFree}
-                    isFree={form.isFree}
+                    canGenerateCodes
                     onChange={(patch) =>
                       setForm((prev) => ({ ...prev, ...patch }))
                     }
                   />
                 </div>
 
-                {/* Coupons — comp codes for this experience */}
-                {host?.id && event?.id && (
+                {/* Passkey codes — per-guest access (private events) */}
+                {host?.id && event?.id && form.isPrivate && (
                   <div className="mb-4 border-t border-gray-100 pt-6">
-                    <CouponsManager eventId={event.id} hostId={host.id} />
+                    <CouponsManager
+                      eventId={event.id}
+                      hostId={host.id}
+                      kind="access"
+                    />
+                  </div>
+                )}
+
+                {/* Free-booking codes — comp specific guests (paid events) */}
+                {host?.id && event?.id && !form.isFree && (
+                  <div className="mb-4 border-t border-gray-100 pt-6">
+                    <CouponsManager
+                      eventId={event.id}
+                      hostId={host.id}
+                      kind="free"
+                    />
                   </div>
                 )}
 

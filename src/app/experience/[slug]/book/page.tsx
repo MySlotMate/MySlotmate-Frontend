@@ -212,16 +212,18 @@ function BookingContent({ eventId }: { eventId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Private-event passkey gate (listed but booking-locked).
+  // Private-event access gate (listed but booking-locked).
   const [passkey, setPasskey] = useState("");
   const [passkeyValid, setPasskeyValid] = useState(false);
-  const [passkeyGrantsFree, setPasskeyGrantsFree] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [passkeyError, setPasskeyError] = useState(false);
+  const [unlockMessage, setUnlockMessage] = useState<string | null>(null);
 
-  // Comp coupon (always a full waiver — no partial discounts).
+  // A code the guest applied (unlock code or public promo). couponComps is true
+  // only for a free-booking code; an access code applies but doesn't waive price.
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponComps, setCouponComps] = useState(false);
   const [couponChecking, setCouponChecking] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
 
@@ -314,9 +316,10 @@ function BookingContent({ eventId }: { eventId: string }) {
       : (event?.price_cents ?? 0) / 100;
   const totalPrice = pricePerPerson * guests;
   const grossPriceCents = totalPrice * 100;
-  // A matched passkey that comps, or an applied coupon, waives the whole booking.
-  const isComped =
-    (passkeyValid && passkeyGrantsFree) || appliedCoupon !== null;
+  // A booking is comped only when a free-booking code was applied. Access
+  // (passkey) never comps — a private paid event is still paid. A free-priced
+  // event is handled by the price itself (grossPriceCents = 0).
+  const isComped = couponComps;
   const totalPriceCents = isComped ? 0 : grossPriceCents;
   const walletBalance = wallet?.balance_cents ?? 0;
   const hasInsufficientBalance =
@@ -326,17 +329,38 @@ function BookingContent({ eventId }: { eventId: string }) {
   const needsUnlock = !!event?.is_private && !passkeyValid;
 
   const handleUnlock = async () => {
-    if (!passkey.trim() || !event) return;
+    const code = passkey.trim();
+    if (!code || !event) return;
     setUnlocking(true);
     setPasskeyError(false);
+    setUnlockMessage(null);
     try {
-      const res = await unlockEvent(eventId, passkey.trim());
+      // First try the shared access passkey — grants access only (guest pays).
+      const res = await unlockEvent(eventId, code);
       if (res.data.valid) {
         setPasskeyValid(true);
-        setPasskeyGrantsFree(res.data.grants_free);
-      } else {
-        setPasskeyError(true);
+        return;
       }
+      // Otherwise it may be a per-guest code: an access code (unlocks, pays) or a
+      // free-booking code (unlocks + comps). Validate it; comps_booking tells us.
+      if (userId) {
+        try {
+          const cres = await validateCoupon(eventId, userId, code);
+          if (cres.data.valid) {
+            setPasskeyValid(true);
+            setAppliedCoupon(cres.data.code);
+            setCouponComps(cres.data.comps_booking);
+            return;
+          }
+        } catch (err) {
+          // A recognised-but-unusable code (e.g. already used) has a specific
+          // message worth showing instead of the generic "wrong passkey".
+          if (err instanceof Error && err.message) {
+            setUnlockMessage(err.message);
+          }
+        }
+      }
+      setPasskeyError(true);
     } catch {
       setPasskeyError(true);
     } finally {
@@ -354,8 +378,9 @@ function BookingContent({ eventId }: { eventId: string }) {
     setCouponError(null);
     try {
       const res = await validateCoupon(eventId, userId, couponInput.trim());
-      if (res.data.valid) {
+      if (res.data.valid && res.data.comps_booking) {
         setAppliedCoupon(res.data.code);
+        setCouponComps(true);
       } else {
         setCouponError("This coupon can't be applied");
       }
@@ -370,6 +395,7 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
+    setCouponComps(false);
     setCouponInput("");
     setCouponError(null);
   };
@@ -726,7 +752,7 @@ function BookingContent({ eventId }: { eventId: string }) {
             {passkeyValid ? (
               <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
                 <FiLock size={16} /> Unlocked
-                {passkeyGrantsFree && " — this booking is free with your passkey"}
+                {couponComps && " — this booking is free"}
               </div>
             ) : (
               <div className="rounded-xl border-2 border-gray-200 bg-gray-50 p-4">
@@ -743,6 +769,7 @@ function BookingContent({ eventId }: { eventId: string }) {
                     onChange={(e) => {
                       setPasskey(e.target.value);
                       setPasskeyError(false);
+                      setUnlockMessage(null);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") void handleUnlock();
@@ -762,7 +789,7 @@ function BookingContent({ eventId }: { eventId: string }) {
                 </div>
                 {passkeyError && (
                   <p className="mt-2 text-sm text-red-500">
-                    That passkey isn&apos;t right — try again.
+                    {unlockMessage ?? "That passkey isn't right — try again."}
                   </p>
                 )}
               </div>
@@ -770,11 +797,12 @@ function BookingContent({ eventId }: { eventId: string }) {
           </div>
         )}
 
-        {/* Coupon field — for a paid booking not already comped by the passkey */}
-        {!event.is_free &&
+        {/* Coupon field — public paid events only. For a private event, the
+            code is entered in the unlock prompt above, not here. */}
+        {!event.is_private &&
+          !event.is_free &&
           grossPriceCents > 0 &&
-          !(passkeyValid && passkeyGrantsFree) &&
-          !needsUnlock && (
+          !isComped && (
             <div className="mt-6">
               {appliedCoupon ? (
                 <div className="flex items-center justify-between rounded-xl border-2 border-green-200 bg-green-50 p-4">

@@ -1390,6 +1390,8 @@ export interface CouponDTO {
   host_id: string;
   event_id: string | null;
   code: string;
+  /** true = free-booking code (comp); false = access code (unlocks, guest pays). */
+  grants_free: boolean;
   max_redemptions: number | null;
   times_redeemed: number;
   per_user_limit: number | null;
@@ -1404,6 +1406,8 @@ export interface CouponPayload {
   host_id: string;
   event_id?: string | null;
   code: string;
+  /** true = free-booking code (comp); false = access code. Defaults to true. */
+  grants_free?: boolean;
   max_redemptions?: number | null;
   per_user_limit?: number | null;
   valid_from?: string | null;
@@ -1419,6 +1423,24 @@ export function getHostCoupons(hostId: string) {
 /** POST /coupons/ — create a comp code */
 export function createCoupon(body: CouponPayload) {
   return apiFetch<CouponDTO>("/coupons/", { method: "POST", data: body });
+}
+
+export interface CouponBatchPayload {
+  host_id: string;
+  event_id?: string | null;
+  count: number;
+  prefix?: string;
+  /** true = free-booking codes (comp); false = access codes. Defaults to true. */
+  grants_free?: boolean;
+  /** Defaults to single-use (max_redemptions=1, per_user_limit=1). */
+  max_redemptions?: number | null;
+  per_user_limit?: number | null;
+  valid_until?: string | null;
+}
+
+/** POST /coupons/batch — generate `count` unique single-use codes at once */
+export function createCouponsBatch(body: CouponBatchPayload) {
+  return apiFetch<CouponDTO[]>("/coupons/batch", { method: "POST", data: body });
 }
 
 /** PUT /coupons/{id} — update a comp code (partial; omitted limits are kept) */

@@ -27,6 +27,11 @@ export const metadata: Metadata = {
     "local experiences",
     "adventure booking",
     "skill sharing",
+    "myslotmate",
+    "book people",
+    "slot booking",
+    "host an experience",
+    "learn from experts"
   ],
   applicationName: "MySlotMate",
   creator: "MySlotMate Team",
@@ -92,15 +97,14 @@ export const metadata: Metadata = {
 
   /* Icons */
   icons: {
-    icon: [{ url: "/assets/home/logomyslotmate.png", sizes: "any" }],
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/assets/home/Icon.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
     other: [
-      {
-        rel: "icon",
-        url: "/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-      },
       {
         rel: "icon",
         url: "/icon-512.png",

@@ -87,6 +87,7 @@ interface FormData {
   attendeeFields: string[];
   // Privacy & access
   isPrivate: boolean;
+  accessMode: "shared" | "unique";
   accessPasskey: string;
   passkeyGrantsFree: boolean;
 }
@@ -936,6 +937,7 @@ export default function CreateExperiencePage() {
     requiresAttendeeDetails: false,
     attendeeFields: [],
     isPrivate: false,
+    accessMode: "shared",
     accessPasskey: "",
     passkeyGrantsFree: false,
   });
@@ -1200,7 +1202,11 @@ export default function CreateExperiencePage() {
         return false;
       }
     }
-    if (form.isPrivate && !form.accessPasskey.trim()) {
+    if (
+      form.isPrivate &&
+      form.accessMode === "shared" &&
+      !form.accessPasskey.trim()
+    ) {
       setShowErrors(true);
       toast.error("A private experience needs a passkey");
       return false;
@@ -1317,9 +1323,12 @@ export default function CreateExperiencePage() {
           ? form.attendeeFields
           : [],
         is_private: form.isPrivate,
-        access_passkey: form.isPrivate ? form.accessPasskey.trim() : "",
-        passkey_grants_free:
-          form.isPrivate && !form.isFree ? form.passkeyGrantsFree : false,
+        // Shared mode sends the one passkey; unique mode clears it (access comes
+        // from the per-guest access codes generated after saving).
+        access_passkey:
+          form.isPrivate && form.accessMode === "shared"
+            ? form.accessPasskey.trim()
+            : "",
         status: asDraft ? "draft" : "live",
       });
 
@@ -2340,10 +2349,10 @@ export default function CreateExperiencePage() {
 
                 <PrivacyAccessSection
                   isPrivate={form.isPrivate}
+                  accessMode={form.accessMode}
                   accessPasskey={form.accessPasskey}
-                  passkeyGrantsFree={form.passkeyGrantsFree}
-                  isFree={form.isFree}
                   showError={showErrors}
+                  canGenerateCodes={false}
                   onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
                 />
 

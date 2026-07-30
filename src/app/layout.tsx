@@ -95,23 +95,17 @@ export const metadata: Metadata = {
     ...(env.YANDEX_VERIFICATION && { yandex: env.YANDEX_VERIFICATION }),
   },
 
-  /* Icons */
+  /* Icons — note: NO SVG here. Chrome prefers an image/svg+xml icon over
+     everything else, and the brand SVG is a non-square 33×40 glyph that fails to
+     render at favicon size (blank/default globe). Square .ico/.png only. */
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/assets/home/Icon.svg", type: "image/svg+xml" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
-    other: [
-      {
-        rel: "icon",
-        url: "/icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-      },
-    ],
   },
 
   /* Manifest */

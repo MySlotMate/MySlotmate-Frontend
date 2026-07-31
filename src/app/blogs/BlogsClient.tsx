@@ -28,7 +28,8 @@ import {
 } from "~/hooks/useApi";
 import type { BlogCreatePayload, BlogDTO } from "~/lib/api";
 import { getStoredUserId, setStoredUserId } from "~/lib/auth-storage";
-import { RichTextEditor, RichTextView } from "~/components/RichTextEditor";
+import { RichTextEditor } from "~/components/RichTextEditor";
+import { RichTextView } from "~/components/RichTextView";
 import { ImageCropModal } from "~/components/ImageCropModal";
 import { auth } from "~/utils/firebase";
 import { env } from "~/env";

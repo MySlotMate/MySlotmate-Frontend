@@ -4,8 +4,8 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "~/components/Navbar";
-import { RichTextView } from "~/components/RichTextEditor";
-import { Footer } from "~/components/home";
+import { RichTextView } from "~/components/RichTextView";
+import Footer from "~/components/home/Footer";
 import {
   useEvent,
   usePublicHostProfile,
@@ -45,7 +45,7 @@ import type {
   OccurrenceAvailability,
   PriceTierDTO,
 } from "~/lib/api";
-import { GoogleLogin } from "~/components";
+import GoogleLogin from "~/components/GoogleLogin";
 
 export const runtime = "edge";
 
@@ -101,7 +101,7 @@ function PhotoGallery({
         <img
           src={images[currentImageIndex]}
           alt={`Experience gallery ${currentImageIndex + 1}`}
-          loading="lazy"
+          fetchPriority="high"
           className="relative z-[1] block h-full w-full object-contain transition-opacity duration-300"
         />
 

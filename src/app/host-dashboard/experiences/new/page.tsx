@@ -18,7 +18,8 @@ import { useContentModeration } from "~/hooks/useContentModeration";
 import { useSuggestions } from "~/hooks/useSuggestions";
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { SuggestionChips } from "~/components/SuggestionChips";
-import { RichTextEditor, RichTextView } from "~/components/RichTextEditor";
+import { RichTextEditor } from "~/components/RichTextEditor";
+import { RichTextView } from "~/components/RichTextView";
 import {
   FiArrowLeft,
   FiArrowRight,

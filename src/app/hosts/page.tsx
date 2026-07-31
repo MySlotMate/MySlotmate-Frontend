@@ -46,7 +46,7 @@ const HostCard = ({
       href={`/host/${slug ?? id}`}
       className="group overflow-hidden rounded-[22px] border border-[#aeddf89e] bg-white shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
     >
-      <div className="relative h-[214px] w-full overflow-hidden bg-[#f8fbff]">
+      <div className="relative aspect-square w-full overflow-hidden bg-[#f8fbff]">
         {imageUrl && !imageUrl.includes("people1.") ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -240,7 +240,7 @@ export default function HostsPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
             {filteredHosts.map((host) => (
               <HostCard
                 key={host.id}

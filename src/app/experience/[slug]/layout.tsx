@@ -19,7 +19,7 @@ export async function generateMetadata({
   const { slug } = await params;
   try {
     const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/events/${slug}`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 300 },
     });
     if (!res.ok) return {};
     const json = (await res.json()) as {

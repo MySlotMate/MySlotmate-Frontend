@@ -26,7 +26,7 @@ export default function AboutSection({
         <h2 className="text-xl font-bold text-gray-900">About {first_name}</h2>
         {aboutText && (
           <>
-            <div className="mt-3 text-sm leading-relaxed text-gray-600 italic">
+            <div className="mt-3 text-sm leading-relaxed text-gray-600">
               {expanded ? (
                 <p style={{ whiteSpace: "pre-line" }}>{aboutText}</p>
               ) : (

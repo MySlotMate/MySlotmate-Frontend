@@ -232,7 +232,7 @@ const COMMUNITY_SETS: CommunitySet[] = [
   },
 ];
 
-const STATS_TARGETS = [1000, 200, 4.8, 6] as const;
+const STATS_TARGETS = [100, 50, 4.8, 6] as const;
 const STEPS_ICONS = [
   "/assets/home/verified_magnifying_glass.svg",
   "/assets/home/calender.svg",

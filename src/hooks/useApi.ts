@@ -334,12 +334,24 @@ export function useCalendarEvents(hostId: string | null) {
   });
 }
 
-export function useEvent(eventId: string | null) {
+/**
+ * `initialData` seeds the cache with an event the server already rendered
+ * (see `experience/[slug]/page.tsx`), so the detail page doesn't immediately
+ * refetch data it was just handed. `initialDataUpdatedAt` is required for that
+ * to hold — without it React Query treats the seed as fetched at epoch, sees it
+ * as stale against `staleTime`, and refetches on mount anyway.
+ */
+export function useEvent(
+  eventId: string | null,
+  initialData?: api.Envelope<api.EventDTO>,
+) {
   return useQuery({
     queryKey: queryKeys.event(eventId ?? ""),
     queryFn: () => api.getEvent(eventId!),
     enabled: !!eventId,
     staleTime: 2 * 60 * 1000,
+    initialData,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
     select: (res) => res.data,
   });
 }

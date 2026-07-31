@@ -1292,6 +1292,7 @@ export default function ExperienceDetailClient({
   // legacy UUID) — the /events endpoint resolves either form.
   const { data: fetchedEvent, isLoading: eventQueryLoading } = useEvent(
     resolvedParams.slug,
+    initialEvent ? { success: true, data: initialEvent } : undefined,
   );
   const event = fetchedEvent ?? initialEvent ?? undefined;
   const eventLoading = eventQueryLoading && !event;

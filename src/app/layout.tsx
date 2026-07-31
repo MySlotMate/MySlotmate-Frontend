@@ -4,7 +4,6 @@ import { type Metadata, type Viewport } from "next";
 import { Geist, Manrope, Outfit } from "next/font/google";
 import Providers from "~/components/Providers";
 import { env } from "~/env";
-import PreloaderGate from "~/components/PreloaderGate";
 import { Toaster } from "sonner";
 
 const appUrl = "https://www.myslotmate.com";
@@ -214,7 +213,7 @@ export default function RootLayout({
       </head>
       <body className="max-w-screen overflow-x-clip">
         <Providers>
-          <PreloaderGate>{children}</PreloaderGate>
+          {children}
         </Providers>
         <Toaster position="top-right" richColors closeButton />
       </body>

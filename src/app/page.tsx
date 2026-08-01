@@ -1,66 +1,34 @@
-"use client";
-import * as components from "../components";
-import { useLayoutEffect, useRef } from "react";
-import gsap from "gsap";
-import { MoodProvider } from "~/context/MoodContext";
-export default function HomePage() {
-  const mainRef = useRef<HTMLElement>(null);
-  const filterBarRef = useRef<HTMLDivElement>(null);
+import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
+import { fetchPublic, fetchPublicList } from "~/lib/server-api";
+import type { HomepageMarketingConfig } from "~/components/home/ShowcaseSections";
+import HomeClient from "./HomeClient";
 
-  // hostId and mounted were unused because of commented out code
+export const revalidate = 300;
 
-  useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      const fadeElements = gsap.utils.toArray<HTMLElement>(".scroll-fade");
-
-      fadeElements.forEach((el) => {
-        gsap.fromTo(
-          el,
-          { opacity: 0, y: 24 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.75,
-            ease: "power2.out",
-          },
-        );
-      });
-    }, mainRef);
-
-    return () => ctx.revert();
-  }, []);
+/**
+ * Server half of the home page.
+ *
+ * `ShowcaseSections` falls back to hardcoded marketing cards whenever its
+ * queries have no data yet — and because it server-renders, those fakes were
+ * being baked into the shipped HTML and swapped for real content on hydration.
+ * Fetching here and seeding the client cache means the first paint is real.
+ *
+ * All three are fetched in parallel: none depends on another.
+ */
+export default async function HomePage() {
+  const [events, hosts, marketingConfig] = await Promise.all([
+    fetchPublicList<EventDTO>("/events/"),
+    fetchPublicList<PublicHostProfileDTO>("/hosts"),
+    fetchPublic<HomepageMarketingConfig>(
+      "/platform-settings/homepage_marketing_config",
+    ),
+  ]);
 
   return (
-    <MoodProvider>
-      <main
-        ref={mainRef}
-        className="flex min-h-screen flex-col items-center gap-14 overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(31,167,255,0.10),transparent_30%),linear-gradient(180deg,#fbfeff_0%,#f3faff_100%)] text-[#16304c]"
-      >
-        <components.Navbar />
-
-        <div className="scroll-fade w-full">
-          <components.Home.Hero filterBarRef={filterBarRef} />
-        </div>
-
-        <div className="scroll-fade w-full">
-          <components.Home.ShowcaseSections />
-          {/* <div ref={filterBarRef} className="w-full site-x">
-            <div className="mx-auto flex w-full max-w-[1120px] justify-start">
-              {mounted ? <FilterBar /> : null}
-            </div>
-          </div>
-          <div className="w-full">
-            <components.Home.Trending />
-          </div>
-          <div className="w-full">
-            <components.Home.AllHosts currentHostId={hostId} />
-          </div> */}
-        </div>
-
-        <div className="scroll-fade flex w-full flex-col gap-14">
-          <components.Home.Footer />
-        </div>
-      </main>
-    </MoodProvider>
+    <HomeClient
+      initialEvents={events}
+      initialHosts={hosts}
+      initialMarketingConfig={marketingConfig}
+    />
   );
 }

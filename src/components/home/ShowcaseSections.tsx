@@ -23,6 +23,7 @@ import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 import { eventPriceLabel } from "~/lib/price";
 import { formatIST } from "~/lib/datetime";
+import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import {
   useListHosts,
@@ -261,14 +262,28 @@ const stripHtml = (html: string, maxLength?: number) => {
   return clean;
 };
 
-interface HomepageMarketingConfig {
+export interface HomepageMarketingConfig {
   featured_limit?: number;
   curated_limit?: number;
   featured_event_ids?: string[];
   curated_event_ids?: string[];
 }
 
-const ShowcaseSections = () => {
+/**
+ * `initial*` props come from the server component (`app/page.tsx`) and seed the
+ * React Query cache. Without them the queries start empty on the server render
+ * and the hardcoded *_FALLBACK_DATA marketing cards get baked into the HTML,
+ * then visibly swap to real content on hydration.
+ */
+const ShowcaseSections = ({
+  initialEvents,
+  initialHosts,
+  initialMarketingConfig,
+}: {
+  initialEvents?: EventDTO[];
+  initialHosts?: PublicHostProfileDTO[];
+  initialMarketingConfig?: HomepageMarketingConfig | null;
+} = {}) => {
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredId, setFeaturedId] = useState<string | null>(null);
   const [isFeaturedPlaying, setIsFeaturedPlaying] = useState(true);
@@ -283,13 +298,22 @@ const ShowcaseSections = () => {
   const { hostId, userId } = useStoredAuth();
   const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
     useListTimeAction();
-  const { data: events } = useListPublicEvents();
-  const { data: hosts } = useListHosts();
+  const { data: events } = useListPublicEvents(
+    initialEvents ? { success: true, data: initialEvents } : undefined,
+  );
+  const { data: hosts } = useListHosts(
+    initialHosts ? { success: true, data: initialHosts } : undefined,
+  );
   const { data: featuredSavedStatus } = useIsExperienceSaved(
     featuredId,
     userId,
   );
-  const { data: marketingConfig } = usePlatformSetting<HomepageMarketingConfig>("homepage_marketing_config");
+  const { data: marketingConfig } = usePlatformSetting<HomepageMarketingConfig>(
+    "homepage_marketing_config",
+    initialMarketingConfig
+      ? { success: true, data: initialMarketingConfig }
+      : undefined,
+  );
   const saveExperience = useSaveExperience();
   const unsaveExperience = useUnsaveExperience();
   const curatedSessionsViewportRef = useRef<HTMLDivElement>(null);

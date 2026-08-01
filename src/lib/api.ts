@@ -948,6 +948,8 @@ export interface HostWalkInInitiateBody {
   quantity: number;
   occurrence_date?: string; // RFC3339; required for recurring events
   attendee_details?: WalkInAttendeeDetails;
+  /** A valid free-booking code comps the walk-in to ₹0 (skips payment). */
+  coupon_code?: string;
 }
 
 export interface HostWalkInInitiateResponse {
@@ -1378,6 +1380,15 @@ export function validateCoupon(eventId: string, userId: string, code: string) {
   return apiFetch<{ valid: boolean; comps_booking: boolean; code: string }>(
     "/coupons/validate",
     { method: "POST", data: { event_id: eventId, user_id: userId, code } },
+  );
+}
+
+/** Verify a coupon without a specific guest (walk-in / on-spot). The per-guest
+ *  limit is re-checked at booking; comps_booking indicates a free-booking code. */
+export function verifyCoupon(eventId: string, code: string) {
+  return apiFetch<{ valid: boolean; comps_booking: boolean; code: string }>(
+    "/coupons/validate",
+    { method: "POST", data: { event_id: eventId, code } },
   );
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
-import { FiTrash2, FiPlus, FiDownload } from "react-icons/fi";
+import { FiTrash2, FiPlus, FiDownload, FiChevronDown } from "react-icons/fi";
 import {
   getHostCoupons,
   createCoupon,
@@ -49,6 +49,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
   const [batchPrefix, setBatchPrefix] = useState("");
   const [generating, setGenerating] = useState(false);
   const [lastBatch, setLastBatch] = useState<CouponDTO[]>([]);
+  const [expanded, setExpanded] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -182,6 +183,22 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
     }
   };
 
+  const removeAll = async () => {
+    // Only the codes scoped to THIS event — never the host-wide ones.
+    const own = coupons.filter((c) => c.event_id === eventId);
+    if (own.length === 0) return;
+    if (!window.confirm(`Delete all ${own.length} codes for this experience?`))
+      return;
+    try {
+      await Promise.all(own.map((c) => deleteCoupon(c.id, hostId)));
+      toast.success("Codes cleared");
+      setLastBatch([]);
+      void load();
+    } catch {
+      toast.error("Could not clear all codes");
+    }
+  };
+
   const filePrefix = isFree ? "free-codes" : "access-codes";
 
   return (
@@ -197,13 +214,24 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
               : "Each code lets one guest into this private event; they pay the normal price. A unique passkey per guest."}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => download(coupons, `${filePrefix}-${eventId}.csv`)}
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          <FiDownload size={15} /> All CSV
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => download(coupons, `${filePrefix}-${eventId}.csv`)}
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <FiDownload size={15} /> All CSV
+          </button>
+          {coupons.some((c) => c.event_id === eventId) && (
+            <button
+              type="button"
+              onClick={() => void removeAll()}
+              className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              <FiTrash2 size={15} /> Clear all
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Bulk generate — unique single-use codes, one per guest */}
@@ -287,62 +315,76 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
         />
       </div>
 
-      {/* List */}
+      {/* List — collapsed by default; a batch of codes stays out of the way. */}
       {loading ? (
         <p className="text-sm text-gray-400">Loading…</p>
       ) : coupons.length === 0 ? (
         <p className="text-sm text-gray-400">No codes yet.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-gray-100 text-xs uppercase tracking-wide text-gray-400">
-                <th className="py-2 pr-3 font-medium">Code</th>
-                <th className="py-2 pr-3 font-medium">Scope</th>
-                <th className="py-2 pr-3 font-medium">Used</th>
-                <th className="py-2 pr-3 font-medium">Status</th>
-                <th className="py-2 font-medium" />
-              </tr>
-            </thead>
-            <tbody>
-              {coupons.map((c) => (
-                <tr key={c.id} className="border-b border-gray-50">
-                  <td className="py-2 pr-3 font-semibold text-gray-800">
-                    {c.code}
-                  </td>
-                  <td className="py-2 pr-3 text-gray-500">
-                    {c.event_id === null ? "All events" : "This event"}
-                  </td>
-                  <td className="py-2 pr-3 text-gray-600">
-                    {c.times_redeemed > 0 ? "Used" : "Available"}
-                  </td>
-                  <td className="py-2 pr-3">
-                    <button
-                      type="button"
-                      onClick={() => void toggleActive(c)}
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        c.is_active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-500"
-                      }`}
-                    >
-                      {c.is_active ? "Active" : "Paused"}
-                    </button>
-                  </td>
-                  <td className="py-2 text-right">
-                    <button
-                      type="button"
-                      onClick={() => void remove(c)}
-                      className="text-gray-400 hover:text-red-500"
-                      aria-label="Delete code"
-                    >
-                      <FiTrash2 size={15} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div>
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <span>
+              {coupons.length} code{coupons.length > 1 ? "s" : ""}
+            </span>
+            <FiChevronDown
+              size={16}
+              className={`transition-transform ${expanded ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {expanded && (
+            <div className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-100">
+              <table className="w-full text-left text-sm">
+                <thead className="sticky top-0 bg-white shadow-[0_1px_0_rgba(0,0,0,0.06)]">
+                  <tr className="text-xs uppercase tracking-wide text-gray-400">
+                    <th className="px-3 py-2 font-medium">Code</th>
+                    <th className="px-3 py-2 font-medium">Used</th>
+                    <th className="px-3 py-2 font-medium">Status</th>
+                    <th className="px-3 py-2 font-medium" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {coupons.map((c) => (
+                    <tr key={c.id} className="border-t border-gray-50">
+                      <td className="px-3 py-2 font-semibold text-gray-800">
+                        {c.code}
+                      </td>
+                      <td className="px-3 py-2 text-gray-600">
+                        {c.times_redeemed > 0 ? "Used" : "Available"}
+                      </td>
+                      <td className="px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => void toggleActive(c)}
+                          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                            c.is_active
+                              ? "bg-green-100 text-green-700"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {c.is_active ? "Active" : "Paused"}
+                        </button>
+                      </td>
+                      <td className="px-3 py-2 text-right">
+                        <button
+                          type="button"
+                          onClick={() => void remove(c)}
+                          className="text-gray-400 hover:text-red-500"
+                          aria-label="Delete code"
+                        >
+                          <FiTrash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -143,29 +143,42 @@ export function useMyHost(userId: string | null) {
   });
 }
 
-export function useListHosts() {
+export function useListHosts(
+  initialData?: api.Envelope<api.PublicHostProfileDTO[]>,
+) {
   return useQuery({
     queryKey: queryKeys.listHosts,
     queryFn: () => api.listHosts(),
     staleTime: 5 * 60 * 1000,
+    initialData,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
     select: (res) => res.data,
   });
 }
 
-export function useListPublicEvents() {
+export function useListPublicEvents(
+  initialData?: api.Envelope<api.EventDTO[]>,
+) {
   return useQuery({
     queryKey: queryKeys.listPublicEvents,
     queryFn: () => api.listPublicEvents(),
     staleTime: 5 * 60 * 1000,
+    initialData,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
     select: (res) => res.data,
   });
 }
 
-export function usePlatformSetting<T = unknown>(key: string) {
+export function usePlatformSetting<T = unknown>(
+  key: string,
+  initialData?: api.Envelope<T>,
+) {
   return useQuery({
     queryKey: ["platformSetting", key],
     queryFn: () => api.getPlatformSetting<T>(key),
     staleTime: 5 * 60 * 1000,
+    initialData,
+    initialDataUpdatedAt: initialData ? Date.now() : undefined,
     select: (res) => res.data,
   });
 }

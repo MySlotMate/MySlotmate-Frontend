@@ -128,6 +128,11 @@ export default function HostOnSpotBookingModal({
   >(null);
   const [downloading, setDownloading] = useState(false);
 
+  const [couponCode, setCouponCode] = useState("");
+  const [verifiedCoupon, setVerifiedCoupon] = useState<string | null>(null);
+  const [verifyingCoupon, setVerifyingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+
   const [attendeeValues, setAttendeeValues] = useState<AttendeeValues>({});
   const [showAttendeeErrors, setShowAttendeeErrors] = useState(false);
 
@@ -264,12 +269,41 @@ export default function HostOnSpotBookingModal({
     }
   };
 
+  const handleVerifyCoupon = async () => {
+    const code = couponCode.trim();
+    if (!code) return;
+    setVerifyingCoupon(true);
+    setCouponError(null);
+    try {
+      const res = (await api.verifyCoupon(eventId, code)).data;
+      if (res.valid && res.comps_booking) {
+        setVerifiedCoupon(res.code);
+      } else if (res.valid) {
+        setCouponError("That code only grants access, not a free booking.");
+      } else {
+        setCouponError("Invalid coupon.");
+      }
+    } catch (err) {
+      setCouponError(
+        err instanceof Error ? err.message : "Could not verify coupon.",
+      );
+    } finally {
+      setVerifyingCoupon(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!name.trim()) {
       setError("Guest name is required.");
+      return;
+    }
+    // A typed-but-unverified coupon must be checked first (so we don't try to
+    // book free on an unverified code).
+    if (couponCode.trim() && !verifiedCoupon) {
+      setError("Verify the coupon before booking, or clear it.");
       return;
     }
     if (phone.length !== 10) {
@@ -322,6 +356,7 @@ export default function HostOnSpotBookingModal({
           quantity,
           occurrence_date,
           attendee_details,
+          coupon_code: verifiedCoupon || undefined,
         })
       ).data;
 
@@ -462,6 +497,13 @@ export default function HostOnSpotBookingModal({
                   <span className="font-semibold text-emerald-600">
                     Free experience
                   </span>
+                ) : verifiedCoupon ? (
+                  <span className="font-semibold text-emerald-600">
+                    Free with coupon{" "}
+                    <span className="text-gray-400 line-through">
+                      ₹{priceRupees.toLocaleString("en-IN")}
+                    </span>
+                  </span>
                 ) : (
                   <span className="font-semibold text-gray-900">
                     ₹{priceRupees.toLocaleString("en-IN")}{" "}
@@ -469,6 +511,64 @@ export default function HostOnSpotBookingModal({
                   </span>
                 )}
               </div>
+
+              {/* Coupon — a verified free-booking code comps this walk-in to ₹0. */}
+              {!isFree && (
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-600">
+                    Coupon (optional)
+                  </label>
+                  {verifiedCoupon ? (
+                    <div className="flex items-center justify-between rounded-lg border-2 border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                      <span className="text-sm font-medium text-emerald-700">
+                        ✓ {verifiedCoupon} — this booking is free
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVerifiedCoupon(null);
+                          setCouponCode("");
+                          setCouponError(null);
+                        }}
+                        className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
+                          setCouponError(null);
+                        }}
+                        placeholder="Free-booking code"
+                        className="w-full flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm uppercase outline-none transition focus:border-[#0094CA]"
+                        disabled={loading || verifyingCoupon}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleVerifyCoupon()}
+                        disabled={verifyingCoupon || !couponCode.trim()}
+                        className="shrink-0 rounded-lg border border-[#0094CA] px-4 py-2.5 text-sm font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5 disabled:opacity-50"
+                      >
+                        {verifyingCoupon ? "…" : "Verify"}
+                      </button>
+                    </div>
+                  )}
+                  {couponError ? (
+                    <p className="mt-1 text-[11px] text-red-500">{couponError}</p>
+                  ) : (
+                    !verifiedCoupon && (
+                      <p className="mt-1 text-[11px] text-gray-400">
+                        Enter a free-booking code and verify to comp this guest.
+                      </p>
+                    )
+                  )}
+                </div>
+              )}
 
               {/* Phone */}
               <div>
@@ -608,7 +708,7 @@ export default function HostOnSpotBookingModal({
                   {loading && <LuLoader2 className="h-4 w-4 animate-spin" />}
                   {loading
                     ? "Processing…"
-                    : isFree
+                    : isFree || verifiedCoupon
                       ? "Create booking"
                       : "Collect payment"}
                 </button>

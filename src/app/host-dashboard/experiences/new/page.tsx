@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { HostNavbar } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
 import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
+import CouponsManager from "~/components/host/CouponsManager";
 import Breadcrumb from "~/components/Breadcrumb";
 import {
   useMyHost,
@@ -796,7 +797,7 @@ function PreviewCard({ form }: { form: FormData }) {
 /* ------------------------------------------------------------------ */
 function SuccessModal({
   isOpen,
-  onClose: _onClose,
+  onClose,
   experienceId,
   experienceSlug,
   isDraft,
@@ -832,6 +833,12 @@ function SuccessModal({
             : "Congratulations! Your experience has been published and is now visible to guests."}
         </p>
         <div className="flex flex-col gap-3">
+          <button
+            onClick={onClose}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#0094CA] py-3 font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5"
+          >
+            Add access &amp; coupon codes
+          </button>
           {!isDraft && (
             <>
               <button
@@ -2353,9 +2360,37 @@ export default function CreateExperiencePage() {
                   accessMode={form.accessMode}
                   accessPasskey={form.accessPasskey}
                   showError={showErrors}
-                  canGenerateCodes={false}
+                  canGenerateCodes={!!createdEventId}
                   onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
                 />
+
+                {/* Codes attach to a saved event, so they unlock once the
+                    experience has been created (draft or published). */}
+                {createdEventId && host?.id ? (
+                  <div className="space-y-6 border-t border-gray-100 pt-6">
+                    {/* Access codes only matter for a private event. */}
+                    {form.isPrivate && (
+                      <CouponsManager
+                        eventId={createdEventId}
+                        hostId={host.id}
+                        kind="access"
+                      />
+                    )}
+                    {/* Free-booking coupons only matter for a paid event. */}
+                    {!form.isFree && (
+                      <CouponsManager
+                        eventId={createdEventId}
+                        hostId={host.id}
+                        kind="free"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                    Save this experience (draft or publish) to add access codes
+                    and free-booking coupons — they attach to the saved event.
+                  </div>
+                )}
 
                 {/* Action Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 border-t border-gray-100 pt-6">

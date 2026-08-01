@@ -19,11 +19,13 @@ import {
   FiShield,
   FiAlertTriangle,
   FiUserPlus,
+  FiKey,
 } from "react-icons/fi";
 import { LuBookOpen, LuRotateCcw } from "react-icons/lu";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import HostOnSpotBookingModal from "~/components/host-dashboard/HostOnSpotBookingModal";
+import ManageCodesModal from "~/components/host-dashboard/ManageCodesModal";
 
 /* ------------------------------------------------------------------ */
 /*  Helper: relative time formatting                                   */
@@ -137,6 +139,7 @@ function ExperienceCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPauseConfirm, setShowPauseConfirm] = useState(false);
   const [showOnSpot, setShowOnSpot] = useState(false);
+  const [showCodes, setShowCodes] = useState(false);
   const [pauseOption, setPauseOption] = useState<"all" | "from" | "date">("all");
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -348,6 +351,20 @@ function ExperienceCard({
               </div>
             )}
 
+            {/* Codes & passkey — quick manage without opening the full editor. */}
+            <div className="group relative">
+              <button
+                onClick={() => setShowCodes(true)}
+                className="rounded-lg p-2 text-gray-400 transition hover:bg-[#e6f8ff] hover:text-[#0094CA]"
+                title="Codes & passkey"
+              >
+                <FiKey className="h-4 w-4" />
+              </button>
+              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
+                Codes &amp; passkey
+              </span>
+            </div>
+
             {/* Pause/Resume button — disabled (but visible) for drafts since a
                 draft is neither live nor paused. */}
             <div className="group relative">
@@ -407,6 +424,15 @@ function ExperienceCard({
           </div>
         </div>
       </div>
+
+      {/* Quick codes & passkey manager */}
+      <ManageCodesModal
+        eventId={event.id}
+        eventTitle={event.title}
+        hostId={_hostId}
+        isOpen={showCodes}
+        onClose={() => setShowCodes(false)}
+      />
 
       {/* On-spot booking modal */}
       {showOnSpot && (

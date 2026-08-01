@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { HostNavbar, EarningsChart } from "~/components/host-dashboard";
+import ManageCodesModal from "~/components/host-dashboard/ManageCodesModal";
 import type { ChartPoint } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
 import { formatIST } from "~/lib/datetime";
@@ -37,6 +38,7 @@ import {
   LuChevronLeft,
   LuChevronRight,
   LuLoader2,
+  LuKeyRound,
 } from "react-icons/lu";
 import {
   useHostDashboard,
@@ -52,6 +54,7 @@ import {
 import type { AttentionItemDTO } from "~/lib/api";
 import { PauseExperienceModal } from "~/components/PauseExperienceModal";
 import HostOnSpotPickerModal from "~/components/host-dashboard/HostOnSpotPickerModal";
+import HostCodesPickerModal from "~/components/host-dashboard/HostCodesPickerModal";
 
 /* ------------------------------------------------------------------ */
 /*  Attention items — driven by the /hosts/attention-items endpoint      */
@@ -334,6 +337,12 @@ export default function HostDashboardPage() {
   const { data: attentionData } = useHostAttentionItems(storedHostId);
   const { data: hostExperiences, isLoading: experiencesLoading } = useEventsByHost(storedHostId);
 
+  // Quick "codes & passkey" manager — which experience's panel is open.
+  const [codesEvent, setCodesEvent] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
   const [greeting, setGreeting] = useState("Hello");
   useEffect(() => {
     const hr = new Date().getHours();
@@ -345,6 +354,7 @@ export default function HostDashboardPage() {
   const [activeTab, setActiveTab] = useState<"today" | "all">("today");
 
   const [showOnSpotPicker, setShowOnSpotPicker] = useState(false);
+  const [showCodesPicker, setShowCodesPicker] = useState(false);
 
   const [tipIndex, setTipIndex] = useState(0);
   const HOST_TIPS = [
@@ -706,6 +716,26 @@ export default function HostDashboardPage() {
                     </p>
                   </div>
                 </button>
+
+                {/* Codes & passkey — opens an experience picker, then the codes
+                    manager (private passkey + access / free coupon codes). */}
+                <button
+                  type="button"
+                  onClick={() => setShowCodesPicker(true)}
+                  className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-sky-50/50 p-4 text-left text-sky-700 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:shadow-[0_12px_24px_rgba(0,0,0,0.02)]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:scale-105">
+                    <LuKeyRound className="h-5 w-5 text-[#0094CA]" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-gray-800 tracking-tight leading-none">
+                      Codes &amp; Passkey
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-semibold truncate mt-1">
+                      Passkey &amp; coupon codes
+                    </p>
+                  </div>
+                </button>
               </div>
             </div>
 
@@ -978,6 +1008,17 @@ export default function HostDashboardPage() {
                                   >
                                     View Page
                                   </Link>
+                                  <button
+                                    onClick={() =>
+                                      setCodesEvent({
+                                        id: exp.id,
+                                        title: exp.title,
+                                      })
+                                    }
+                                    className="text-xs font-bold text-[#6f8daa] hover:text-[#0e8ae0] transition"
+                                  >
+                                    Codes &amp; passkey
+                                  </button>
                                   <Link
                                     href={`/host-dashboard/experiences/${exp.id}`}
                                     className="text-xs font-bold text-[#0e8ae0] hover:underline"
@@ -1153,6 +1194,27 @@ export default function HostDashboardPage() {
               queryKey: ["todaySchedule", storedHostId],
             });
           }}
+        />
+      )}
+
+      {/* Quick codes & passkey manager (from a My Experiences card) */}
+      {codesEvent && storedHostId && (
+        <ManageCodesModal
+          eventId={codesEvent.id}
+          eventTitle={codesEvent.title}
+          hostId={storedHostId}
+          isOpen={!!codesEvent}
+          onClose={() => setCodesEvent(null)}
+        />
+      )}
+
+      {/* Codes & passkey — Quick Actions entry point (pick an experience first) */}
+      {storedHostId && (
+        <HostCodesPickerModal
+          hostId={storedHostId}
+          events={hostExperiences ?? []}
+          isOpen={showCodesPicker}
+          onClose={() => setShowCodesPicker(false)}
         />
       )}
     </div>

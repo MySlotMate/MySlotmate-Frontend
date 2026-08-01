@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  useBroadcastMessage,
   useEventMessages,
   useEventsByHost,
   useHostMessages,
@@ -16,7 +15,7 @@ import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
 import { createSocket } from "~/lib/socket";
 import type { EventDTO, InboxMessageDTO } from "~/lib/api";
-import { FiSearch, FiSend, FiVolume2 } from "react-icons/fi";
+import { FiSearch, FiSend } from "react-icons/fi";
 import { format } from "date-fns";
 import { formatIST } from "~/lib/datetime";
 
@@ -49,7 +48,6 @@ export default function HostMessagesPage() {
   const { data: eventMessages } = useEventMessages(selectedEventId);
 
   const sendMessage = useSendMessage();
-  const broadcastMessage = useBroadcastMessage();
   const markRead = useMarkMessageRead();
   const { checkContentSync } = useContentModeration();
 
@@ -324,41 +322,6 @@ export default function HostMessagesPage() {
                 )}
               </div>
 
-              <button
-                disabled={!selectedEventId}
-                className="flex items-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-50"
-                onClick={() => {
-                  if (!selectedEventId) return;
-                  const message = window.prompt(
-                    "Enter your broadcast announcement:",
-                  );
-                  if (!message?.trim()) return;
-
-                  // Check content moderation for broadcast
-                  const result = checkContentSync(message);
-
-                  if (result.score > 5) {
-                    toast.error(
-                      `Broadcast violates community guidelines (Risk Level: ${result.score}/10).\n\n${result.details}`,
-                    );
-                    return;
-                  }
-
-                  if (result.score >= 3) {
-                    toast.warning(
-                      `⚠️ Warning: ${result.details} (Risk Level: ${result.score}/10)`,
-                    );
-                  }
-
-                  broadcastMessage.mutate({
-                    message: message.trim(),
-                    host_id: hostId,
-                    event_id: selectedEventId,
-                  });
-                }}
-              >
-                <FiVolume2 className="h-4 w-4" /> Broadcast Announcement
-              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-4">

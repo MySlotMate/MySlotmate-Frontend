@@ -356,7 +356,7 @@ export default function HostOnSpotBookingModal({
           quantity,
           occurrence_date,
           attendee_details,
-          coupon_code: verifiedCoupon || undefined,
+          coupon_code: verifiedCoupon ?? undefined,
         })
       ).data;
 

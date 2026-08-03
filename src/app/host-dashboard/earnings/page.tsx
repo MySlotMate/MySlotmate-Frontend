@@ -30,6 +30,11 @@ import { LuWallet, LuBuilding2 } from "react-icons/lu";
 // ─── Types ────────────────────────────────────────────────────────────────────
 type PayoutMethodType = "bank" | "upi";
 
+// Payout method types a host is allowed to ADD. UPI is disabled because UPI
+// payouts are not enabled on the Cashfree account (transfers get Rejected with an
+// "account configuration" error) — re-add "upi" here once Cashfree enables it.
+const ENABLED_PAYOUT_METHOD_TYPES: PayoutMethodType[] = ["bank"];
+
 interface AddMethodForm {
   type: PayoutMethodType;
   bank_name: string;
@@ -1208,22 +1213,24 @@ export default function HostEarningsPage() {
           }}
         >
           <div className="space-y-4">
-            {/* Type toggle */}
-            <div className="flex rounded-lg border border-gray-200 p-1">
-              {(["bank", "upi"] as PayoutMethodType[]).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setAddForm((f) => ({ ...f, type: t }))}
-                  className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
-                    addForm.type === t
-                      ? "bg-[#0094CA] text-white shadow-sm"
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
-                >
-                  {t === "bank" ? "🏦 Bank Account" : "📱 UPI"}
-                </button>
-              ))}
-            </div>
+            {/* Type toggle — hidden when only one method type is enabled */}
+            {ENABLED_PAYOUT_METHOD_TYPES.length > 1 && (
+              <div className="flex rounded-lg border border-gray-200 p-1">
+                {ENABLED_PAYOUT_METHOD_TYPES.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setAddForm((f) => ({ ...f, type: t }))}
+                    className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
+                      addForm.type === t
+                        ? "bg-[#0094CA] text-white shadow-sm"
+                        : "text-gray-500 hover:text-gray-700"
+                    }`}
+                  >
+                    {t === "bank" ? "🏦 Bank Account" : "📱 UPI"}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Beneficiary name always shown */}
             <InputField

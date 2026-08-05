@@ -6,7 +6,7 @@ import { LuX, LuCheck, LuDownload, LuLoader2 } from "react-icons/lu";
 import { toast } from "sonner";
 import * as api from "~/lib/api";
 import type { EventDTO, OccurrenceAvailability } from "~/lib/api";
-import { downloadTicketPdf } from "~/lib/ticket";
+import { downloadTicketPdf, sendTicketPdfNotification } from "~/lib/ticket";
 import AttendeeDetailsForm, {
   attendeeFormValid,
   type AttendeeValues,
@@ -43,8 +43,11 @@ function getRazorpay():
   | (new (options: RazorpayOptions) => RazorpayInstance)
   | undefined {
   if (typeof window === "undefined") return undefined;
-  return (window as unknown as { Razorpay?: new (o: RazorpayOptions) => RazorpayInstance })
-    .Razorpay;
+  return (
+    window as unknown as {
+      Razorpay?: new (o: RazorpayOptions) => RazorpayInstance;
+    }
+  ).Razorpay;
 }
 
 // Formats an RFC3339 instant in IST for the occurrence dropdown.
@@ -123,9 +126,7 @@ export default function HostOnSpotBookingModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [booking, setBooking] = useState<
-    Record<string, unknown> | null
-  >(null);
+  const [booking, setBooking] = useState<Record<string, unknown> | null>(null);
   const [downloading, setDownloading] = useState(false);
 
   const [couponCode, setCouponCode] = useState("");
@@ -219,12 +220,10 @@ export default function HostOnSpotBookingModal({
     setAttendeeValues((prev) => ({ ...prev, [key]: value }));
 
   const isFree = !!event?.is_free;
-  const priceRupees =
-    event?.price_cents != null ? event.price_cents / 100 : 0;
+  const priceRupees = event?.price_cents != null ? event.price_cents / 100 : 0;
 
   // Capacity gating for the chosen slot.
-  const selectedOcc =
-    occurrences.find((o) => o.date === selectedDate) ?? null;
+  const selectedOcc = occurrences.find((o) => o.date === selectedDate) ?? null;
   const noSlots = !occLoading && occurrences.length === 0;
   const allSlotsFull =
     occurrences.length > 0 && occurrences.every((o) => o.is_fully_booked);
@@ -247,21 +246,38 @@ export default function HostOnSpotBookingModal({
   const finish = (created?: unknown) => {
     if (created && typeof created === "object") {
       setBooking(created as Record<string, unknown>);
+      // Push the ticket to the guest over WhatsApp. The backend does not send
+      // it for walk-ins (Notify:false), so the client has to trigger it — same
+      // as the admin panel's on-spot flow. Fire-and-forget: the booking is
+      // already committed, so a delivery failure must not block the UI.
+      void sendGuestTicket(created as Record<string, unknown>);
     }
     setLoading(false);
     setDone(true);
     onBooked?.();
   };
 
+  const sendGuestTicket = async (created: Record<string, unknown>) => {
+    if (!event) return;
+    const ok = await sendTicketPdfNotification(
+      created,
+      event,
+      { name: name.trim() },
+      `+91${phone}`,
+    );
+    if (!ok) {
+      toast.error(
+        "Booked, but the WhatsApp ticket could not be sent. Download it and share it manually.",
+      );
+    }
+  };
+
   const handleDownloadTicket = async () => {
     if (!booking || !event) return;
     setDownloading(true);
     try {
-      await downloadTicketPdf(
-        booking,
-        event,
-        { name: name.trim() },
-        (l) => setDownloading(l),
+      await downloadTicketPdf(booking, event, { name: name.trim() }, (l) =>
+        setDownloading(l),
       );
     } catch {
       toast.error("Could not generate the ticket. Please try again.");
@@ -332,7 +348,10 @@ export default function HostOnSpotBookingModal({
       );
       return;
     }
-    if (requiresAttendee && !attendeeFormValid(attendeeFields, attendeeValues)) {
+    if (
+      requiresAttendee &&
+      !attendeeFormValid(attendeeFields, attendeeValues)
+    ) {
       setShowAttendeeErrors(true);
       setError("Please complete the attendee details.");
       return;
@@ -409,8 +428,7 @@ export default function HostOnSpotBookingModal({
               finish(created);
             } catch (err) {
               setLoading(false);
-              const msg =
-                err instanceof Error ? err.message : "booking failed";
+              const msg = err instanceof Error ? err.message : "booking failed";
               setError(
                 `Payment captured but booking failed: ${msg}. The amount is in the guest's wallet — contact support.`,
               );
@@ -545,7 +563,7 @@ export default function HostOnSpotBookingModal({
                           setCouponError(null);
                         }}
                         placeholder="Free-booking code"
-                        className="w-full flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm uppercase outline-none transition focus:border-[#0094CA]"
+                        className="w-full flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm uppercase transition outline-none focus:border-[#0094CA]"
                         disabled={loading || verifyingCoupon}
                       />
                       <button
@@ -559,7 +577,9 @@ export default function HostOnSpotBookingModal({
                     </div>
                   )}
                   {couponError ? (
-                    <p className="mt-1 text-[11px] text-red-500">{couponError}</p>
+                    <p className="mt-1 text-[11px] text-red-500">
+                      {couponError}
+                    </p>
                   ) : (
                     !verifiedCoupon && (
                       <p className="mt-1 text-[11px] text-gray-400">
@@ -576,7 +596,7 @@ export default function HostOnSpotBookingModal({
                   Phone number
                 </label>
                 <div className="flex items-center rounded-lg border border-gray-200 bg-white transition focus-within:border-[#0094CA]">
-                  <span className="select-none border-r border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-500">
+                  <span className="border-r border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-500 select-none">
                     +91
                   </span>
                   <input
@@ -601,7 +621,7 @@ export default function HostOnSpotBookingModal({
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#0094CA]"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA]"
                   placeholder="Full name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -618,7 +638,7 @@ export default function HostOnSpotBookingModal({
                   <input
                     type="number"
                     min={1}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#0094CA]"
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA]"
                     value={quantity}
                     onChange={(e) =>
                       setQuantity(
@@ -633,7 +653,7 @@ export default function HostOnSpotBookingModal({
                     Date &amp; time
                   </label>
                   <select
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[#0094CA] disabled:opacity-60"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA] disabled:opacity-60"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                     disabled={loading || occLoading || occurrences.length === 0}

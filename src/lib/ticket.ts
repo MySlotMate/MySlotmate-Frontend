@@ -1,7 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import { formatIST } from "./datetime";
 import { pdfSafe } from "./pdfText";
 import { toast } from "sonner";
+import { env } from "~/env";
 
 // Load jsPDF dynamically from CDN to keep initial bundle size small
 function loadJsPdf(): Promise<any> {
@@ -9,7 +10,8 @@ function loadJsPdf(): Promise<any> {
   if (w.jspdf) return Promise.resolve(w.jspdf.jsPDF);
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+    script.src =
+      "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
     script.onload = () => {
       if (w.jspdf) resolve(w.jspdf.jsPDF);
       else reject(new Error("jsPDF loaded but not found on window"));
@@ -43,7 +45,7 @@ function buildPdfDocument(
   bookingUser: any,
   coverBase64: string,
   qrBase64: string,
-  bookingId: string | null
+  bookingId: string | null,
 ) {
   const eventDate = new Date(booking?.occurrence_date ?? event?.time ?? "");
 
@@ -64,7 +66,15 @@ function buildPdfDocument(
   // Subtle outer shadow line
   doc.setDrawColor(229, 231, 235); // gray-200
   doc.setLineWidth(0.3);
-  doc.roundedRect(startX - 0.2, startY - 0.2, width + 0.4, height + 0.4, 6.2, 6.2, "D");
+  doc.roundedRect(
+    startX - 0.2,
+    startY - 0.2,
+    width + 0.4,
+    height + 0.4,
+    6.2,
+    6.2,
+    "D",
+  );
   doc.setLineWidth(0.2); // reset
 
   // 1. Top Brand Stripe
@@ -76,7 +86,9 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
-  doc.text("M Y S L O T M A T E", startX + width / 2, startY + 5.5, { align: "center" });
+  doc.text("M Y S L O T M A T E", startX + width / 2, startY + 5.5, {
+    align: "center",
+  });
 
   // 2. Header Content (Image & Text details)
   // Draw Event Cover Image on Left
@@ -120,7 +132,7 @@ function buildPdfDocument(
   // Draw Event Details on Right
   const textX = startX + 28;
   let textY = startY + 16;
-  
+
   // Event Title (Uppercase, Bold, Black)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
@@ -128,7 +140,7 @@ function buildPdfDocument(
   const titleText = pdfSafe(event?.title ?? "EXPERIENCE TICKET").toUpperCase();
   const titleLines = doc.splitTextToSize(titleText, 52); // fits within right block width
   doc.text(titleLines, textX, textY);
-  
+
   const titleHeight = titleLines.length * 4.2;
   textY += titleHeight + 0.5;
 
@@ -179,16 +191,16 @@ function buildPdfDocument(
 
   // 3. Notch Divider
   const dividerY = startY + 43;
-  
+
   // Circular cuts on left and right border
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(229, 231, 235); // matches card outer border
-  
+
   // Left notch
   doc.circle(startX, dividerY, 3.5, "FD");
   doc.setFillColor(255, 255, 255);
   doc.rect(startX - 5, dividerY - 5, 5, 10, "F"); // Mask left outer half
-  
+
   // Right notch
   doc.circle(startX + width, dividerY, 3.5, "FD");
   doc.setFillColor(255, 255, 255);
@@ -208,7 +220,12 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(75, 85, 99); // gray-600
-  doc.text("SHOW THIS MOBILE TICKET AT CHECK-IN", startX + width / 2, pillY + 4.8, { align: "center" });
+  doc.text(
+    "SHOW THIS MOBILE TICKET AT CHECK-IN",
+    startX + width / 2,
+    pillY + 4.8,
+    { align: "center" },
+  );
 
   // 5. Nested Inner Card (QR Code & Info)
   const innerY = pillY + 11;
@@ -230,7 +247,9 @@ function buildPdfDocument(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(6);
     doc.setTextColor(156, 163, 175);
-    doc.text("[QR CODE]", qrX + qrSize/2, qrY + qrSize/2 + 2, { align: "center" });
+    doc.text("[QR CODE]", qrX + qrSize / 2, qrY + qrSize / 2 + 2, {
+      align: "center",
+    });
   }
 
   // Red Line Decoration under QR Code
@@ -259,8 +278,12 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(17, 24, 39); // gray-900
-  const displayBookingId = bookingId ? `XXXX${bookingId.slice(-6).toUpperCase()}` : "N/A";
-  doc.text(`BOOKING ID: ${displayBookingId}`, infoCenter, innerY + 18.5, { align: "center" });
+  const displayBookingId = bookingId
+    ? `XXXX${bookingId.slice(-6).toUpperCase()}`
+    : "N/A";
+  doc.text(`BOOKING ID: ${displayBookingId}`, infoCenter, innerY + 18.5, {
+    align: "center",
+  });
 
   // Confirmed Badge (Green Pill shape)
   const badgeW = 20;
@@ -281,7 +304,10 @@ function buildPdfDocument(
   const barcodeY = innerY + innerH + 4;
   doc.setDrawColor(22, 48, 76);
   let barX = startX + 39.5;
-  const barWidths = [0.3, 0.6, 0.2, 0.8, 0.3, 0.5, 0.2, 0.7, 0.3, 0.4, 0.8, 0.2, 0.5, 0.3, 0.7, 0.2, 0.6, 0.4, 0.3, 0.8];
+  const barWidths = [
+    0.3, 0.6, 0.2, 0.8, 0.3, 0.5, 0.2, 0.7, 0.3, 0.4, 0.8, 0.2, 0.5, 0.3, 0.7,
+    0.2, 0.6, 0.4, 0.3, 0.8,
+  ];
   for (const w of barWidths) {
     doc.setLineWidth(w);
     doc.line(barX, barcodeY, barX, barcodeY + 4);
@@ -293,7 +319,7 @@ function buildPdfDocument(
   const cancelY = barcodeY + 8;
   doc.setFillColor(249, 250, 251); // gray-50
   doc.rect(startX + 0.1, cancelY, width - 0.2, 8, "F");
-  
+
   // top & bottom border for banner
   doc.setDrawColor(243, 244, 246); // gray-100
   doc.line(startX + 0.1, cancelY, startX + width - 0.1, cancelY);
@@ -302,7 +328,12 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(107, 114, 128); // gray-500
-  doc.text("CANCELLATION POLICY RULES APPLY FOR BOOKINGS", startX + width / 2, cancelY + 5.2, { align: "center" });
+  doc.text(
+    "CANCELLATION POLICY RULES APPLY FOR BOOKINGS",
+    startX + width / 2,
+    cancelY + 5.2,
+    { align: "center" },
+  );
 
   // 8. Total Amount Paid Row
   const amountY = cancelY + 8;
@@ -314,7 +345,7 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(17, 24, 39); // gray-900
-  const priceText = `Rs. ${booking?.amount_cents ? ((booking.amount_cents) / 100).toFixed(2) : "0.00"}`;
+  const priceText = `Rs. ${booking?.amount_cents ? (booking.amount_cents / 100).toFixed(2) : "0.00"}`;
   doc.text(priceText, startX + width - 5, amountY + 7, { align: "right" });
 
   // 9. Gold Footer
@@ -368,42 +399,103 @@ function buildPdfDocument(
   }
 }
 
+// renderTicketDoc builds the finished jsPDF document for a booking. Shared by
+// the download and the WhatsApp-send paths so both produce the same ticket.
+async function renderTicketDoc(booking: any, event: any, bookingUser: any) {
+  const jsPDFClass = await loadJsPdf();
+  const doc = new jsPDFClass({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  const verifyUrl = `https://myslotmate.com/experience/${event.id}/confirmation?booking=${booking.id}`;
+
+  // Cover image proxying
+  const coverUrl = event?.cover_image_url ?? "/assets/home/cover.webp";
+  const proxiedCoverUrl = coverUrl.startsWith("http")
+    ? `/api/proxy-image?url=${encodeURIComponent(coverUrl)}`
+    : coverUrl;
+  const coverBase64 = await getBase64FromUrl(proxiedCoverUrl);
+
+  // QR code proxying
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`;
+  const qrBase64 = await getBase64FromUrl(qrUrl);
+
+  buildPdfDocument(
+    doc,
+    event,
+    booking,
+    bookingUser,
+    coverBase64,
+    qrBase64,
+    booking.id,
+  );
+  return doc;
+}
+
+function ticketFileName(bookingId: string | null | undefined): string {
+  const suffix = bookingId ? bookingId.slice(-6).toUpperCase() : "booking";
+  return `slotmate-ticket-${suffix}.pdf`;
+}
+
 export async function downloadTicketPdf(
   booking: any,
   event: any,
   bookingUser: any,
-  onProgress?: (loading: boolean) => void
+  onProgress?: (loading: boolean) => void,
 ) {
   onProgress?.(true);
   try {
-    const jsPDFClass = await loadJsPdf();
-    const doc = new jsPDFClass({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-
-    const verifyUrl = `https://myslotmate.com/experience/${event.id}/confirmation?booking=${booking.id}`;
-    
-    // Cover image proxying
-    const coverUrl = event?.cover_image_url ?? "/assets/home/cover.webp";
-    const proxiedCoverUrl = coverUrl.startsWith("http")
-      ? `/api/proxy-image?url=${encodeURIComponent(coverUrl)}`
-      : coverUrl;
-    const coverBase64 = await getBase64FromUrl(proxiedCoverUrl);
-
-    // QR code proxying
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`;
-    const qrBase64 = await getBase64FromUrl(qrUrl);
-
-    buildPdfDocument(doc, event, booking, bookingUser, coverBase64, qrBase64, booking.id);
-
-    const ticketSuffix = booking.id ? booking.id.slice(-6).toUpperCase() : "booking";
-    doc.save(`slotmate-ticket-${ticketSuffix}.pdf`);
+    const doc = await renderTicketDoc(booking, event, bookingUser);
+    doc.save(ticketFileName(booking.id));
   } catch (err) {
     console.error("PDF generation failed:", err);
     toast.error("Failed to generate PDF. Please try again.");
   } finally {
     onProgress?.(false);
+  }
+}
+
+// sendTicketPdfNotification renders the ticket and uploads it to the backend,
+// which pushes it to the guest over WhatsApp. Best-effort: the booking already
+// succeeded, so a failure here is logged and surfaced as a toast rather than
+// thrown. Mirrors the admin panel's sendTicketNotificationPdf.
+export async function sendTicketPdfNotification(
+  booking: any,
+  event: any,
+  bookingUser: any,
+  phone: string,
+): Promise<boolean> {
+  try {
+    const bookingId = String(booking?.id ?? "");
+    if (!bookingId || !phone) return false;
+
+    const doc = await renderTicketDoc(booking, event, bookingUser);
+    const pdfBlob = doc.output("blob") as Blob;
+    const fileName = ticketFileName(bookingId);
+    const pdfFile = new File([pdfBlob], fileName, { type: "application/pdf" });
+
+    const form = new FormData();
+    form.append("file", pdfFile);
+    form.append("phone", phone);
+    form.append("eventName", event?.title ?? "");
+    form.append("bookingId", bookingId);
+
+    const res = await fetch(
+      `${env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/ticket-notification`,
+      { method: "POST", body: form },
+    );
+    if (!res.ok) {
+      const errData = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      console.error("[WhatsApp Ticket] Send failed:", errData?.error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[WhatsApp Ticket] Error generating/sending PDF:", err);
+    return false;
   }
 }

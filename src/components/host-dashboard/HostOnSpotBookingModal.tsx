@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "~/utils/firebase";
 import { LuX, LuCheck, LuDownload, LuLoader2 } from "react-icons/lu";
 import { toast } from "sonner";
 import * as api from "~/lib/api";
@@ -128,6 +130,29 @@ export default function HostOnSpotBookingModal({
   const [done, setDone] = useState(false);
   const [booking, setBooking] = useState<Record<string, unknown> | null>(null);
   const [downloading, setDownloading] = useState(false);
+  // Name on the account the booking landed on, as resolved by the backend. For a
+  // returning guest this can differ from what the host typed — there is no
+  // host-side phone lookup (it would allow account enumeration), so the initiate
+  // response is where we learn it.
+  const [guest, setGuest] = useState<{
+    name: string;
+    existing: boolean;
+  } | null>(null);
+  // Set when the typed phone already has an account: the name is filled in from
+  // it and locked, since editing it wouldn't rename the account anyway.
+  const [knownGuest, setKnownGuest] = useState(false);
+
+  // Firebase ID token for the auth-gated phone lookup, falling back to the
+  // phone-login JWT (mirrors host-dashboard/page.tsx).
+  const [authUser] = useAuthState(auth);
+  const [idToken, setIdToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (authUser) {
+      void authUser.getIdToken().then(setIdToken);
+    } else {
+      setIdToken(localStorage.getItem("msm_auth_token"));
+    }
+  }, [authUser]);
 
   const [couponCode, setCouponCode] = useState("");
   const [verifiedCoupon, setVerifiedCoupon] = useState<string | null>(null);
@@ -200,6 +225,36 @@ export default function HostOnSpotBookingModal({
     };
   }, [isOpen, eventId]);
 
+  // The moment a full 10-digit number is typed, look it up: an existing account
+  // auto-fills and locks the name, so the host sees whose number it is before
+  // booking. Fires immediately — the effect only runs on the 10th digit, so
+  // there is at most one request per number. Failures (offline, 401,
+  // not-your-event) fall back silently to manual entry.
+  useEffect(() => {
+    if (phone.length !== 10 || !idToken) {
+      setKnownGuest(false);
+      return;
+    }
+    let cancelled = false;
+    api
+      .hostLookupWalkInPhone(`+91${phone}`, eventId, idToken)
+      .then((res) => {
+        if (cancelled) return;
+        if (res.data.exists) {
+          setKnownGuest(true);
+          setName(res.data.name ?? "");
+        } else {
+          setKnownGuest(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setKnownGuest(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [phone, eventId, idToken]);
+
   const reset = () => {
     setEvent(null);
     setName("");
@@ -212,6 +267,8 @@ export default function HostOnSpotBookingModal({
     setDone(false);
     setBooking(null);
     setDownloading(false);
+    setGuest(null);
+    setKnownGuest(false);
     setAttendeeValues({});
     setShowAttendeeErrors(false);
   };
@@ -243,31 +300,50 @@ export default function HostOnSpotBookingModal({
     onClose();
   };
 
-  const finish = (created?: unknown) => {
+  // The name printed on the ticket: the account's own name when the backend
+  // resolved one, otherwise whatever the host typed.
+  const ticketName = (resolved?: string) => {
+    const trimmed = resolved?.trim() ?? "";
+    return trimmed.length > 0 ? trimmed : name.trim();
+  };
+
+  // resolved is the guest identity the backend attached the booking to. Passed
+  // in rather than read from state, since setGuest hasn't flushed yet when the
+  // caller invokes finish in the same handler.
+  const finish = (
+    created?: unknown,
+    resolved?: { name: string; existing: boolean },
+  ) => {
+    if (resolved) setGuest(resolved);
     if (created && typeof created === "object") {
       setBooking(created as Record<string, unknown>);
       // Push the ticket to the guest over WhatsApp. The backend does not send
       // it for walk-ins (Notify:false), so the client has to trigger it — same
       // as the admin panel's on-spot flow. Fire-and-forget: the booking is
       // already committed, so a delivery failure must not block the UI.
-      void sendGuestTicket(created as Record<string, unknown>);
+      void sendGuestTicket(created as Record<string, unknown>, resolved?.name);
     }
     setLoading(false);
     setDone(true);
     onBooked?.();
   };
 
-  const sendGuestTicket = async (created: Record<string, unknown>) => {
+  const sendGuestTicket = async (
+    created: Record<string, unknown>,
+    resolvedName?: string,
+  ) => {
     if (!event) return;
-    const ok = await sendTicketPdfNotification(
+    const res = await sendTicketPdfNotification(
       created,
       event,
-      { name: name.trim() },
+      { name: ticketName(resolvedName) },
       `+91${phone}`,
     );
-    if (!ok) {
+    if (!res.ok) {
       toast.error(
-        "Booked, but the WhatsApp ticket could not be sent. Download it and share it manually.",
+        res.reason
+          ? `Booked, but the WhatsApp ticket failed: ${res.reason}. Download it and share it manually.`
+          : "Booked, but the WhatsApp ticket could not be sent. Download it and share it manually.",
       );
     }
   };
@@ -276,8 +352,11 @@ export default function HostOnSpotBookingModal({
     if (!booking || !event) return;
     setDownloading(true);
     try {
-      await downloadTicketPdf(booking, event, { name: name.trim() }, (l) =>
-        setDownloading(l),
+      await downloadTicketPdf(
+        booking,
+        event,
+        { name: ticketName(guest?.name) },
+        (l) => setDownloading(l),
       );
     } catch {
       toast.error("Could not generate the ticket. Please try again.");
@@ -379,9 +458,14 @@ export default function HostOnSpotBookingModal({
         })
       ).data;
 
+      const resolvedGuest = {
+        name: res.guest_name,
+        existing: res.guest_existing,
+      };
+
       // Free event → already booked + confirmed.
       if (!res.paid) {
-        finish(res.booking);
+        finish(res.booking, resolvedGuest);
         return;
       }
 
@@ -425,7 +509,7 @@ export default function HostOnSpotBookingModal({
                   razorpay_signature: response.razorpay_signature,
                 })
               ).data;
-              finish(created);
+              finish(created, resolvedGuest);
             } catch (err) {
               setLoading(false);
               const msg = err instanceof Error ? err.message : "booking failed";
@@ -483,8 +567,16 @@ export default function HostOnSpotBookingModal({
                 Booking confirmed
               </p>
               <p className="text-sm text-gray-500">
-                The guest&apos;s booking has been created and confirmed.
+                {guest
+                  ? `Booked for ${guest.name} · +91 ${phone}`
+                  : "The guest's booking has been created and confirmed."}
               </p>
+              {guest?.existing && (
+                <p className="text-xs text-gray-400">
+                  This number already had an account — the booking and ticket
+                  went to {guest.name}.
+                </p>
+              )}
               {error && (
                 <div className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">
                   {error}
@@ -621,12 +713,18 @@ export default function HostOnSpotBookingModal({
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA]"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA] disabled:bg-gray-50 disabled:text-gray-500"
                   placeholder="Full name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  disabled={loading}
+                  disabled={loading || knownGuest}
                 />
+                {knownGuest && (
+                  <p className="mt-1 text-xs text-emerald-600">
+                    This number is already registered — booking under the
+                    existing account.
+                  </p>
+                )}
               </div>
 
               {/* Quantity + Date */}

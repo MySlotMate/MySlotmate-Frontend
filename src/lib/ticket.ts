@@ -21,11 +21,24 @@ function loadJsPdf(): Promise<any> {
   });
 }
 
-// Convert image url to base64 via FileReader to prevent canvas tainting in PDF generation
+// Convert image url to base64 via FileReader to prevent canvas tainting in PDF generation.
+//
+// The res.ok / MIME checks are load-bearing: fetch resolves on 404 too, so
+// without them a missing image yields a data: URI of the error page's HTML,
+// which jsPDF then rejects at addImage with "Incomplete or corrupt PNG file" —
+// aborting the whole ticket over a decorative cover.
 async function getBase64FromUrl(url: string): Promise<string> {
   try {
     const res = await fetch(url);
+    if (!res.ok) {
+      console.warn(`Image fetch failed (${res.status}):`, url);
+      return "";
+    }
     const blob = await res.blob();
+    if (!blob.type.startsWith("image/")) {
+      console.warn(`Not an image (${blob.type}):`, url);
+      return "";
+    }
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
@@ -34,6 +47,35 @@ async function getBase64FromUrl(url: string): Promise<string> {
     });
   } catch (err) {
     console.warn("Failed to fetch image base64 from URL:", url, err);
+    return "";
+  }
+}
+
+// jsPDF only decodes PNG and JPEG. Covers are routinely WEBP (and the local
+// fallback is an SVG), so normalise everything through a canvas to PNG. Returns
+// "" if the image can't be decoded — callers treat that as "no cover" and draw
+// the placeholder instead of failing the ticket.
+async function toPngDataUrl(dataUrl: string): Promise<string> {
+  if (!dataUrl) return "";
+  if (dataUrl.startsWith("data:image/png")) return dataUrl;
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("image decode failed"));
+      el.src = dataUrl;
+    });
+    // SVGs without intrinsic dimensions decode to 0x0 — nothing to draw.
+    if (!img.naturalWidth || !img.naturalHeight) return "";
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+    ctx.drawImage(img, 0, 0);
+    return canvas.toDataURL("image/png");
+  } catch (err) {
+    console.warn("Could not convert image to PNG for the ticket:", err);
     return "";
   }
 }
@@ -411,16 +453,19 @@ async function renderTicketDoc(booking: any, event: any, bookingUser: any) {
 
   const verifyUrl = `https://myslotmate.com/experience/${event.id}/confirmation?booking=${booking.id}`;
 
-  // Cover image proxying
-  const coverUrl = event?.cover_image_url ?? "/assets/home/cover.webp";
+  // Cover image proxying. Both images go through toPngDataUrl because jsPDF is
+  // told they are PNG at addImage time — anything else aborts the ticket.
+  const coverUrl = event?.cover_image_url ?? "/assets/home/cover.svg";
   const proxiedCoverUrl = coverUrl.startsWith("http")
     ? `/api/proxy-image?url=${encodeURIComponent(coverUrl)}`
     : coverUrl;
-  const coverBase64 = await getBase64FromUrl(proxiedCoverUrl);
+  const coverBase64 = await toPngDataUrl(
+    await getBase64FromUrl(proxiedCoverUrl),
+  );
 
   // QR code proxying
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`;
-  const qrBase64 = await getBase64FromUrl(qrUrl);
+  const qrBase64 = await toPngDataUrl(await getBase64FromUrl(qrUrl));
 
   buildPdfDocument(
     doc,
@@ -457,6 +502,14 @@ export async function downloadTicketPdf(
   }
 }
 
+// TicketSendResult carries why a send failed, so the caller can show the actual
+// server error instead of a generic "could not be sent" that hides whether the
+// problem is the booking, the network, or the WhatsApp provider's config.
+export interface TicketSendResult {
+  ok: boolean;
+  reason?: string;
+}
+
 // sendTicketPdfNotification renders the ticket and uploads it to the backend,
 // which pushes it to the guest over WhatsApp. Best-effort: the booking already
 // succeeded, so a failure here is logged and surfaced as a toast rather than
@@ -466,10 +519,12 @@ export async function sendTicketPdfNotification(
   event: any,
   bookingUser: any,
   phone: string,
-): Promise<boolean> {
+): Promise<TicketSendResult> {
   try {
     const bookingId = String(booking?.id ?? "");
-    if (!bookingId || !phone) return false;
+    if (!bookingId)
+      return { ok: false, reason: "no booking id on the booking" };
+    if (!phone) return { ok: false, reason: "no guest phone number" };
 
     const doc = await renderTicketDoc(booking, event, bookingUser);
     const pdfBlob = doc.output("blob") as Blob;
@@ -490,12 +545,16 @@ export async function sendTicketPdfNotification(
       const errData = (await res.json().catch(() => ({}))) as {
         error?: string;
       };
-      console.error("[WhatsApp Ticket] Send failed:", errData?.error);
-      return false;
+      const reason = errData?.error ?? `HTTP ${res.status}`;
+      console.error("[WhatsApp Ticket] Send failed:", reason);
+      return { ok: false, reason };
     }
-    return true;
+    return { ok: true };
   } catch (err) {
     console.error("[WhatsApp Ticket] Error generating/sending PDF:", err);
-    return false;
+    return {
+      ok: false,
+      reason: err instanceof Error ? err.message : "unexpected error",
+    };
   }
 }

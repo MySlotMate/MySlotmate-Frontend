@@ -938,7 +938,10 @@ export function getEventAvailability(eventId: string) {
 
 /** Attendee-profile answers collected at booking, without user_id (the guest is
  *  created server-side). Mirrors the customer booking form's upsert payload. */
-export type WalkInAttendeeDetails = Omit<AttendeeProfileUpdatePayload, "user_id">;
+export type WalkInAttendeeDetails = Omit<
+  AttendeeProfileUpdatePayload,
+  "user_id"
+>;
 
 export interface HostWalkInInitiateBody {
   host_id: string;
@@ -957,6 +960,11 @@ export interface HostWalkInInitiateResponse {
   booking?: unknown;
   guest_user_id: string;
   occurrence_date: string;
+  /** Name on the account the booking attached to, and whether that account
+   *  already existed for this phone. Lets the UI confirm "booked for <name>"
+   *  after the fact — there is no host-side phone lookup by design. */
+  guest_name: string;
+  guest_existing: boolean;
   // Razorpay checkout fields (paid path only).
   order_id?: string;
   key_id?: string;
@@ -974,6 +982,28 @@ export interface HostWalkInCompleteBody {
   razorpay_order_id: string;
   razorpay_payment_id: string;
   razorpay_signature: string;
+}
+
+export interface WalkInPhoneLookup {
+  exists: boolean;
+  user_id?: string;
+  name?: string;
+}
+
+/**
+ * GET /host/bookings/walk-in/lookup — does this phone already have an account?
+ * Auth-gated (RequireUser) and scoped to an event the caller hosts, so it can't
+ * be used as an open phone→name oracle. Sends `Authorization: Bearer <token>`.
+ */
+export function hostLookupWalkInPhone(
+  phone: string,
+  eventId: string,
+  idToken: string,
+) {
+  return apiFetch<WalkInPhoneLookup>("/host/bookings/walk-in/lookup", {
+    params: { phone, event_id: eventId },
+    headers: getAuthHeader(idToken),
+  });
 }
 
 /** POST /host/bookings/walk-in/initiate */
@@ -1451,7 +1481,10 @@ export interface CouponBatchPayload {
 
 /** POST /coupons/batch — generate `count` unique single-use codes at once */
 export function createCouponsBatch(body: CouponBatchPayload) {
-  return apiFetch<CouponDTO[]>("/coupons/batch", { method: "POST", data: body });
+  return apiFetch<CouponDTO[]>("/coupons/batch", {
+    method: "POST",
+    data: body,
+  });
 }
 
 /** PUT /coupons/{id} — update a comp code (partial; omitted limits are kept) */

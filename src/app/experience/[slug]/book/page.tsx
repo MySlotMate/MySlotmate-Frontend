@@ -327,7 +327,8 @@ function BookingContent({ eventId }: { eventId: string }) {
   const shortfall = totalPriceCents - walletBalance;
   // Private events are booking-locked until the passkey is verified.
   const needsUnlock =
-    !!(event?.is_private || event?.access_passkey) && !passkeyValid;
+    (Boolean(event?.is_private) || Boolean(event?.access_passkey)) &&
+    !passkeyValid;
 
   const handleUnlock = async () => {
     const code = passkey.trim();
@@ -633,7 +634,8 @@ function BookingContent({ eventId }: { eventId: string }) {
             occurrence_date: new Date(date || event.time).toISOString(),
             idempotency_key: idempotencyKey,
             price_tier_id: tierId,
-            ...((event.is_private || !!event.access_passkey) && passkey.trim()
+            ...((Boolean(event.is_private) || Boolean(event.access_passkey)) &&
+            passkey.trim()
               ? { passkey: passkey.trim() }
               : {}),
             ...(appliedCoupon ? { coupon_code: appliedCoupon } : {}),
@@ -748,7 +750,7 @@ function BookingContent({ eventId }: { eventId: string }) {
         )}
 
         {/* Private-event / passkey gate */}
-        {(event.is_private || !!event.access_passkey) && (
+        {(Boolean(event.is_private) || Boolean(event.access_passkey)) && (
           <div className="mt-6">
             {passkeyValid ? (
               <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">

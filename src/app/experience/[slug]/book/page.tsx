@@ -343,15 +343,20 @@ function BookingContent({ eventId }: { eventId: string }) {
         setPasskeyValid(true);
         return;
       }
-      // Otherwise it may be a per-guest code: an access code (unlocks, pays) or a
-      // free-booking code (unlocks + comps). Validate it; comps_booking tells us.
+      // Otherwise it may be a per-guest code: an access code / passkey (unlocks,
+      // guest pays) or a free-booking code (unlocks + comps). A passkey and a
+      // coupon are DIFFERENT things: only apply this as a coupon when it actually
+      // comps the booking — an access-only passkey just unlocks and is never
+      // shown in the coupon UI. (A separate free coupon can then be added below.)
       if (userId) {
         try {
           const cres = await validateCoupon(eventId, userId, code);
           if (cres.data.valid) {
             setPasskeyValid(true);
-            setAppliedCoupon(cres.data.code);
-            setCouponComps(cres.data.comps_booking);
+            if (cres.data.comps_booking) {
+              setAppliedCoupon(cres.data.code);
+              setCouponComps(true);
+            }
             return;
           }
         } catch (err) {
@@ -800,11 +805,11 @@ function BookingContent({ eventId }: { eventId: string }) {
           </div>
         )}
 
-        {/* Coupon field — public paid events only. Hides if passkey is required, entered, or valid. */}
-        {!event.is_private &&
-          !event.access_passkey &&
-          !passkeyValid &&
-          !passkey.trim() &&
+        {/* Coupon field — passkey and coupon are independent. The coupon is
+            always available on a paid booking; for a private event it appears
+            once the passkey has unlocked it (needsUnlock is false). Apply a
+            coupon to comp the booking, otherwise the guest pays. */}
+        {!needsUnlock &&
           !event.is_free &&
           grossPriceCents > 0 &&
           !isComped && (
@@ -812,7 +817,10 @@ function BookingContent({ eventId }: { eventId: string }) {
               {appliedCoupon ? (
                 <div className="flex items-center justify-between rounded-xl border-2 border-green-200 bg-green-50 p-4">
                   <span className="text-sm font-medium text-green-700">
-                    ✓ {appliedCoupon} applied — this booking is free
+                    ✓ {appliedCoupon} applied
+                    {couponComps
+                      ? " — this booking is free"
+                      : " — access unlocked, you’ll still pay"}
                   </span>
                   <button
                     onClick={removeCoupon}

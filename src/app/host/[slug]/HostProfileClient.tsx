@@ -68,15 +68,13 @@ export default function HostProfileClient({
 
   // DEBUG: Console logs
 
-  // Derive gallery from the host's own photos (scraped from Instagram at
-  // application time) + all event cover images + gallery URLs
+  // Derive gallery from the host's own photos + event cover images (excluding sub-gallery photos)
   const galleryUrls = useMemo(() => {
     const urls: string[] = [...(host?.gallery_urls ?? [])];
     for (const evt of events ?? []) {
       if (evt.cover_image_url) urls.push(evt.cover_image_url);
-      if (evt.gallery_urls) urls.push(...evt.gallery_urls);
     }
-    return urls;
+    return Array.from(new Set(urls.filter(Boolean)));
   }, [host, events]);
 
   // Derive aggregate stats from events, unless an admin has pinned a value for

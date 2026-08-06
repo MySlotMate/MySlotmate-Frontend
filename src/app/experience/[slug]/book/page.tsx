@@ -326,7 +326,8 @@ function BookingContent({ eventId }: { eventId: string }) {
     !event?.is_free && totalPriceCents > 0 && walletBalance < totalPriceCents;
   const shortfall = totalPriceCents - walletBalance;
   // Private events are booking-locked until the passkey is verified.
-  const needsUnlock = !!event?.is_private && !passkeyValid;
+  const needsUnlock =
+    !!(event?.is_private || event?.access_passkey) && !passkeyValid;
 
   const handleUnlock = async () => {
     const code = passkey.trim();
@@ -632,7 +633,7 @@ function BookingContent({ eventId }: { eventId: string }) {
             occurrence_date: new Date(date || event.time).toISOString(),
             idempotency_key: idempotencyKey,
             price_tier_id: tierId,
-            ...(event.is_private && passkey.trim()
+            ...((event.is_private || !!event.access_passkey) && passkey.trim()
               ? { passkey: passkey.trim() }
               : {}),
             ...(appliedCoupon ? { coupon_code: appliedCoupon } : {}),
@@ -746,8 +747,8 @@ function BookingContent({ eventId }: { eventId: string }) {
           </div>
         )}
 
-        {/* Private-event passkey gate */}
-        {event.is_private && (
+        {/* Private-event / passkey gate */}
+        {(event.is_private || !!event.access_passkey) && (
           <div className="mt-6">
             {passkeyValid ? (
               <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
@@ -797,9 +798,11 @@ function BookingContent({ eventId }: { eventId: string }) {
           </div>
         )}
 
-        {/* Coupon field — public paid events only. For a private event, the
-            code is entered in the unlock prompt above, not here. */}
+        {/* Coupon field — public paid events only. Hides if passkey is required, entered, or valid. */}
         {!event.is_private &&
+          !event.access_passkey &&
+          !passkeyValid &&
+          !passkey.trim() &&
           !event.is_free &&
           grossPriceCents > 0 &&
           !isComped && (

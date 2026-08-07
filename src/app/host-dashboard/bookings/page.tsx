@@ -17,8 +17,11 @@ import {
   FiUsers,
   FiChevronDown,
   FiChevronRight,
+  FiDownload,
 } from "react-icons/fi";
 import { LuLoader2 } from "react-icons/lu";
+import { downloadTicketPdf } from "~/lib/ticket";
+import { exportBookingsToExcel } from "~/lib/excelExport";
 
 /**
  * Host bookings page — every booking the host has received, grouped by event.
@@ -198,6 +201,7 @@ function EventBookingsGroup({
   isPast: boolean;
 }) {
   const [open, setOpen] = useState(!isPast);
+  const [exporting, setExporting] = useState(false);
 
   const active = bookings.filter(
     (b) => b.status !== "cancelled" && b.status !== "refunded",
@@ -254,7 +258,7 @@ function EventBookingsGroup({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-4 text-xs text-gray-500">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-4 text-xs text-gray-500">
           <span className="flex items-center gap-1">
             <FiUsers className="h-3.5 w-3.5" />
             {guests} / {event.capacity}
@@ -264,6 +268,23 @@ function EventBookingsGroup({
               ₹{(revenue / 100).toFixed(2)}
             </span>
           )}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              void exportBookingsToExcel(event.title, bookings, setExporting);
+            }}
+            disabled={exporting || bookings.length === 0}
+            className="inline-flex items-center gap-1 rounded-md border border-emerald-600 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+            title="Download Excel sheet of bookings for this event"
+          >
+            {exporting ? (
+              <LuLoader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <FiDownload className="h-3 w-3" />
+            )}
+            Excel
+          </button>
           <Link
             href={`/host-dashboard/experiences/${event.id}?tab=bookings`}
             onClick={(e) => e.stopPropagation()}
@@ -281,7 +302,7 @@ function EventBookingsGroup({
               No bookings yet.
             </p>
           ) : (
-            bookings.map((b) => <BookingRow key={b.id} booking={b} />)
+            bookings.map((b) => <BookingRow key={b.id} booking={b} event={event} />)
           )}
         </div>
       )}
@@ -337,9 +358,16 @@ function AttendeeDetails({ profile }: { profile: AttendeeProfileDTO }) {
   );
 }
 
-function BookingRow({ booking }: { booking: BookingDTO }) {
+function BookingRow({
+  booking,
+  event,
+}: {
+  booking: BookingDTO;
+  event: { id: string; title: string; time: string; location: string | null; capacity: number };
+}) {
   const name = booking.user_name ?? "Unknown user";
   const [showDetails, setShowDetails] = useState(false);
+  const [downloadingTicket, setDownloadingTicket] = useState(false);
   const hasDetails = !!booking.attendee_profile;
 
   return (
@@ -376,7 +404,7 @@ function BookingRow({ booking }: { booking: BookingDTO }) {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-3 text-xs">
+        <div className="flex items-center gap-2 sm:gap-3 text-xs">
           <span className="text-gray-500">Qty {booking.quantity}</span>
           {booking.amount_cents !== null && (
             <span className="text-gray-700">
@@ -396,6 +424,27 @@ function BookingRow({ booking }: { booking: BookingDTO }) {
           >
             {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
           </span>
+          <button
+            type="button"
+            onClick={() => {
+              void downloadTicketPdf(
+                booking,
+                event,
+                { name: booking.user_name, email: booking.user_email },
+                setDownloadingTicket,
+              );
+            }}
+            disabled={downloadingTicket}
+            className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA] disabled:opacity-50"
+            title="Download Ticket PDF"
+          >
+            {downloadingTicket ? (
+              <LuLoader2 className="h-3 w-3 animate-spin text-[#0094CA]" />
+            ) : (
+              <FiDownload className="h-3 w-3 text-gray-500" />
+            )}
+            Ticket
+          </button>
         </div>
       </div>
       {hasDetails && showDetails && booking.attendee_profile && (

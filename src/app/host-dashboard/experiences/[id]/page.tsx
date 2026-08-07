@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
 "use client";
 
 import { useEffect, useState, useRef, use, useCallback } from "react";
@@ -16,12 +17,14 @@ import {
   usePublishEvent,
 } from "~/hooks/useApi";
 import { useDragDrop } from "~/hooks/useDragDrop";
-import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck, FiChevronDown, FiChevronRight, FiCalendar, FiUsers } from "react-icons/fi";
+import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck, FiChevronDown, FiChevronRight, FiCalendar, FiUsers, FiDownload } from "react-icons/fi";
 import { getEvent, type BookingDTO } from "~/lib/api";
 import { istInputToUTCISO, utcToISTInputs } from "~/lib/datetime";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImageCropModal } from "~/components/ImageCropModal";
+import { downloadTicketPdf } from "~/lib/ticket";
+import { exportBookingsToExcel } from "~/lib/excelExport";
 
 export const runtime = "edge";
 
@@ -305,7 +308,15 @@ function ImageUpload({
   );
 }
 
-function AttendeeRow({ attendee }: { attendee: BookingDTO }) {
+function AttendeeRow({
+  attendee,
+  event,
+}: {
+  attendee: BookingDTO;
+  event: any;
+}) {
+  const [downloadingTicket, setDownloadingTicket] = useState(false);
+
   return (
     <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 first:border-t-0">
       <div className="flex min-w-0 items-center gap-3">
@@ -338,21 +349,44 @@ function AttendeeRow({ attendee }: { attendee: BookingDTO }) {
           </p>
         </div>
       </div>
-      <span
-        className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
-          attendee.status === "pending"
-            ? "bg-yellow-100 text-yellow-800"
-            : attendee.status === "confirmed"
-              ? "bg-green-100 text-green-800"
-              : attendee.status === "cancelled"
-                ? "bg-red-100 text-red-800"
-                : attendee.status === "refunded"
-                  ? "bg-orange-100 text-orange-800"
-                  : "bg-gray-100 text-gray-800"
-        }`}
-      >
-        {attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1)}
-      </span>
+      <div className="flex items-center gap-2">
+        <span
+          className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
+            attendee.status === "pending"
+              ? "bg-yellow-100 text-yellow-800"
+              : attendee.status === "confirmed"
+                ? "bg-green-100 text-green-800"
+                : attendee.status === "cancelled"
+                  ? "bg-red-100 text-red-800"
+                  : attendee.status === "refunded"
+                    ? "bg-orange-100 text-orange-800"
+                    : "bg-gray-100 text-gray-800"
+          }`}
+        >
+          {attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1)}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            void downloadTicketPdf(
+              attendee,
+              event,
+              { name: attendee.user_name, email: attendee.user_email },
+              setDownloadingTicket,
+            );
+          }}
+          disabled={downloadingTicket}
+          className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA] disabled:opacity-50"
+          title="Download Ticket PDF"
+        >
+          {downloadingTicket ? (
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#0094CA] border-t-transparent" />
+          ) : (
+            <FiDownload className="h-3 w-3 text-gray-500" />
+          )}
+          Ticket
+        </button>
+      </div>
     </div>
   );
 }
@@ -362,11 +396,13 @@ function SessionGroup({
   bookings,
   defaultOpen,
   isRecurring,
+  event,
 }: {
   occurrenceDate: string;
   bookings: BookingDTO[];
   defaultOpen: boolean;
   isRecurring: boolean;
+  event: any;
 }) {
   const [open, setOpen] = useState(defaultOpen);
 
@@ -395,7 +431,7 @@ function SessionGroup({
     return (
       <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
         {bookings.map((b) => (
-          <AttendeeRow key={b.id} attendee={b} />
+          <AttendeeRow key={b.id} attendee={b} event={event} />
         ))}
       </div>
     );
@@ -437,7 +473,7 @@ function SessionGroup({
       {open && (
         <div className="bg-white">
           {bookings.map((b) => (
-            <AttendeeRow key={b.id} attendee={b} />
+            <AttendeeRow key={b.id} attendee={b} event={event} />
           ))}
         </div>
       )}
@@ -448,12 +484,15 @@ function SessionGroup({
 function AttendeesList({
   eventId,
   isRecurring,
+  event,
 }: {
   eventId: string;
   isRecurring: boolean;
+  event: any;
 }) {
   const [attendees, setAttendees] = useState<BookingDTO[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -504,16 +543,45 @@ function AttendeesList({
     sortedKeys[sortedKeys.length - 1];
 
   return (
-    <div className="space-y-3">
-      {sortedKeys.map((key) => (
-        <SessionGroup
-          key={key}
-          occurrenceDate={key}
-          bookings={groups.get(key)!}
-          defaultOpen={key === firstUpcomingKey}
-          isRecurring={isRecurring}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
+        <span className="text-xs text-gray-500">
+          Total Bookings: <strong className="text-gray-900">{attendees.length}</strong>
+        </span>
+        <button
+          type="button"
+          onClick={() =>
+            void exportBookingsToExcel(
+              event?.title ?? "experience",
+              attendees,
+              setExporting,
+            )
+          }
+          disabled={exporting || attendees.length === 0}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+          title="Download Excel Sheet of all bookings for this experience"
+        >
+          {exporting ? (
+            <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-emerald-700 border-t-transparent" />
+          ) : (
+            <FiDownload className="h-3.5 w-3.5" />
+          )}
+          Download Excel Sheet
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {sortedKeys.map((key) => (
+          <SessionGroup
+            key={key}
+            occurrenceDate={key}
+            bookings={groups.get(key)!}
+            defaultOpen={key === firstUpcomingKey}
+            isRecurring={isRecurring}
+            event={event}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -1595,7 +1663,7 @@ export default function EditEventPage({
               <h2 className="mb-4 text-lg font-semibold text-gray-900">
                 Event Bookings
               </h2>
-              <AttendeesList eventId={id} isRecurring={form.isRecurring} />
+              <AttendeesList eventId={id} isRecurring={form.isRecurring} event={event} />
             </div>
           )}
         </div>

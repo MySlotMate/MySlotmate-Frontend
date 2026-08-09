@@ -53,6 +53,8 @@ interface EventFormData {
   endTime: string;
   isRecurring: boolean;
   recurrenceRule: string;
+  scheduleType: "one_time" | "recurring" | "custom_dates";
+  customDatesList: { date: string; time: string }[];
   cancellationPolicy: string;
   requiresAttendeeDetails: boolean;
   attendeeFields: string[];
@@ -629,6 +631,8 @@ export default function EditEventPage({
     endTime: "",
     isRecurring: false,
     recurrenceRule: "",
+    scheduleType: "one_time",
+    customDatesList: [{ date: "", time: "" }],
     cancellationPolicy: "flexible",
     requiresAttendeeDetails: false,
     attendeeFields: [],
@@ -637,6 +641,29 @@ export default function EditEventPage({
     accessPasskey: "",
     passkeyGrantsFree: false,
   });
+
+  const addCustomSlot = () => {
+    setForm((prev) => ({
+      ...prev,
+      customDatesList: [...prev.customDatesList, { date: "", time: "" }],
+    }));
+  };
+
+  const removeCustomSlot = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      customDatesList: prev.customDatesList.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateCustomSlot = (index: number, field: "date" | "time", val: string) => {
+    setForm((prev) => {
+      const list = [...prev.customDatesList];
+      const current = list[index] ?? { date: "", time: "" };
+      list[index] = { ...current, [field]: val };
+      return { ...prev, customDatesList: list };
+    });
+  };
 
   useEffect(() => {
     setUserId(localStorage.getItem("msm_user_id"));
@@ -656,6 +683,18 @@ export default function EditEventPage({
       // event.time / end_time are stored as UTC; the form inputs are IST.
       const { date: dateStr, time: timeStr } = utcToISTInputs(event.time);
       const endTime = event.end_time ? utcToISTInputs(event.end_time).time : "";
+
+      const parsedCustomSlots =
+        event.schedule_type === "custom_dates" || (event.custom_dates && event.custom_dates.length > 0)
+          ? (event.custom_dates ?? []).map((d) => utcToISTInputs(d))
+          : [{ date: dateStr, time: timeStr }];
+
+      const computedScheduleType: "one_time" | "recurring" | "custom_dates" =
+        event.schedule_type === "custom_dates" || (event.custom_dates && event.custom_dates.length > 0)
+          ? "custom_dates"
+          : event.is_recurring
+          ? "recurring"
+          : "one_time";
 
       setForm({
         title: event.title ?? "",
@@ -688,6 +727,8 @@ export default function EditEventPage({
         endTime: endTime,
         isRecurring: event.is_recurring ?? false,
         recurrenceRule: event.recurrence_rule ?? "",
+        scheduleType: computedScheduleType,
+        customDatesList: parsedCustomSlots.length > 0 ? parsedCustomSlots : [{ date: dateStr, time: timeStr }],
         cancellationPolicy: event.cancellation_policy ?? "flexible",
         requiresAttendeeDetails: event.requires_attendee_details ?? false,
         attendeeFields: event.attendee_fields ?? [],
@@ -913,13 +954,20 @@ export default function EditEventPage({
         }
       }
 
+      const firstSlot =
+        form.scheduleType === "custom_dates" &&
+        form.customDatesList[0]?.date &&
+        form.customDatesList[0]?.time
+          ? form.customDatesList[0]
+          : { date: form.eventDate, time: form.eventTime };
+
       // Form inputs are IST; anchor to +05:30 so the stored UTC instant is stable.
       const eventDateTime = new Date(
-        istInputToUTCISO(form.eventDate, form.eventTime),
+        istInputToUTCISO(firstSlot.date, firstSlot.time),
       );
       let endDateTime: Date | undefined;
       if (form.endTime) {
-        endDateTime = new Date(istInputToUTCISO(form.eventDate, form.endTime));
+        endDateTime = new Date(istInputToUTCISO(firstSlot.date, form.endTime));
       } else {
         endDateTime = new Date(
           eventDateTime.getTime() + form.durationMinutes * 60 * 1000,
@@ -966,8 +1014,15 @@ export default function EditEventPage({
                     price_cents: Math.round(Number(t.priceStr) * 100),
                   }))
               : [],
-          is_recurring: form.isRecurring,
-          recurrence_rule: form.isRecurring ? form.recurrenceRule : undefined,
+          is_recurring: form.scheduleType === "recurring",
+          recurrence_rule: form.scheduleType === "recurring" ? form.recurrenceRule : undefined,
+          schedule_type: form.scheduleType,
+          custom_dates:
+            form.scheduleType === "custom_dates"
+              ? form.customDatesList
+                  .filter((s) => s.date && s.time)
+                  .map((s) => istInputToUTCISO(s.date, s.time))
+              : undefined,
           cancellation_policy: form.cancellationPolicy,
           requires_attendee_details: form.requiresAttendeeDetails,
           attendee_fields: form.requiresAttendeeDetails
@@ -1190,45 +1245,172 @@ export default function EditEventPage({
                   Schedule & Pricing
                 </h3>
 
-                {/* Date */}
-                <div className="mb-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Event Date <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={form.eventDate}
-                    onChange={(e) => updateForm("eventDate", e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                  />
+                {/* Schedule Type Selection Tabs */}
+                <div className="mb-6 flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateForm("scheduleType", "one_time");
+                      updateForm("isRecurring", false);
+                    }}
+                    className={`flex-1 rounded-xl border p-3.5 text-left transition ${
+                      form.scheduleType === "one_time"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="font-medium text-sm">One-Time Event</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Single specific date & time</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateForm("scheduleType", "recurring");
+                      updateForm("isRecurring", true);
+                    }}
+                    className={`flex-1 rounded-xl border p-3.5 text-left transition ${
+                      form.scheduleType === "recurring"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="font-medium text-sm">Recurring</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Repeats daily, weekly, or monthly</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateForm("scheduleType", "custom_dates");
+                      updateForm("isRecurring", false);
+                    }}
+                    className={`flex-1 rounded-xl border p-3.5 text-left transition ${
+                      form.scheduleType === "custom_dates"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="font-medium text-sm">Custom Dates</div>
+                    <div className="text-xs text-gray-500 mt-0.5">Pick dynamic dates (e.g. Aug 15, 22, Sept 5)</div>
+                  </button>
                 </div>
 
-                {/* Time */}
-                <div className="mb-4 grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Start Time <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="time"
-                      value={form.eventTime}
-                      onChange={(e) => updateForm("eventTime", e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
+                {/* Standard One-Time & Recurring Inputs */}
+                {(form.scheduleType === "one_time" || form.scheduleType === "recurring") && (
+                  <>
+                    {/* Date */}
+                    <div className="mb-4 space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Event Date <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        value={form.eventDate}
+                        onChange={(e) => updateForm("eventDate", e.target.value)}
+                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                      />
+                    </div>
+
+                    {/* Time */}
+                    <div className="mb-4 grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Start Time <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="time"
+                          value={form.eventTime}
+                          onChange={(e) => updateForm("eventTime", e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          End Time
+                        </label>
+                        <input
+                          type="time"
+                          value={form.endTime}
+                          onChange={(e) => updateForm("endTime", e.target.value)}
+                          placeholder="Optional - auto-calculated from duration if not set"
+                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        />
+                      </div>
+                    </div>
+
+                    {form.scheduleType === "recurring" && (
+                      <div className="mb-4 space-y-2 rounded-xl bg-gray-50 p-4 border border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Recurrence Frequency <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          value={form.recurrenceRule}
+                          onChange={(e) => updateForm("recurrenceRule", e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        >
+                          <option value="">Select frequency</option>
+                          <option value="FREQ=DAILY">Daily</option>
+                          <option value="FREQ=WEEKLY">Weekly</option>
+                          <option value="FREQ=WEEKLY;INTERVAL=2">Every 2 weeks</option>
+                          <option value="FREQ=MONTHLY">Monthly</option>
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Dynamic Custom Selected Dates Inputs */}
+                {form.scheduleType === "custom_dates" && (
+                  <div className="mb-6 space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-sm">Selected Specific Dates & Times</h4>
+                      <p className="text-xs text-gray-500">
+                        Add the specific dates and times when this experience will take place.
+                      </p>
+                    </div>
+
+                    {form.customDatesList.map((slot, idx) => (
+                      <div key={idx} className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                        <div className="flex-1 min-w-[150px]">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                          <input
+                            type="date"
+                            value={slot.date}
+                            onChange={(e) => updateCustomSlot(idx, "date", e.target.value)}
+                            min={new Date().toISOString().split("T")[0]}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                          />
+                        </div>
+                        <div className="w-36 min-w-[120px]">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Start Time</label>
+                          <input
+                            type="time"
+                            value={slot.time}
+                            onChange={(e) => updateCustomSlot(idx, "time", e.target.value)}
+                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                          />
+                        </div>
+                        {form.customDatesList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeCustomSlot(idx)}
+                            className="mt-5 p-2 text-gray-400 hover:text-red-500 transition"
+                            title="Remove slot"
+                          >
+                            <FiX size={18} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={addCustomSlot}
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094CA] hover:underline"
+                    >
+                      + Add Another Date
+                    </button>
                   </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      End Time
-                    </label>
-                    <input
-                      type="time"
-                      value={form.endTime}
-                      onChange={(e) => updateForm("endTime", e.target.value)}
-                      placeholder="Optional - auto-calculated from duration if not set"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                  </div>
-                </div>
+                )}
 
                 {/* Duration */}
                 <div className="mb-4 space-y-2">

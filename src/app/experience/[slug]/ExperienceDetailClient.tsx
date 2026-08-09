@@ -321,7 +321,7 @@ function BookingWidget({
   }, [guestOptions, guests]);
 
   const sessionDates =
-    isRecurring && availability && availability.length > 0
+    availability && availability.length > 0
       ? availability
       : selectedDate
         ? [
@@ -422,7 +422,7 @@ function BookingWidget({
           {/* </div> */}
 
           {/* Choose Your Session */}
-          {isRecurring && (
+          {(isRecurring || (availability && availability.length > 1)) && (
             <div className="mb-3">
               <div className="flex items-center gap-1.5">
                 <FiCalendar className="h-4 w-4 text-[#0094CA]" />
@@ -784,8 +784,8 @@ function BookingWidget({
               </button>
             </div>
 
-            {/* Choose Date (Conditional for recurring event) */}
-            {isRecurring && (
+            {/* Choose Date (Conditional for recurring event or multi-slot experience) */}
+            {(isRecurring || (availability && availability.length > 1)) && (
               <div className="mb-5">
                 <div className="mb-2 flex items-center gap-1.5">
                   <FiCalendar className="h-4 w-4 text-[#0094CA]" />
@@ -1531,7 +1531,7 @@ export default function ExperienceDetailClient({
                 totalBookings={event.total_bookings}
                 bookingsLastWeek={event.bookings_last_week ?? 0}
                 availability={availability}
-                isRecurring={event.is_recurring}
+                isRecurring={event.is_recurring || event.schedule_type === "custom_dates" || (!!event.custom_dates && event.custom_dates.length > 0)}
                 cancellationPolicy={event.cancellation_policy}
                 onBook={handleBook}
               />

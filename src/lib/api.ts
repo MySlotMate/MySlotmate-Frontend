@@ -862,6 +862,8 @@ export interface EventDTO {
   is_free: boolean;
   is_recurring: boolean;
   recurrence_rule: string | null;
+  schedule_type?: "one_time" | "recurring" | "custom_dates";
+  custom_dates?: string[] | null;
   cancellation_policy: string | null;
   ai_suggestion: string | null;
   meeting_link: string | null;
@@ -1146,6 +1148,8 @@ export interface EventCreatePayload {
   is_free?: boolean;
   is_recurring?: boolean;
   recurrence_rule?: string;
+  schedule_type?: 'one_time' | 'recurring' | 'custom_dates';
+  custom_dates?: string[];
   cancellation_policy?: string;
   ai_suggestion?: string;
   meeting_link?: string;
@@ -1185,6 +1189,8 @@ export interface EventUpdatePayload {
   is_free?: boolean;
   is_recurring?: boolean;
   recurrence_rule?: string;
+  schedule_type?: "one_time" | "recurring" | "custom_dates";
+  custom_dates?: string[];
   cancellation_policy?: string;
   meeting_link?: string;
   google_maps_url?: string;

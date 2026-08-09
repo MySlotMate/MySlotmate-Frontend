@@ -83,6 +83,8 @@ interface FormData {
   endTime: string;
   isRecurring: boolean;
   recurrenceRule: string;
+  scheduleType: "one_time" | "recurring" | "custom_dates";
+  customDatesList: { date: string; time: string }[];
   cancellationPolicy: string;
   // Attendee details
   requiresAttendeeDetails: boolean;
@@ -941,6 +943,8 @@ export default function CreateExperiencePage() {
     endTime: "",
     isRecurring: false,
     recurrenceRule: "",
+    scheduleType: "one_time",
+    customDatesList: [{ date: "", time: "" }],
     cancellationPolicy: "flexible",
     requiresAttendeeDetails: false,
     attendeeFields: [],
@@ -949,6 +953,29 @@ export default function CreateExperiencePage() {
     accessPasskey: "",
     passkeyGrantsFree: false,
   });
+
+  const addCustomSlot = () => {
+    setForm((prev) => ({
+      ...prev,
+      customDatesList: [...prev.customDatesList, { date: "", time: "" }],
+    }));
+  };
+
+  const removeCustomSlot = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      customDatesList: prev.customDatesList.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateCustomSlot = (index: number, field: "date" | "time", val: string) => {
+    setForm((prev) => {
+      const list = [...prev.customDatesList];
+      const current = list[index] ?? { date: "", time: "" };
+      list[index] = { ...current, [field]: val };
+      return { ...prev, customDatesList: list };
+    });
+  };
 
   // Local string trackers for controlled numeric inputs to avoid leading-zero/clearing issues
   const [priceInputStr, setPriceInputStr] = useState<string>(form.isFree ? "" : (form.priceCents / 100).toString());
@@ -1185,15 +1212,24 @@ export default function CreateExperiencePage() {
   };
 
   const validateStep2 = (): boolean => {
-    if (!form.eventDate) {
-      setShowErrors(true);
-      toast.error("Please select an event date");
-      return false;
-    }
-    if (!form.eventTime) {
-      setShowErrors(true);
-      toast.error("Please select a start time");
-      return false;
+    if (form.scheduleType === "custom_dates") {
+      const valid = form.customDatesList.filter((s) => s.date && s.time);
+      if (valid.length === 0) {
+        setShowErrors(true);
+        toast.error("Please add at least one custom date and time slot");
+        return false;
+      }
+    } else {
+      if (!form.eventDate) {
+        setShowErrors(true);
+        toast.error("Please select an event date");
+        return false;
+      }
+      if (!form.eventTime) {
+        setShowErrors(true);
+        toast.error("Please select a start time");
+        return false;
+      }
     }
     if (!form.isFree && !form.useTiers && form.priceCents <= 0) {
       setShowErrors(true);
@@ -1275,13 +1311,17 @@ export default function CreateExperiencePage() {
       // Construct datetime — drafts may be missing date/time, so fall back to now.
       // Host-entered date/time are India-local (IST); anchor them to +05:30 so the
       // stored UTC instant doesn't drift with the host's browser timezone.
-      const hasDateTime = !!(form.eventDate && form.eventTime);
+      const firstSlot = form.scheduleType === "custom_dates" && form.customDatesList[0]?.date && form.customDatesList[0]?.time
+        ? form.customDatesList[0]
+        : { date: form.eventDate, time: form.eventTime };
+
+      const hasDateTime = !!(firstSlot.date && firstSlot.time);
       const eventDateTime = hasDateTime
-        ? new Date(istInputToUTCISO(form.eventDate, form.eventTime))
+        ? new Date(istInputToUTCISO(firstSlot.date, firstSlot.time))
         : new Date();
       let endDateTime: Date;
-      if (form.endTime && form.eventDate) {
-        endDateTime = new Date(istInputToUTCISO(form.eventDate, form.endTime));
+      if (form.endTime && firstSlot.date) {
+        endDateTime = new Date(istInputToUTCISO(firstSlot.date, form.endTime));
       } else {
         endDateTime = new Date(
           eventDateTime.getTime() + (form.durationMinutes || 60) * 60 * 1000,
@@ -1323,8 +1363,14 @@ export default function CreateExperiencePage() {
                   price_cents: Math.round(Number(t.priceStr) * 100),
                 }))
             : undefined,
-        is_recurring: form.isRecurring,
-        recurrence_rule: form.isRecurring ? form.recurrenceRule : undefined,
+        schedule_type: form.scheduleType,
+        custom_dates: form.scheduleType === "custom_dates"
+          ? form.customDatesList
+              .filter((s) => s.date && s.time)
+              .map((s) => istInputToUTCISO(s.date, s.time))
+          : undefined,
+        is_recurring: form.scheduleType === "recurring",
+        recurrence_rule: form.scheduleType === "recurring" ? form.recurrenceRule : undefined,
         cancellation_policy: form.cancellationPolicy,
         requires_attendee_details: form.requiresAttendeeDetails,
         attendee_fields: form.requiresAttendeeDetails
@@ -2018,9 +2064,7 @@ export default function CreateExperiencePage() {
 
           {/* Step 2: Schedule & Pricing */}
           {currentStep === 2 && (
-            <div className="grid gap-6 lg:grid-cols-12">
-              {/* Form Section */}
-              <div className="max-h-[calc(100vh-200px)] space-y-6 overflow-y-auto rounded-xl border border-gray-200 bg-white p-6 shadow-sm [scrollbar-width:none] lg:col-span-7 [&::-webkit-scrollbar]:hidden">
+            <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
                 <div className="border-b border-gray-100 pb-4">
                   <h2 className="text-lg font-semibold text-gray-900">
                     Schedule & Pricing
@@ -2204,101 +2248,186 @@ export default function CreateExperiencePage() {
                 {/* Availability Section */}
                 <div className="space-y-4 border-t border-gray-100 pt-6">
                   <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
-                    <FiCalendar /> Availability
+                    <FiCalendar /> Availability & Schedule
                   </h3>
 
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Date <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={form.eventDate}
-                        onChange={(e) =>
-                          updateForm("eventDate", e.target.value)
-                        }
-                        min={new Date().toISOString().split("T")[0]}
-                        className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !form.eventDate
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-200 focus:border-transparent"
-                          }`}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Start Time <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="time"
-                        value={form.eventTime}
-                        onChange={(e) =>
-                          updateForm("eventTime", e.target.value)
-                        }
-                        className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !form.eventTime
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-200 focus:border-transparent"
-                          }`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      End Time (optional)
-                    </label>
-                    <input
-                      type="time"
-                      value={form.endTime}
-                      onChange={(e) => updateForm("endTime", e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Leave empty to auto-calculate based on duration
-                    </p>
-                  </div>
-
-                  {/* Recurring Toggle */}
-                  <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        Recurring Experience
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        This experience repeats on a schedule
-                      </p>
-                    </div>
+                  {/* Schedule Type Selection Tabs */}
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <button
                       type="button"
-                      onClick={() =>
-                        updateForm("isRecurring", !form.isRecurring)
-                      }
-                      className={`h-6 w-12 rounded-full transition ${form.isRecurring ? "bg-[#0094CA]" : "bg-gray-300"}`}
+                      onClick={() => {
+                        updateForm("scheduleType", "one_time");
+                        updateForm("isRecurring", false);
+                      }}
+                      className={`flex-1 rounded-xl border p-3.5 text-left transition ${
+                        form.scheduleType === "one_time"
+                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                      }`}
                     >
-                      <div
-                        className={`h-5 w-5 transform rounded-full bg-white shadow transition ${form.isRecurring ? "translate-x-6" : "translate-x-0.5"}`}
-                      />
+                      <div className="font-medium text-sm">One-Time Event</div>
+                      <div className="text-xs text-gray-500 mt-0.5">Single specific date & time</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateForm("scheduleType", "recurring");
+                        updateForm("isRecurring", true);
+                      }}
+                      className={`flex-1 rounded-xl border p-3.5 text-left transition ${
+                        form.scheduleType === "recurring"
+                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="font-medium text-sm">Recurring</div>
+                      <div className="text-xs text-gray-500 mt-0.5">Repeats daily, weekly, or monthly</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        updateForm("scheduleType", "custom_dates");
+                        updateForm("isRecurring", false);
+                      }}
+                      className={`flex-1 rounded-xl border p-3.5 text-left transition ${
+                        form.scheduleType === "custom_dates"
+                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="font-medium text-sm">Custom Dates</div>
+                      <div className="text-xs text-gray-500 mt-0.5">Pick dynamic dates (e.g. Aug 15, 22, Sept 5)</div>
                     </button>
                   </div>
 
-                  {form.isRecurring && (
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Recurrence Rule
-                      </label>
-                      <select
-                        value={form.recurrenceRule}
-                        onChange={(e) =>
-                          updateForm("recurrenceRule", e.target.value)
-                        }
-                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                  {/* Standard One-Time & Recurring Inputs */}
+                  {(form.scheduleType === "one_time" || form.scheduleType === "recurring") && (
+                    <>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Date <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={form.eventDate}
+                            onChange={(e) =>
+                              updateForm("eventDate", e.target.value)
+                            }
+                            min={new Date().toISOString().split("T")[0]}
+                            className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !form.eventDate
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200 focus:border-transparent"
+                              }`}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Start Time <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="time"
+                            value={form.eventTime}
+                            onChange={(e) =>
+                              updateForm("eventTime", e.target.value)
+                            }
+                            className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !form.eventTime
+                                ? "border-red-500 bg-red-50"
+                                : "border-gray-200 focus:border-transparent"
+                              }`}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          End Time (optional)
+                        </label>
+                        <input
+                          type="time"
+                          value={form.endTime}
+                          onChange={(e) => updateForm("endTime", e.target.value)}
+                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        />
+                        <p className="text-xs text-gray-500">
+                          Leave empty to auto-calculate based on duration
+                        </p>
+                      </div>
+
+                      {form.scheduleType === "recurring" && (
+                        <div className="space-y-2 rounded-xl bg-gray-50 p-4 border border-gray-200">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Recurrence Frequency <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={form.recurrenceRule}
+                            onChange={(e) =>
+                              updateForm("recurrenceRule", e.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                          >
+                            <option value="">Select frequency</option>
+                            <option value="FREQ=DAILY">Daily</option>
+                            <option value="FREQ=WEEKLY">Weekly</option>
+                            <option value="FREQ=WEEKLY;INTERVAL=2">Every 2 weeks</option>
+                            <option value="FREQ=MONTHLY">Monthly</option>
+                          </select>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Dynamic Custom Selected Dates Inputs */}
+                  {form.scheduleType === "custom_dates" && (
+                    <div className="space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
+                      <div>
+                        <h4 className="font-semibold text-gray-900 text-sm">Selected Specific Dates & Times</h4>
+                        <p className="text-xs text-gray-500">
+                          Add the specific dates and times when this experience will take place.
+                        </p>
+                      </div>
+
+                      {form.customDatesList.map((slot, idx) => (
+                        <div key={idx} className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                          <div className="flex-1 min-w-[150px]">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                            <input
+                              type="date"
+                              value={slot.date}
+                              onChange={(e) => updateCustomSlot(idx, "date", e.target.value)}
+                              min={new Date().toISOString().split("T")[0]}
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                            />
+                          </div>
+                          <div className="w-36 min-w-[120px]">
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Start Time</label>
+                            <input
+                              type="time"
+                              value={slot.time}
+                              onChange={(e) => updateCustomSlot(idx, "time", e.target.value)}
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                            />
+                          </div>
+                          {form.customDatesList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeCustomSlot(idx)}
+                              className="mt-5 p-2 text-gray-400 hover:text-red-500 transition"
+                              title="Remove slot"
+                            >
+                              <FiX size={18} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={addCustomSlot}
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094CA] hover:underline"
                       >
-                        <option value="">Select frequency</option>
-                        <option value="FREQ=DAILY">Daily</option>
-                        <option value="FREQ=WEEKLY">Weekly</option>
-                        <option value="FREQ=WEEKLY;INTERVAL=2">Every 2 weeks</option>
-                        <option value="FREQ=MONTHLY">Monthly</option>
-                      </select>
+                        + Add Another Date
+                      </button>
                     </div>
                   )}
                 </div>
@@ -2433,20 +2562,6 @@ export default function CreateExperiencePage() {
                     )}
                   </button>
                 </div>
-              </div>
-
-              {/* Preview Card Sidebar */}
-              <div className="lg:col-span-5">
-                <div className="sticky top-24">
-                  <h3 className="mb-4 text-sm font-semibold text-gray-500 uppercase">
-                    Preview
-                  </h3>
-                  <PreviewCard form={form} />
-                  <p className="mt-4 text-center text-xs text-gray-400">
-                    This is how your experience will appear to guests
-                  </p>
-                </div>
-              </div>
             </div>
           )}
         </div>

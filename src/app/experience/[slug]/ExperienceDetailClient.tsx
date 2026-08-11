@@ -39,7 +39,8 @@ import {
 import { LuLanguages, LuBadgeCheck, LuSparkles, LuTicket } from "react-icons/lu";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { formatIST } from "~/lib/datetime";
+import { formatIST, sameInstant } from "~/lib/datetime";
+import SessionSlotPicker from "~/components/experience/SessionSlotPicker";
 import type {
   EventDTO,
   OccurrenceAvailability,
@@ -261,6 +262,7 @@ function BookingWidget({
   bookingsLastWeek,
   availability,
   isRecurring,
+  isOneOnOne,
   cancellationPolicy,
   onBook,
 }: {
@@ -276,6 +278,8 @@ function BookingWidget({
   bookingsLastWeek: number;
   availability?: OccurrenceAvailability[];
   isRecurring: boolean;
+  /** One-on-one events get the day/time picker instead of the flat slot row. */
+  isOneOnOne: boolean;
   cancellationPolicy: string | null;
   onBook: (date: string, guests: number, tierId?: string) => void;
 }) {
@@ -299,8 +303,12 @@ function BookingWidget({
     ? Math.min(...priceTiers.map((t) => t.price_cents))
     : 0;
 
-  // Find the selected occurrence availability
-  const currentOccurrence = availability?.find((a) => a.date === selectedDate);
+  // Find the selected occurrence availability. The event's own `time` and the
+  // availability dates are serialised independently, so match on the instant —
+  // string equality misses slots that are in fact the same moment.
+  const currentOccurrence = availability?.find((a) =>
+    sameInstant(a.date, selectedDate),
+  );
   const spotsLeft = currentOccurrence
     ? currentOccurrence.remaining
     : capacity - totalBookings;
@@ -312,6 +320,18 @@ function BookingWidget({
   const eventHasPassed = selectedDate
     ? new Date(selectedDate) < new Date()
     : false;
+
+  // `selectedDate` starts as the event's own time, which for a multi-slot event
+  // is just the first slot and may not be bookable (or may be spelled
+  // differently to the availability rows). Snap it onto a real, open occurrence
+  // as soon as we have one — otherwise spotsLeft falls back to a whole-event
+  // count and the guest can end up with no bookable quantity at all.
+  useEffect(() => {
+    if (!availability || availability.length === 0) return;
+    if (availability.some((a) => sameInstant(a.date, selectedDate))) return;
+    const firstOpen = availability.find((a) => !a.is_fully_booked);
+    setSelectedDate((firstOpen ?? availability[0]!).date);
+  }, [availability, selectedDate]);
 
   useEffect(() => {
     if (guestOptions.length === 0) return;
@@ -434,7 +454,13 @@ function BookingWidget({
                 Pick a time 
               </p>
 
-              {sessionDates.length > 0 ? (
+              {isOneOnOne ? (
+                <SessionSlotPicker
+                  sessions={sessionDates}
+                  selectedDate={selectedDate}
+                  onSelect={setSelectedDate}
+                />
+              ) : sessionDates.length > 0 ? (
                 <div
                   className={`${sessionDates.length === 1
                     ? "flex"
@@ -793,7 +819,13 @@ function BookingWidget({
                     Choose your session
                   </h4>
                 </div>
-                {sessionDates.length > 0 ? (
+                {isOneOnOne ? (
+                <SessionSlotPicker
+                  sessions={sessionDates}
+                  selectedDate={selectedDate}
+                  onSelect={setSelectedDate}
+                />
+              ) : sessionDates.length > 0 ? (
                   <div className="flex gap-3 overflow-x-auto hide-scrollbar -mx-2 px-2 pb-2">
                     {sessionDates.map((occ) => {
                       const isSelected = selectedDate === occ.date;
@@ -1532,6 +1564,7 @@ export default function ExperienceDetailClient({
                 bookingsLastWeek={event.bookings_last_week ?? 0}
                 availability={availability}
                 isRecurring={event.is_recurring || event.schedule_type === "custom_dates" || (!!event.custom_dates && event.custom_dates.length > 0)}
+                isOneOnOne={event.session_type === "one_on_one"}
                 cancellationPolicy={event.cancellation_policy}
                 onBook={handleBook}
               />

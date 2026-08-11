@@ -72,6 +72,25 @@ export function istInputToUTCISO(dateStr: string, timeStr: string): string {
 }
 
 /**
+ * Do two timestamps refer to the same moment?
+ *
+ * Occurrence times reach the client from more than one place — an event's own
+ * `time` field, the availability endpoint, a slot in `custom_dates` — and the
+ * same instant can arrive spelled differently ("…T04:30:00Z" vs
+ * "…T10:00:00+05:30", with or without fractional seconds). Comparing the
+ * strings makes matching slots look like different ones, so compare instants.
+ */
+export function sameInstant(
+  a: string | Date | null | undefined,
+  b: string | Date | null | undefined,
+): boolean {
+  if (!a || !b) return false;
+  const ta = (typeof a === "string" ? new Date(a) : a).getTime();
+  const tb = (typeof b === "string" ? new Date(b) : b).getTime();
+  return !Number.isNaN(ta) && ta === tb;
+}
+
+/**
  * Split a stored UTC instant into the IST `date` ("YYYY-MM-DD") and `time`
  * ("HH:mm") strings used to pre-fill <input type="date"> / <input type="time">
  * fields. Inverse of {@link istInputToUTCISO}.

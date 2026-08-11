@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { HostNavbar } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
+import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
 import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
 import CouponsManager from "~/components/host/CouponsManager";
 import Breadcrumb from "~/components/Breadcrumb";
@@ -45,6 +46,14 @@ import {
 import { LuLanguages, LuBadgeCheck, LuSparkles, LuTicket } from "react-icons/lu";
 import { format } from "date-fns";
 import { istInputToUTCISO } from "~/lib/datetime";
+import {
+  generateSessionSlots,
+  generateWeeklySessions,
+  nextWeeklySession,
+  slotsToCustomDates,
+  type SessionWindow,
+} from "~/lib/sessionSlots";
+import type { SessionType } from "~/lib/api";
 import { toast } from "sonner";
 import { MapPickerModal, LocationSearchInput } from "~/components";
 import { ImageCropModal } from "~/components/ImageCropModal";
@@ -85,6 +94,14 @@ interface FormData {
   recurrenceRule: string;
   scheduleType: "one_time" | "recurring" | "custom_dates";
   customDatesList: { date: string; time: string }[];
+  // One-on-one mode: the host gives availability windows and we expand them
+  // into single-seat sessions (see src/lib/sessionSlots.ts).
+  sessionType: SessionType;
+  sessionWindows: SessionWindow[];
+  breakMinutes: number;
+  // Weekly office hours (repeat forever, generated server-side) vs a fixed
+  // list of dated windows expanded into custom_dates.
+  sessionIsWeekly: boolean;
   cancellationPolicy: string;
   // Attendee details
   requiresAttendeeDetails: boolean;
@@ -945,6 +962,10 @@ export default function CreateExperiencePage() {
     recurrenceRule: "",
     scheduleType: "one_time",
     customDatesList: [{ date: "", time: "" }],
+    sessionType: "group",
+    sessionWindows: [{ date: "", start: "", end: "" }],
+    breakMinutes: 0,
+    sessionIsWeekly: true,
     cancellationPolicy: "flexible",
     requiresAttendeeDetails: false,
     attendeeFields: [],
@@ -1212,7 +1233,35 @@ export default function CreateExperiencePage() {
   };
 
   const validateStep2 = (): boolean => {
-    if (form.scheduleType === "custom_dates") {
+    if (form.sessionType === "one_on_one") {
+      const { errors, count } = form.sessionIsWeekly
+        ? (() => {
+            const r = generateWeeklySessions(
+              form.sessionWindows,
+              form.durationMinutes,
+              form.breakMinutes,
+            );
+            return { errors: r.errors, count: r.perWeek };
+          })()
+        : (() => {
+            const r = generateSessionSlots(
+              form.sessionWindows,
+              form.durationMinutes,
+              form.breakMinutes,
+            );
+            return { errors: r.errors, count: r.slots.length };
+          })();
+      if (errors.length > 0) {
+        setShowErrors(true);
+        toast.error(errors[0]);
+        return false;
+      }
+      if (count === 0) {
+        setShowErrors(true);
+        toast.error("Your availability windows don't fit a single session");
+        return false;
+      }
+    } else if (form.scheduleType === "custom_dates") {
       const valid = form.customDatesList.filter((s) => s.date && s.time);
       if (valid.length === 0) {
         setShowErrors(true);
@@ -1311,7 +1360,36 @@ export default function CreateExperiencePage() {
       // Construct datetime — drafts may be missing date/time, so fall back to now.
       // Host-entered date/time are India-local (IST); anchor them to +05:30 so the
       // stored UTC instant doesn't drift with the host's browser timezone.
-      const firstSlot = form.scheduleType === "custom_dates" && form.customDatesList[0]?.date && form.customDatesList[0]?.time
+      // One-on-one: expand the host's windows into the individual sessions that
+      // become custom_dates. Empty for group events.
+      // Dated one-on-one: expand the windows into the sessions that become
+      // custom_dates. Weekly one-on-one sends no dates at all — the server
+      // regenerates them from the windows on every read — but still needs a
+      // real upcoming session as the event's anchor time.
+      const isWeeklyOneOnOne =
+        form.sessionType === "one_on_one" && form.sessionIsWeekly;
+      const oneOnOneSlots =
+        form.sessionType === "one_on_one" && !form.sessionIsWeekly
+          ? generateSessionSlots(
+              form.sessionWindows,
+              form.durationMinutes,
+              form.breakMinutes,
+            ).slots
+          : [];
+      const weeklyAnchor = isWeeklyOneOnOne
+        ? nextWeeklySession(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          )
+        : null;
+
+      const firstSlot = form.sessionType === "one_on_one"
+        ? {
+            date: (isWeeklyOneOnOne ? weeklyAnchor?.date : oneOnOneSlots[0]?.date) ?? "",
+            time: (isWeeklyOneOnOne ? weeklyAnchor?.time : oneOnOneSlots[0]?.time) ?? "",
+          }
+        : form.scheduleType === "custom_dates" && form.customDatesList[0]?.date && form.customDatesList[0]?.time
         ? form.customDatesList[0]
         : { date: form.eventDate, time: form.eventTime };
 
@@ -1320,7 +1398,14 @@ export default function CreateExperiencePage() {
         ? new Date(istInputToUTCISO(firstSlot.date, firstSlot.time))
         : new Date();
       let endDateTime: Date;
-      if (form.endTime && firstSlot.date) {
+      if (form.sessionType === "one_on_one") {
+        // end_time spans ONE session, not the whole day: consumers derive a
+        // per-occurrence duration from (end_time - time), so stretching it to
+        // the last window would make every slot look hours long.
+        endDateTime = new Date(
+          eventDateTime.getTime() + (form.durationMinutes || 60) * 60 * 1000,
+        );
+      } else if (form.endTime && firstSlot.date) {
         endDateTime = new Date(istInputToUTCISO(firstSlot.date, form.endTime));
       } else {
         endDateTime = new Date(
@@ -1346,9 +1431,11 @@ export default function CreateExperiencePage() {
           ? form.googleMapsUrl || undefined
           : undefined,
         duration_minutes: form.durationMinutes,
-        capacity: form.maxGroupSize,
-        min_group_size: form.minGroupSize,
-        max_group_size: form.maxGroupSize,
+        // A one-on-one slot seats exactly one guest — that single seat is what
+        // stops a second booking landing on the same session.
+        capacity: form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
+        min_group_size: form.sessionType === "one_on_one" ? 1 : form.minGroupSize,
+        max_group_size: form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
         languages: form.languages,
         level: form.level || undefined,
         price_cents:
@@ -1363,14 +1450,27 @@ export default function CreateExperiencePage() {
                   price_cents: Math.round(Number(t.priceStr) * 100),
                 }))
             : undefined,
-        schedule_type: form.scheduleType,
-        custom_dates: form.scheduleType === "custom_dates"
+        schedule_type: isWeeklyOneOnOne ? "recurring" : form.scheduleType,
+        custom_dates: isWeeklyOneOnOne
+          ? []
+          : form.sessionType === "one_on_one"
+          ? slotsToCustomDates(oneOnOneSlots)
+          : form.scheduleType === "custom_dates"
           ? form.customDatesList
               .filter((s) => s.date && s.time)
               .map((s) => istInputToUTCISO(s.date, s.time))
           : undefined,
-        is_recurring: form.scheduleType === "recurring",
-        recurrence_rule: form.scheduleType === "recurring" ? form.recurrenceRule : undefined,
+        session_type: form.sessionType,
+        break_minutes: form.sessionType === "one_on_one" ? form.breakMinutes : undefined,
+        session_windows:
+          form.sessionType === "one_on_one" ? form.sessionWindows : undefined,
+        is_recurring: isWeeklyOneOnOne || form.scheduleType === "recurring",
+        // The weekdays live in the windows, so the rule only says "weekly".
+        recurrence_rule: isWeeklyOneOnOne
+          ? "FREQ=WEEKLY"
+          : form.scheduleType === "recurring"
+          ? form.recurrenceRule
+          : undefined,
         cancellation_policy: form.cancellationPolicy,
         requires_attendee_details: form.requiresAttendeeDetails,
         attendee_fields: form.requiresAttendeeDetails
@@ -2252,15 +2352,16 @@ export default function CreateExperiencePage() {
                   </h3>
 
                   {/* Schedule Type Selection Tabs */}
-                  <div className="flex flex-col gap-2 sm:flex-row">
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                     <button
                       type="button"
                       onClick={() => {
                         updateForm("scheduleType", "one_time");
                         updateForm("isRecurring", false);
+                        updateForm("sessionType", "group");
                       }}
-                      className={`flex-1 rounded-xl border p-3.5 text-left transition ${
-                        form.scheduleType === "one_time"
+                      className={`rounded-xl border p-3.5 text-left transition ${
+                        form.sessionType === "group" && form.scheduleType === "one_time"
                           ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
                           : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                       }`}
@@ -2273,9 +2374,10 @@ export default function CreateExperiencePage() {
                       onClick={() => {
                         updateForm("scheduleType", "recurring");
                         updateForm("isRecurring", true);
+                        updateForm("sessionType", "group");
                       }}
-                      className={`flex-1 rounded-xl border p-3.5 text-left transition ${
-                        form.scheduleType === "recurring"
+                      className={`rounded-xl border p-3.5 text-left transition ${
+                        form.sessionType === "group" && form.scheduleType === "recurring"
                           ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
                           : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                       }`}
@@ -2288,9 +2390,10 @@ export default function CreateExperiencePage() {
                       onClick={() => {
                         updateForm("scheduleType", "custom_dates");
                         updateForm("isRecurring", false);
+                        updateForm("sessionType", "group");
                       }}
-                      className={`flex-1 rounded-xl border p-3.5 text-left transition ${
-                        form.scheduleType === "custom_dates"
+                      className={`rounded-xl border p-3.5 text-left transition ${
+                        form.sessionType === "group" && form.scheduleType === "custom_dates"
                           ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
                           : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                       }`}
@@ -2298,10 +2401,29 @@ export default function CreateExperiencePage() {
                       <div className="font-medium text-sm">Custom Dates</div>
                       <div className="text-xs text-gray-500 mt-0.5">Pick dynamic dates (e.g. Aug 15, 22, Sept 5)</div>
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // One-on-one is stored as a custom-dates event whose slots
+                        // we generate from the host's availability windows.
+                        updateForm("sessionType", "one_on_one");
+                        updateForm("scheduleType", "custom_dates");
+                        updateForm("isRecurring", false);
+                      }}
+                      className={`rounded-xl border p-3.5 text-left transition ${
+                        form.sessionType === "one_on_one"
+                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="font-medium text-sm">One-on-One</div>
+                      <div className="text-xs text-gray-500 mt-0.5">Set your hours, we split them into 1:1 slots</div>
+                    </button>
                   </div>
 
                   {/* Standard One-Time & Recurring Inputs */}
-                  {(form.scheduleType === "one_time" || form.scheduleType === "recurring") && (
+                  {form.sessionType === "group" &&
+                    (form.scheduleType === "one_time" || form.scheduleType === "recurring") && (
                     <>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
@@ -2378,7 +2500,7 @@ export default function CreateExperiencePage() {
                   )}
 
                   {/* Dynamic Custom Selected Dates Inputs */}
-                  {form.scheduleType === "custom_dates" && (
+                  {form.sessionType === "group" && form.scheduleType === "custom_dates" && (
                     <div className="space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
                       <div>
                         <h4 className="font-semibold text-gray-900 text-sm">Selected Specific Dates & Times</h4>
@@ -2429,6 +2551,19 @@ export default function CreateExperiencePage() {
                         + Add Another Date
                       </button>
                     </div>
+                  )}
+
+                  {form.sessionType === "one_on_one" && (
+                    <SessionWindowsEditor
+                      windows={form.sessionWindows}
+                      onWindowsChange={(windows) => updateForm("sessionWindows", windows)}
+                      breakMinutes={form.breakMinutes}
+                      onBreakMinutesChange={(minutes) => updateForm("breakMinutes", minutes)}
+                      durationMinutes={form.durationMinutes}
+                      isWeekly={form.sessionIsWeekly}
+                      onIsWeeklyChange={(weekly) => updateForm("sessionIsWeekly", weekly)}
+                      showErrors={showErrors}
+                    />
                   )}
                 </div>
 

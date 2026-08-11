@@ -835,6 +835,29 @@ export interface PriceTierInput {
   sort_order?: number;
 }
 
+/**
+ * A group experience takes many guests per session; a one-on-one experience is
+ * a calendar of single-seat slots (capacity 1) generated from the host's
+ * availability windows. Both are stored as ordinary events.
+ */
+export type SessionType = "group" | "one_on_one";
+
+/**
+ * One availability window, in IST wall-clock — matches models.SessionWindow.
+ * Either dated (a one-off calendar) or weekly (office hours that repeat), never
+ * both: `weekday` set means the windows regenerate server-side each week.
+ */
+export interface ApiSessionWindow {
+  /** "YYYY-MM-DD" — dated windows only. */
+  date: string;
+  /** "HH:mm" */
+  start: string;
+  /** "HH:mm" */
+  end: string;
+  /** 0 = Sunday … 6 = Saturday — weekly windows only. */
+  weekday?: number;
+}
+
 export interface EventDTO {
   id: string;
   /** Clean, URL-safe identifier for public links (/experience/{slug}). */
@@ -864,6 +887,12 @@ export interface EventDTO {
   recurrence_rule: string | null;
   schedule_type?: "one_time" | "recurring" | "custom_dates";
   custom_dates?: string[] | null;
+  /** "group" (default) or "one_on_one" — see src/lib/sessionSlots.ts. */
+  session_type?: SessionType;
+  /** Gap between consecutive one-on-one sessions, in minutes. */
+  break_minutes?: number;
+  /** The host's raw availability windows, kept so the edit form can round-trip them. */
+  session_windows?: ApiSessionWindow[];
   cancellation_policy: string | null;
   ai_suggestion: string | null;
   meeting_link: string | null;
@@ -1150,6 +1179,12 @@ export interface EventCreatePayload {
   recurrence_rule?: string;
   schedule_type?: 'one_time' | 'recurring' | 'custom_dates';
   custom_dates?: string[];
+  /** "group" (default) or "one_on_one" — see src/lib/sessionSlots.ts. */
+  session_type?: SessionType;
+  /** Gap between consecutive one-on-one sessions, in minutes. */
+  break_minutes?: number;
+  /** The host's raw availability windows, kept so the edit form can round-trip them. */
+  session_windows?: ApiSessionWindow[];
   cancellation_policy?: string;
   ai_suggestion?: string;
   meeting_link?: string;
@@ -1191,6 +1226,12 @@ export interface EventUpdatePayload {
   recurrence_rule?: string;
   schedule_type?: "one_time" | "recurring" | "custom_dates";
   custom_dates?: string[];
+  /** "group" (default) or "one_on_one" — see src/lib/sessionSlots.ts. */
+  session_type?: SessionType;
+  /** Gap between consecutive one-on-one sessions, in minutes. */
+  break_minutes?: number;
+  /** The host's raw availability windows, kept so the edit form can round-trip them. */
+  session_windows?: ApiSessionWindow[];
   cancellation_policy?: string;
   meeting_link?: string;
   google_maps_url?: string;

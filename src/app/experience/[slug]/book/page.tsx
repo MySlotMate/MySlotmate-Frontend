@@ -285,7 +285,8 @@ function BookingContent({ eventId }: { eventId: string }) {
       qualification: p?.qualification ?? "",
       occupation: p?.occupation ?? "",
       marital_status: p?.marital_status ?? "",
-      contact_number: p?.contact_number ?? userProfile?.phn_number ?? userPhone ?? "",
+      contact_number:
+        p?.contact_number ?? userProfile?.phn_number ?? userPhone ?? "",
       whatsapp_number: p?.whatsapp_number ?? "",
       registration_type: p?.registration_type ?? "",
       govt_id_url: p?.govt_id_url ?? "",
@@ -809,57 +810,54 @@ function BookingContent({ eventId }: { eventId: string }) {
             always available on a paid booking; for a private event it appears
             once the passkey has unlocked it (needsUnlock is false). Apply a
             coupon to comp the booking, otherwise the guest pays. */}
-        {!needsUnlock &&
-          !event.is_free &&
-          grossPriceCents > 0 &&
-          !isComped && (
-            <div className="mt-6">
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between rounded-xl border-2 border-green-200 bg-green-50 p-4">
-                  <span className="text-sm font-medium text-green-700">
-                    ✓ {appliedCoupon} applied
-                    {couponComps
-                      ? " — this booking is free"
-                      : " — access unlocked, you’ll still pay"}
-                  </span>
+        {!needsUnlock && !event.is_free && grossPriceCents > 0 && !isComped && (
+          <div className="mt-6">
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between rounded-xl border-2 border-green-200 bg-green-50 p-4">
+                <span className="text-sm font-medium text-green-700">
+                  ✓ {appliedCoupon} applied
+                  {couponComps
+                    ? " — this booking is free"
+                    : " — access unlocked, you’ll still pay"}
+                </span>
+                <button
+                  onClick={removeCoupon}
+                  className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Have a coupon?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => {
+                      setCouponInput(e.target.value.toUpperCase());
+                      setCouponError(null);
+                    }}
+                    placeholder="Coupon code"
+                    className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 uppercase outline-none focus:ring-2 focus:ring-[#0094CA]"
+                  />
                   <button
-                    onClick={removeCoupon}
-                    className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                    onClick={() => void handleApplyCoupon()}
+                    disabled={couponChecking || !couponInput.trim()}
+                    className="rounded-lg border border-[#0094CA] px-5 py-2.5 font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5 disabled:opacity-50"
                   >
-                    Remove
+                    {couponChecking ? "…" : "Apply"}
                   </button>
                 </div>
-              ) : (
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Have a coupon?
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={couponInput}
-                      onChange={(e) => {
-                        setCouponInput(e.target.value.toUpperCase());
-                        setCouponError(null);
-                      }}
-                      placeholder="Coupon code"
-                      className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 uppercase outline-none focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                    <button
-                      onClick={() => void handleApplyCoupon()}
-                      disabled={couponChecking || !couponInput.trim()}
-                      className="rounded-lg border border-[#0094CA] px-5 py-2.5 font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5 disabled:opacity-50"
-                    >
-                      {couponChecking ? "…" : "Apply"}
-                    </button>
-                  </div>
-                  {couponError && (
-                    <p className="mt-2 text-sm text-red-500">{couponError}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                {couponError && (
+                  <p className="mt-2 text-sm text-red-500">{couponError}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Free-with-comp summary */}
         {isComped && (
@@ -937,7 +935,11 @@ function BookingContent({ eventId }: { eventId: string }) {
           ) : needsUnlock ? (
             "Enter passkey to book"
           ) : totalPriceCents === 0 ? (
-            isComped ? "Confirm free booking" : "Confirm Booking"
+            isComped ? (
+              "Confirm free booking"
+            ) : (
+              "Confirm Booking"
+            )
           ) : hasInsufficientBalance ? (
             `Pay ₹${(shortfall / 100).toFixed(0)} & Confirm (₹${(walletBalance / 100).toFixed(0)} from wallet)`
           ) : (

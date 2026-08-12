@@ -236,8 +236,12 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
 
       {/* Bulk generate — unique single-use codes, one per guest */}
       <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-        <p className="text-sm font-medium text-gray-700">Generate unique codes</p>
-        <p className={`mb-2 text-xs ${isFree ? "text-amber-600" : "text-gray-500"}`}>
+        <p className="text-sm font-medium text-gray-700">
+          Generate unique codes
+        </p>
+        <p
+          className={`mb-2 text-xs ${isFree ? "text-amber-600" : "text-gray-500"}`}
+        >
           {isFree
             ? "Each code books this experience for ₹0 — you comp the guest."
             : "Each code unlocks booking; guests still pay the normal price."}
@@ -279,8 +283,8 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
             }
             className="mt-3 flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-700"
           >
-            <FiDownload size={15} /> Download the {lastBatch.length} codes you just
-            generated
+            <FiDownload size={15} /> Download the {lastBatch.length} codes you
+            just generated
           </button>
         )}
       </div>
@@ -340,7 +344,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
             <div className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-100">
               <table className="w-full text-left text-sm">
                 <thead className="sticky top-0 bg-white shadow-[0_1px_0_rgba(0,0,0,0.06)]">
-                  <tr className="text-xs uppercase tracking-wide text-gray-400">
+                  <tr className="text-xs tracking-wide text-gray-400 uppercase">
                     <th className="px-3 py-2 font-medium">Code</th>
                     <th className="px-3 py-2 font-medium">Used</th>
                     <th className="px-3 py-2 font-medium">Status</th>

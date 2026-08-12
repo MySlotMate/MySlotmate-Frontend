@@ -51,8 +51,6 @@ type PriceFilter =
 type DurationFilter = "any" | "under_60" | "60_120" | "120_240" | "240_plus";
 type RatingFilter = "any" | "new" | "3_5_plus" | "4_0_plus" | "4_5_plus";
 
-
-
 const matchesNormalizedQuery = (
   normalizedQuery: string,
   values: Array<string | null | undefined>,
@@ -163,9 +161,7 @@ export default function ExplorePage() {
   // events when the "Professionals only" toggle is on.
   const professionalHostIds = useMemo(
     () =>
-      new Set(
-        (hosts ?? []).filter((h) => h.is_professional).map((h) => h.id),
-      ),
+      new Set((hosts ?? []).filter((h) => h.is_professional).map((h) => h.id)),
     [hosts],
   );
 
@@ -301,7 +297,10 @@ export default function ExplorePage() {
       .filter((event) =>
         byRating(event.avg_rating, event.total_reviews, ratingFilter),
       )
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
   }, [
     events,
     priceFilter,
@@ -676,8 +675,7 @@ export default function ExplorePage() {
                     }
                     headline={(host.tagline ?? "Local Host").toUpperCase()}
                     description={
-                      host.bio ??
-                      "Hosting thoughtful sessions around the city."
+                      host.bio ?? "Hosting thoughtful sessions around the city."
                     }
                     isVerified={host.is_identity_verified}
                     className="w-full"
@@ -728,7 +726,9 @@ export default function ExplorePage() {
                       event.description ??
                       "Discover a hosted experience near you."
                     }
-                    imageUrl={event.cover_image_url ?? "/assets/home/hiking.webp"}
+                    imageUrl={
+                      event.cover_image_url ?? "/assets/home/hiking.webp"
+                    }
                     rating={
                       event.avg_rating !== null &&
                       event.avg_rating !== undefined &&

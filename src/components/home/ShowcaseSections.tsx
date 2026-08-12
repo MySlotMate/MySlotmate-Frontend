@@ -76,10 +76,12 @@ type CommunitySet = {
   images: string[];
 };
 
-import { ExperienceCard, type ExperienceCardItem } from "../../components/ExperienceCard";
+import {
+  ExperienceCard,
+  type ExperienceCardItem,
+} from "../../components/ExperienceCard";
 
 type CuratedSessionItem = ExperienceCardItem;
-
 
 const WAY_CARDS = [
   {
@@ -351,50 +353,52 @@ const ShowcaseSections = ({
     const specificIds = marketingConfig?.featured_event_ids ?? [];
     if (specificIds.length > 0) {
       upcoming = upcoming.filter((event) => specificIds.includes(event.id));
-      upcoming.sort((a, b) => specificIds.indexOf(a.id) - specificIds.indexOf(b.id));
+      upcoming.sort(
+        (a, b) => specificIds.indexOf(a.id) - specificIds.indexOf(b.id),
+      );
     } else {
-      upcoming.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+      upcoming.sort(
+        (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
+      );
     }
 
-    const mapped = upcoming
-      .slice(0, limit)
-      .map((event) => ({
-        id: event.id,
-        slug: event.slug,
-        title: event.title,
-        copy: stripHtml(
-          event.description ??
+    const mapped = upcoming.slice(0, limit).map((event) => ({
+      id: event.id,
+      slug: event.slug,
+      title: event.title,
+      copy: stripHtml(
+        event.description ??
           event.hook_line ??
           "Discover a hosted experience near you.",
-          220
-        ),
-        duration: (() => {
-          const mins = event.duration_minutes ?? 0;
-          if (mins <= 0) return "1 Hour";
-          if (mins < 60) return `${mins} mins`;
-          const hrs = mins / 60;
-          return `${Number.isInteger(hrs) ? hrs : hrs.toFixed(1)} ${hrs === 1 ? "Hour" : "Hours"}`;
-        })(),
-        // Drop the year for this-year sessions to keep the badge row on one line.
-        dateLabel: formatIST(
-          event.time,
-          formatIST(event.time, "yyyy") === formatIST(now, "yyyy")
-            ? "EEE, d MMM"
-            : "d MMM yyyy",
-        ),
-        price: eventPriceLabel(event),
-        rating:
-          event.avg_rating !== null &&
-            event.avg_rating !== undefined &&
-            event.avg_rating !== 0
-            ? event.avg_rating.toFixed(1)
-            : "NEW",
-        image: event.cover_image_url ?? "/assets/home/hiking.webp",
-        overlayTitle: event.title,
-        overlaySubtitle: event.location
-          ? `In ${event.location}`
-          : "Hosted on MySlotMate",
-      }));
+        220,
+      ),
+      duration: (() => {
+        const mins = event.duration_minutes ?? 0;
+        if (mins <= 0) return "1 Hour";
+        if (mins < 60) return `${mins} mins`;
+        const hrs = mins / 60;
+        return `${Number.isInteger(hrs) ? hrs : hrs.toFixed(1)} ${hrs === 1 ? "Hour" : "Hours"}`;
+      })(),
+      // Drop the year for this-year sessions to keep the badge row on one line.
+      dateLabel: formatIST(
+        event.time,
+        formatIST(event.time, "yyyy") === formatIST(now, "yyyy")
+          ? "EEE, d MMM"
+          : "d MMM yyyy",
+      ),
+      price: eventPriceLabel(event),
+      rating:
+        event.avg_rating !== null &&
+        event.avg_rating !== undefined &&
+        event.avg_rating !== 0
+          ? event.avg_rating.toFixed(1)
+          : "NEW",
+      image: event.cover_image_url ?? "/assets/home/hiking.webp",
+      overlayTitle: event.title,
+      overlaySubtitle: event.location
+        ? `In ${event.location}`
+        : "Hosted on MySlotMate",
+    }));
 
     return mapped.length > 0 ? mapped : FEATURED_FALLBACK_DATA;
   }, [events, marketingConfig]);
@@ -421,41 +425,43 @@ const ShowcaseSections = ({
     const specificIds = marketingConfig?.curated_event_ids ?? [];
     if (specificIds.length > 0) {
       upcoming = upcoming.filter((event) => specificIds.includes(event.id));
-      upcoming.sort((a, b) => specificIds.indexOf(a.id) - specificIds.indexOf(b.id));
+      upcoming.sort(
+        (a, b) => specificIds.indexOf(a.id) - specificIds.indexOf(b.id),
+      );
     } else {
-      upcoming.sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+      upcoming.sort(
+        (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
+      );
     }
 
-    const mapped = upcoming
-      .slice(0, limit)
-      .map((event) => ({
-        id: event.id,
-        slug: event.slug,
-        headline: event.location ? `In ${event.location}` : "Curated Session",
-        title: event.title,
-        description: stripHtml(
-          event.hook_line ??
+    const mapped = upcoming.slice(0, limit).map((event) => ({
+      id: event.id,
+      slug: event.slug,
+      headline: event.location ? `In ${event.location}` : "Curated Session",
+      title: event.title,
+      description: stripHtml(
+        event.hook_line ??
           event.description ??
           "Discover a hosted experience near you.",
-          160
-        ),
-        imageUrl: event.cover_image_url ?? "/assets/home/hiking.webp",
-        rating:
-          event.avg_rating !== null &&
-            event.avg_rating !== undefined &&
-            event.avg_rating !== 0
-            ? event.avg_rating.toFixed(1)
-            : "NEW",
-        price: eventPriceLabel(event),
-        time: event.time,
-        location: event.location,
-        isRecurring: event.is_recurring,
-        capacity: event.capacity,
-        totalBookings: event.total_bookings,
-        recurrenceRule: event.recurrence_rule,
-        nextAvailableDate: event.next_available_date,
-        isPrivate: event.is_private,
-      }));
+        160,
+      ),
+      imageUrl: event.cover_image_url ?? "/assets/home/hiking.webp",
+      rating:
+        event.avg_rating !== null &&
+        event.avg_rating !== undefined &&
+        event.avg_rating !== 0
+          ? event.avg_rating.toFixed(1)
+          : "NEW",
+      price: eventPriceLabel(event),
+      time: event.time,
+      location: event.location,
+      isRecurring: event.is_recurring,
+      capacity: event.capacity,
+      totalBookings: event.total_bookings,
+      recurrenceRule: event.recurrence_rule,
+      nextAvailableDate: event.next_available_date,
+      isPrivate: event.is_private,
+    }));
 
     return mapped.length > 0 ? mapped : fallback;
   }, [events, marketingConfig]);
@@ -469,25 +475,25 @@ const ShowcaseSections = ({
       !mounted || !location
         ? hosts.slice(0, 3)
         : hosts
-          .map((host) => {
-            const hostCity = POPULAR_CITIES.find(
-              (city) => city.city.toLowerCase() === host.city.toLowerCase(),
-            );
+            .map((host) => {
+              const hostCity = POPULAR_CITIES.find(
+                (city) => city.city.toLowerCase() === host.city.toLowerCase(),
+              );
 
-            const distance = hostCity
-              ? calculateDistance(
-                location.lat,
-                location.lng,
-                hostCity.lat,
-                hostCity.lng,
-              )
-              : Number.POSITIVE_INFINITY;
+              const distance = hostCity
+                ? calculateDistance(
+                    location.lat,
+                    location.lng,
+                    hostCity.lat,
+                    hostCity.lng,
+                  )
+                : Number.POSITIVE_INFINITY;
 
-            return { host, distance };
-          })
-          .sort((a, b) => a.distance - b.distance)
-          .slice(0, 3)
-          .map(({ host }) => host);
+              return { host, distance };
+            })
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 3)
+            .map(({ host }) => host);
 
     const mappedStories = nearbyHosts.map((host) => {
       const fullName = `${host.first_name} ${host.last_name}`.trim();
@@ -568,7 +574,6 @@ const ShowcaseSections = ({
     if (featuredData.length <= 1) return;
     setFeaturedIndex((prev) => (prev + 1) % featuredData.length);
   };
-
 
   const updateCuratedSessionsScrollState = () => {
     const viewport = curatedSessionsViewportRef.current;

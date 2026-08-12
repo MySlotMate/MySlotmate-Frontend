@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { GoogleAuthProvider, signInWithPopup, signInWithCustomToken } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithCustomToken,
+} from "firebase/auth";
 import { auth } from "~/utils/firebase";
 import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
@@ -41,7 +45,13 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
         setCreatedUserId(storedId);
         // Fetch profile to see if name is Guest User
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me?user_id=${storedId}`)
-          .then((r) => r.json() as Promise<{ success: boolean; data?: { name: string } }>)
+          .then(
+            (r) =>
+              r.json() as Promise<{
+                success: boolean;
+                data?: { name: string };
+              }>,
+          )
           .then((res) => {
             if (res.success && res.data) {
               const u = res.data;
@@ -50,7 +60,9 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
               }
             }
           })
-          .catch((err) => console.error("Error fetching current profile:", err));
+          .catch((err) =>
+            console.error("Error fetching current profile:", err),
+          );
       }
     } else {
       setStep("phone");
@@ -169,7 +181,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
       const res = await verifyLoginOTP(formattedPhone, sessionId, otp);
       if (res.success) {
         const { user, token, firebase_custom_token } = res.data;
-        
+
         // Save auth details
         localStorage.setItem("msm_auth_token", token);
         setStoredUserId(user.id);
@@ -182,7 +194,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
             console.error("Firebase custom token login failed:", fbErr);
           }
         }
-        
+
         if (user.name === "Guest User" || user.name === "") {
           setCreatedUserId(user.id);
           setStep("name");
@@ -231,7 +243,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="relative max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-2xl sm:px-8 sm:py-10 ring-1 ring-gray-100">
+      <div className="relative max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-2xl ring-1 ring-gray-100 sm:px-8 sm:py-10">
         {/* Close button */}
         {step !== "name" && (
           <button
@@ -315,7 +327,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
             <button
               onClick={handleGoogleLogin}
               disabled={!agreed || loading}
-              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full py-3.5 text-base font-semibold text-white transition disabled:opacity-50 hover:opacity-95"
+              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
               style={{
                 background: agreed
                   ? "linear-gradient(135deg, #0094CA, #00b4ef)"
@@ -354,7 +366,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                       }}
                       placeholder="98765 43210"
                       maxLength={10}
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-[78px] text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-[78px] text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
                     />
                   </div>
                 </div>
@@ -362,11 +374,12 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                 <button
                   type="submit"
                   disabled={phone.length !== 10 || loading || !agreed}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition disabled:opacity-50 hover:opacity-95"
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
                   style={{
-                    background: agreed && phone.length === 10
-                      ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                      : "#b0b0b0",
+                    background:
+                      agreed && phone.length === 10
+                        ? "linear-gradient(135deg, #0094CA, #00b4ef)"
+                        : "#b0b0b0",
                   }}
                 >
                   {loading ? "Sending code..." : "Get Verification Code"}
@@ -410,7 +423,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                       }}
                       placeholder="0000 or 000000"
                       maxLength={6}
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-center text-sm font-semibold tracking-[0.5em] text-gray-900 placeholder-gray-300 outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-center text-sm font-semibold tracking-[0.5em] text-gray-900 placeholder-gray-300 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
                     />
                   </div>
                 </div>
@@ -432,11 +445,12 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                 <button
                   type="submit"
                   disabled={!(otp.length === 4 || otp.length === 6) || loading}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition disabled:opacity-50 hover:opacity-95"
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
                   style={{
-                    background: (otp.length === 4 || otp.length === 6)
-                      ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                      : "#b0b0b0",
+                    background:
+                      otp.length === 4 || otp.length === 6
+                        ? "linear-gradient(135deg, #0094CA, #00b4ef)"
+                        : "#b0b0b0",
                   }}
                 >
                   {loading ? "Verifying..." : "Verify & Login"}
@@ -469,7 +483,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="John Doe"
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
                       required
                     />
                   </div>
@@ -478,7 +492,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                 <button
                   type="submit"
                   disabled={!name.trim() || loading}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition disabled:opacity-50 hover:opacity-95"
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
                   style={{
                     background: name.trim()
                       ? "linear-gradient(135deg, #0094CA, #00b4ef)"

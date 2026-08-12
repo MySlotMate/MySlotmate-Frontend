@@ -13,7 +13,9 @@ export async function GET(request: NextRequest) {
   try {
     const response = await fetch(imageUrl);
     if (!response.ok) {
-      return new NextResponse(`Failed to fetch image: ${response.statusText}`, { status: response.status });
+      return new NextResponse(`Failed to fetch image: ${response.statusText}`, {
+        status: response.status,
+      });
     }
 
     const contentType = response.headers.get("content-type") ?? "image/jpeg";

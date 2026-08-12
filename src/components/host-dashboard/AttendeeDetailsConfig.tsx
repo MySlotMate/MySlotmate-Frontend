@@ -26,8 +26,8 @@ export default function AttendeeDetailsConfig({
             Require attendee details
           </h3>
           <p className="text-sm text-gray-500">
-            Collect extra details from each guest at booking. Selected fields are
-            required.
+            Collect extra details from each guest at booking. Selected fields
+            are required.
           </p>
         </div>
         <button

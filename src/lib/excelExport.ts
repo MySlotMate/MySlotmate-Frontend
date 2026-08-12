@@ -16,7 +16,8 @@ function loadXlsx(): Promise<any> {
       if (w.XLSX) resolve(w.XLSX);
       else reject(new Error("XLSX script loaded but window.XLSX is missing"));
     };
-    script.onerror = () => reject(new Error("Failed to load XLSX script from CDN"));
+    script.onerror = () =>
+      reject(new Error("Failed to load XLSX script from CDN"));
     document.body.appendChild(script);
   });
 }
@@ -54,8 +55,11 @@ export async function exportBookingsToExcel(
         "Guest Email": b.user_email ?? "N/A",
         "Occurrence Date & Time": occurrenceFormatted,
         "Quantity (Seats)": b.quantity,
-        "Amount Paid (₹)": b.amount_cents !== null && b.amount_cents !== undefined ? (b.amount_cents / 100).toFixed(2) : "0.00",
-        "Status": (b.status ?? "").toUpperCase(),
+        "Amount Paid (₹)":
+          b.amount_cents !== null && b.amount_cents !== undefined
+            ? (b.amount_cents / 100).toFixed(2)
+            : "0.00",
+        Status: (b.status ?? "").toUpperCase(),
         "Booking Date": createdFormatted,
       };
 
@@ -110,7 +114,9 @@ export async function exportBookingsToExcel(
 
     // Download file
     XLSX.writeFile(workbook, fileName);
-    toast.success(`Exported ${bookings.length} booking${bookings.length === 1 ? "" : "s"} to Excel!`);
+    toast.success(
+      `Exported ${bookings.length} booking${bookings.length === 1 ? "" : "s"} to Excel!`,
+    );
   } catch (err) {
     console.error("Failed to export Excel sheet:", err);
     toast.error("Failed to generate Excel file. Please try again.");

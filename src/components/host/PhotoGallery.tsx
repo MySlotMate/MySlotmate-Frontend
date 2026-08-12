@@ -118,12 +118,12 @@ export default function PhotoGallery({
       {/* Lightbox Preview Modal */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 p-4 sm:p-6 backdrop-blur-md"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 p-4 backdrop-blur-md sm:p-6"
           onClick={closeModal}
         >
           {/* Top Bar: Counter (Left) and Prominent Cross/Close Button (Right) */}
-          <div className="absolute top-4 left-4 right-4 z-[10000] flex items-center justify-between pointer-events-none">
-            <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-black/50 px-3.5 py-1.5 text-white backdrop-blur border border-white/10 shadow-md">
+          <div className="pointer-events-none absolute top-4 right-4 left-4 z-[10000] flex items-center justify-between">
+            <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-white/10 bg-black/50 px-3.5 py-1.5 text-white shadow-md backdrop-blur">
               <span className="text-xs font-semibold text-white/90">
                 {currentIndex + 1} / {totalImages}
               </span>
@@ -140,7 +140,7 @@ export default function PhotoGallery({
               type="button"
               onClick={closeModal}
               aria-label="Close preview"
-              className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white border border-white/20 shadow-xl backdrop-blur transition hover:bg-white/30 hover:scale-110 active:scale-95 cursor-pointer"
+              className="pointer-events-auto flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/20 text-white shadow-xl backdrop-blur transition hover:scale-110 hover:bg-white/30 active:scale-95"
             >
               <FiX className="h-6 w-6" />
             </button>
@@ -148,13 +148,13 @@ export default function PhotoGallery({
 
           {/* Main Preview Image — Compact Sizing */}
           <div
-            className="relative z-[9999] flex max-h-[70vh] max-w-[85vw] sm:max-w-[75vw] items-center justify-center overflow-hidden rounded-2xl bg-black/40 shadow-2xl p-1"
+            className="relative z-[9999] flex max-h-[70vh] max-w-[85vw] items-center justify-center overflow-hidden rounded-2xl bg-black/40 p-1 shadow-2xl sm:max-w-[75vw]"
             onClick={(e) => e.stopPropagation()}
           >
             <img
               src={currentImage}
               alt={`Gallery preview ${currentIndex + 1}`}
-              className="max-h-[70vh] max-w-[85vw] sm:max-w-[75vw] rounded-xl object-contain shadow-2xl transition-all duration-200"
+              className="max-h-[70vh] max-w-[85vw] rounded-xl object-contain shadow-2xl transition-all duration-200 sm:max-w-[75vw]"
             />
           </div>
 
@@ -167,7 +167,7 @@ export default function PhotoGallery({
                 handlePrev();
               }}
               aria-label="Previous image"
-              className="absolute left-4 sm:left-8 top-1/2 z-[10000] -translate-y-1/2 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white shadow-xl backdrop-blur-md transition hover:bg-black/90 hover:scale-110 active:scale-95 cursor-pointer"
+              className="absolute top-1/2 left-4 z-[10000] flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-black/60 text-white shadow-xl backdrop-blur-md transition hover:scale-110 hover:bg-black/90 active:scale-95 sm:left-8 sm:h-12 sm:w-12"
             >
               <FiChevronLeft className="h-6 w-6 sm:h-7 sm:w-7" />
             </button>
@@ -182,7 +182,7 @@ export default function PhotoGallery({
                 handleNext();
               }}
               aria-label="Next image"
-              className="absolute right-4 sm:right-8 top-1/2 z-[10000] -translate-y-1/2 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white shadow-xl backdrop-blur-md transition hover:scale-110 hover:bg-black/90 active:scale-95 cursor-pointer"
+              className="absolute top-1/2 right-4 z-[10000] flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/15 bg-black/60 text-white shadow-xl backdrop-blur-md transition hover:scale-110 hover:bg-black/90 active:scale-95 sm:right-8 sm:h-12 sm:w-12"
             >
               <FiChevronRight className="h-6 w-6 sm:h-7 sm:w-7" />
             </button>

@@ -42,7 +42,9 @@ export default function SessionSlotPicker({
     }));
   }, [sessions]);
 
-  const dayOfSelected = selectedDate ? formatIST(selectedDate, "yyyy-MM-dd") : "";
+  const dayOfSelected = selectedDate
+    ? formatIST(selectedDate, "yyyy-MM-dd")
+    : "";
   const firstOpenDay = days.find((d) => !d.isFullyBooked)?.key;
   const [activeDay, setActiveDay] = useState(
     dayOfSelected || (firstOpenDay ?? days[0]?.key ?? ""),

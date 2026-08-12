@@ -13,7 +13,12 @@ import {
   useBooking,
   useUserProfile,
 } from "~/hooks/useApi";
-import { FiCheck, FiCalendar, FiMessageCircle, FiDownload } from "react-icons/fi";
+import {
+  FiCheck,
+  FiCalendar,
+  FiMessageCircle,
+  FiDownload,
+} from "react-icons/fi";
 import { formatIST } from "~/lib/datetime";
 import { pdfSafe } from "~/lib/pdfText";
 import { getRecommendedEventSync } from "~/lib/recommendations";
@@ -34,7 +39,7 @@ function buildPdfDocument(
   bookingUser: any,
   coverBase64: string,
   qrBase64: string,
-  bookingId: string | null
+  bookingId: string | null,
 ) {
   const eventDate = new Date(booking?.occurrence_date ?? event?.time ?? "");
 
@@ -55,7 +60,15 @@ function buildPdfDocument(
   // Subtle outer shadow line
   doc.setDrawColor(229, 231, 235); // gray-200
   doc.setLineWidth(0.3);
-  doc.roundedRect(startX - 0.2, startY - 0.2, width + 0.4, height + 0.4, 6.2, 6.2, "D");
+  doc.roundedRect(
+    startX - 0.2,
+    startY - 0.2,
+    width + 0.4,
+    height + 0.4,
+    6.2,
+    6.2,
+    "D",
+  );
   doc.setLineWidth(0.2); // reset
 
   // 1. Top Brand Stripe
@@ -67,7 +80,9 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
   doc.setTextColor(255, 255, 255);
-  doc.text("M Y S L O T M A T E", startX + width / 2, startY + 5.5, { align: "center" });
+  doc.text("M Y S L O T M A T E", startX + width / 2, startY + 5.5, {
+    align: "center",
+  });
 
   // 2. Header Content (Image & Text details)
   // Draw Event Cover Image on Left
@@ -111,7 +126,7 @@ function buildPdfDocument(
   // Draw Event Details on Right
   const textX = startX + 28;
   let textY = startY + 16;
-  
+
   // Event Title (Uppercase, Bold, Black)
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
@@ -119,7 +134,7 @@ function buildPdfDocument(
   const titleText = pdfSafe(event?.title ?? "EXPERIENCE TICKET").toUpperCase();
   const titleLines = doc.splitTextToSize(titleText, 52); // fits within right block width
   doc.text(titleLines, textX, textY);
-  
+
   const titleHeight = titleLines.length * 4.2;
   textY += titleHeight + 0.5;
 
@@ -170,16 +185,16 @@ function buildPdfDocument(
 
   // 3. Notch Divider
   const dividerY = startY + 43;
-  
+
   // Circular cuts on left and right border
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(229, 231, 235); // matches card outer border
-  
+
   // Left notch
   doc.circle(startX, dividerY, 3.5, "FD");
   doc.setFillColor(255, 255, 255);
   doc.rect(startX - 5, dividerY - 5, 5, 10, "F"); // Mask left outer half
-  
+
   // Right notch
   doc.circle(startX + width, dividerY, 3.5, "FD");
   doc.setFillColor(255, 255, 255);
@@ -199,7 +214,12 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(75, 85, 99); // gray-600
-  doc.text("SHOW THIS MOBILE TICKET AT CHECK-IN", startX + width / 2, pillY + 4.8, { align: "center" });
+  doc.text(
+    "SHOW THIS MOBILE TICKET AT CHECK-IN",
+    startX + width / 2,
+    pillY + 4.8,
+    { align: "center" },
+  );
 
   // 5. Nested Inner Card (QR Code & Info)
   const innerY = pillY + 11;
@@ -221,7 +241,9 @@ function buildPdfDocument(
     doc.setFont("helvetica", "bold");
     doc.setFontSize(6);
     doc.setTextColor(156, 163, 175);
-    doc.text("[QR CODE]", qrX + qrSize/2, qrY + qrSize/2 + 2, { align: "center" });
+    doc.text("[QR CODE]", qrX + qrSize / 2, qrY + qrSize / 2 + 2, {
+      align: "center",
+    });
   }
 
   // Red Line Decoration under QR Code
@@ -250,8 +272,12 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8.5);
   doc.setTextColor(17, 24, 39); // gray-900
-  const displayBookingId = bookingId ? `XXXX${bookingId.slice(-6).toUpperCase()}` : "N/A";
-  doc.text(`BOOKING ID: ${displayBookingId}`, infoCenter, innerY + 18.5, { align: "center" });
+  const displayBookingId = bookingId
+    ? `XXXX${bookingId.slice(-6).toUpperCase()}`
+    : "N/A";
+  doc.text(`BOOKING ID: ${displayBookingId}`, infoCenter, innerY + 18.5, {
+    align: "center",
+  });
 
   // Confirmed Badge (Green Pill shape)
   const badgeW = 20;
@@ -272,7 +298,10 @@ function buildPdfDocument(
   const barcodeY = innerY + innerH + 4;
   doc.setDrawColor(22, 48, 76);
   let barX = startX + 39.5;
-  const barWidths = [0.3, 0.6, 0.2, 0.8, 0.3, 0.5, 0.2, 0.7, 0.3, 0.4, 0.8, 0.2, 0.5, 0.3, 0.7, 0.2, 0.6, 0.4, 0.3, 0.8];
+  const barWidths = [
+    0.3, 0.6, 0.2, 0.8, 0.3, 0.5, 0.2, 0.7, 0.3, 0.4, 0.8, 0.2, 0.5, 0.3, 0.7,
+    0.2, 0.6, 0.4, 0.3, 0.8,
+  ];
   for (const w of barWidths) {
     doc.setLineWidth(w);
     doc.line(barX, barcodeY, barX, barcodeY + 4);
@@ -284,7 +313,7 @@ function buildPdfDocument(
   const cancelY = barcodeY + 8;
   doc.setFillColor(249, 250, 251); // gray-50
   doc.rect(startX + 0.1, cancelY, width - 0.2, 8, "F");
-  
+
   // top & bottom border for banner
   doc.setDrawColor(243, 244, 246); // gray-100
   doc.line(startX + 0.1, cancelY, startX + width - 0.1, cancelY);
@@ -293,7 +322,12 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(6.5);
   doc.setTextColor(107, 114, 128); // gray-500
-  doc.text("CANCELLATION POLICY RULES APPLY FOR BOOKINGS", startX + width / 2, cancelY + 5.2, { align: "center" });
+  doc.text(
+    "CANCELLATION POLICY RULES APPLY FOR BOOKINGS",
+    startX + width / 2,
+    cancelY + 5.2,
+    { align: "center" },
+  );
 
   // 8. Total Amount Paid Row
   const amountY = cancelY + 8;
@@ -305,7 +339,7 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.5);
   doc.setTextColor(17, 24, 39); // gray-900
-  const priceText = `Rs. ${booking?.amount_cents ? ((booking.amount_cents) / 100).toFixed(2) : "0.00"}`;
+  const priceText = `Rs. ${booking?.amount_cents ? (booking.amount_cents / 100).toFixed(2) : "0.00"}`;
   doc.text(priceText, startX + width - 5, amountY + 7, { align: "right" });
 
   // 9. Gold Footer
@@ -321,7 +355,12 @@ function buildPdfDocument(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
   doc.setTextColor(146, 64, 14); // amber-800
-  doc.text("Scan QR code at the entrance to gain entry.", startX + width / 2, footerY + 7, { align: "center" });
+  doc.text(
+    "Scan QR code at the entrance to gain entry.",
+    startX + width / 2,
+    footerY + 7,
+    { align: "center" },
+  );
 
   // 10. Per-experience Terms & Conditions, printed below the ticket card.
   // The card is fixed-height, so terms flow underneath and onto extra pages
@@ -442,12 +481,22 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
         const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`;
         const qrBase64 = await getBase64FromUrl(qrUrl);
- 
+
         // Generate the PDF contents using the helper function
-        buildPdfDocument(doc, event, booking, bookingUser, coverBase64, qrBase64, bookingId);
+        buildPdfDocument(
+          doc,
+          event,
+          booking,
+          bookingUser,
+          coverBase64,
+          qrBase64,
+          bookingId,
+        );
 
         // Save PDF
-        const ticketSuffix = bookingId ? bookingId.slice(-6).toUpperCase() : "booking";
+        const ticketSuffix = bookingId
+          ? bookingId.slice(-6).toUpperCase()
+          : "booking";
         doc.save(`slotmate-ticket-${ticketSuffix}.pdf`);
         setIsDownloading(false);
       } catch (err) {
@@ -461,13 +510,16 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
       void runJsPdf();
     } else {
       const script = document.createElement("script");
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+      script.src =
+        "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
       script.onload = () => {
         void runJsPdf();
       };
       script.onerror = () => {
         setIsDownloading(false);
-        toast.error("Could not load PDF library. Please check your internet connection.");
+        toast.error(
+          "Could not load PDF library. Please check your internet connection.",
+        );
       };
       document.body.appendChild(script);
     }
@@ -492,7 +544,8 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           }
           return new Promise((resolve, reject) => {
             const script = document.createElement("script");
-            script.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+            script.src =
+              "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
             script.onload = () => {
               if ((window as any).jspdf) {
                 resolve((window as any).jspdf.jsPDF);
@@ -500,7 +553,8 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
                 reject(new Error("jsPDF loaded but not found on window"));
               }
             };
-            script.onerror = () => reject(new Error("Failed to load jsPDF script"));
+            script.onerror = () =>
+              reject(new Error("Failed to load jsPDF script"));
             document.body.appendChild(script);
           });
         };
@@ -538,14 +592,26 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         const qrBase64 = await getBase64FromUrl(qrUrl);
 
         // Draw PDF layout
-        buildPdfDocument(doc, event, booking, bookingUser, coverBase64, qrBase64, booking.id);
+        buildPdfDocument(
+          doc,
+          event,
+          booking,
+          bookingUser,
+          coverBase64,
+          qrBase64,
+          booking.id,
+        );
 
         // Convert doc to a blob and create file
         const pdfBlob = doc.output("blob") as Blob;
         const ticketSuffix = booking.id.slice(-6).toUpperCase();
-        const pdfFile = new File([pdfBlob], `slotmate-ticket-${ticketSuffix}.pdf`, {
-          type: "application/pdf",
-        });
+        const pdfFile = new File(
+          [pdfBlob],
+          `slotmate-ticket-${ticketSuffix}.pdf`,
+          {
+            type: "application/pdf",
+          },
+        );
 
         const sendFormData = new FormData();
         sendFormData.append("file", pdfFile);
@@ -553,10 +619,13 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         sendFormData.append("eventName", event.title);
         sendFormData.append("bookingId", booking.id);
 
-        const response = await fetch(`${env.NEXT_PUBLIC_API_URL}/bookings/${booking.id}/ticket-notification`, {
-          method: "POST",
-          body: sendFormData,
-        });
+        const response = await fetch(
+          `${env.NEXT_PUBLIC_API_URL}/bookings/${booking.id}/ticket-notification`,
+          {
+            method: "POST",
+            body: sendFormData,
+          },
+        );
 
         if (response.ok) {
           console.log("[WhatsApp Notification] Successfully sent!");
@@ -566,7 +635,10 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           console.error("[WhatsApp Notification] Send failed:", errData?.error);
         }
       } catch (err) {
-        console.error("[WhatsApp Notification] Error generating/sending PDF:", err);
+        console.error(
+          "[WhatsApp Notification] Error generating/sending PDF:",
+          err,
+        );
       }
     };
 
@@ -600,103 +672,112 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
       <div className="site-x mx-auto max-w-md text-center">
         {/* Success Header Block */}
         <div className="mb-5 text-center">
-          <div className="inline-flex items-center justify-center gap-2 mb-1.5">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white shrink-0">
+          <div className="mb-1.5 inline-flex items-center justify-center gap-2">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500 text-white">
               <FiCheck size={14} className="stroke-[3]" />
             </div>
-            <h1 className="text-xl font-black text-gray-900 tracking-tight">
+            <h1 className="text-xl font-black tracking-tight text-gray-900">
               Booking Confirmed!
             </h1>
           </div>
-          <p className="text-xs text-gray-500 px-4 max-w-sm mx-auto">
-            Host {host?.first_name ?? "the host"} is notified. You&apos;re all set for {event.title}.
+          <p className="mx-auto max-w-sm px-4 text-xs text-gray-500">
+            Host {host?.first_name ?? "the host"} is notified. You&apos;re all
+            set for {event.title}.
           </p>
         </div>
 
         {/* BookMyShow Style Ticket Card */}
-        <div 
-          id="booking-ticket" 
-          className="mb-5 overflow-hidden rounded-[24px] bg-white border border-gray-100 shadow-2xl text-left transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] relative max-w-md mx-auto"
+        <div
+          id="booking-ticket"
+          className="relative mx-auto mb-5 max-w-md overflow-hidden rounded-[24px] border border-gray-100 bg-white text-left shadow-2xl transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
         >
           {/* Top Brand Bar */}
-          <div className="bg-[#16304c] text-white py-2 px-5 text-center text-[10px] font-extrabold tracking-[0.2em] uppercase">
+          <div className="bg-[#16304c] px-5 py-2 text-center text-[10px] font-extrabold tracking-[0.2em] text-white uppercase">
             My Slotmate
           </div>
 
           {/* Main Header (Upper Section) */}
-          <div className="p-4 flex gap-4 items-start relative bg-white">
+          <div className="relative flex items-start gap-4 bg-white p-4">
             {/* Event Cover Image (Left) */}
-            <div className="w-20 h-26 shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100 shadow-sm relative">
+            <div className="relative h-26 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm">
               <img
                 src={event.cover_image_url ?? "/assets/home/cover.webp"}
                 alt="Event Cover"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             </div>
 
             {/* Event Info (Middle) */}
-            <div className="flex-1 min-w-0">
-              <h2 className="text-[15px] font-black text-gray-900 leading-snug uppercase tracking-tight line-clamp-2">
+            <div className="min-w-0 flex-1">
+              <h2 className="line-clamp-2 text-[15px] leading-snug font-black tracking-tight text-gray-900 uppercase">
                 {event.title}
               </h2>
-              <p className="text-[10px] text-gray-500 font-semibold mt-1">
-                {event.mood ?? "Experience"} | {event.languages?.join("/") ?? "English"}
+              <p className="mt-1 text-[10px] font-semibold text-gray-500">
+                {event.mood ?? "Experience"} |{" "}
+                {event.languages?.join("/") ?? "English"}
               </p>
-              <p className="text-[11px] text-gray-900 font-extrabold mt-1.5 flex items-center gap-1">
+              <p className="mt-1.5 flex items-center gap-1 text-[11px] font-extrabold text-gray-900">
                 {formatIST(eventDate, "EEE, d MMM | hh:mm a")}
               </p>
-              <p className="text-[10px] text-gray-500 font-semibold mt-1 uppercase truncate">
-                {event.is_online ? "Online Meet Link" : (event.location ?? "TBD")}
+              <p className="mt-1 truncate text-[10px] font-semibold text-gray-500 uppercase">
+                {event.is_online
+                  ? "Online Meet Link"
+                  : (event.location ?? "TBD")}
               </p>
             </div>
 
             {/* Vertical M-Ticket Label (Right) */}
-            <div className="text-[9px] uppercase font-black tracking-[0.2em] text-slate-400 [writing-mode:vertical-lr] rotate-180 self-stretch flex items-center justify-center border-l border-gray-100 pl-3">
+            <div className="flex rotate-180 items-center justify-center self-stretch border-l border-gray-100 pl-3 text-[9px] font-black tracking-[0.2em] text-slate-400 uppercase [writing-mode:vertical-lr]">
               M-Ticket
             </div>
           </div>
 
           {/* Notch Divider */}
           <div className="relative flex items-center">
-            <div className="absolute -left-2 w-4 h-4 bg-gray-50 rounded-full border border-gray-100/50 shadow-inner"></div>
-            <div className="absolute -right-2 w-4 h-4 bg-gray-50 rounded-full border border-gray-100/50 shadow-inner"></div>
-            <div className="w-full border-t border-dashed border-gray-200/80 mx-2"></div>
+            <div className="absolute -left-2 h-4 w-4 rounded-full border border-gray-100/50 bg-gray-50 shadow-inner"></div>
+            <div className="absolute -right-2 h-4 w-4 rounded-full border border-gray-100/50 bg-gray-50 shadow-inner"></div>
+            <div className="mx-2 w-full border-t border-dashed border-gray-200/80"></div>
           </div>
 
           {/* Instruction Pill */}
-          <div className="px-5 mt-3">
-            <div className="w-full py-2 bg-gray-50 rounded-xl text-center text-[10px] font-bold text-gray-600 tracking-wide uppercase">
+          <div className="mt-3 px-5">
+            <div className="w-full rounded-xl bg-gray-50 py-2 text-center text-[10px] font-bold tracking-wide text-gray-600 uppercase">
               Show this mobile ticket at check-in
             </div>
           </div>
 
           {/* QR Code & Booking details container */}
-          <div className="px-5 mt-3">
-            <div className="p-3.5 border border-gray-200/80 rounded-2xl flex items-center gap-4 bg-white shadow-xs">
+          <div className="mt-3 px-5">
+            <div className="flex items-center gap-4 rounded-2xl border border-gray-200/80 bg-white p-3.5 shadow-xs">
               {/* QR Image with red line decoration */}
-              <div className="flex flex-col items-center shrink-0">
+              <div className="flex shrink-0 flex-col items-center">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`}
                   alt="Booking QR Code"
-                  className="w-18 h-18"
+                  className="h-18 w-18"
                   crossOrigin="anonymous"
                 />
-                <div className="w-18 h-0.5 bg-red-500 mt-1 rounded-full" />
+                <div className="mt-1 h-0.5 w-18 rounded-full bg-red-500" />
               </div>
 
               {/* Booking metadata */}
-              <div className="flex-1 text-center pr-2 flex flex-col justify-center items-center gap-0.5">
-                <span className="text-[10px] text-gray-400 font-semibold block">
-                  {booking?.quantity ?? 1} Guest{(booking?.quantity ?? 1) > 1 ? "s" : ""}
-                  {bookedTierName ? ` · ${bookedTierName}` : ""} · Myslotmate Pass
+              <div className="flex flex-1 flex-col items-center justify-center gap-0.5 pr-2 text-center">
+                <span className="block text-[10px] font-semibold text-gray-400">
+                  {booking?.quantity ?? 1} Guest
+                  {(booking?.quantity ?? 1) > 1 ? "s" : ""}
+                  {bookedTierName ? ` · ${bookedTierName}` : ""} · Myslotmate
+                  Pass
                 </span>
-                <span className="text-xs font-extrabold text-gray-950 block uppercase tracking-wide">
+                <span className="block text-xs font-extrabold tracking-wide text-gray-950 uppercase">
                   {bookingUser?.name ?? "Guest"}
                 </span>
-                <span className="text-[11px] font-black text-gray-900 block tracking-tight select-all">
-                  BOOKING ID: {bookingId ? `XXXX${bookingId.slice(-6).toUpperCase()}` : "N/A"}
+                <span className="block text-[11px] font-black tracking-tight text-gray-900 select-all">
+                  BOOKING ID:{" "}
+                  {bookingId
+                    ? `XXXX${bookingId.slice(-6).toUpperCase()}`
+                    : "N/A"}
                 </span>
-                <span className="inline-block rounded-full bg-green-50 text-green-700 text-[8px] font-extrabold px-2 py-0.5 border border-green-200/50 mt-0.5">
+                <span className="mt-0.5 inline-block rounded-full border border-green-200/50 bg-green-50 px-2 py-0.5 text-[8px] font-extrabold text-green-700">
                   CONFIRMED
                 </span>
               </div>
@@ -704,20 +785,25 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           </div>
 
           {/* Cancellation Info Banner */}
-          <div className="mt-3 bg-gray-50/80 py-2 px-5 text-center text-[9px] font-black text-gray-500 uppercase tracking-widest border-t border-b border-gray-100">
+          <div className="mt-3 border-t border-b border-gray-100 bg-gray-50/80 px-5 py-2 text-center text-[9px] font-black tracking-widest text-gray-500 uppercase">
             Cancellation policy rules apply for bookings
           </div>
 
           {/* Total Amount paid */}
-          <div className="px-5 py-2.5 flex justify-between items-center bg-white">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Total Amount</span>
+          <div className="flex items-center justify-between bg-white px-5 py-2.5">
+            <span className="text-xs font-bold tracking-wide text-gray-500 uppercase">
+              Total Amount
+            </span>
             <span className="text-[15px] font-black text-gray-900">
-              ₹ {booking?.amount_cents ? ((booking.amount_cents) / 100).toFixed(2) : "0.00"}
+              ₹{" "}
+              {booking?.amount_cents
+                ? (booking.amount_cents / 100).toFixed(2)
+                : "0.00"}
             </span>
           </div>
 
           {/* Gold footer decoration */}
-          <div className="bg-amber-100/60 border-t border-amber-200/50 py-2.5 px-5 text-center text-[10px] font-bold text-amber-800 tracking-wide">
+          <div className="border-t border-amber-200/50 bg-amber-100/60 px-5 py-2.5 text-center text-[10px] font-bold tracking-wide text-amber-800">
             Scan QR code at the entrance to gain entry.
           </div>
         </div>
@@ -735,20 +821,23 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-3 mt-5">
+        <div className="mt-5 flex gap-3">
           <button
             type="button"
             onClick={downloadPDF}
             disabled={isDownloading}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-3 text-xs font-black text-white shadow-[0_4px_12px_rgba(0,148,202,0.15)] transition hover:shadow-[0_6px_16px_rgba(0,148,202,0.22)] active:scale-95 duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-3 text-xs font-black text-white shadow-[0_4px_12px_rgba(0,148,202,0.15)] transition duration-100 hover:shadow-[0_6px_16px_rgba(0,148,202,0.22)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <FiDownload size={14} className={isDownloading ? "animate-bounce" : ""} />
+            <FiDownload
+              size={14}
+              className={isDownloading ? "animate-bounce" : ""}
+            />
             {isDownloading ? "PDF..." : "Download PDF"}
           </button>
 
           <button
             onClick={() => router.push("/activities")}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-2xl bg-[#0094CA] py-3 text-xs font-black text-white transition hover:bg-[#007ba8] active:scale-95 shadow-[0_4px_12px_rgba(0,148,202,0.05)]"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[#0094CA] py-3 text-xs font-black text-white shadow-[0_4px_12px_rgba(0,148,202,0.05)] transition hover:bg-[#007ba8] active:scale-95"
           >
             <FiCalendar size={14} />
             My Bookings
@@ -756,10 +845,11 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         </div>
 
         {/* Chat Unlocked Notice */}
-        <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-[#0094CA]/15 bg-[#0094CA]/5 px-3 py-2.5 text-left text-[11px] text-gray-600 leading-normal">
-          <FiMessageCircle className="text-[#0094CA] shrink-0" size={15} />
+        <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-[#0094CA]/15 bg-[#0094CA]/5 px-3 py-2.5 text-left text-[11px] leading-normal text-gray-600">
+          <FiMessageCircle className="shrink-0 text-[#0094CA]" size={15} />
           <span>
-            <strong className="text-gray-900">Chat Unlocked:</strong> Reach out to {host?.first_name ?? "the host"} anytime to coordinate details.
+            <strong className="text-gray-900">Chat Unlocked:</strong> Reach out
+            to {host?.first_name ?? "the host"} anytime to coordinate details.
           </span>
         </div>
 

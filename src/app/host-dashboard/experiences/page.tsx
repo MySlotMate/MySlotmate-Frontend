@@ -1,10 +1,17 @@
 "use client";
 
-import { useEventsByHost, useMyHost, useResumeEvent, usePauseEvent, useEventOccurrencesForHost, useEventAttendees } from "~/hooks/useApi";
+import {
+  useEventsByHost,
+  useMyHost,
+  useResumeEvent,
+  usePauseEvent,
+  useEventOccurrencesForHost,
+  useEventAttendees,
+} from "~/hooks/useApi";
 import type { BookingDTO } from "~/lib/api";
 import type { OccurrenceAvailability } from "~/lib/api";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { HostNavbar } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
 import {
@@ -21,10 +28,11 @@ import {
   FiUserPlus,
   FiKey,
 } from "react-icons/fi";
-import { LuBookOpen, LuRotateCcw } from "react-icons/lu";
+import { LuBookOpen, LuRotateCcw, LuFileSpreadsheet } from "react-icons/lu";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import HostOnSpotBookingModal from "~/components/host-dashboard/HostOnSpotBookingModal";
+import HostBulkImportModal from "~/components/host-dashboard/HostBulkImportModal";
 import ManageCodesModal from "~/components/host-dashboard/ManageCodesModal";
 
 /* ------------------------------------------------------------------ */
@@ -124,7 +132,10 @@ interface ExperienceCardProps {
   };
   hostId: string;
   onResume: (eventId: string) => Promise<void>;
-  onPause: (eventId: string, options?: { pausedFrom?: string; pausedDate?: string }) => Promise<void>;
+  onPause: (
+    eventId: string,
+    options?: { pausedFrom?: string; pausedDate?: string },
+  ) => Promise<void>;
   isProcessing: boolean;
 }
 
@@ -139,11 +150,33 @@ function ExperienceCard({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPauseConfirm, setShowPauseConfirm] = useState(false);
   const [showOnSpot, setShowOnSpot] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const [showCodes, setShowCodes] = useState(false);
-  const [pauseOption, setPauseOption] = useState<"all" | "from" | "date">("all");
+  const [pauseOption, setPauseOption] = useState<"all" | "from" | "date">(
+    "all",
+  );
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
+
+  // Shared by on-spot and bulk import: refresh the attendee list plus every
+  // host-events view, so the booking count on the card updates immediately
+  // (mirrors delete).
+  const refreshAfterBooking = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: ["eventAttendees", event.id],
+    });
+    void queryClient.invalidateQueries({ queryKey: ["eventsByHost", _hostId] });
+    void queryClient.invalidateQueries({
+      queryKey: ["hostEventsFiltered", _hostId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["calendarEvents", _hostId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["todaySchedule", _hostId],
+    });
+  }, [queryClient, event.id, _hostId]);
 
   const isPaused = event.status === "paused";
   const isDraft = event.status === "draft";
@@ -186,7 +219,9 @@ function ExperienceCard({
 
   // For a partial pause we still have bookable sessions ahead, so show the next
   // available date instead of just "Paused".
-  const nextDate = isFullPause ? null : (event.next_available_date ?? event.time);
+  const nextDate = isFullPause
+    ? null
+    : (event.next_available_date ?? event.time);
 
   const pauseDetail = isFullPause
     ? "Paused"
@@ -351,6 +386,23 @@ function ExperienceCard({
               </div>
             )}
 
+            {/* Bulk import — the same guest-entry job as on-spot booking, but
+                from a spreadsheet. Same live/non-expired gate. */}
+            {isLive && !isExpired && (
+              <div className="group relative">
+                <button
+                  onClick={() => setShowBulkImport(true)}
+                  className="rounded-lg p-2 text-gray-400 transition hover:bg-[#e6f8ff] hover:text-[#0094CA]"
+                  title="Bulk add bookings"
+                >
+                  <LuFileSpreadsheet className="h-4 w-4" />
+                </button>
+                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-gray-900 px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
+                  Bulk Add (Excel)
+                </span>
+              </div>
+            )}
+
             {/* Codes & passkey — quick manage without opening the full editor. */}
             <div className="group relative">
               <button
@@ -377,7 +429,7 @@ function ExperienceCard({
                     : isPaused
                       ? "text-green-600 hover:bg-green-50"
                       : "text-amber-600 hover:bg-amber-50"
-                } ${isProcessing ? "opacity-50 cursor-not-allowed" : ""}`}
+                } ${isProcessing ? "cursor-not-allowed opacity-50" : ""}`}
                 title={
                   isDraft
                     ? "Publish the experience first"
@@ -442,25 +494,18 @@ function ExperienceCard({
           hostId={_hostId}
           isOpen={showOnSpot}
           onClose={() => setShowOnSpot(false)}
-          onBooked={() => {
-            // Refresh the attendee list plus every host-events view so the
-            // booking count on the card updates immediately (mirrors delete).
-            void queryClient.invalidateQueries({
-              queryKey: ["eventAttendees", event.id],
-            });
-            void queryClient.invalidateQueries({
-              queryKey: ["eventsByHost", _hostId],
-            });
-            void queryClient.invalidateQueries({
-              queryKey: ["hostEventsFiltered", _hostId],
-            });
-            void queryClient.invalidateQueries({
-              queryKey: ["calendarEvents", _hostId],
-            });
-            void queryClient.invalidateQueries({
-              queryKey: ["todaySchedule", _hostId],
-            });
-          }}
+          onBooked={refreshAfterBooking}
+        />
+      )}
+
+      {/* Bulk import modal — same post-booking refresh as on-spot. */}
+      {showBulkImport && (
+        <HostBulkImportModal
+          eventId={event.id}
+          eventTitle={event.title}
+          isOpen={showBulkImport}
+          onClose={() => setShowBulkImport(false)}
+          onImported={refreshAfterBooking}
         />
       )}
 
@@ -508,13 +553,15 @@ function ExperienceCard({
                 <div className="text-xs leading-relaxed">
                   <p className="font-semibold text-red-900">
                     {deleteAffected.count}{" "}
-                    {deleteAffected.count === 1 ? "attendee" : "attendees"}{" "}
-                    will be refunded
+                    {deleteAffected.count === 1 ? "attendee" : "attendees"} will
+                    be refunded
                   </p>
                   <p className="mt-0.5 text-red-800">
-                    {fmtRupees(deleteAffected.totalCents)} will be credited
-                    back to{" "}
-                    {deleteAffected.count === 1 ? "their wallet" : "their wallets"}{" "}
+                    {fmtRupees(deleteAffected.totalCents)} will be credited back
+                    to{" "}
+                    {deleteAffected.count === 1
+                      ? "their wallet"
+                      : "their wallets"}{" "}
                     the moment you confirm. This cannot be undone.
                   </p>
                 </div>
@@ -551,7 +598,9 @@ function ExperienceCard({
                       },
                     );
                     if (!cancelRes.ok) {
-                      const errBody = (await cancelRes.json().catch(() => ({}))) as { error?: string };
+                      const errBody = (await cancelRes
+                        .json()
+                        .catch(() => ({}))) as { error?: string };
                       throw new Error(
                         errBody?.error ??
                           "Could not refund upcoming attendees — please try again.",
@@ -570,14 +619,18 @@ function ExperienceCard({
                       // Refunds succeeded but the row couldn't be removed —
                       // the event is already marked cancelled, so the host is
                       // not stuck. Surface honestly.
-                      const errBody = (await delRes.json().catch(() => ({}))) as { error?: string };
+                      const errBody = (await delRes
+                        .json()
+                        .catch(() => ({}))) as { error?: string };
                       throw new Error(
                         errBody?.error ??
                           "Attendees were refunded, but the experience couldn't be fully removed. It's marked Cancelled — refresh to confirm.",
                       );
                     }
 
-                    toast.success("Experience cancelled and removed. Refunds sent to attendees' wallets.");
+                    toast.success(
+                      "Experience cancelled and removed. Refunds sent to attendees' wallets.",
+                    );
                     // Invalidate every cache keyed off this host's events so
                     // the list, calendar, filtered views, and "today" widget
                     // all drop the deleted row immediately.
@@ -734,12 +787,15 @@ export default function ExperiencesPage() {
     }
   };
 
-  const handlePause = async (eventId: string, options?: { pausedFrom?: string; pausedDate?: string }) => {
+  const handlePause = async (
+    eventId: string,
+    options?: { pausedFrom?: string; pausedDate?: string },
+  ) => {
     if (!host?.id) return;
     setProcessingId(eventId);
     try {
-      await pauseEvent.mutateAsync({ 
-        eventId, 
+      await pauseEvent.mutateAsync({
+        eventId,
         hostId: host.id,
         pausedFrom: options?.pausedFrom,
         pausedDate: options?.pausedDate,
@@ -991,7 +1047,9 @@ function PauseModalContent({
       if (option === "date") {
         if (!target) return false;
         // same-day match (compare YYYY-MM-DD only)
-        return occ.toISOString().slice(0, 10) === target.toISOString().slice(0, 10);
+        return (
+          occ.toISOString().slice(0, 10) === target.toISOString().slice(0, 10)
+        );
       }
       return false;
     });
@@ -1121,7 +1179,9 @@ function PauseModalContent({
                       availability?.map((a: OccurrenceAvailability) => (
                         <div
                           key={a.date}
-                          onClick={() => !a.is_paused && setSelectedDate(a.date)}
+                          onClick={() =>
+                            !a.is_paused && setSelectedDate(a.date)
+                          }
                           className={`p-2 text-xs transition ${
                             a.is_paused
                               ? "cursor-not-allowed text-gray-400 line-through"
@@ -1193,9 +1253,7 @@ function PauseModalContent({
           </button>
           <button
             onClick={onConfirm}
-            disabled={
-              (option === "from" || option === "date") && !selectedDate
-            }
+            disabled={(option === "from" || option === "date") && !selectedDate}
             className="flex-1 rounded-lg bg-amber-600 py-3 font-semibold text-white transition hover:bg-amber-700 disabled:opacity-50"
           >
             {affected.count > 0

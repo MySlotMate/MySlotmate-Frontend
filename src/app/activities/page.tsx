@@ -212,22 +212,24 @@ export default function ActivitiesPage() {
                     <div>
                       <div className="mb-3 flex items-start justify-between">
                         <Link href={`/experience/${event.slug}`}>
-                          <h3 className="text-lg font-semibold text-gray-900 transition hover:text-[#0094CA] pr-2">
+                          <h3 className="pr-2 text-lg font-semibold text-gray-900 transition hover:text-[#0094CA]">
                             {event.title}
                           </h3>
                         </Link>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex shrink-0 items-center gap-2">
                           {booking.status === "confirmed" && (
                             <button
-                              onClick={() => void handleDownloadTicket(booking, event)}
+                              onClick={() =>
+                                void handleDownloadTicket(booking, event)
+                              }
                               disabled={downloadingTicketId === booking.id}
                               className="inline-flex items-center justify-center rounded-full border border-[#0094CA] bg-white px-2.5 py-1 text-xs font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5 active:bg-[#0094CA]/10 disabled:opacity-50"
                               title="Download Ticket"
                             >
                               {downloadingTicketId === booking.id ? (
-                                <div className="h-3 w-3 animate-spin rounded-full border border-[#0094CA] border-t-transparent mr-1" />
+                                <div className="mr-1 h-3 w-3 animate-spin rounded-full border border-[#0094CA] border-t-transparent" />
                               ) : (
-                                <FiDownload className="h-3.5 w-3.5 mr-1" />
+                                <FiDownload className="mr-1 h-3.5 w-3.5" />
                               )}
                               Ticket
                             </button>
@@ -339,9 +341,7 @@ export default function ActivitiesPage() {
                         booking.status === "pending") &&
                         new Date(booking.occurrence_date) > new Date() && (
                           <button
-                            onClick={() =>
-                              setActiveCancelBookingId(booking.id)
-                            }
+                            onClick={() => setActiveCancelBookingId(booking.id)}
                             className="inline-flex items-center gap-2 rounded-lg border border-red-100 bg-red-50/50 px-4 py-2 text-sm font-medium text-red-500 transition hover:bg-red-50"
                           >
                             <FiXCircle className="h-4 w-4" />
@@ -443,7 +443,7 @@ export default function ActivitiesPage() {
             {/* Refund destination picker — comment out this block to disable
                 source refund for users (keeping wallet-only as default). */}
             <fieldset className="mb-6">
-              <legend className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <legend className="mb-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 Refund destination
               </legend>
               <label className="mb-2 flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 p-3 transition hover:bg-gray-50">

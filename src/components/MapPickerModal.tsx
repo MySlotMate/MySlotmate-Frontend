@@ -47,7 +47,10 @@ export default function MapPickerModal({
   const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [initialCenter, setInitialCenter] = useState<[number, number]>([initialLat, initialLng]);
+  const [initialCenter, setInitialCenter] = useState<[number, number]>([
+    initialLat,
+    initialLng,
+  ]);
 
   const fetchSuggestions = useRef(
     debounce(async (query: string) => {
@@ -60,7 +63,7 @@ export default function MapPickerModal({
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=in`,
-          { headers: { "User-Agent": "MySlotMate/1.0" } }
+          { headers: { "User-Agent": "MySlotMate/1.0" } },
         );
         const data = (await res.json()) as NominatimResult[];
         setSuggestions(data);
@@ -70,7 +73,7 @@ export default function MapPickerModal({
       } finally {
         setLoading(false);
       }
-    }, 500)
+    }, 500),
   ).current;
 
   useEffect(() => {
@@ -102,10 +105,17 @@ export default function MapPickerModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 p-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Pick Location on Map</h2>
-            <p className="text-xs text-gray-500">Search for a place or click on the map</p>
+            <h2 className="text-xl font-bold text-gray-900">
+              Pick Location on Map
+            </h2>
+            <p className="text-xs text-gray-500">
+              Search for a place or click on the map
+            </p>
           </div>
-          <button onClick={onClose} className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+          >
             <FiX size={20} />
           </button>
         </div>
@@ -138,18 +148,22 @@ export default function MapPickerModal({
 
           {/* Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute left-4 right-4 z-[1001] mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-2xl">
+            <div className="absolute right-4 left-4 z-[1001] mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-2xl">
               {suggestions.map((item, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSelectSuggestion(item)}
-                  className="flex w-full items-start gap-3 border-b border-gray-50 p-3 text-left transition hover:bg-gray-50 last:border-0"
+                  className="flex w-full items-start gap-3 border-b border-gray-50 p-3 text-left transition last:border-0 hover:bg-gray-50"
                 >
                   <FiMapPin className="mt-1 shrink-0 text-gray-400" size={16} />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{item.display_name}</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {item.display_name}
+                    </p>
                     {item.type && (
-                      <p className="text-xs text-[#0094CA] capitalize">{item.type.replace(/_/g, ' ')}</p>
+                      <p className="text-xs text-[#0094CA] capitalize">
+                        {item.type.replace(/_/g, " ")}
+                      </p>
                     )}
                   </div>
                 </button>
@@ -169,7 +183,7 @@ export default function MapPickerModal({
                 try {
                   const res = await fetch(
                     `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-                    { headers: { "User-Agent": "MySlotMate/1.0" } }
+                    { headers: { "User-Agent": "MySlotMate/1.0" } },
                   );
                   const data = (await res.json()) as NominatimResult | null;
                   if (data?.display_name) {
@@ -181,17 +195,21 @@ export default function MapPickerModal({
               })();
             }}
           />
-          
+
           {/* Address Overlay */}
-          <div className="absolute bottom-4 left-4 right-4 z-[1000]">
+          <div className="absolute right-4 bottom-4 left-4 z-[1000]">
             <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-lg">
               <div className="flex items-start gap-3">
                 <div className="mt-1 rounded-full bg-[#0094CA]/10 p-2 text-[#0094CA]">
                   <FiMapPin size={18} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Selected Location</p>
-                  <p className="line-clamp-2 text-sm font-medium text-gray-800">{address || "Click on map to select..."}</p>
+                  <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                    Selected Location
+                  </p>
+                  <p className="line-clamp-2 text-sm font-medium text-gray-800">
+                    {address || "Click on map to select..."}
+                  </p>
                 </div>
               </div>
             </div>

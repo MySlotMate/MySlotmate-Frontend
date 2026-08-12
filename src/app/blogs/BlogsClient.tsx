@@ -36,7 +36,12 @@ import { env } from "~/env";
 
 // Block types for rich content editor
 export type TextBlock = { id: string; type: "text"; content: string };
-export type ImageBlock = { id: string; type: "image"; url: string; caption: string };
+export type ImageBlock = {
+  id: string;
+  type: "image";
+  url: string;
+  caption: string;
+};
 export type BlogBlock = TextBlock | ImageBlock;
 
 type BlogFormState = {
@@ -81,7 +86,9 @@ function blocksToContent(blocks: BlogBlock[]): string {
   return JSON.stringify(blocks);
 }
 
-export function contentToBlocks(content: string | null | undefined): BlogBlock[] {
+export function contentToBlocks(
+  content: string | null | undefined,
+): BlogBlock[] {
   if (!content?.trim())
     return [{ id: generateBlockId(), type: "text", content: "" }];
 
@@ -161,8 +168,6 @@ export function getBlogExcerpt(blog: BlogDTO) {
   if (source.length <= 140) return source;
   return `${source.slice(0, 137).trim()}...`;
 }
-
-
 
 function mapBlogToFormState(blog: BlogDTO): BlogFormState {
   return {
@@ -486,19 +491,19 @@ function BlogCard({
   const excerpt = getBlogExcerpt(blog);
 
   return (
-    <article className="flex flex-col justify-between h-full p-5 rounded-[28px] bg-white/82 border border-[#aeddf899] shadow-[0_20px_42px_rgba(60,121,175,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_56px_rgba(60,121,175,0.16)]">
+    <article className="flex h-full flex-col justify-between rounded-[28px] border border-[#aeddf899] bg-white/82 p-5 shadow-[0_20px_42px_rgba(60,121,175,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_56px_rgba(60,121,175,0.16)]">
       <div className="space-y-4">
         <div
-          className="relative min-h-[220px] w-full overflow-hidden rounded-[28px] border border-[#addbf699] bg-[linear-gradient(145deg,#e5f7ff,#f9fdff)] group cursor-pointer"
+          className="group relative min-h-[220px] w-full cursor-pointer overflow-hidden rounded-[28px] border border-[#addbf699] bg-[linear-gradient(145deg,#e5f7ff,#f9fdff)]"
           onClick={() => onOpen(blog.slug)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={blog.cover_image_url ?? FALLBACK_BLOG_IMAGE}
             alt={title}
-            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105 rounded-[28px]"
+            className="absolute inset-0 h-full w-full rounded-[28px] object-cover transition duration-500 group-hover:scale-105"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(22,48,76,0.02)_0%,rgba(22,48,76,0.18)_100%)] pointer-events-none rounded-[28px]" />
+          <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[linear-gradient(180deg,rgba(22,48,76,0.02)_0%,rgba(22,48,76,0.18)_100%)]" />
           {!blog.published_at && (
             <span className="absolute top-3 left-3 z-10 rounded-full bg-amber-500 px-2.5 py-1 text-[0.66rem] font-extrabold tracking-wide text-white uppercase shadow">
               Draft
@@ -508,11 +513,11 @@ function BlogCard({
 
         <div className="grid content-start gap-2.5 pt-2">
           <div>
-            <span className="inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 bg-white/90 border border-[#a9daf5a6] text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase before:content-[''] before:w-1.5 before:h-1.5 before:rounded-full before:bg-[#4a8ab8]">
+            <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase before:h-1.5 before:w-1.5 before:rounded-full before:bg-[#4a8ab8] before:content-['']">
               {getBlogValue(blog.category, "General")}
             </span>
           </div>
-          <h3 className="font-outfit text-[1.08rem] font-semibold leading-[1.24] tracking-[-0.04em] text-[#16304c] m-0">
+          <h3 className="font-outfit m-0 text-[1.08rem] leading-[1.24] font-semibold tracking-[-0.04em] text-[#16304c]">
             <Link
               href={`/blogs/${blog.slug}`}
               className="cursor-pointer transition hover:text-[#0e8ae0]"
@@ -520,7 +525,7 @@ function BlogCard({
               {title}
             </Link>
           </h3>
-          <p className="line-clamp-3 text-[0.88rem] leading-[1.68] text-[#6f8daa] m-0">
+          <p className="m-0 line-clamp-3 text-[0.88rem] leading-[1.68] text-[#6f8daa]">
             {excerpt}
           </p>
         </div>
@@ -559,8 +564,6 @@ function BlogCard({
     </article>
   );
 }
-
-
 
 export default function BlogsClient({
   initialBlogs,
@@ -1040,12 +1043,13 @@ export default function BlogsClient({
 
       <div className="flex-1">
         <main className="mx-auto max-w-[1120px] px-4 pt-24 pb-16">
-          <section className="grid gap-1.5 py-0.5 mb-2">
-            <h1 className="font-outfit text-[clamp(1.9rem,3.3vw,2.8rem)] font-semibold tracking-[-0.06em] text-[#16304c] m-0">
+          <section className="mb-2 grid gap-1.5 py-0.5">
+            <h1 className="font-outfit m-0 text-[clamp(1.9rem,3.3vw,2.8rem)] font-semibold tracking-[-0.06em] text-[#16304c]">
               The Myslotmate Blog
             </h1>
-            <p className="max-w-[620px] mt-0.5 text-[0.88rem] leading-[1.7] text-[#6f8daa] m-0">
-              Practical stories, host insights, and local experience ideas from the Myslotmate world.
+            <p className="m-0 mt-0.5 max-w-[620px] text-[0.88rem] leading-[1.7] text-[#6f8daa]">
+              Practical stories, host insights, and local experience ideas from
+              the Myslotmate world.
             </p>
           </section>
 
@@ -1339,19 +1343,24 @@ export default function BlogsClient({
               {/* Featured Blog */}
               {(() => {
                 const featuredBlog = filteredBlogs[0]!;
-                const authorName = getBlogValue(featuredBlog.author_name, "MySlotmate Team");
-                const displayDate = formatBlogDate(featuredBlog.published_at ?? featuredBlog.created_at);
+                const authorName = getBlogValue(
+                  featuredBlog.author_name,
+                  "MySlotmate Team",
+                );
+                const displayDate = formatBlogDate(
+                  featuredBlog.published_at ?? featuredBlog.created_at,
+                );
                 const excerpt = getBlogExcerpt(featuredBlog);
 
                 return (
-                  <section className="grid lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)] gap-6.5 items-stretch p-7 rounded-[32px] bg-white/72 border border-[#aeddf8a6] shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
+                  <section className="grid items-stretch gap-6.5 rounded-[32px] border border-[#aeddf8a6] bg-white/72 p-7 shadow-[0_24px_60px_rgba(58,119,172,0.12)] lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
                     <div className="grid content-start gap-5">
                       <div className="w-full">
-                        <span className="flex w-full items-center justify-center gap-2 rounded-full px-3.5 py-2 bg-white/90 border border-[#a9daf5a6] text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase before:content-[''] before:w-1.5 before:h-1.5 before:rounded-full before:bg-[#4a8ab8]">
+                        <span className="flex w-full items-center justify-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase before:h-1.5 before:w-1.5 before:rounded-full before:bg-[#4a8ab8] before:content-['']">
                           Featured Story
                         </span>
                       </div>
-                      <h2 className="font-outfit text-[clamp(1.5rem,2.45vw,2.1rem)] font-semibold leading-[1.16] tracking-[-0.04em] text-[#16304c] m-0">
+                      <h2 className="font-outfit m-0 text-[clamp(1.5rem,2.45vw,2.1rem)] leading-[1.16] font-semibold tracking-[-0.04em] text-[#16304c]">
                         <Link
                           href={`/blogs/${featuredBlog.slug}`}
                           className="cursor-pointer transition hover:text-[#0e8ae0]"
@@ -1359,27 +1368,27 @@ export default function BlogsClient({
                           {getBlogValue(featuredBlog.title, "Untitled blog")}
                         </Link>
                       </h2>
-                      <div className="flex flex-wrap gap-2.5 mt-0.5">
-                        <span className="inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 bg-white/90 border border-[#78bce759] text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
+                      <div className="mt-0.5 flex flex-wrap gap-2.5">
+                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#78bce759] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
                           {getBlogValue(featuredBlog.category, "Host Strategy")}
                         </span>
-                        <span className="inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 bg-white/90 border border-[#78bce759] text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
+                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#78bce759] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
                           {authorName}
                         </span>
-                        <span className="inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 bg-white/90 border border-[#78bce759] text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
+                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#78bce759] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
                           {displayDate}
                         </span>
-                        <span className="inline-flex items-center justify-center gap-2 rounded-full px-3.5 py-1.5 bg-white/90 border border-[#78bce759] text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
+                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#78bce759] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
                           {featuredBlog.read_time_minutes ?? 5} Min Read
                         </span>
                       </div>
-                      <p className="text-[0.88rem] leading-[1.68] text-[#6f8daa] m-0 line-clamp-4">
+                      <p className="m-0 line-clamp-4 text-[0.88rem] leading-[1.68] text-[#6f8daa]">
                         {excerpt}
                       </p>
                       <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
                         <Link
                           href={`/blogs/${featuredBlog.slug}`}
-                          className="inline-flex items-center gap-2 bg-transparent border-0 p-0 font-outfit text-[0.92rem] font-bold text-[#0e8ae0] cursor-pointer hover:underline after:content-['>'] after:text-base"
+                          className="font-outfit inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-[0.92rem] font-bold text-[#0e8ae0] after:text-base after:content-['>'] hover:underline"
                         >
                           Read article
                         </Link>
@@ -1408,14 +1417,16 @@ export default function BlogsClient({
                     </div>
 
                     <div
-                      className="relative min-h-[320px] w-full overflow-hidden rounded-[28px] border border-[#addbf699] bg-[linear-gradient(145deg,#e5f7ff,#f9fdff)] group cursor-pointer"
+                      className="group relative min-h-[320px] w-full cursor-pointer overflow-hidden rounded-[28px] border border-[#addbf699] bg-[linear-gradient(145deg,#e5f7ff,#f9fdff)]"
                       onClick={() => router.push(`/blogs/${featuredBlog.slug}`)}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={featuredBlog.cover_image_url ?? FALLBACK_BLOG_IMAGE}
+                        src={
+                          featuredBlog.cover_image_url ?? FALLBACK_BLOG_IMAGE
+                        }
                         alt={getBlogValue(featuredBlog.title, "Featured story")}
-                        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105 rounded-[28px]"
+                        className="absolute inset-0 h-full w-full rounded-[28px] object-cover transition duration-500 group-hover:scale-105"
                       />
                       {!featuredBlog.published_at && (
                         <span className="absolute top-4 left-4 z-10 rounded-full bg-amber-500 px-3 py-1 text-[0.7rem] font-extrabold tracking-wide text-white uppercase shadow">
@@ -1428,13 +1439,14 @@ export default function BlogsClient({
               })()}
 
               <section className="mt-12 mb-8">
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mt-13 mb-5.5">
+                <div className="mt-13 mb-5.5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                   <div>
-                    <h2 className="font-outfit text-[clamp(1.5rem,2.3vw,2rem)] font-semibold leading-[1.16] tracking-[-0.04em] text-[#16304c] m-0">
+                    <h2 className="font-outfit m-0 text-[clamp(1.5rem,2.3vw,2rem)] leading-[1.16] font-semibold tracking-[-0.04em] text-[#16304c]">
                       Browse the latest from Myslotmate
                     </h2>
-                    <p className="mt-3 text-[0.9rem] leading-[1.68] text-[#6f8daa] m-0">
-                      Editorial inspiration with the same bright, local-first energy as the main brand.
+                    <p className="m-0 mt-3 text-[0.9rem] leading-[1.68] text-[#6f8daa]">
+                      Editorial inspiration with the same bright, local-first
+                      energy as the main brand.
                     </p>
                   </div>
                   <div className="relative w-full md:max-w-sm">
@@ -1444,17 +1456,18 @@ export default function BlogsClient({
                       placeholder="Search blogs..."
                       value={searchTerm}
                       onChange={(event) => setSearchTerm(event.target.value)}
-                      className="w-full rounded-full border border-[rgba(120,188,231,0.35)] bg-white/90 py-2.5 pr-4 pl-11 text-sm text-[#16304c] placeholder-[#6f8daa] outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20 shadow-[0_10px_24px_rgba(74,141,194,0.08)]"
+                      className="w-full rounded-full border border-[rgba(120,188,231,0.35)] bg-white/90 py-2.5 pr-4 pl-11 text-sm text-[#16304c] placeholder-[#6f8daa] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
                     />
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3 mt-2.5">
+                <div className="mt-2.5 flex flex-wrap gap-3">
                   <span
                     onClick={() => setSelectedCategory("All")}
-                    className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[0.74rem] font-extrabold tracking-[0.08em] uppercase cursor-pointer transition-all duration-200 ${selectedCategory === "All"
-                        ? "bg-[linear-gradient(135deg,#1fa7ff,#66d1ff)] border border-transparent text-white shadow-[0_14px_26px_rgba(31,167,255,0.24)]"
-                        : "bg-white/90 border border-[#78bce759] text-[#4c84ab] hover:bg-[#ebf6ff] hover:text-[#0e8ae0]"
-                      }`}
+                    className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[0.74rem] font-extrabold tracking-[0.08em] uppercase transition-all duration-200 ${
+                      selectedCategory === "All"
+                        ? "border border-transparent bg-[linear-gradient(135deg,#1fa7ff,#66d1ff)] text-white shadow-[0_14px_26px_rgba(31,167,255,0.24)]"
+                        : "border border-[#78bce759] bg-white/90 text-[#4c84ab] hover:bg-[#ebf6ff] hover:text-[#0e8ae0]"
+                    }`}
                   >
                     All Posts
                   </span>
@@ -1462,10 +1475,11 @@ export default function BlogsClient({
                     <span
                       key={category}
                       onClick={() => setSelectedCategory(category)}
-                      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[0.74rem] font-extrabold tracking-[0.08em] uppercase cursor-pointer transition-all duration-200 ${selectedCategory === category
-                          ? "bg-[linear-gradient(135deg,#1fa7ff,#66d1ff)] border border-transparent text-white shadow-[0_14px_26px_rgba(31,167,255,0.24)]"
-                          : "bg-white/90 border border-[#78bce759] text-[#4c84ab] hover:bg-[#ebf6ff] hover:text-[#0e8ae0]"
-                        }`}
+                      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[0.74rem] font-extrabold tracking-[0.08em] uppercase transition-all duration-200 ${
+                        selectedCategory === category
+                          ? "border border-transparent bg-[linear-gradient(135deg,#1fa7ff,#66d1ff)] text-white shadow-[0_14px_26px_rgba(31,167,255,0.24)]"
+                          : "border border-[#78bce759] bg-white/90 text-[#4c84ab] hover:bg-[#ebf6ff] hover:text-[#0e8ae0]"
+                      }`}
                     >
                       {category}
                     </span>
@@ -1475,7 +1489,7 @@ export default function BlogsClient({
 
               {/* Story Grid for remaining blogs */}
               {filteredBlogs.length > 1 && (
-                <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+                <section className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {filteredBlogs.slice(1).map((blog) => (
                     <BlogCard
                       key={blog.id}

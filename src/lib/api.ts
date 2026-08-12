@@ -1053,6 +1053,215 @@ export function hostCompleteWalkIn(body: HostWalkInCompleteBody) {
   });
 }
 
+/* ------------------------------------------------------------------ */
+/*  Host bulk booking import (Excel)                                   */
+/* ------------------------------------------------------------------ */
+// A host uploads an .xlsx of guests (Name, Phone, Quantity) and each row is
+// booked in the background. Every route derives the host from the auth token,
+// so all of these must send `Authorization: Bearer <token>`.
+//
+// Money: the backend allows imports only where the booking costs ₹0 — a free
+// event, or a coupon that comps it — because a bulk upload has no per-row
+// checkout. Paid events without such a code are rejected with a 422.
+
+export interface BookingImportJob {
+  id: string;
+  host_id: string;
+  event_id: string;
+  occurrence_date: string;
+  coupon_code?: string;
+  payment_mode: "free" | "coupon" | "offline";
+  unit_price_cents: number;
+  offline_ack: boolean;
+  file_name: string;
+  /** pending | processing | completed | failed.
+   *  "completed" means the job finished, NOT that every row succeeded —
+   *  read success_rows / failed_rows for that. */
+  status: "pending" | "processing" | "completed" | "failed";
+  error_message?: string;
+  total_rows: number;
+  processed_rows: number;
+  success_rows: number;
+  failed_rows: number;
+  created_at: string;
+  updated_at: string;
+  completed_at?: string;
+}
+
+export interface BookingImportRow {
+  id: string;
+  job_id: string;
+  /** 1-based line in the host's sheet, header excluded. */
+  row_number: number;
+  guest_name: string;
+  guest_phone: string;
+  quantity: number;
+  status: "pending" | "success" | "failed";
+  error_message?: string;
+  booking_id?: string;
+}
+
+export interface BookingImportStatus {
+  job: BookingImportJob;
+  failed_rows: BookingImportRow[];
+}
+
+/** Structured detail attached to a 400 when the sheet's headers are wrong, so
+ *  the UI can name the missing columns instead of dumping a sentence. */
+export interface BookingImportHeaderError {
+  missing: string[];
+  expected: string[];
+  found: string[];
+}
+
+/** Pulls the header detail off a thrown apiFetch error, when present. */
+export function getImportHeaderError(
+  err: unknown,
+): BookingImportHeaderError | null {
+  const data = (
+    err as { data?: Envelope<{ header_error?: BookingImportHeaderError }> }
+  )?.data?.data;
+  return data?.header_error ?? null;
+}
+
+export interface BookingImportValidation {
+  importable: true;
+  /** How the bookings will be paid for:
+   *  - "free"    the event costs nothing
+   *  - "coupon"  paid event comped to zero by a host code
+   *  - "offline" paid event; the HOST collects the fee themselves. These
+   *              bookings are written at zero with no ledger entry and no host
+   *              earnings — the platform never sees the money, so it owes the
+   *              host nothing for these seats. */
+  payment_mode: "free" | "coupon" | "offline";
+  unit_price_cents: number;
+  /** True for "offline": the host must confirm they collected payment before
+   *  the upload is accepted. Enforced server-side, not just here. */
+  requires_offline_ack: boolean;
+  expected_headers: string[];
+  max_rows: number;
+}
+
+/**
+ * GET /host/bookings/import/validate — can this event be bulk-imported?
+ * Call before the host picks a file so paid/tiered/attendee-detail events are
+ * refused up front rather than after an upload.
+ */
+export function validateBookingImportEvent(
+  eventId: string,
+  idToken: string,
+  couponCode?: string,
+) {
+  return apiFetch<BookingImportValidation>("/host/bookings/import/validate", {
+    params: {
+      event_id: eventId,
+      ...(couponCode ? { coupon_code: couponCode } : {}),
+    },
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/**
+ * GET /host/bookings/import/template — downloads the .xlsx template.
+ * Generated server-side from the same column definitions the upload validator
+ * checks, so it can never drift out of sync. Returns a Blob, not an envelope.
+ */
+export async function downloadBookingImportTemplate(
+  idToken: string,
+): Promise<Blob> {
+  const res = await api.request<Blob>({
+    url: "/host/bookings/import/template",
+    responseType: "blob",
+    headers: getAuthHeader(idToken),
+  });
+  return res.data;
+}
+
+/**
+ * POST /host/bookings/import — upload the filled sheet.
+ * Returns 202 with a job that is already running; poll getBookingImportJob.
+ * Header/parse errors come back as a 400 before any job is created.
+ */
+export function uploadBookingImport(
+  args: {
+    file: File;
+    eventId: string;
+    occurrenceDate?: string; // RFC3339; required for recurring events
+    couponCode?: string;
+    /** Required when payment_mode is "offline" — the host confirming they have
+     *  already collected the fee from these guests. */
+    offlineAck?: boolean;
+  },
+  idToken: string,
+) {
+  const form = new FormData();
+  form.append("file", args.file);
+  form.append("event_id", args.eventId);
+  if (args.occurrenceDate) form.append("occurrence_date", args.occurrenceDate);
+  if (args.couponCode) form.append("coupon_code", args.couponCode);
+  if (args.offlineAck) form.append("offline_ack", "true");
+
+  return apiFetch<BookingImportJob>("/host/bookings/import", {
+    method: "POST",
+    data: form,
+    // Must override the axios instance's JSON default or the upload is sent
+    // with the wrong content type. Axios fills in the boundary itself when the
+    // body is FormData (same pattern as uploadFiles above).
+    headers: {
+      ...getAuthHeader(idToken),
+      "Content-Type": "multipart/form-data",
+    },
+  });
+}
+
+/** GET /host/bookings/import/{jobID} — counters plus the failed rows. */
+export function getBookingImportJob(jobId: string, idToken: string) {
+  return apiFetch<BookingImportStatus>(`/host/bookings/import/${jobId}`, {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/**
+ * GET /host/bookings/import/{jobID}/rows — the job's rows, optionally filtered.
+ * Separate from getBookingImportJob so the 2s poll stays small; fetch this once
+ * the job finishes to show the full booked/failed report.
+ */
+export function listBookingImportRows(
+  jobId: string,
+  idToken: string,
+  status?: "success" | "failed" | "pending",
+) {
+  return apiFetch<BookingImportRow[]>(`/host/bookings/import/${jobId}/rows`, {
+    params: status ? { status } : undefined,
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/**
+ * GET /host/bookings/import/{jobID}/report — the finished import as an .xlsx:
+ * a Summary sheet plus every row with its outcome and failure reason.
+ * Returns a Blob, not an envelope.
+ */
+export async function downloadBookingImportReport(
+  jobId: string,
+  idToken: string,
+): Promise<Blob> {
+  const res = await api.request<Blob>({
+    url: `/host/bookings/import/${jobId}/report`,
+    responseType: "blob",
+    headers: getAuthHeader(idToken),
+  });
+  return res.data;
+}
+
+/** GET /host/bookings/import — the host's recent imports. */
+export function listBookingImportJobs(idToken: string, limit = 20) {
+  return apiFetch<BookingImportJob[]>("/host/bookings/import", {
+    params: { limit },
+    headers: getAuthHeader(idToken),
+  });
+}
+
 export interface ExperienceTemplateDTO {
   id: string;
   mood: string;
@@ -1177,7 +1386,7 @@ export interface EventCreatePayload {
   is_free?: boolean;
   is_recurring?: boolean;
   recurrence_rule?: string;
-  schedule_type?: 'one_time' | 'recurring' | 'custom_dates';
+  schedule_type?: "one_time" | "recurring" | "custom_dates";
   custom_dates?: string[];
   /** "group" (default) or "one_on_one" — see src/lib/sessionSlots.ts. */
   session_type?: SessionType;
@@ -1415,10 +1624,19 @@ export interface BookingDTO {
   created_at: string;
   updated_at: string;
   cancelled_at: string | null;
+  /** True once a booking confirmation/ticket has gone out over WhatsApp. */
+  notification_sent_whatsapp?: boolean;
   // Joined user fields — present only on the host attendees endpoint.
   user_name?: string;
   user_email?: string;
+  /** Guest's phone. Present on the host attendees endpoint; backs the
+   *  "send ticket over WhatsApp" action. */
+  user_phone?: string;
   user_avatar_url?: string | null;
+  /** How the booking was made: "online" (guest checkout), "walk_in" (on-spot),
+   *  or "bulk_import" (spreadsheet upload). */
+  source?: "online" | "walk_in" | "bulk_import";
+  import_job_id?: string | null;
   // Submitted attendee details — present on the host attendees endpoint when
   // the guest filled the attendee form.
   attendee_profile?: AttendeeProfileDTO | null;

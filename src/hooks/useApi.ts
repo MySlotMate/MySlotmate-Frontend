@@ -25,11 +25,11 @@ export const queryKeys = {
   hostEventsFiltered: (hostId: string, filters?: Record<string, string>) =>
     ["hostEventsFiltered", hostId, filters] as const,
   event: (eventId: string) => ["event", eventId] as const,
-  eventAvailability: (eventId: string) => ["eventAvailability", eventId] as const,
+  eventAvailability: (eventId: string) =>
+    ["eventAvailability", eventId] as const,
   eventOccurrencesForHost: (eventId: string, hostId: string) =>
     ["eventOccurrencesForHost", eventId, hostId] as const,
-  experienceTemplates: (mood: string) =>
-    ["experienceTemplates", mood] as const,
+  experienceTemplates: (mood: string) => ["experienceTemplates", mood] as const,
   eventAttendees: (eventId: string) => ["eventAttendees", eventId] as const,
   reviewsByEvent: (eventId: string) => ["reviewsByEvent", eventId] as const,
   eventRating: (eventId: string) => ["eventRating", eventId] as const,
@@ -480,7 +480,10 @@ export function usePayoutMethods(
   idToken?: string | null,
 ) {
   return useQuery({
-    queryKey: [...queryKeys.payoutMethods(hostId ?? ""), idToken ?? ""] as const,
+    queryKey: [
+      ...queryKeys.payoutMethods(hostId ?? ""),
+      idToken ?? "",
+    ] as const,
     queryFn: () => api.getPayoutMethods(hostId!, idToken!),
     enabled: !!hostId && !!idToken,
     staleTime: 2 * 60 * 1000,
@@ -696,8 +699,7 @@ export function useAddPlatformPayoutMethod() {
     }: {
       body: api.PlatformAddPayoutMethodPayload;
       idToken: string;
-    }) =>
-      api.addPlatformPayoutMethod(body, idToken),
+    }) => api.addPlatformPayoutMethod(body, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
     },
@@ -717,8 +719,7 @@ export function useSetPlatformPrimaryPayoutMethod() {
     }: {
       methodId: string;
       idToken: string;
-    }) =>
-      api.setPlatformPrimaryPayoutMethod(methodId, idToken),
+    }) => api.setPlatformPrimaryPayoutMethod(methodId, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
     },
@@ -738,8 +739,7 @@ export function useDeletePlatformPayoutMethod() {
     }: {
       methodId: string;
       idToken: string;
-    }) =>
-      api.deletePlatformPayoutMethod(methodId, idToken),
+    }) => api.deletePlatformPayoutMethod(methodId, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformPayoutMethods });
     },
@@ -759,8 +759,7 @@ export function useWithdrawPlatformFees() {
     }: {
       body: { amount_cents: number; idempotency_key?: string };
       idToken: string;
-    }) =>
-      api.withdrawPlatformFees(body, idToken),
+    }) => api.withdrawPlatformFees(body, idToken),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: queryKeys.platformBalance });
     },

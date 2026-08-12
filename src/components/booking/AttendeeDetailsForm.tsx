@@ -119,9 +119,7 @@ export default function AttendeeDetailsForm({
               </>
             )}
 
-            {(f.type === "text" ||
-              f.type === "tel" ||
-              f.type === "number") && (
+            {(f.type === "text" || f.type === "tel" || f.type === "number") && (
               <input
                 type={f.type === "number" ? "number" : f.type}
                 inputMode={

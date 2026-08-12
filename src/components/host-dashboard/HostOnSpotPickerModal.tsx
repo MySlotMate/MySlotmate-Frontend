@@ -2,9 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { LuX, LuSearch, LuChevronRight, LuUserPlus } from "react-icons/lu";
+import {
+  LuX,
+  LuSearch,
+  LuChevronRight,
+  LuUserPlus,
+  LuFileSpreadsheet,
+} from "react-icons/lu";
 import type { EventDTO } from "~/lib/api";
 import HostOnSpotBookingModal from "./HostOnSpotBookingModal";
+import HostBulkImportModal from "./HostBulkImportModal";
 
 // An event is bookable on-spot only if it's live and (for non-recurring events)
 // hasn't started yet. Mirrors the per-card gate on the experiences page.
@@ -14,17 +21,44 @@ function isBookable(e: EventDTO): boolean {
   return true;
 }
 
+/** Which flow the picker hands off to once an experience is chosen. */
+export type PickerMode = "on-spot" | "bulk-import";
+
+// Everything that differs between the two flows. The picking itself — the live
+// event gate, search, the list — is identical, so the modes share it rather than
+// maintaining two near-identical pickers.
+const MODE_COPY: Record<
+  PickerMode,
+  { icon: typeof LuUserPlus; title: string; subtitle: string; empty: string }
+> = {
+  "on-spot": {
+    icon: LuUserPlus,
+    title: "On-spot booking",
+    subtitle: "Pick a live experience to book a walk-in guest.",
+    empty: "No live experiences available for on-spot booking right now.",
+  },
+  "bulk-import": {
+    icon: LuFileSpreadsheet,
+    title: "Bulk add bookings",
+    subtitle: "Pick a live experience to upload a guest list for.",
+    empty: "No live experiences available for bulk booking right now.",
+  },
+};
+
 interface HostOnSpotPickerModalProps {
   hostId: string;
   events: EventDTO[];
   isOpen: boolean;
   onClose: () => void;
   onBooked?: () => void;
+  /** Defaults to the walk-in flow this picker was originally built for. */
+  mode?: PickerMode;
 }
 
 /**
- * Dashboard entry point for on-spot booking: pick one of the host's live
- * experiences, then hand off to HostOnSpotBookingModal for the actual booking.
+ * Dashboard entry point for adding bookings by hand: pick one of the host's live
+ * experiences, then hand off to the flow named by `mode` — a single walk-in
+ * guest (HostOnSpotBookingModal) or a spreadsheet of them (HostBulkImportModal).
  */
 export default function HostOnSpotPickerModal({
   hostId,
@@ -32,6 +66,7 @@ export default function HostOnSpotPickerModal({
   isOpen,
   onClose,
   onBooked,
+  mode = "on-spot",
 }: HostOnSpotPickerModalProps) {
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
@@ -42,10 +77,7 @@ export default function HostOnSpotPickerModal({
 
   useEffect(() => setMounted(true), []);
 
-  const bookable = useMemo(
-    () => (events ?? []).filter(isBookable),
-    [events],
-  );
+  const bookable = useMemo(() => (events ?? []).filter(isBookable), [events]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return bookable;
@@ -58,11 +90,22 @@ export default function HostOnSpotPickerModal({
     onClose();
   };
 
+  const copy = MODE_COPY[mode];
+
   if (!isOpen || !mounted) return null;
 
-  // Once an event is chosen, the booking modal takes over.
+  // Once an event is chosen, the flow's own modal takes over. Closing it returns
+  // here rather than dismissing everything, so the host can pick another.
   if (selected) {
-    return (
+    return mode === "bulk-import" ? (
+      <HostBulkImportModal
+        eventId={selected.id}
+        eventTitle={selected.title}
+        isOpen
+        onClose={() => setSelected(null)}
+        onImported={onBooked}
+      />
+    ) : (
       <HostOnSpotBookingModal
         eventId={selected.id}
         eventTitle={selected.title}
@@ -88,15 +131,13 @@ export default function HostOnSpotPickerModal({
           <div className="mb-4 flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e6f8ff]">
-                <LuUserPlus className="h-5 w-5 text-[#0094CA]" />
+                <copy.icon className="h-5 w-5 text-[#0094CA]" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-gray-900">
-                  On-spot booking
+                  {copy.title}
                 </h2>
-                <p className="text-sm text-gray-500">
-                  Pick a live experience to book a walk-in guest.
-                </p>
+                <p className="text-sm text-gray-500">{copy.subtitle}</p>
               </div>
             </div>
             <button
@@ -109,7 +150,7 @@ export default function HostOnSpotPickerModal({
 
           {bookable.length === 0 ? (
             <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
-              No live experiences available for on-spot booking right now.
+              {copy.empty}
             </div>
           ) : (
             <>
@@ -135,9 +176,7 @@ export default function HostOnSpotPickerModal({
                   filtered.map((e) => (
                     <button
                       key={e.id}
-                      onClick={() =>
-                        setSelected({ id: e.id, title: e.title })
-                      }
+                      onClick={() => setSelected({ id: e.id, title: e.title })}
                       className="flex w-full items-center gap-3 rounded-xl border border-gray-100 px-3 py-3 text-left transition hover:border-[#0094CA] hover:bg-[#e6f8ff]/40"
                     >
                       {e.cover_image_url ? (

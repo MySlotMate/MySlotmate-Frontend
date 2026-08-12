@@ -36,7 +36,8 @@ function toISTWallClock(input: string | Date): Date | null {
     hour12: false,
   }).formatToParts(date);
 
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "0";
+  const get = (type: string) =>
+    parts.find((p) => p.type === type)?.value ?? "0";
   const hour = get("hour") === "24" ? 0 : Number(get("hour"));
 
   return new Date(

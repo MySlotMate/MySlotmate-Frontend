@@ -92,7 +92,9 @@ export default function ManageCodesModal({
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Codes &amp; passkey</h2>
+            <h2 className="text-lg font-bold text-gray-900">
+              Codes &amp; passkey
+            </h2>
             <p className="text-sm text-gray-500">{eventTitle}</p>
           </div>
           <button

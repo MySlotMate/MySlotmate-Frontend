@@ -86,7 +86,7 @@ export const getNextOccurrence = (
   const base = new Date(baseDate);
   if (isNaN(base.getTime())) return null;
 
-  // To find the NEXT occurrence after the currently full one, 
+  // To find the NEXT occurrence after the currently full one,
   // we start our search from the base date itself.
   const now = new Date();
   const searchFrom = new Date(Math.max(now.getTime(), base.getTime() + 1000));
@@ -103,7 +103,8 @@ export const getNextOccurrence = (
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays > 0) {
       const remainder = diffDays % interval;
-      if (remainder !== 0) cursor.setDate(cursor.getDate() + (interval - remainder));
+      if (remainder !== 0)
+        cursor.setDate(cursor.getDate() + (interval - remainder));
     }
     if (cursor <= searchFrom) cursor.setDate(cursor.getDate() + interval);
     return cursor;
@@ -111,7 +112,13 @@ export const getNextOccurrence = (
 
   // Weekly handling with potentially multiple days (though we mostly use single day rules for now)
   const dayMap: Record<string, number> = {
-    SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6,
+    SU: 0,
+    MO: 1,
+    TU: 2,
+    WE: 3,
+    TH: 4,
+    FR: 5,
+    SA: 6,
   };
   const byDay = parts.BYDAY;
   const targetDays: number[] = [];
@@ -177,7 +184,11 @@ export const ExperienceCard = ({
 
   const isSaved = savedStatus?.saved ?? false;
 
-  const isFull = !isRecurring && capacity !== undefined && totalBookings !== undefined && totalBookings >= capacity;
+  const isFull =
+    !isRecurring &&
+    capacity !== undefined &&
+    totalBookings !== undefined &&
+    totalBookings >= capacity;
 
   // Local fallback if backend didn't provide nextAvailableDate
   const nextDateLocal =
@@ -185,13 +196,17 @@ export const ExperienceCard = ({
       ? getNextOccurrence(time, recurrenceRule)
       : null;
 
-  const nextDateLabel = nextDateLocal ? formatEventDate(nextDateLocal.toISOString()) : null;
+  const nextDateLabel = nextDateLocal
+    ? formatEventDate(nextDateLocal.toISOString())
+    : null;
 
   const displayDate = isShowingNext ? dateLabel : (nextDateLabel ?? dateLabel);
 
   const spotsLeft =
     capacity !== undefined && totalBookings !== undefined
-      ? (isRecurring ? capacity : Math.max(0, capacity - totalBookings))
+      ? isRecurring
+        ? capacity
+        : Math.max(0, capacity - totalBookings)
       : null;
 
   useEffect(() => {
@@ -236,7 +251,11 @@ export const ExperienceCard = ({
   const isNew = isNaN(numericRating) || numericRating === 0;
 
   const badge = {
-    label: isNew ? "NEW" : (Number.isInteger(numericRating) ? numericRating.toFixed(1) : numericRating.toString()),
+    label: isNew
+      ? "NEW"
+      : Number.isInteger(numericRating)
+        ? numericRating.toFixed(1)
+        : numericRating.toString(),
     icon: Star,
   };
 
@@ -267,7 +286,9 @@ export const ExperienceCard = ({
       const timePart = commaSplit.slice(2).join(", ");
       return {
         top: commaSplit.slice(0, 2).join(", ").trim(),
-        bottom: timePart.toLowerCase().startsWith("at") ? timePart : `at ${timePart}`,
+        bottom: timePart.toLowerCase().startsWith("at")
+          ? timePart
+          : `at ${timePart}`,
       };
     }
 
@@ -310,7 +331,10 @@ export const ExperienceCard = ({
           {/* Top-left Badges */}
           <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-1.5">
             <span className="inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#16304c] uppercase shadow-sm">
-              <badge.icon className="h-3 w-3 text-[#f59e0b] fill-[#f59e0b]" strokeWidth={2.5} />
+              <badge.icon
+                className="h-3 w-3 fill-[#f59e0b] text-[#f59e0b]"
+                strokeWidth={2.5}
+              />
               {badge.label}
             </span>
             {isPrivate && (
@@ -347,7 +371,7 @@ export const ExperienceCard = ({
       <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
         {/* Title */}
         <Link href={href} className="block">
-          <h3 className="line-clamp-1 text-[15px] font-bold leading-tight tracking-tight text-[#16304c] transition-colors group-hover:bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] group-hover:bg-clip-text group-hover:text-transparent">
+          <h3 className="line-clamp-1 text-[15px] leading-tight font-bold tracking-tight text-[#16304c] transition-colors group-hover:bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] group-hover:bg-clip-text group-hover:text-transparent">
             {title}
           </h3>
         </Link>
@@ -359,7 +383,14 @@ export const ExperienceCard = ({
 
         <svg width="0" height="0" className="absolute" aria-hidden="true">
           <defs>
-            <linearGradient id={`icon-gradient-${id ?? "default"}`} x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+            <linearGradient
+              id={`icon-gradient-${id ?? "default"}`}
+              x1="0"
+              y1="0"
+              x2="24"
+              y2="24"
+              gradientUnits="userSpaceOnUse"
+            >
               <stop stopColor="#1fa7ff" offset="0%" />
               <stop stopColor="#63ceff" offset="100%" />
             </linearGradient>
@@ -382,7 +413,9 @@ export const ExperienceCard = ({
                 </p>
               </div>
             ) : (
-              <p className="text-[12px] font-bold text-[#a0aec0]">Schedule TBD</p>
+              <p className="text-[12px] font-bold text-[#a0aec0]">
+                Schedule TBD
+              </p>
             )}
           </div>
 
@@ -394,19 +427,21 @@ export const ExperienceCard = ({
             />
             {location ? (
               <div className="min-w-0">
-                <p className="line-clamp-2 text-[12px] font-bold leading-snug text-[#16304c]">
+                <p className="line-clamp-2 text-[12px] leading-snug font-bold text-[#16304c]">
                   {location}
                 </p>
               </div>
             ) : (
-              <p className="text-[12px] font-bold text-[#a0aec0]">Location TBD</p>
+              <p className="text-[12px] font-bold text-[#a0aec0]">
+                Location TBD
+              </p>
             )}
           </div>
         </div>
       </div>
 
       {/* Pricing + Book Action — light pill row */}
-      <div className="mt-auto px-4 pb-3 pt-2">
+      <div className="mt-auto px-4 pt-2 pb-3">
         <div className="flex items-center justify-between rounded-2xl bg-[#fcfdff] px-4 py-3 ring-1 ring-[#e6eef7]">
           <div className="flex items-baseline gap-1">
             <span className="text-[15px] font-bold text-[#16304c]">

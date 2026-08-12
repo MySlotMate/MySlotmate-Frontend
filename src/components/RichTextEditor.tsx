@@ -23,7 +23,11 @@ import Image from "@tiptap/extension-image";
  * Dragging the handle resizes the image (width as a percentage of the editor
  * column so it stays responsive on small screens).
  */
-function ResizableImageNodeView({ node, updateAttributes, selected }: NodeViewProps) {
+function ResizableImageNodeView({
+  node,
+  updateAttributes,
+  selected,
+}: NodeViewProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const dragging = useRef<{
     startX: number;
@@ -75,7 +79,12 @@ function ResizableImageNodeView({ node, updateAttributes, selected }: NodeViewPr
       style={{ width: widthAttr ?? undefined }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className="rt-image rounded-lg" draggable={false} />
+      <img
+        src={src}
+        alt={alt}
+        className="rt-image rounded-lg"
+        draggable={false}
+      />
       {selected && (
         <span
           role="slider"
@@ -196,7 +205,12 @@ import {
   FiX,
   FiImage,
 } from "react-icons/fi";
-import { LuListOrdered, LuHeading1, LuHeading2, LuHeading3 } from "react-icons/lu";
+import {
+  LuListOrdered,
+  LuHeading1,
+  LuHeading2,
+  LuHeading3,
+} from "react-icons/lu";
 
 export interface RichTextEditorProps {
   /** HTML content. Empty string when the editor is blank. */
@@ -541,9 +555,7 @@ export function RichTextEditor({
                     backgroundColor: c.value || "transparent",
                   }}
                 >
-                  {!c.value && (
-                    <FiX className="h-2.5 w-2.5 text-gray-400" />
-                  )}
+                  {!c.value && <FiX className="h-2.5 w-2.5 text-gray-400" />}
                 </button>
               ))}
             </div>

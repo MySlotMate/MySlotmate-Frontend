@@ -17,7 +17,18 @@ import {
   usePublishEvent,
 } from "~/hooks/useApi";
 import { useDragDrop } from "~/hooks/useDragDrop";
-import { FiArrowLeft, FiX, FiUpload, FiTrash2, FiCheck, FiChevronDown, FiChevronRight, FiCalendar, FiUsers, FiDownload } from "react-icons/fi";
+import {
+  FiArrowLeft,
+  FiX,
+  FiUpload,
+  FiTrash2,
+  FiCheck,
+  FiChevronDown,
+  FiChevronRight,
+  FiCalendar,
+  FiUsers,
+  FiDownload,
+} from "react-icons/fi";
 import { getEvent, type BookingDTO } from "~/lib/api";
 import { istInputToUTCISO, utcToISTInputs } from "~/lib/datetime";
 import {
@@ -216,13 +227,25 @@ function ImageUpload({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCurrentImageIndex((prev) => (prev === 0 ? previews.length - 1 : prev - 1));
+                      setCurrentImageIndex((prev) =>
+                        prev === 0 ? previews.length - 1 : prev - 1,
+                      );
                     }}
                     className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
                     aria-label="Previous image"
                   >
-                    <svg className="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    <svg
+                      className="h-4 w-4 text-gray-800"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
                     </svg>
                   </button>
 
@@ -231,13 +254,25 @@ function ImageUpload({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCurrentImageIndex((prev) => (prev === previews.length - 1 ? 0 : prev + 1));
+                      setCurrentImageIndex((prev) =>
+                        prev === previews.length - 1 ? 0 : prev + 1,
+                      );
                     }}
                     className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
                     aria-label="Next image"
                   >
-                    <svg className="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg
+                      className="h-4 w-4 text-gray-800"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   </button>
 
@@ -256,8 +291,10 @@ function ImageUpload({
               <div
                 key={i}
                 onClick={() => setCurrentImageIndex(i)}
-                className={`relative cursor-pointer rounded-lg border-2 transition overflow-hidden ${
-                  currentImageIndex === i ? "border-[#0094CA]" : "border-transparent"
+                className={`relative cursor-pointer overflow-hidden rounded-lg border-2 transition ${
+                  currentImageIndex === i
+                    ? "border-[#0094CA]"
+                    : "border-transparent"
                 }`}
               >
                 <img
@@ -272,7 +309,7 @@ function ImageUpload({
                     e.stopPropagation();
                     onRemoveMultiple?.(i);
                   }}
-                  className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition shadow"
+                  className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white shadow transition hover:bg-red-600"
                 >
                   <FiX size={10} />
                 </button>
@@ -352,7 +389,9 @@ function AttendeeRow({
             {attendee.user_name ?? "Unknown user"}
           </p>
           {attendee.user_email && (
-            <p className="truncate text-xs text-gray-500">{attendee.user_email}</p>
+            <p className="truncate text-xs text-gray-500">
+              {attendee.user_email}
+            </p>
           )}
           <p className="text-xs text-gray-500">
             Qty: {attendee.quantity}
@@ -561,7 +600,8 @@ function AttendeesList({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
         <span className="text-xs text-gray-500">
-          Total Bookings: <strong className="text-gray-900">{attendees.length}</strong>
+          Total Bookings:{" "}
+          <strong className="text-gray-900">{attendees.length}</strong>
         </span>
         <button
           type="button"
@@ -673,7 +713,11 @@ export default function EditEventPage({
     }));
   };
 
-  const updateCustomSlot = (index: number, field: "date" | "time", val: string) => {
+  const updateCustomSlot = (
+    index: number,
+    field: "date" | "time",
+    val: string,
+  ) => {
     setForm((prev) => {
       const list = [...prev.customDatesList];
       const current = list[index] ?? { date: "", time: "" };
@@ -702,16 +746,18 @@ export default function EditEventPage({
       const endTime = event.end_time ? utcToISTInputs(event.end_time).time : "";
 
       const parsedCustomSlots =
-        event.schedule_type === "custom_dates" || (event.custom_dates && event.custom_dates.length > 0)
+        event.schedule_type === "custom_dates" ||
+        (event.custom_dates && event.custom_dates.length > 0)
           ? (event.custom_dates ?? []).map((d) => utcToISTInputs(d))
           : [{ date: dateStr, time: timeStr }];
 
       const computedScheduleType: "one_time" | "recurring" | "custom_dates" =
-        event.schedule_type === "custom_dates" || (event.custom_dates && event.custom_dates.length > 0)
+        event.schedule_type === "custom_dates" ||
+        (event.custom_dates && event.custom_dates.length > 0)
           ? "custom_dates"
           : event.is_recurring
-          ? "recurring"
-          : "one_time";
+            ? "recurring"
+            : "one_time";
 
       setForm({
         title: event.title ?? "",
@@ -745,8 +791,12 @@ export default function EditEventPage({
         isRecurring: event.is_recurring ?? false,
         recurrenceRule: event.recurrence_rule ?? "",
         scheduleType: computedScheduleType,
-        customDatesList: parsedCustomSlots.length > 0 ? parsedCustomSlots : [{ date: dateStr, time: timeStr }],
-        sessionType: event.session_type === "one_on_one" ? "one_on_one" : "group",
+        customDatesList:
+          parsedCustomSlots.length > 0
+            ? parsedCustomSlots
+            : [{ date: dateStr, time: timeStr }],
+        sessionType:
+          event.session_type === "one_on_one" ? "one_on_one" : "group",
         // Windows are what the host actually typed; custom_dates is the expansion.
         // A one-on-one event saved before session_windows existed falls back to an
         // empty row rather than showing the host a list of generated slots.
@@ -919,7 +969,8 @@ export default function EditEventPage({
       return "Add a location (or mark as online) before publishing";
     if (form.isOnline && !form.meetingLink.trim())
       return "Add a meeting link before publishing";
-    if (form.maxGroupSize < 1) return "Set a valid group size before publishing";
+    if (form.maxGroupSize < 1)
+      return "Set a valid group size before publishing";
     if (!form.cancellationPolicy)
       return "Pick a cancellation policy before publishing";
     return null;
@@ -1043,11 +1094,13 @@ export default function EditEventPage({
         form.sessionType === "one_on_one"
           ? {
               date:
-                (isWeeklyOneOnOne ? weeklyAnchor?.date : oneOnOneSlots[0]?.date) ??
-                form.eventDate,
+                (isWeeklyOneOnOne
+                  ? weeklyAnchor?.date
+                  : oneOnOneSlots[0]?.date) ?? form.eventDate,
               time:
-                (isWeeklyOneOnOne ? weeklyAnchor?.time : oneOnOneSlots[0]?.time) ??
-                form.eventTime,
+                (isWeeklyOneOnOne
+                  ? weeklyAnchor?.time
+                  : oneOnOneSlots[0]?.time) ?? form.eventTime,
             }
           : form.scheduleType === "custom_dates" &&
               form.customDatesList[0]?.date &&
@@ -1100,8 +1153,10 @@ export default function EditEventPage({
             : undefined,
           duration_minutes: form.durationMinutes,
           capacity: form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
-          min_group_size: form.sessionType === "one_on_one" ? 1 : form.minGroupSize,
-          max_group_size: form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
+          min_group_size:
+            form.sessionType === "one_on_one" ? 1 : form.minGroupSize,
+          max_group_size:
+            form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
           price_cents: form.isFree || form.useTiers ? 0 : form.priceCents,
           is_free: form.isFree,
           price_tiers:
@@ -1366,13 +1421,16 @@ export default function EditEventPage({
                       updateForm("sessionType", "group");
                     }}
                     className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" && form.scheduleType === "one_time"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                      form.sessionType === "group" &&
+                      form.scheduleType === "one_time"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    <div className="font-medium text-sm">One-Time Event</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Single specific date & time</div>
+                    <div className="text-sm font-medium">One-Time Event</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      Single specific date & time
+                    </div>
                   </button>
                   <button
                     type="button"
@@ -1382,13 +1440,16 @@ export default function EditEventPage({
                       updateForm("sessionType", "group");
                     }}
                     className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" && form.scheduleType === "recurring"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                      form.sessionType === "group" &&
+                      form.scheduleType === "recurring"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    <div className="font-medium text-sm">Recurring</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Repeats daily, weekly, or monthly</div>
+                    <div className="text-sm font-medium">Recurring</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      Repeats daily, weekly, or monthly
+                    </div>
                   </button>
                   <button
                     type="button"
@@ -1398,13 +1459,16 @@ export default function EditEventPage({
                       updateForm("sessionType", "group");
                     }}
                     className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" && form.scheduleType === "custom_dates"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                      form.sessionType === "group" &&
+                      form.scheduleType === "custom_dates"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    <div className="font-medium text-sm">Custom Dates</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Pick dynamic dates (e.g. Aug 15, 22, Sept 5)</div>
+                    <div className="text-sm font-medium">Custom Dates</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      Pick dynamic dates (e.g. Aug 15, 22, Sept 5)
+                    </div>
                   </button>
                   <button
                     type="button"
@@ -1415,144 +1479,179 @@ export default function EditEventPage({
                     }}
                     className={`rounded-xl border p-3.5 text-left transition ${
                       form.sessionType === "one_on_one"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
                         : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    <div className="font-medium text-sm">One-on-One</div>
-                    <div className="text-xs text-gray-500 mt-0.5">Set your hours, we split them into 1:1 slots</div>
+                    <div className="text-sm font-medium">One-on-One</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      Set your hours, we split them into 1:1 slots
+                    </div>
                   </button>
                 </div>
 
                 {/* Standard One-Time & Recurring Inputs */}
                 {form.sessionType === "group" &&
-                  (form.scheduleType === "one_time" || form.scheduleType === "recurring") && (
-                  <>
-                    {/* Date */}
-                    <div className="mb-4 space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Event Date <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={form.eventDate}
-                        onChange={(e) => updateForm("eventDate", e.target.value)}
-                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                      />
-                    </div>
-
-                    {/* Time */}
-                    <div className="mb-4 grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
+                  (form.scheduleType === "one_time" ||
+                    form.scheduleType === "recurring") && (
+                    <>
+                      {/* Date */}
+                      <div className="mb-4 space-y-2">
                         <label className="block text-sm font-medium text-gray-700">
-                          Start Time <span className="text-red-500">*</span>
+                          Event Date <span className="text-red-500">*</span>
                         </label>
                         <input
-                          type="time"
-                          value={form.eventTime}
-                          onChange={(e) => updateForm("eventTime", e.target.value)}
+                          type="date"
+                          value={form.eventDate}
+                          onChange={(e) =>
+                            updateForm("eventDate", e.target.value)
+                          }
                           className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          End Time
-                        </label>
-                        <input
-                          type="time"
-                          value={form.endTime}
-                          onChange={(e) => updateForm("endTime", e.target.value)}
-                          placeholder="Optional - auto-calculated from duration if not set"
-                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                        />
-                      </div>
-                    </div>
 
-                    {form.scheduleType === "recurring" && (
-                      <div className="mb-4 space-y-2 rounded-xl bg-gray-50 p-4 border border-gray-200">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Recurrence Frequency <span className="text-red-500">*</span>
-                        </label>
-                        <select
-                          value={form.recurrenceRule}
-                          onChange={(e) => updateForm("recurrenceRule", e.target.value)}
-                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                        >
-                          <option value="">Select frequency</option>
-                          <option value="FREQ=DAILY">Daily</option>
-                          <option value="FREQ=WEEKLY">Weekly</option>
-                          <option value="FREQ=WEEKLY;INTERVAL=2">Every 2 weeks</option>
-                          <option value="FREQ=MONTHLY">Monthly</option>
-                        </select>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {/* Dynamic Custom Selected Dates Inputs */}
-                {form.sessionType === "group" && form.scheduleType === "custom_dates" && (
-                  <div className="mb-6 space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
-                    <div>
-                      <h4 className="font-semibold text-gray-900 text-sm">Selected Specific Dates & Times</h4>
-                      <p className="text-xs text-gray-500">
-                        Add the specific dates and times when this experience will take place.
-                      </p>
-                    </div>
-
-                    {form.customDatesList.map((slot, idx) => (
-                      <div key={idx} className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                        <div className="flex-1 min-w-[150px]">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
-                          <input
-                            type="date"
-                            value={slot.date}
-                            onChange={(e) => updateCustomSlot(idx, "date", e.target.value)}
-                            min={new Date().toISOString().split("T")[0]}
-                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
-                          />
-                        </div>
-                        <div className="w-36 min-w-[120px]">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Start Time</label>
+                      {/* Time */}
+                      <div className="mb-4 grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Start Time <span className="text-red-500">*</span>
+                          </label>
                           <input
                             type="time"
-                            value={slot.time}
-                            onChange={(e) => updateCustomSlot(idx, "time", e.target.value)}
-                            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                            value={form.eventTime}
+                            onChange={(e) =>
+                              updateForm("eventTime", e.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                           />
                         </div>
-                        {form.customDatesList.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removeCustomSlot(idx)}
-                            className="mt-5 p-2 text-gray-400 hover:text-red-500 transition"
-                            title="Remove slot"
-                          >
-                            <FiX size={18} />
-                          </button>
-                        )}
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            End Time
+                          </label>
+                          <input
+                            type="time"
+                            value={form.endTime}
+                            onChange={(e) =>
+                              updateForm("endTime", e.target.value)
+                            }
+                            placeholder="Optional - auto-calculated from duration if not set"
+                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                          />
+                        </div>
                       </div>
-                    ))}
 
-                    <button
-                      type="button"
-                      onClick={addCustomSlot}
-                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094CA] hover:underline"
-                    >
-                      + Add Another Date
-                    </button>
-                  </div>
-                )}
+                      {form.scheduleType === "recurring" && (
+                        <div className="mb-4 space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Recurrence Frequency{" "}
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <select
+                            value={form.recurrenceRule}
+                            onChange={(e) =>
+                              updateForm("recurrenceRule", e.target.value)
+                            }
+                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                          >
+                            <option value="">Select frequency</option>
+                            <option value="FREQ=DAILY">Daily</option>
+                            <option value="FREQ=WEEKLY">Weekly</option>
+                            <option value="FREQ=WEEKLY;INTERVAL=2">
+                              Every 2 weeks
+                            </option>
+                            <option value="FREQ=MONTHLY">Monthly</option>
+                          </select>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                {/* Dynamic Custom Selected Dates Inputs */}
+                {form.sessionType === "group" &&
+                  form.scheduleType === "custom_dates" && (
+                    <div className="mb-6 space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">
+                          Selected Specific Dates & Times
+                        </h4>
+                        <p className="text-xs text-gray-500">
+                          Add the specific dates and times when this experience
+                          will take place.
+                        </p>
+                      </div>
+
+                      {form.customDatesList.map((slot, idx) => (
+                        <div
+                          key={idx}
+                          className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+                        >
+                          <div className="min-w-[150px] flex-1">
+                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                              Date
+                            </label>
+                            <input
+                              type="date"
+                              value={slot.date}
+                              onChange={(e) =>
+                                updateCustomSlot(idx, "date", e.target.value)
+                              }
+                              min={new Date().toISOString().split("T")[0]}
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                            />
+                          </div>
+                          <div className="w-36 min-w-[120px]">
+                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                              Start Time
+                            </label>
+                            <input
+                              type="time"
+                              value={slot.time}
+                              onChange={(e) =>
+                                updateCustomSlot(idx, "time", e.target.value)
+                              }
+                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                            />
+                          </div>
+                          {form.customDatesList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeCustomSlot(idx)}
+                              className="mt-5 p-2 text-gray-400 transition hover:text-red-500"
+                              title="Remove slot"
+                            >
+                              <FiX size={18} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={addCustomSlot}
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094CA] hover:underline"
+                      >
+                        + Add Another Date
+                      </button>
+                    </div>
+                  )}
 
                 {form.sessionType === "one_on_one" && (
                   <div className="mb-6">
                     <SessionWindowsEditor
                       windows={form.sessionWindows}
-                      onWindowsChange={(windows) => updateForm("sessionWindows", windows)}
+                      onWindowsChange={(windows) =>
+                        updateForm("sessionWindows", windows)
+                      }
                       breakMinutes={form.breakMinutes}
-                      onBreakMinutesChange={(minutes) => updateForm("breakMinutes", minutes)}
+                      onBreakMinutesChange={(minutes) =>
+                        updateForm("breakMinutes", minutes)
+                      }
                       durationMinutes={form.durationMinutes}
                       isWeekly={form.sessionIsWeekly}
-                      onIsWeeklyChange={(weekly) => updateForm("sessionIsWeekly", weekly)}
+                      onIsWeeklyChange={(weekly) =>
+                        updateForm("sessionIsWeekly", weekly)
+                      }
                     />
                   </div>
                 )}
@@ -1748,8 +1847,8 @@ export default function EditEventPage({
                   </div>
                 </div>
                 <p className="mt-2 mb-4 text-xs text-gray-500">
-                  <span className="font-medium">Max group size</span> = total spots
-                  that can book this session (the event capacity).
+                  <span className="font-medium">Max group size</span> = total
+                  spots that can book this session (the event capacity).
                 </p>
 
                 {/* Location Type */}
@@ -1990,7 +2089,11 @@ export default function EditEventPage({
               <h2 className="mb-4 text-lg font-semibold text-gray-900">
                 Event Bookings
               </h2>
-              <AttendeesList eventId={id} isRecurring={form.isRecurring} event={event} />
+              <AttendeesList
+                eventId={id}
+                isRecurring={form.isRecurring}
+                event={event}
+              />
             </div>
           )}
         </div>

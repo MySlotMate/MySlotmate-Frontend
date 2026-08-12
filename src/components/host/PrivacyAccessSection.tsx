@@ -40,8 +40,8 @@ export default function PrivacyAccessSection({
             Private experience
           </h3>
           <p className="text-sm text-gray-500">
-            Still shown in discovery with a lock — guests need a passkey to book.
-            (Guests pay the normal price unless the event is free.)
+            Still shown in discovery with a lock — guests need a passkey to
+            book. (Guests pay the normal price unless the event is free.)
           </p>
         </div>
         <button
@@ -65,20 +65,18 @@ export default function PrivacyAccessSection({
         <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
           {/* Access mode: one shared passkey vs a unique passkey per guest */}
           <div className="grid gap-2 sm:grid-cols-2">
-            {(
-              [
-                {
-                  key: "shared" as const,
-                  title: "Same passkey for everyone",
-                  desc: "One passkey you share with all invited guests.",
-                },
-                {
-                  key: "unique" as const,
-                  title: "A unique passkey per guest",
-                  desc: "Generate single-use access codes, one per guest.",
-                },
-              ]
-            ).map((opt) => (
+            {[
+              {
+                key: "shared" as const,
+                title: "Same passkey for everyone",
+                desc: "One passkey you share with all invited guests.",
+              },
+              {
+                key: "unique" as const,
+                title: "A unique passkey per guest",
+                desc: "Generate single-use access codes, one per guest.",
+              },
+            ].map((opt) => (
               <button
                 key={opt.key}
                 type="button"

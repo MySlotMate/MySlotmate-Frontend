@@ -123,8 +123,8 @@ export function RecommendationPopup({
             <div className="flex items-center gap-2 text-sm text-gray-600">
               <FiClock size={14} className="text-[#0094CA]" />
               <span>
-                {formatIST(eventDate, "h:mm a")} • {event.duration_minutes ?? 60}{" "}
-                min
+                {formatIST(eventDate, "h:mm a")} •{" "}
+                {event.duration_minutes ?? 60} min
               </span>
             </div>
             <div className="flex items-center gap-2 text-sm text-gray-600">

@@ -20,7 +20,9 @@ import {
   FiDownload,
 } from "react-icons/fi";
 import { LuLoader2 } from "react-icons/lu";
-import { downloadTicketPdf } from "~/lib/ticket";
+import { FaWhatsapp } from "react-icons/fa";
+import { toast } from "sonner";
+import { downloadTicketPdf, sendTicketPdfNotification } from "~/lib/ticket";
 import { exportBookingsToExcel } from "~/lib/excelExport";
 
 /**
@@ -88,7 +90,12 @@ export default function HostBookingsPage() {
       (a, b) =>
         new Date(b.event.time).getTime() - new Date(a.event.time).getTime(),
     );
-    return { upcoming: u, history: h, totalBookings: totalB, totalGuests: totalG };
+    return {
+      upcoming: u,
+      history: h,
+      totalBookings: totalB,
+      totalGuests: totalG,
+    };
   }, [events, attendeesQueries]);
 
   return (
@@ -150,7 +157,11 @@ export default function HostBookingsPage() {
             />
             {history.length > 0 && (
               <div className="mt-10">
-                <Section title="History" empty="No past events." groups={history} />
+                <Section
+                  title="History"
+                  empty="No past events."
+                  groups={history}
+                />
               </div>
             )}
           </>
@@ -168,7 +179,13 @@ function Section({
   title: string;
   empty: string;
   groups: {
-    event: { id: string; title: string; time: string; location: string | null; capacity: number };
+    event: {
+      id: string;
+      title: string;
+      time: string;
+      location: string | null;
+      capacity: number;
+    };
     bookings: BookingDTO[];
     isPast: boolean;
   }[];
@@ -196,7 +213,13 @@ function EventBookingsGroup({
   bookings,
   isPast,
 }: {
-  event: { id: string; title: string; time: string; location: string | null; capacity: number };
+  event: {
+    id: string;
+    title: string;
+    time: string;
+    location: string | null;
+    capacity: number;
+  };
   bookings: BookingDTO[];
   isPast: boolean;
 }) {
@@ -258,7 +281,7 @@ function EventBookingsGroup({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-4 text-xs text-gray-500">
+        <div className="flex shrink-0 items-center gap-2 text-xs text-gray-500 sm:gap-4">
           <span className="flex items-center gap-1">
             <FiUsers className="h-3.5 w-3.5" />
             {guests} / {event.capacity}
@@ -302,7 +325,9 @@ function EventBookingsGroup({
               No bookings yet.
             </p>
           ) : (
-            bookings.map((b) => <BookingRow key={b.id} booking={b} event={event} />)
+            bookings.map((b) => (
+              <BookingRow key={b.id} booking={b} event={event} />
+            ))
           )}
         </div>
       )}
@@ -320,8 +345,7 @@ function AttendeeDetails({ profile }: { profile: AttendeeProfileDTO }) {
   for (const f of ATTENDEE_FIELDS) {
     const raw = values[f.key];
     if (raw === null || raw === undefined || raw === "") continue;
-    const display =
-      f.key === "travel" ? (raw ? "Yes" : "No") : String(raw);
+    const display = f.key === "travel" ? (raw ? "Yes" : "No") : String(raw);
     rows.push({ key: f.key, label: f.label, value: display });
   }
 
@@ -363,12 +387,50 @@ function BookingRow({
   event,
 }: {
   booking: BookingDTO;
-  event: { id: string; title: string; time: string; location: string | null; capacity: number };
+  event: {
+    id: string;
+    title: string;
+    time: string;
+    location: string | null;
+    capacity: number;
+  };
 }) {
   const name = booking.user_name ?? "Unknown user";
   const [showDetails, setShowDetails] = useState(false);
   const [downloadingTicket, setDownloadingTicket] = useState(false);
+  const [sendingWhatsapp, setSendingWhatsapp] = useState(false);
+  // Sticky per-row confirmation. The backend records the send on the booking,
+  // but this list isn't refetched after a send, so remember it locally too.
+  const [whatsappSent, setWhatsappSent] = useState<boolean>(
+    booking.notification_sent_whatsapp === true,
+  );
   const hasDetails = !!booking.attendee_profile;
+  // Without a phone there is nobody to message — bulk-imported and walk-in
+  // guests always have one; older online bookings may not.
+  const guestPhone = booking.user_phone ?? "";
+
+  const handleSendWhatsapp = async () => {
+    if (!guestPhone) return;
+    setSendingWhatsapp(true);
+    try {
+      const res = await sendTicketPdfNotification(
+        booking,
+        event,
+        { name: booking.user_name, email: booking.user_email },
+        guestPhone,
+      );
+      if (res.ok) {
+        setWhatsappSent(true);
+        toast.success(`Ticket sent to ${booking.user_name ?? "the guest"}.`);
+      } else {
+        // Surface the real reason — "could not send" hides whether the problem
+        // is the booking, the network, or the WhatsApp provider.
+        toast.error(res.reason ?? "Could not send the ticket.");
+      }
+    } finally {
+      setSendingWhatsapp(false);
+    }
+  };
 
   return (
     <div>
@@ -387,7 +449,9 @@ function BookingRow({
             </div>
           )}
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-900">{name}</p>
+            <p className="truncate text-sm font-semibold text-gray-900">
+              {name}
+            </p>
             {booking.user_email && (
               <p className="truncate text-xs text-gray-500">
                 {booking.user_email}
@@ -404,7 +468,7 @@ function BookingRow({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3 text-xs">
+        <div className="flex items-center gap-2 text-xs sm:gap-3">
           <span className="text-gray-500">Qty {booking.quantity}</span>
           {booking.amount_cents !== null && (
             <span className="text-gray-700">
@@ -424,6 +488,26 @@ function BookingRow({
           >
             {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
           </span>
+          <button
+            type="button"
+            onClick={() => void handleSendWhatsapp()}
+            disabled={sendingWhatsapp || !guestPhone}
+            className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:border-emerald-500 hover:text-emerald-600 disabled:opacity-50"
+            title={
+              guestPhone
+                ? `Send ticket on WhatsApp to ${guestPhone}`
+                : "No phone number on this booking"
+            }
+          >
+            {sendingWhatsapp ? (
+              <LuLoader2 className="h-3 w-3 animate-spin text-emerald-600" />
+            ) : (
+              <FaWhatsapp
+                className={`h-3 w-3 ${whatsappSent ? "text-emerald-600" : "text-gray-500"}`}
+              />
+            )}
+            {whatsappSent ? "Sent" : "WhatsApp"}
+          </button>
           <button
             type="button"
             onClick={() => {

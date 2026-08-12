@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FiClock, FiX } from "react-icons/fi";
 import { format, parseISO } from "date-fns";
 import {
@@ -58,14 +58,14 @@ export default function SessionWindowsEditor({
 }: Props) {
   // Mirror the numeric input as a string so clearing the field doesn't snap
   // back to "0" mid-edit (same pattern as the other numeric inputs in the form).
+  // Resyncing happens during render rather than in an effect — the value is
+  // derived from a prop, so an effect would cost an extra render pass.
   const [breakInputStr, setBreakInputStr] = useState(String(breakMinutes));
-  useEffect(() => {
-    if (Number(breakInputStr) !== breakMinutes) {
-      setBreakInputStr(String(breakMinutes));
-    }
-    // Only resync when the source of truth changes underneath us.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [breakMinutes]);
+  const [lastBreakMinutes, setLastBreakMinutes] = useState(breakMinutes);
+  if (breakMinutes !== lastBreakMinutes) {
+    setLastBreakMinutes(breakMinutes);
+    setBreakInputStr(String(breakMinutes));
+  }
 
   const dated = generateSessionSlots(windows, durationMinutes, breakMinutes);
   const weekly = generateWeeklySessions(windows, durationMinutes, breakMinutes);
@@ -100,7 +100,11 @@ export default function SessionWindowsEditor({
     onIsWeeklyChange(weeklyMode);
   };
 
-  const updateWindow = (index: number, field: keyof SessionWindow, value: string) => {
+  const updateWindow = (
+    index: number,
+    field: keyof SessionWindow,
+    value: string,
+  ) => {
     onWindowsChange(
       windows.map((w, i) => (i === index ? { ...w, [field]: value } : w)),
     );
@@ -131,9 +135,10 @@ export default function SessionWindowsEditor({
           Your availability
         </h4>
         <p className="text-xs text-gray-500">
-          Add the stretches of time you&apos;re free. We&apos;ll split each one into{" "}
-          {durationMinutes > 0 ? `${durationMinutes}-minute` : "individual"} sessions
-          that guests book one at a time.
+          Add the stretches of time you&apos;re free. We&apos;ll split each one
+          into{" "}
+          {durationMinutes > 0 ? `${durationMinutes}-minute` : "individual"}{" "}
+          sessions that guests book one at a time.
         </p>
         <p className="mt-1 text-xs text-gray-500">
           Each session seats one guest, so the group size you set in Basics
@@ -185,7 +190,9 @@ export default function SessionWindowsEditor({
             onChange={(e) => {
               setBreakInputStr(e.target.value);
               const parsed = parseInt(e.target.value, 10);
-              onBreakMinutesChange(Number.isNaN(parsed) || parsed < 0 ? 0 : parsed);
+              onBreakMinutesChange(
+                Number.isNaN(parsed) || parsed < 0 ? 0 : parsed,
+              );
             }}
             onBlur={() => setBreakInputStr(String(breakMinutes))}
             className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
@@ -193,7 +200,8 @@ export default function SessionWindowsEditor({
           <span className="text-sm text-gray-600">minutes</span>
         </div>
         <p className="text-xs text-gray-500">
-          Buffer to catch your breath between back-to-back guests. 0 means no gap.
+          Buffer to catch your breath between back-to-back guests. 0 means no
+          gap.
         </p>
       </div>
 
@@ -327,7 +335,8 @@ export default function SessionWindowsEditor({
             {weekly.perWeek * SESSION_HORIZON_WEEKS > MAX_GENERATED_SESSIONS
               ? `That's a dense schedule — guests will see the next ${MAX_GENERATED_SESSIONS} sessions rather than the full ${SESSION_HORIZON_WEEKS} weeks.`
               : `Guests can book up to ${SESSION_HORIZON_WEEKS} weeks ahead.`}{" "}
-            The window rolls forward on its own, so your calendar never runs out.
+            The window rolls forward on its own, so your calendar never runs
+            out.
           </p>
         </div>
       )}
@@ -337,8 +346,8 @@ export default function SessionWindowsEditor({
           <div className="flex items-center gap-1.5">
             <FiClock className="h-4 w-4 text-[#0094CA]" />
             <h5 className="text-sm font-semibold text-gray-900">
-              {dated.slots.length} session{dated.slots.length === 1 ? "" : "s"} will
-              be created
+              {dated.slots.length} session{dated.slots.length === 1 ? "" : "s"}{" "}
+              will be created
             </h5>
           </div>
           {grouped.map(([date, daySlots]) => (

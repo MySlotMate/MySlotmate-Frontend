@@ -2,7 +2,13 @@
 // requires; the booking form renders only the enabled ones. Keys must match the
 // backend attendee_profiles columns and models.AttendeeProfile.HasField.
 
-export type AttendeeFieldType = "text" | "number" | "tel" | "select" | "bool" | "file";
+export type AttendeeFieldType =
+  | "text"
+  | "number"
+  | "tel"
+  | "select"
+  | "bool"
+  | "file";
 
 export interface AttendeeFieldDef {
   key: string;

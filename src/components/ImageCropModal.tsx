@@ -46,7 +46,11 @@ export function ImageCropModal({
   const [rotation, setRotation] = useState(0);
   const [busy, setBusy] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
-  const [dimensions, setDimensions] = useState<{ width: number; height: number; ratioLabel: string } | null>(null);
+  const [dimensions, setDimensions] = useState<{
+    width: number;
+    height: number;
+    ratioLabel: string;
+  } | null>(null);
 
   // Read file → data URL whenever a new file is supplied.
   useEffect(() => {
@@ -71,10 +75,10 @@ export function ImageCropModal({
     }
     const scaleX = img.naturalWidth / img.width;
     const scaleY = img.naturalHeight / img.height;
-    
+
     let width = Math.round(completedCrop.width * scaleX);
     let height = Math.round(completedCrop.height * scaleY);
-    
+
     const largest = Math.max(width, height);
     if (largest > maxDimension) {
       const scale = maxDimension / largest;
@@ -91,7 +95,7 @@ export function ImageCropModal({
       else if (Math.abs(ratio - 4 / 3) < 0.02) ratioLabel = "4:3";
       else if (Math.abs(ratio - 3 / 2) < 0.02) ratioLabel = "3:2";
       else if (Math.abs(ratio - 1) < 0.02) ratioLabel = "1:1";
-      
+
       setDimensions({ width, height, ratioLabel });
     }
   }, [completedCrop, rotation, file, maxDimension, imageSrc]);
@@ -161,8 +165,10 @@ export function ImageCropModal({
           </div>
           <div className="flex items-center gap-3">
             {dimensions && (
-              <div className="flex items-center gap-2 rounded-lg bg-sky-50 px-2.5 py-1 text-xs font-semibold text-[#0094CA] border border-sky-100">
-                <span>{dimensions.width} × {dimensions.height} px</span>
+              <div className="flex items-center gap-2 rounded-lg border border-sky-100 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-[#0094CA]">
+                <span>
+                  {dimensions.width} × {dimensions.height} px
+                </span>
                 <span className="text-sky-200">|</span>
                 <span>Aspect: {dimensions.ratioLabel}</span>
               </div>

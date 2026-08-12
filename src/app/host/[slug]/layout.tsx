@@ -31,7 +31,9 @@ export async function generateMetadata({
     const name = [host?.first_name, host?.last_name].filter(Boolean).join(" ");
     if (!name) return {};
 
-    const title = host.city ? `${name} — Host in ${host.city}` : `${name} — Host`;
+    const title = host.city
+      ? `${name} — Host in ${host.city}`
+      : `${name} — Host`;
     const description = clamp(
       host.tagline ??
         host.bio ??

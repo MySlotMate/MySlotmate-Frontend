@@ -23,9 +23,7 @@ export function splitEventsByTime(events: EventDTO[]): {
   const upcoming: EventDTO[] = [];
   const past: EventDTO[] = [];
   for (const e of events) (isPastEvent(e) ? past : upcoming).push(e);
-  past.sort(
-    (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime(),
-  );
+  past.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
   return { upcoming, past };
 }
 

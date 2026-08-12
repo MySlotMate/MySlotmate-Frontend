@@ -25,9 +25,10 @@ export default function HostCodesPickerModal({
 }: Props) {
   const [mounted, setMounted] = useState(false);
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<{ id: string; title: string } | null>(
-    null,
-  );
+  const [selected, setSelected] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   useEffect(() => setMounted(true), []);
 

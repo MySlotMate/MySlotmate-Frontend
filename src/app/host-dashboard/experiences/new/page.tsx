@@ -43,7 +43,12 @@ import {
   FiMessageCircle,
   FiShield,
 } from "react-icons/fi";
-import { LuLanguages, LuBadgeCheck, LuSparkles, LuTicket } from "react-icons/lu";
+import {
+  LuLanguages,
+  LuBadgeCheck,
+  LuSparkles,
+  LuTicket,
+} from "react-icons/lu";
 import { format } from "date-fns";
 import { istInputToUTCISO } from "~/lib/datetime";
 import {
@@ -334,13 +339,25 @@ function ImageUpload({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCurrentImageIndex((prev) => (prev === 0 ? previews.length - 1 : prev - 1));
+                      setCurrentImageIndex((prev) =>
+                        prev === 0 ? previews.length - 1 : prev - 1,
+                      );
                     }}
                     className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
                     aria-label="Previous image"
                   >
-                    <svg className="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    <svg
+                      className="h-4 w-4 text-gray-800"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
                     </svg>
                   </button>
 
@@ -349,13 +366,25 @@ function ImageUpload({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setCurrentImageIndex((prev) => (prev === previews.length - 1 ? 0 : prev + 1));
+                      setCurrentImageIndex((prev) =>
+                        prev === previews.length - 1 ? 0 : prev + 1,
+                      );
                     }}
                     className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
                     aria-label="Next image"
                   >
-                    <svg className="h-4 w-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    <svg
+                      className="h-4 w-4 text-gray-800"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   </button>
 
@@ -374,8 +403,10 @@ function ImageUpload({
               <div
                 key={i}
                 onClick={() => setCurrentImageIndex(i)}
-                className={`relative cursor-pointer rounded-lg border-2 transition overflow-hidden ${
-                  currentImageIndex === i ? "border-[#0094CA]" : "border-transparent"
+                className={`relative cursor-pointer overflow-hidden rounded-lg border-2 transition ${
+                  currentImageIndex === i
+                    ? "border-[#0094CA]"
+                    : "border-transparent"
                 }`}
               >
                 <img
@@ -390,7 +421,7 @@ function ImageUpload({
                     e.stopPropagation();
                     onRemoveMultiple?.(i);
                   }}
-                  className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 transition shadow"
+                  className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white shadow transition hover:bg-red-600"
                 >
                   <FiX size={10} />
                 </button>
@@ -409,10 +440,11 @@ function ImageUpload({
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
-          className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition ${isDragging
+          className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition ${
+            isDragging
               ? "scale-105 border-[#0094CA] bg-[#0094CA]/5"
               : "border-gray-300 hover:border-[#0094CA] hover:bg-gray-50"
-            }`}
+          }`}
         >
           <FiUpload
             className={`mx-auto mb-2 transition ${isDragging ? "text-[#0094CA]" : "text-gray-400"}`}
@@ -469,10 +501,11 @@ function MoodSelector({
             key={mood}
             type="button"
             onClick={() => onChange(mood.toLowerCase())}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${value === mood.toLowerCase()
+            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+              value === mood.toLowerCase()
                 ? "bg-[#0094CA] text-white"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+            }`}
           >
             {mood}
           </button>
@@ -551,11 +584,13 @@ function TitleAutocomplete({
               ? "Pick a mood first to see suggestions"
               : "Start typing — or pick a suggestion below"
           }
-          className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${moodDisabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : ""
-            } ${hasError
+          className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
+            moodDisabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : ""
+          } ${
+            hasError
               ? "border-red-500 bg-red-50"
               : "border-gray-200 focus:border-transparent"
-            }`}
+          }`}
           maxLength={100}
         />
 
@@ -644,7 +679,7 @@ function PreviewCard({ form }: { form: FormData }) {
   };
 
   return (
-    <div className="sticky top-20 h-max w-full pl-4 max-w-[420px] mx-auto lg:ml-auto select-none">
+    <div className="sticky top-20 mx-auto h-max w-full max-w-[420px] pl-4 select-none lg:ml-auto">
       <div className="relative overflow-hidden rounded-3xl border border-[#cfe8fa] bg-gradient-to-br from-white via-[#f4faff] to-[#e9f5ff] p-5 shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
         {/* Header */}
         <div className="mb-3 flex items-start gap-2.5">
@@ -652,7 +687,7 @@ function PreviewCard({ form }: { form: FormData }) {
             <LuTicket className="h-4 w-4 -rotate-12 text-[#0094CA]" />
           </div>
           <div className="flex-1">
-            <h2 className="font-outfit text-xl font-extrabold leading-none tracking-tight text-[#16304c]">
+            <h2 className="font-outfit text-xl leading-none font-extrabold tracking-tight text-[#16304c]">
               {form.isFree ? (
                 "FREE EXPERIENCE"
               ) : (
@@ -697,7 +732,7 @@ function PreviewCard({ form }: { form: FormData }) {
             </h3>
           </div>
           <p className="mb-4 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
-            Pick a time 
+            Pick a time
           </p>
 
           {form.eventDate ? (
@@ -708,7 +743,9 @@ function PreviewCard({ form }: { form: FormData }) {
                   {getFormattedDate(form.eventDate)},
                 </span>
                 <span className="text-sm text-white/90">
-                  {form.eventTime ? getFormattedTime(form.eventTime) : "Time TBD"}
+                  {form.eventTime
+                    ? getFormattedTime(form.eventTime)
+                    : "Time TBD"}
                 </span>
               </div>
               <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white">
@@ -732,7 +769,7 @@ function PreviewCard({ form }: { form: FormData }) {
             How many are joining?
           </p>
           <div className="relative">
-            <div className="w-full rounded-2xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] outline-none flex justify-between items-center">
+            <div className="flex w-full items-center justify-between rounded-2xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] outline-none">
               <span>1 Guest</span>
               <FiChevronDown className="h-4 w-4 text-[#6f8daa]" />
             </div>
@@ -743,7 +780,7 @@ function PreviewCard({ form }: { form: FormData }) {
         <button
           type="button"
           disabled
-          className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] opacity-50 cursor-not-allowed"
+          className="group flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white opacity-50 shadow-[0_16px_32px_rgba(31,167,255,0.32)]"
         >
           <span>Reserve My Spot</span>
           <FiArrowRight className="h-4 w-4" />
@@ -801,7 +838,8 @@ function PreviewCard({ form }: { form: FormData }) {
             <div>
               <p className="text-sm font-semibold text-red-600">Rare find</p>
               <p className="text-xs text-red-500">
-                Only {form.maxGroupSize} spot{form.maxGroupSize > 1 ? "s" : ""} left!
+                Only {form.maxGroupSize} spot{form.maxGroupSize > 1 ? "s" : ""}{" "}
+                left!
               </p>
             </div>
           </div>
@@ -835,8 +873,9 @@ function SuccessModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="animate-in fade-in zoom-in w-full max-w-md rounded-2xl bg-white p-8 text-center duration-200">
         <div
-          className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isDraft ? "bg-gray-100" : "bg-green-100"
-            }`}
+          className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
+            isDraft ? "bg-gray-100" : "bg-green-100"
+          }`}
         >
           <FiCheck
             className={isDraft ? "text-gray-500" : "text-green-600"}
@@ -911,7 +950,9 @@ export default function CreateExperiencePage() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitType, setSubmitType] = useState<"draft" | "publish" | null>(null);
+  const [submitType, setSubmitType] = useState<"draft" | "publish" | null>(
+    null,
+  );
   const [showSuccess, setShowSuccess] = useState(false);
   const [savedAsDraft, setSavedAsDraft] = useState(false);
   const [createdEventId, setCreatedEventId] = useState<string>("");
@@ -989,7 +1030,11 @@ export default function CreateExperiencePage() {
     }));
   };
 
-  const updateCustomSlot = (index: number, field: "date" | "time", val: string) => {
+  const updateCustomSlot = (
+    index: number,
+    field: "date" | "time",
+    val: string,
+  ) => {
     setForm((prev) => {
       const list = [...prev.customDatesList];
       const current = list[index] ?? { date: "", time: "" };
@@ -999,10 +1044,18 @@ export default function CreateExperiencePage() {
   };
 
   // Local string trackers for controlled numeric inputs to avoid leading-zero/clearing issues
-  const [priceInputStr, setPriceInputStr] = useState<string>(form.isFree ? "" : (form.priceCents / 100).toString());
-  const [durationInputStr, setDurationInputStr] = useState<string>(form.durationMinutes.toString());
-  const [minGroupInputStr, setMinGroupInputStr] = useState<string>(form.minGroupSize.toString());
-  const [maxGroupInputStr, setMaxGroupInputStr] = useState<string>(form.maxGroupSize.toString());
+  const [priceInputStr, setPriceInputStr] = useState<string>(
+    form.isFree ? "" : (form.priceCents / 100).toString(),
+  );
+  const [durationInputStr, setDurationInputStr] = useState<string>(
+    form.durationMinutes.toString(),
+  );
+  const [minGroupInputStr, setMinGroupInputStr] = useState<string>(
+    form.minGroupSize.toString(),
+  );
+  const [maxGroupInputStr, setMaxGroupInputStr] = useState<string>(
+    form.maxGroupSize.toString(),
+  );
 
   useEffect(() => {
     if (form.isFree) {
@@ -1060,8 +1113,6 @@ export default function CreateExperiencePage() {
   // Plain-text length of the rich-text description, for char counter & maxLength.
   const [descriptionTextLength, setDescriptionTextLength] = useState(0);
   const [isSummarizing, setIsSummarizing] = useState(false);
-
-
 
   useEffect(() => {
     if (isHydrated && !userId && !hostLoading) {
@@ -1384,14 +1435,23 @@ export default function CreateExperiencePage() {
           )
         : null;
 
-      const firstSlot = form.sessionType === "one_on_one"
-        ? {
-            date: (isWeeklyOneOnOne ? weeklyAnchor?.date : oneOnOneSlots[0]?.date) ?? "",
-            time: (isWeeklyOneOnOne ? weeklyAnchor?.time : oneOnOneSlots[0]?.time) ?? "",
-          }
-        : form.scheduleType === "custom_dates" && form.customDatesList[0]?.date && form.customDatesList[0]?.time
-        ? form.customDatesList[0]
-        : { date: form.eventDate, time: form.eventTime };
+      const firstSlot =
+        form.sessionType === "one_on_one"
+          ? {
+              date:
+                (isWeeklyOneOnOne
+                  ? weeklyAnchor?.date
+                  : oneOnOneSlots[0]?.date) ?? "",
+              time:
+                (isWeeklyOneOnOne
+                  ? weeklyAnchor?.time
+                  : oneOnOneSlots[0]?.time) ?? "",
+            }
+          : form.scheduleType === "custom_dates" &&
+              form.customDatesList[0]?.date &&
+              form.customDatesList[0]?.time
+            ? form.customDatesList[0]
+            : { date: form.eventDate, time: form.eventTime };
 
       const hasDateTime = !!(firstSlot.date && firstSlot.time);
       const eventDateTime = hasDateTime
@@ -1434,12 +1494,13 @@ export default function CreateExperiencePage() {
         // A one-on-one slot seats exactly one guest — that single seat is what
         // stops a second booking landing on the same session.
         capacity: form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
-        min_group_size: form.sessionType === "one_on_one" ? 1 : form.minGroupSize,
-        max_group_size: form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
+        min_group_size:
+          form.sessionType === "one_on_one" ? 1 : form.minGroupSize,
+        max_group_size:
+          form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
         languages: form.languages,
         level: form.level || undefined,
-        price_cents:
-          form.isFree || form.useTiers ? 0 : form.priceCents,
+        price_cents: form.isFree || form.useTiers ? 0 : form.priceCents,
         is_free: form.isFree,
         price_tiers:
           !form.isFree && form.useTiers
@@ -1454,14 +1515,15 @@ export default function CreateExperiencePage() {
         custom_dates: isWeeklyOneOnOne
           ? []
           : form.sessionType === "one_on_one"
-          ? slotsToCustomDates(oneOnOneSlots)
-          : form.scheduleType === "custom_dates"
-          ? form.customDatesList
-              .filter((s) => s.date && s.time)
-              .map((s) => istInputToUTCISO(s.date, s.time))
-          : undefined,
+            ? slotsToCustomDates(oneOnOneSlots)
+            : form.scheduleType === "custom_dates"
+              ? form.customDatesList
+                  .filter((s) => s.date && s.time)
+                  .map((s) => istInputToUTCISO(s.date, s.time))
+              : undefined,
         session_type: form.sessionType,
-        break_minutes: form.sessionType === "one_on_one" ? form.breakMinutes : undefined,
+        break_minutes:
+          form.sessionType === "one_on_one" ? form.breakMinutes : undefined,
         session_windows:
           form.sessionType === "one_on_one" ? form.sessionWindows : undefined,
         is_recurring: isWeeklyOneOnOne || form.scheduleType === "recurring",
@@ -1469,8 +1531,8 @@ export default function CreateExperiencePage() {
         recurrence_rule: isWeeklyOneOnOne
           ? "FREQ=WEEKLY"
           : form.scheduleType === "recurring"
-          ? form.recurrenceRule
-          : undefined,
+            ? form.recurrenceRule
+            : undefined,
         cancellation_policy: form.cancellationPolicy,
         requires_attendee_details: form.requiresAttendeeDetails,
         attendee_fields: form.requiresAttendeeDetails
@@ -1494,7 +1556,10 @@ export default function CreateExperiencePage() {
             hostId: host.id,
           });
         } catch (publishErr) {
-          console.warn("Auto-publish failed, event saved as draft:", publishErr);
+          console.warn(
+            "Auto-publish failed, event saved as draft:",
+            publishErr,
+          );
         }
       }
 
@@ -1640,10 +1705,11 @@ export default function CreateExperiencePage() {
                   }}
                   onBlur={() => hookSuggestions.clearSuggestions()}
                   placeholder="A short catchy phrase to attract guests"
-                  className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !form.hookLine.trim()
+                  className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
+                    showErrors && !form.hookLine.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-200 focus:border-transparent"
-                    }`}
+                  }`}
                   maxLength={150}
                 />
                 <p className="text-xs text-gray-400">
@@ -1706,10 +1772,11 @@ export default function CreateExperiencePage() {
                     <button
                       type="button"
                       onClick={() => updateForm("isOnline", false)}
-                      className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition ${!form.isOnline
+                      className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition ${
+                        !form.isOnline
                           ? "bg-[#0094CA] text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                      }`}
                     >
                       <FiMapPin className="mr-2 inline" size={16} />
                       In-Person
@@ -1717,10 +1784,11 @@ export default function CreateExperiencePage() {
                     <button
                       type="button"
                       onClick={() => updateForm("isOnline", true)}
-                      className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition ${form.isOnline
+                      className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition ${
+                        form.isOnline
                           ? "bg-[#0094CA] text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                      }`}
                     >
                       🌐 Online
                     </button>
@@ -1817,10 +1885,11 @@ export default function CreateExperiencePage() {
                           key={mins}
                           type="button"
                           onClick={() => updateForm("durationMinutes", mins)}
-                          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${form.durationMinutes === mins
+                          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                            form.durationMinutes === mins
                               ? "bg-[#0094CA] text-white"
                               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
+                          }`}
                         >
                           {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
                         </button>
@@ -1945,8 +2014,8 @@ export default function CreateExperiencePage() {
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-gray-500">
-                  <span className="font-medium">Max group size</span> = total spots
-                  that can book this session (the event capacity).
+                  <span className="font-medium">Max group size</span> = total
+                  spots that can book this session (the event capacity).
                 </p>
 
                 {/* Languages */}
@@ -1965,10 +2034,11 @@ export default function CreateExperiencePage() {
                           key={lang}
                           type="button"
                           onClick={() => toggleLanguage(lang)}
-                          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${selected
+                          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                            selected
                               ? "bg-[#0094CA] text-white"
                               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
+                          }`}
                         >
                           {lang}
                         </button>
@@ -2024,10 +2094,11 @@ export default function CreateExperiencePage() {
                         key={lvl}
                         type="button"
                         onClick={() => updateForm("level", lvl)}
-                        className={`rounded-lg px-4 py-2 text-sm font-medium transition ${form.level === lvl
+                        className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                          form.level === lvl
                             ? "bg-[#0094CA] text-white"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
+                        }`}
                       >
                         {lvl}
                       </button>
@@ -2047,7 +2118,10 @@ export default function CreateExperiencePage() {
                     onChange={(html) => {
                       handleDescriptionChange(html);
                       // AI suggestions work better on plain text — strip tags before sending.
-                      const plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+                      const plain = html
+                        .replace(/<[^>]+>/g, " ")
+                        .replace(/\s+/g, " ")
+                        .trim();
                       void descriptionSuggestions.generateSuggestions(
                         plain,
                         "description",
@@ -2070,10 +2144,11 @@ export default function CreateExperiencePage() {
                   </div>
                   {descriptionWarning && (
                     <div
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${descriptionWarning.includes("⚠️")
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                        descriptionWarning.includes("⚠️")
                           ? "border border-red-200 bg-red-50 text-red-700"
                           : "border border-blue-200 bg-blue-50 text-blue-700"
-                        }`}
+                      }`}
                     >
                       <FiAlertTriangle size={16} className="shrink-0" />
                       <span>{descriptionWarning}</span>
@@ -2135,11 +2210,11 @@ export default function CreateExperiencePage() {
               </div>
 
               {/* Step 1 footer — draft save + continue */}
-              <div className="flex flex-col sm:flex-row gap-4 border-t border-gray-100 pt-6">
+              <div className="flex flex-col gap-4 border-t border-gray-100 pt-6 sm:flex-row">
                 <button
                   onClick={() => void handleSubmit(true)}
                   disabled={isSubmitting}
-                  className="flex flex-1 items-center justify-center gap-2.5 rounded-xl border border-gray-250 bg-white py-3.5 px-6 font-semibold text-gray-700 transition duration-300 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="border-gray-250 flex flex-1 items-center justify-center gap-2.5 rounded-xl border bg-white px-6 py-3.5 font-semibold text-gray-700 transition duration-300 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {submitType === "draft" ? (
                     <>
@@ -2153,7 +2228,7 @@ export default function CreateExperiencePage() {
                 <button
                   onClick={goToStep2}
                   disabled={isSubmitting}
-                  className="flex flex-1 items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0094CA] via-[#00a6e2] to-[#00bde5] py-3.5 px-6 font-bold text-white shadow-md shadow-[#0094CA]/15 transition-all duration-300 hover:shadow-lg hover:shadow-[#0094CA]/25 hover:-translate-y-0.5 hover:scale-[1.01] active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0094CA] via-[#00a6e2] to-[#00bde5] px-6 py-3.5 font-bold text-white shadow-md shadow-[#0094CA]/15 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-lg hover:shadow-[#0094CA]/25 active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <span>Continue to Schedule & Pricing</span>
                   <FiArrowRight size={16} />
@@ -2165,265 +2240,287 @@ export default function CreateExperiencePage() {
           {/* Step 2: Schedule & Pricing */}
           {currentStep === 2 && (
             <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div className="border-b border-gray-100 pb-4">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Schedule & Pricing
-                  </h2>
-                  <p className="text-sm text-gray-500">Set when and how much</p>
+              <div className="border-b border-gray-100 pb-4">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Schedule & Pricing
+                </h2>
+                <p className="text-sm text-gray-500">Set when and how much</p>
+              </div>
+
+              {/* Pricing Section */}
+              <div className="space-y-4">
+                <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
+                  <span className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none font-bold">
+                    ₹
+                  </span>{" "}
+                  Pricing
+                </h3>
+
+                {/* Free/Paid Toggle */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateForm("isFree", false)}
+                    className={`flex-1 rounded-lg px-4 py-3 text-sm font-medium transition ${
+                      !form.isFree
+                        ? "bg-[#0094CA] text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Paid Experience
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateForm("isFree", true)}
+                    className={`flex-1 rounded-lg px-4 py-3 text-sm font-medium transition ${
+                      form.isFree
+                        ? "bg-[#0094CA] text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    Free Experience
+                  </button>
                 </div>
 
-                {/* Pricing Section */}
-                <div className="space-y-4">
-                  <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
-                    <span className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none font-bold">
-                      ₹
-                    </span>{" "}
-                    Pricing
-                  </h3>
-
-                  {/* Free/Paid Toggle */}
+                {/* Pricing mode: single price vs. multiple ticket types */}
+                {!form.isFree && (
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => updateForm("isFree", false)}
-                      className={`flex-1 rounded-lg px-4 py-3 text-sm font-medium transition ${!form.isFree
+                      onClick={() => updateForm("useTiers", false)}
+                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                        !form.useTiers
                           ? "bg-[#0094CA] text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                      }`}
                     >
-                      Paid Experience
+                      Single price
                     </button>
                     <button
                       type="button"
-                      onClick={() => updateForm("isFree", true)}
-                      className={`flex-1 rounded-lg px-4 py-3 text-sm font-medium transition ${form.isFree
+                      onClick={() => updateForm("useTiers", true)}
+                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                        form.useTiers
                           ? "bg-[#0094CA] text-white"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
+                      }`}
                     >
-                      Free Experience
+                      Multiple ticket types
                     </button>
                   </div>
+                )}
 
-                  {/* Pricing mode: single price vs. multiple ticket types */}
-                  {!form.isFree && (
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => updateForm("useTiers", false)}
-                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${!form.useTiers
-                            ? "bg-[#0094CA] text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
-                      >
-                        Single price
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => updateForm("useTiers", true)}
-                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${form.useTiers
-                            ? "bg-[#0094CA] text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
-                      >
-                        Multiple ticket types
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Single Price Input */}
-                  {!form.isFree && !form.useTiers && (
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Price per person (₹)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500">
-                          ₹
-                        </span>
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={priceInputStr}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                              setPriceInputStr(val);
-                              if (val === "") {
-                                updateForm("priceCents", 0);
-                              } else {
-                                const parsed = parseFloat(val);
-                                if (!isNaN(parsed)) {
-                                  updateForm("priceCents", Math.round(parsed * 100));
-                                }
-                              }
-                            }
-                          }}
-                          onBlur={() => {
-                            const parsed = parseFloat(priceInputStr);
-                            if (isNaN(parsed) || parsed < 0) {
-                              setPriceInputStr("0");
+                {/* Single Price Input */}
+                {!form.isFree && !form.useTiers && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Price per person (₹)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500">
+                        ₹
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={priceInputStr}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                            setPriceInputStr(val);
+                            if (val === "") {
                               updateForm("priceCents", 0);
                             } else {
-                              setPriceInputStr(parsed.toString());
-                              updateForm("priceCents", Math.round(parsed * 100));
+                              const parsed = parseFloat(val);
+                              if (!isNaN(parsed)) {
+                                updateForm(
+                                  "priceCents",
+                                  Math.round(parsed * 100),
+                                );
+                              }
                             }
-                          }}
-                          className={`w-full rounded-lg border py-3 pr-4 pl-8 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !form.isFree && form.priceCents <= 0
+                          }
+                        }}
+                        onBlur={() => {
+                          const parsed = parseFloat(priceInputStr);
+                          if (isNaN(parsed) || parsed < 0) {
+                            setPriceInputStr("0");
+                            updateForm("priceCents", 0);
+                          } else {
+                            setPriceInputStr(parsed.toString());
+                            updateForm("priceCents", Math.round(parsed * 100));
+                          }
+                        }}
+                        className={`w-full rounded-lg border py-3 pr-4 pl-8 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
+                          showErrors && !form.isFree && form.priceCents <= 0
+                            ? "border-red-500 bg-red-50"
+                            : "border-gray-200 focus:border-transparent"
+                        }`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Ticket Tier Editor */}
+                {!form.isFree && form.useTiers && (
+                  <div className="space-y-3">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Ticket types
+                    </label>
+                    {form.priceTiers.map((tier, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <input
+                          type="text"
+                          value={tier.name}
+                          onChange={(e) =>
+                            updatePriceTier(index, "name", e.target.value)
+                          }
+                          placeholder="e.g. General, VIP"
+                          className={`flex-1 rounded-lg border px-3 py-2.5 text-sm transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
+                            showErrors && !tier.name.trim()
                               ? "border-red-500 bg-red-50"
                               : "border-gray-200 focus:border-transparent"
-                            }`}
+                          }`}
                         />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Ticket Tier Editor */}
-                  {!form.isFree && form.useTiers && (
-                    <div className="space-y-3">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Ticket types
-                      </label>
-                      {form.priceTiers.map((tier, index) => (
-                        <div key={index} className="flex items-start gap-2">
+                        <div className="relative w-32">
+                          <span className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500">
+                            ₹
+                          </span>
                           <input
                             type="text"
-                            value={tier.name}
-                            onChange={(e) =>
-                              updatePriceTier(index, "name", e.target.value)
-                            }
-                            placeholder="e.g. General, VIP"
-                            className={`flex-1 rounded-lg border py-2.5 px-3 text-sm transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !tier.name.trim()
+                            inputMode="decimal"
+                            value={tier.priceStr}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                                updatePriceTier(index, "priceStr", val);
+                              }
+                            }}
+                            placeholder="Price"
+                            className={`w-full rounded-lg border py-2.5 pr-3 pl-7 text-sm transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
+                              showErrors && !(Number(tier.priceStr) > 0)
                                 ? "border-red-500 bg-red-50"
                                 : "border-gray-200 focus:border-transparent"
-                              }`}
+                            }`}
                           />
-                          <div className="relative w-32">
-                            <span className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500">
-                              ₹
-                            </span>
-                            <input
-                              type="text"
-                              inputMode="decimal"
-                              value={tier.priceStr}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                                  updatePriceTier(index, "priceStr", val);
-                                }
-                              }}
-                              placeholder="Price"
-                              className={`w-full rounded-lg border py-2.5 pr-3 pl-7 text-sm transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !(Number(tier.priceStr) > 0)
-                                  ? "border-red-500 bg-red-50"
-                                  : "border-gray-200 focus:border-transparent"
-                                }`}
-                            />
-                          </div>
-                          {form.priceTiers.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removePriceTier(index)}
-                              className="mt-1.5 text-gray-400 transition hover:text-red-500"
-                              aria-label="Remove ticket type"
-                            >
-                              <FiX className="h-5 w-5" />
-                            </button>
-                          )}
                         </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addPriceTier}
-                        className="text-sm font-semibold text-[#0094CA] hover:underline"
-                      >
-                        + Add ticket type
-                      </button>
-                      <p className="text-xs text-gray-500">
-                        Guests pick one ticket type when booking.
-                      </p>
+                        {form.priceTiers.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removePriceTier(index)}
+                            className="mt-1.5 text-gray-400 transition hover:text-red-500"
+                            aria-label="Remove ticket type"
+                          >
+                            <FiX className="h-5 w-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={addPriceTier}
+                      className="text-sm font-semibold text-[#0094CA] hover:underline"
+                    >
+                      + Add ticket type
+                    </button>
+                    <p className="text-xs text-gray-500">
+                      Guests pick one ticket type when booking.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Availability Section */}
+              <div className="space-y-4 border-t border-gray-100 pt-6">
+                <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
+                  <FiCalendar /> Availability & Schedule
+                </h3>
+
+                {/* Schedule Type Selection Tabs */}
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateForm("scheduleType", "one_time");
+                      updateForm("isRecurring", false);
+                      updateForm("sessionType", "group");
+                    }}
+                    className={`rounded-xl border p-3.5 text-left transition ${
+                      form.sessionType === "group" &&
+                      form.scheduleType === "one_time"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-sm font-medium">One-Time Event</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      Single specific date & time
                     </div>
-                  )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateForm("scheduleType", "recurring");
+                      updateForm("isRecurring", true);
+                      updateForm("sessionType", "group");
+                    }}
+                    className={`rounded-xl border p-3.5 text-left transition ${
+                      form.sessionType === "group" &&
+                      form.scheduleType === "recurring"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-sm font-medium">Recurring</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      Repeats daily, weekly, or monthly
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateForm("scheduleType", "custom_dates");
+                      updateForm("isRecurring", false);
+                      updateForm("sessionType", "group");
+                    }}
+                    className={`rounded-xl border p-3.5 text-left transition ${
+                      form.sessionType === "group" &&
+                      form.scheduleType === "custom_dates"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-sm font-medium">Custom Dates</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      Pick dynamic dates (e.g. Aug 15, 22, Sept 5)
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // One-on-one is stored as a custom-dates event whose slots
+                      // we generate from the host's availability windows.
+                      updateForm("sessionType", "one_on_one");
+                      updateForm("scheduleType", "custom_dates");
+                      updateForm("isRecurring", false);
+                    }}
+                    className={`rounded-xl border p-3.5 text-left transition ${
+                      form.sessionType === "one_on_one"
+                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
+                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="text-sm font-medium">One-on-One</div>
+                    <div className="mt-0.5 text-xs text-gray-500">
+                      Set your hours, we split them into 1:1 slots
+                    </div>
+                  </button>
                 </div>
 
-                {/* Availability Section */}
-                <div className="space-y-4 border-t border-gray-100 pt-6">
-                  <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
-                    <FiCalendar /> Availability & Schedule
-                  </h3>
-
-                  {/* Schedule Type Selection Tabs */}
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updateForm("scheduleType", "one_time");
-                        updateForm("isRecurring", false);
-                        updateForm("sessionType", "group");
-                      }}
-                      className={`rounded-xl border p-3.5 text-left transition ${
-                        form.sessionType === "group" && form.scheduleType === "one_time"
-                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="font-medium text-sm">One-Time Event</div>
-                      <div className="text-xs text-gray-500 mt-0.5">Single specific date & time</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updateForm("scheduleType", "recurring");
-                        updateForm("isRecurring", true);
-                        updateForm("sessionType", "group");
-                      }}
-                      className={`rounded-xl border p-3.5 text-left transition ${
-                        form.sessionType === "group" && form.scheduleType === "recurring"
-                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="font-medium text-sm">Recurring</div>
-                      <div className="text-xs text-gray-500 mt-0.5">Repeats daily, weekly, or monthly</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        updateForm("scheduleType", "custom_dates");
-                        updateForm("isRecurring", false);
-                        updateForm("sessionType", "group");
-                      }}
-                      className={`rounded-xl border p-3.5 text-left transition ${
-                        form.sessionType === "group" && form.scheduleType === "custom_dates"
-                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="font-medium text-sm">Custom Dates</div>
-                      <div className="text-xs text-gray-500 mt-0.5">Pick dynamic dates (e.g. Aug 15, 22, Sept 5)</div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // One-on-one is stored as a custom-dates event whose slots
-                        // we generate from the host's availability windows.
-                        updateForm("sessionType", "one_on_one");
-                        updateForm("scheduleType", "custom_dates");
-                        updateForm("isRecurring", false);
-                      }}
-                      className={`rounded-xl border p-3.5 text-left transition ${
-                        form.sessionType === "one_on_one"
-                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA] font-semibold"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="font-medium text-sm">One-on-One</div>
-                      <div className="text-xs text-gray-500 mt-0.5">Set your hours, we split them into 1:1 slots</div>
-                    </button>
-                  </div>
-
-                  {/* Standard One-Time & Recurring Inputs */}
-                  {form.sessionType === "group" &&
-                    (form.scheduleType === "one_time" || form.scheduleType === "recurring") && (
+                {/* Standard One-Time & Recurring Inputs */}
+                {form.sessionType === "group" &&
+                  (form.scheduleType === "one_time" ||
+                    form.scheduleType === "recurring") && (
                     <>
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
@@ -2437,10 +2534,11 @@ export default function CreateExperiencePage() {
                               updateForm("eventDate", e.target.value)
                             }
                             min={new Date().toISOString().split("T")[0]}
-                            className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !form.eventDate
+                            className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
+                              showErrors && !form.eventDate
                                 ? "border-red-500 bg-red-50"
                                 : "border-gray-200 focus:border-transparent"
-                              }`}
+                            }`}
                           />
                         </div>
                         <div className="space-y-2">
@@ -2453,10 +2551,11 @@ export default function CreateExperiencePage() {
                             onChange={(e) =>
                               updateForm("eventTime", e.target.value)
                             }
-                            className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${showErrors && !form.eventTime
+                            className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
+                              showErrors && !form.eventTime
                                 ? "border-red-500 bg-red-50"
                                 : "border-gray-200 focus:border-transparent"
-                              }`}
+                            }`}
                           />
                         </div>
                       </div>
@@ -2468,7 +2567,9 @@ export default function CreateExperiencePage() {
                         <input
                           type="time"
                           value={form.endTime}
-                          onChange={(e) => updateForm("endTime", e.target.value)}
+                          onChange={(e) =>
+                            updateForm("endTime", e.target.value)
+                          }
                           className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
                         />
                         <p className="text-xs text-gray-500">
@@ -2477,9 +2578,10 @@ export default function CreateExperiencePage() {
                       </div>
 
                       {form.scheduleType === "recurring" && (
-                        <div className="space-y-2 rounded-xl bg-gray-50 p-4 border border-gray-200">
+                        <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
                           <label className="block text-sm font-medium text-gray-700">
-                            Recurrence Frequency <span className="text-red-500">*</span>
+                            Recurrence Frequency{" "}
+                            <span className="text-red-500">*</span>
                           </label>
                           <select
                             value={form.recurrenceRule}
@@ -2491,7 +2593,9 @@ export default function CreateExperiencePage() {
                             <option value="">Select frequency</option>
                             <option value="FREQ=DAILY">Daily</option>
                             <option value="FREQ=WEEKLY">Weekly</option>
-                            <option value="FREQ=WEEKLY;INTERVAL=2">Every 2 weeks</option>
+                            <option value="FREQ=WEEKLY;INTERVAL=2">
+                              Every 2 weeks
+                            </option>
                             <option value="FREQ=MONTHLY">Monthly</option>
                           </select>
                         </div>
@@ -2499,34 +2603,49 @@ export default function CreateExperiencePage() {
                     </>
                   )}
 
-                  {/* Dynamic Custom Selected Dates Inputs */}
-                  {form.sessionType === "group" && form.scheduleType === "custom_dates" && (
+                {/* Dynamic Custom Selected Dates Inputs */}
+                {form.sessionType === "group" &&
+                  form.scheduleType === "custom_dates" && (
                     <div className="space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
                       <div>
-                        <h4 className="font-semibold text-gray-900 text-sm">Selected Specific Dates & Times</h4>
+                        <h4 className="text-sm font-semibold text-gray-900">
+                          Selected Specific Dates & Times
+                        </h4>
                         <p className="text-xs text-gray-500">
-                          Add the specific dates and times when this experience will take place.
+                          Add the specific dates and times when this experience
+                          will take place.
                         </p>
                       </div>
 
                       {form.customDatesList.map((slot, idx) => (
-                        <div key={idx} className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                          <div className="flex-1 min-w-[150px]">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                        <div
+                          key={idx}
+                          className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+                        >
+                          <div className="min-w-[150px] flex-1">
+                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                              Date
+                            </label>
                             <input
                               type="date"
                               value={slot.date}
-                              onChange={(e) => updateCustomSlot(idx, "date", e.target.value)}
+                              onChange={(e) =>
+                                updateCustomSlot(idx, "date", e.target.value)
+                              }
                               min={new Date().toISOString().split("T")[0]}
                               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
                             />
                           </div>
                           <div className="w-36 min-w-[120px]">
-                            <label className="block text-xs font-medium text-gray-600 mb-1">Start Time</label>
+                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                              Start Time
+                            </label>
                             <input
                               type="time"
                               value={slot.time}
-                              onChange={(e) => updateCustomSlot(idx, "time", e.target.value)}
+                              onChange={(e) =>
+                                updateCustomSlot(idx, "time", e.target.value)
+                              }
                               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
                             />
                           </div>
@@ -2534,7 +2653,7 @@ export default function CreateExperiencePage() {
                             <button
                               type="button"
                               onClick={() => removeCustomSlot(idx)}
-                              className="mt-5 p-2 text-gray-400 hover:text-red-500 transition"
+                              className="mt-5 p-2 text-gray-400 transition hover:text-red-500"
                               title="Remove slot"
                             >
                               <FiX size={18} />
@@ -2553,150 +2672,159 @@ export default function CreateExperiencePage() {
                     </div>
                   )}
 
-                  {form.sessionType === "one_on_one" && (
-                    <SessionWindowsEditor
-                      windows={form.sessionWindows}
-                      onWindowsChange={(windows) => updateForm("sessionWindows", windows)}
-                      breakMinutes={form.breakMinutes}
-                      onBreakMinutesChange={(minutes) => updateForm("breakMinutes", minutes)}
-                      durationMinutes={form.durationMinutes}
-                      isWeekly={form.sessionIsWeekly}
-                      onIsWeeklyChange={(weekly) => updateForm("sessionIsWeekly", weekly)}
-                      showErrors={showErrors}
+                {form.sessionType === "one_on_one" && (
+                  <SessionWindowsEditor
+                    windows={form.sessionWindows}
+                    onWindowsChange={(windows) =>
+                      updateForm("sessionWindows", windows)
+                    }
+                    breakMinutes={form.breakMinutes}
+                    onBreakMinutesChange={(minutes) =>
+                      updateForm("breakMinutes", minutes)
+                    }
+                    durationMinutes={form.durationMinutes}
+                    isWeekly={form.sessionIsWeekly}
+                    onIsWeeklyChange={(weekly) =>
+                      updateForm("sessionIsWeekly", weekly)
+                    }
+                    showErrors={showErrors}
+                  />
+                )}
+              </div>
+
+              {/* Cancellation Policy */}
+              <div className="space-y-4 border-t border-gray-100 pt-6">
+                <h3 className="text-base font-semibold text-gray-900">
+                  Cancellation Policy
+                </h3>
+                <div className="space-y-2">
+                  {CANCELLATION_POLICIES.map((policy) => (
+                    <div
+                      key={policy.value}
+                      onClick={() =>
+                        updateForm("cancellationPolicy", policy.value)
+                      }
+                      className={`cursor-pointer rounded-lg border p-4 transition ${
+                        form.cancellationPolicy === policy.value
+                          ? "border-[#0094CA] bg-[#0094CA]/5"
+                          : "border-gray-200 hover:border-gray-300"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                            form.cancellationPolicy === policy.value
+                              ? "border-[#0094CA]"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {form.cancellationPolicy === policy.value && (
+                            <div className="h-2 w-2 rounded-full bg-[#0094CA]" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {policy.label}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {policy.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Attendee Details */}
+              <AttendeeDetailsConfig
+                enabled={form.requiresAttendeeDetails}
+                fields={form.attendeeFields}
+                onToggle={(next) => updateForm("requiresAttendeeDetails", next)}
+                onFieldsChange={(next) => updateForm("attendeeFields", next)}
+              />
+
+              <PrivacyAccessSection
+                isPrivate={form.isPrivate}
+                accessMode={form.accessMode}
+                accessPasskey={form.accessPasskey}
+                showError={showErrors}
+                canGenerateCodes={!!createdEventId}
+                onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+              />
+
+              {/* Codes attach to a saved event, so they unlock once the
+                    experience has been created (draft or published). */}
+              {createdEventId && host?.id ? (
+                <div className="space-y-6 border-t border-gray-100 pt-6">
+                  {/* Access codes only matter for a private event. */}
+                  {form.isPrivate && (
+                    <CouponsManager
+                      eventId={createdEventId}
+                      hostId={host.id}
+                      kind="access"
+                    />
+                  )}
+                  {/* Free-booking coupons only matter for a paid event. */}
+                  {!form.isFree && (
+                    <CouponsManager
+                      eventId={createdEventId}
+                      hostId={host.id}
+                      kind="free"
                     />
                   )}
                 </div>
-
-                {/* Cancellation Policy */}
-                <div className="space-y-4 border-t border-gray-100 pt-6">
-                  <h3 className="text-base font-semibold text-gray-900">
-                    Cancellation Policy
-                  </h3>
-                  <div className="space-y-2">
-                    {CANCELLATION_POLICIES.map((policy) => (
-                      <div
-                        key={policy.value}
-                        onClick={() =>
-                          updateForm("cancellationPolicy", policy.value)
-                        }
-                        className={`cursor-pointer rounded-lg border p-4 transition ${form.cancellationPolicy === policy.value
-                            ? "border-[#0094CA] bg-[#0094CA]/5"
-                            : "border-gray-200 hover:border-gray-300"
-                          }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${form.cancellationPolicy === policy.value
-                                ? "border-[#0094CA]"
-                                : "border-gray-300"
-                              }`}
-                          >
-                            {form.cancellationPolicy === policy.value && (
-                              <div className="h-2 w-2 rounded-full bg-[#0094CA]" />
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {policy.label}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {policy.description}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
+                  Save this experience (draft or publish) to add access codes
+                  and free-booking coupons — they attach to the saved event.
                 </div>
+              )}
 
-                {/* Attendee Details */}
-                <AttendeeDetailsConfig
-                  enabled={form.requiresAttendeeDetails}
-                  fields={form.attendeeFields}
-                  onToggle={(next) =>
-                    updateForm("requiresAttendeeDetails", next)
-                  }
-                  onFieldsChange={(next) => updateForm("attendeeFields", next)}
-                />
-
-                <PrivacyAccessSection
-                  isPrivate={form.isPrivate}
-                  accessMode={form.accessMode}
-                  accessPasskey={form.accessPasskey}
-                  showError={showErrors}
-                  canGenerateCodes={!!createdEventId}
-                  onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
-                />
-
-                {/* Codes attach to a saved event, so they unlock once the
-                    experience has been created (draft or published). */}
-                {createdEventId && host?.id ? (
-                  <div className="space-y-6 border-t border-gray-100 pt-6">
-                    {/* Access codes only matter for a private event. */}
-                    {form.isPrivate && (
-                      <CouponsManager
-                        eventId={createdEventId}
-                        hostId={host.id}
-                        kind="access"
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-4 border-t border-gray-100 pt-6 sm:flex-row">
+                <button
+                  onClick={goToStep1}
+                  className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3.5 font-semibold text-gray-700 transition duration-300 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99]"
+                >
+                  <FiArrowLeft size={16} />
+                  <span>Back</span>
+                </button>
+                <button
+                  onClick={() => void handleSubmit(true)}
+                  disabled={isSubmitting}
+                  className="border-gray-250 flex flex-1 items-center justify-center gap-2.5 rounded-xl border bg-white px-6 py-3.5 font-semibold text-gray-700 transition duration-300 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {submitType === "draft" ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save as Draft</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => void handleSubmit(false)}
+                  disabled={isSubmitting}
+                  className="relative flex flex-[1.5] items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-gradient-to-r from-[#0094CA] via-[#00a6e2] to-[#00bde5] px-6 py-3.5 font-bold text-white shadow-lg shadow-[#0094CA]/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.01] hover:from-[#008bbd] hover:to-[#00b0d6] hover:shadow-xl hover:shadow-[#0094CA]/30 active:translate-y-0 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                >
+                  {submitType === "publish" ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span>Publishing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FiCheck
+                        className="text-lg transition-transform group-hover:scale-110"
+                        size={18}
                       />
-                    )}
-                    {/* Free-booking coupons only matter for a paid event. */}
-                    {!form.isFree && (
-                      <CouponsManager
-                        eventId={createdEventId}
-                        hostId={host.id}
-                        kind="free"
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
-                    Save this experience (draft or publish) to add access codes
-                    and free-booking coupons — they attach to the saved event.
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4 border-t border-gray-100 pt-6">
-                  <button
-                    onClick={goToStep1}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3.5 font-semibold text-gray-700 transition duration-300 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900 active:scale-[0.99]"
-                  >
-                    <FiArrowLeft size={16} />
-                    <span>Back</span>
-                  </button>
-                  <button
-                    onClick={() => void handleSubmit(true)}
-                    disabled={isSubmitting}
-                    className="flex flex-1 items-center justify-center gap-2.5 rounded-xl border border-gray-250 bg-white py-3.5 px-6 font-semibold text-gray-700 transition duration-300 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {submitType === "draft" ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent" />
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      <span>Save as Draft</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => void handleSubmit(false)}
-                    disabled={isSubmitting}
-                    className="relative overflow-hidden flex flex-[1.5] items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0094CA] via-[#00a6e2] to-[#00bde5] py-3.5 px-6 font-bold text-white shadow-lg shadow-[#0094CA]/20 transition-all duration-300 ease-out hover:from-[#008bbd] hover:to-[#00b0d6] hover:shadow-xl hover:shadow-[#0094CA]/30 hover:-translate-y-0.5 hover:scale-[1.01] active:translate-y-0 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
-                  >
-                    {submitType === "publish" ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        <span>Publishing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FiCheck className="text-lg transition-transform group-hover:scale-110" size={18} />
-                        <span>Publish Experience</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                      <span>Publish Experience</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           )}
         </div>

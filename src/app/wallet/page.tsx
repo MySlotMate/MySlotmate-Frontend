@@ -17,7 +17,11 @@ import {
 import * as components from "~/components";
 import Breadcrumb from "~/components/Breadcrumb";
 import TopUpModal from "~/components/wallet/TopUpModal";
-import { useWalletBalance, useWalletTransactions, useMyProfile } from "~/hooks/useApi";
+import {
+  useWalletBalance,
+  useWalletTransactions,
+  useMyProfile,
+} from "~/hooks/useApi";
 import type { PaymentDTO } from "~/lib/api";
 
 // Human-friendly description of a payment row for the wallet history list.
@@ -115,8 +119,7 @@ function describePayment(p: PaymentDTO): TxnDisplay {
         return {
           title: "Refund · added to wallet",
           subtitle: `${dateStr}${ref}`,
-          note:
-            "Money is in your wallet — use it for another booking, or request a refund to card from your bookings list.",
+          note: "Money is in your wallet — use it for another booking, or request a refund to card from your bookings list.",
           amountSigned: noMovement ? 0 : p.amount_cents,
           statusLabel,
           statusTone,
@@ -180,7 +183,13 @@ function describePayment(p: PaymentDTO): TxnDisplay {
   }
 }
 
-function StatusBadge({ tone, children }: { tone: TxnDisplay["statusTone"]; children: ReactNode }) {
+function StatusBadge({
+  tone,
+  children,
+}: {
+  tone: TxnDisplay["statusTone"];
+  children: ReactNode;
+}) {
   const classes =
     tone === "success"
       ? "bg-green-100 text-green-700"
@@ -191,7 +200,7 @@ function StatusBadge({ tone, children }: { tone: TxnDisplay["statusTone"]; child
           : "bg-gray-100 text-gray-600";
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${classes}`}
+      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${classes}`}
     >
       {children}
     </span>
@@ -283,12 +292,12 @@ export default function WalletPage() {
           {/* Balance card (spans 2 cols on desktop) */}
           <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500 via-pink-600 to-fuchsia-600 p-7 text-white shadow-lg lg:col-span-2">
             {/* Decorative blob */}
-            <div className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
+            <div className="pointer-events-none absolute -top-12 -right-12 h-44 w-44 rounded-full bg-white/10 blur-2xl" />
             <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-widest text-rose-100/90">
+              <p className="text-xs font-semibold tracking-widest text-rose-100/90 uppercase">
                 Available balance
               </p>
-              <p className="mt-2 text-5xl font-bold leading-none">
+              <p className="mt-2 text-5xl leading-none font-bold">
                 {balanceQuery.isLoading ? "…" : formatRupees(balanceCents)}
               </p>
               <p className="mt-3 text-sm text-rose-100/80">
@@ -316,7 +325,7 @@ export default function WalletPage() {
           {/* Stats card */}
           <section className="grid grid-cols-2 gap-3 lg:grid-cols-1">
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 <FiTrendingUp className="text-green-500" /> Money in
               </div>
               <p className="mt-2 text-2xl font-bold text-gray-900">
@@ -325,7 +334,7 @@ export default function WalletPage() {
               <p className="text-[11px] text-gray-400">Top-ups + refunds</p>
             </div>
             <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
                 <FiTrendingDown className="text-rose-500" /> Money out
               </div>
               <p className="mt-2 text-2xl font-bold text-gray-900">
@@ -341,7 +350,7 @@ export default function WalletPage() {
         {/* Transactions */}
         <section className="mt-10">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+            <h2 className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
               Transactions
             </h2>
             {stats.pendingCount > 0 && (

@@ -210,10 +210,7 @@ export default function HostEarningsPage() {
   const loadingSales = salesQuery.isLoading;
   // Flatten all loaded pages into one list (preserves newest-first order).
   const sales = useMemo<HostSaleDTO[]>(
-    () =>
-      salesQuery.data?.pages.flatMap(
-        (page) => page.data ?? [],
-      ) ?? [],
+    () => salesQuery.data?.pages.flatMap((page) => page.data ?? []) ?? [],
     [salesQuery.data],
   );
 
@@ -302,7 +299,8 @@ export default function HostEarningsPage() {
   // admin-set per-host override on top of the platform default and returns it
   // as `platform_fee`. Fall back to the 70/30 default only while loading.
   const platformFeePercent = earnings?.platform_fee?.platform_percentage ?? 30;
-  const hostPercent = earnings?.platform_fee?.host_percentage ?? 100 - platformFeePercent;
+  const hostPercent =
+    earnings?.platform_fee?.host_percentage ?? 100 - platformFeePercent;
   const avgBookingValue = 15000;
   const serviceFee = Math.round(avgBookingValue * (platformFeePercent / 100));
   const netEarning = avgBookingValue - serviceFee;
@@ -382,7 +380,10 @@ export default function HostEarningsPage() {
     clearFeedback();
     try {
       if (!idToken) throw new Error("Not signed in.");
-      await apiDelete(`/payouts/methods/${methodId}?host_id=${hostId}`, idToken);
+      await apiDelete(
+        `/payouts/methods/${methodId}?host_id=${hostId}`,
+        idToken,
+      );
       setActionSuccess("Payout method removed.");
       setShowDeleteConfirm(null);
       void refetchMethods?.();
@@ -670,11 +671,7 @@ export default function HostEarningsPage() {
                             "Confirmed",
                             salesTotals.confirmedCount,
                           ],
-                          [
-                            "refunded",
-                            "Refunded",
-                            salesTotals.refundedCount,
-                          ],
+                          ["refunded", "Refunded", salesTotals.refundedCount],
                         ] as const
                       ).map(([key, label, count]) => (
                         <button
@@ -719,19 +716,19 @@ export default function HostEarningsPage() {
                     {/* Search box + event filter */}
                     <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_220px]">
                       <div className="relative">
-                        <FiSearch className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                        <FiSearch className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
                         <input
                           type="search"
                           value={salesSearch}
                           onChange={(e) => setSalesSearch(e.target.value)}
                           placeholder="Search by buyer name or email…"
-                          className="w-full rounded-lg border border-gray-200 bg-white pl-8 pr-3 py-2 text-xs text-gray-900 placeholder:text-gray-400 focus:border-[#0094CA] focus:outline-none focus:ring-1 focus:ring-[#0094CA]"
+                          className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-3 pl-8 text-xs text-gray-900 placeholder:text-gray-400 focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA] focus:outline-none"
                         />
                       </div>
                       <select
                         value={eventFilter}
                         onChange={(e) => setEventFilter(e.target.value)}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 focus:border-[#0094CA] focus:outline-none focus:ring-1 focus:ring-[#0094CA]"
+                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA] focus:outline-none"
                       >
                         <option value="all">All events</option>
                         {(hostEvents ?? []).map((ev) => (
@@ -823,7 +820,10 @@ export default function HostEarningsPage() {
                             {s.EventTitle}
                           </p>
                           <p className="truncate text-[11px] text-gray-500">
-                            {format(new Date(s.OccurrenceDate), "d MMM yyyy, p")}
+                            {format(
+                              new Date(s.OccurrenceDate),
+                              "d MMM yyyy, p",
+                            )}
                             {" · "}
                             {s.Quantity}{" "}
                             {s.Quantity === 1 ? "ticket" : "tickets"}

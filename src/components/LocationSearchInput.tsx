@@ -42,7 +42,7 @@ export default function LocationSearchInput({
       try {
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=in`,
-          { headers: { "User-Agent": "MySlotMate/1.0" } }
+          { headers: { "User-Agent": "MySlotMate/1.0" } },
         );
         const data = (await res.json()) as NominatimSuggestion[];
         setSuggestions(data);
@@ -52,7 +52,7 @@ export default function LocationSearchInput({
       } finally {
         setLoading(false);
       }
-    }, 500)
+    }, 500),
   ).current;
 
   useEffect(() => {
@@ -61,7 +61,10 @@ export default function LocationSearchInput({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -93,7 +96,7 @@ export default function LocationSearchInput({
       </div>
 
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute left-0 right-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
+        <div className="absolute right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
           {suggestions.map((item, idx) => (
             <button
               key={idx}
@@ -102,11 +105,13 @@ export default function LocationSearchInput({
                 onSelect(item.display_name, item.lat, item.lon);
                 setIsOpen(false);
               }}
-              className="flex w-full items-start gap-3 border-b border-gray-50 p-3 text-left transition hover:bg-gray-50 last:border-0"
+              className="flex w-full items-start gap-3 border-b border-gray-50 p-3 text-left transition last:border-0 hover:bg-gray-50"
             >
               <FiMapPin className="mt-1 shrink-0 text-gray-400" size={16} />
               <div>
-                <p className="text-sm font-medium text-gray-900">{item.display_name}</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {item.display_name}
+                </p>
                 {item.address?.state && (
                   <p className="text-xs text-gray-500">{item.address.state}</p>
                 )}

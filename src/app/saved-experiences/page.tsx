@@ -57,7 +57,6 @@ export default function SavedExperiencesPage() {
     })
     .filter(({ event }) => event);
 
-
   const handleUnsave = (eventId: string) => {
     if (!userId) return;
     setRemovingId(eventId);

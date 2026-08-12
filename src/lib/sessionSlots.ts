@@ -142,7 +142,9 @@ export function generateSessionSlots(
 
   for (const w of filled) {
     if (!w.date || !w.start || !w.end) {
-      errors.push(`${formatWindow(w)} — pick a date, a start time and an end time.`);
+      errors.push(
+        `${formatWindow(w)} — pick a date, a start time and an end time.`,
+      );
       continue;
     }
     const start = toMinutes(w.start);
@@ -154,11 +156,15 @@ export function generateSessionSlots(
     if (end <= start) {
       // Overnight windows (22:00–02:00) are deliberately not supported: they'd
       // split across two dates and make the host's "date" ambiguous.
-      errors.push(`${formatWindow(w)} — the end time must be after the start time.`);
+      errors.push(
+        `${formatWindow(w)} — the end time must be after the start time.`,
+      );
       continue;
     }
     if (end > MINUTES_IN_DAY) {
-      errors.push(`${formatWindow(w)} — the end time must be within the same day.`);
+      errors.push(
+        `${formatWindow(w)} — the end time must be within the same day.`,
+      );
       continue;
     }
     if (durationMinutes > 0 && end - start < durationMinutes) {
@@ -195,7 +201,11 @@ export function generateSessionSlots(
 
   const slots: GeneratedSlot[] = [];
   for (const p of parsed) {
-    const count = countSessionsInWindow(p.end - p.start, durationMinutes, breakMinutes);
+    const count = countSessionsInWindow(
+      p.end - p.start,
+      durationMinutes,
+      breakMinutes,
+    );
     for (let i = 0; i < count; i++) {
       const startMin = p.start + i * (durationMinutes + breakMinutes);
       slots.push({
@@ -209,7 +219,9 @@ export function generateSessionSlots(
   // Windows can be entered in any order; the API and the booking UI both read
   // better with a chronological list.
   slots.sort((a, b) =>
-    a.date === b.date ? a.time.localeCompare(b.time) : a.date.localeCompare(b.date),
+    a.date === b.date
+      ? a.time.localeCompare(b.time)
+      : a.date.localeCompare(b.date),
   );
 
   return { slots, errors: [] };
@@ -276,7 +288,9 @@ export function generateWeeklySessions(
       continue;
     }
     if (durationMinutes > 0 && end - start < durationMinutes) {
-      errors.push(`${label} — too short for a ${durationMinutes}-minute session.`);
+      errors.push(
+        `${label} — too short for a ${durationMinutes}-minute session.`,
+      );
       continue;
     }
     parsed.push({ weekday: w.weekday, start, end });
@@ -343,7 +357,11 @@ export function nextWeeklySession(
   durationMinutes: number,
   breakMinutes = 0,
 ): GeneratedSlot | null {
-  const { days } = generateWeeklySessions(windows, durationMinutes, breakMinutes);
+  const { days } = generateWeeklySessions(
+    windows,
+    durationMinutes,
+    breakMinutes,
+  );
   if (days.length === 0) return null;
 
   const byWeekday = new Map(days.map((d) => [d.weekday, d.slots]));
@@ -384,7 +402,9 @@ export function slotsToCustomDates(slots: GeneratedSlot[]): string[] {
 }
 
 /** Group slots by their IST date, preserving chronological order. */
-export function groupSlotsByDate(slots: GeneratedSlot[]): [string, GeneratedSlot[]][] {
+export function groupSlotsByDate(
+  slots: GeneratedSlot[],
+): [string, GeneratedSlot[]][] {
   const byDate = new Map<string, GeneratedSlot[]>();
   for (const slot of slots) {
     const list = byDate.get(slot.date) ?? [];

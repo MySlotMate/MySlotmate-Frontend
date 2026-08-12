@@ -27,7 +27,6 @@ interface AssistCard {
   accentClassName: string;
 }
 
-
 const assistCards: AssistCard[] = [
   {
     title: "Report a Participant",
@@ -66,7 +65,6 @@ const assistCards: AssistCard[] = [
     accentClassName: "bg-[#f0f0f0] text-[#6B7280]",
   },
 ];
-
 
 function AssistCardComponent({
   title,
@@ -110,7 +108,6 @@ export default function SupportPage() {
       setUserId(id);
     }
   }, []);
-
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -233,7 +230,6 @@ export default function SupportPage() {
           ))}
         </div>
       </section>
-
 
       {/* Tickets Modal */}
       {isTicketsOpen && (

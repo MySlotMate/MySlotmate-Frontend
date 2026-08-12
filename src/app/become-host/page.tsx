@@ -10,12 +10,7 @@ import {
   OTPVerificationModal,
 } from "~/components/become-host";
 import { Home } from "~/components";
-import {
-  FiArrowRight,
-  FiCheck,
-  FiShield,
-  FiUsers,
-} from "react-icons/fi";
+import { FiArrowRight, FiCheck, FiShield, FiUsers } from "react-icons/fi";
 import { toast } from "sonner";
 import {
   useMyProfile,
@@ -122,7 +117,8 @@ export default function BecomeHostPage() {
     if (userProfile) {
       setForm((prev) => ({
         ...prev,
-        fullName: prev.fullName !== "" ? prev.fullName : (userProfile.name ?? ""),
+        fullName:
+          prev.fullName !== "" ? prev.fullName : (userProfile.name ?? ""),
         city: prev.city !== "" ? prev.city : (userProfile.city ?? ""),
       }));
     }
@@ -280,10 +276,11 @@ export default function BecomeHostPage() {
                   <div className="relative flex gap-6">
                     <div className="absolute top-10 bottom-[-32px] left-[15px] w-[1px] bg-gray-100" />
                     <div
-                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${status === "approved"
+                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
+                        status === "approved"
                           ? "bg-green-500 text-white"
                           : "bg-[#0094CA] text-white shadow-lg ring-4 shadow-[#0094CA]/30 ring-[#0094CA]/5"
-                        }`}
+                      }`}
                     >
                       {status === "approved" ? (
                         <FiCheck className="h-4 w-4" />
@@ -313,10 +310,11 @@ export default function BecomeHostPage() {
                   {/* Step 3: Access */}
                   <div className="relative flex gap-6">
                     <div
-                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${status === "approved"
+                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-all duration-500 ${
+                        status === "approved"
                           ? "bg-green-500 text-white"
                           : "border-2 border-gray-50 bg-white text-gray-200"
-                        }`}
+                      }`}
                     >
                       {status === "approved" ? (
                         <FiCheck className="h-4 w-4" />
@@ -580,10 +578,11 @@ export default function BecomeHostPage() {
                   value={form.fullName}
                   onChange={(e) => updateField("fullName", e.target.value)}
                   placeholder="e.g. Alex Rivera"
-                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.fullName.trim()
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.fullName.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                    }`}
+                  }`}
                 />
               </div>
               <div>
@@ -595,10 +594,11 @@ export default function BecomeHostPage() {
                   value={form.city}
                   onChange={(e) => updateField("city", e.target.value)}
                   placeholder="e.g. San Francisco"
-                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.city.trim()
+                  className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.city.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                    }`}
+                  }`}
                 />
               </div>
             </div>
@@ -623,10 +623,11 @@ export default function BecomeHostPage() {
                       updateField("experienceDesc", e.target.value)
                     }
                     placeholder="Write about all the activities you are planning to host"
-                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.experienceDesc.trim()
+                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                      showErrors && !form.experienceDesc.trim()
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300 focus:border-[#0094CA]"
-                      }`}
+                    }`}
                   />
                 </div>
 
@@ -642,10 +643,11 @@ export default function BecomeHostPage() {
                         e.target.value ? [e.target.value] : [],
                       )
                     }
-                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && form.moods.length === 0
+                    className={`w-full rounded-lg border bg-white px-4 py-3 text-sm text-gray-900 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                      showErrors && form.moods.length === 0
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300 focus:border-[#0094CA]"
-                      }`}
+                    }`}
                   >
                     <option value="" disabled>
                       Select a Category
@@ -706,10 +708,11 @@ export default function BecomeHostPage() {
                   maxLength={300}
                   rows={5}
                   placeholder="Describe the magic you're thinking of creating..."
-                  className={`w-full resize-none rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors && !form.description.trim()
+                  className={`w-full resize-none rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                    showErrors && !form.description.trim()
                       ? "border-red-500 bg-red-50"
                       : "border-gray-300 focus:border-[#0094CA]"
-                    }`}
+                  }`}
                 />
               </div>
 
@@ -735,13 +738,14 @@ export default function BecomeHostPage() {
                         updateField("socialInstagram", e.target.value)
                       }
                       placeholder="https://instagram.com/yourprofile"
-                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
-                          !form.socialInstagram.trim() &&
-                          !form.socialLinkedin.trim() &&
-                          !form.socialWebsite.trim()
+                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                        showErrors &&
+                        !form.socialInstagram.trim() &&
+                        !form.socialLinkedin.trim() &&
+                        !form.socialWebsite.trim()
                           ? "border-red-500 bg-red-50"
                           : "border-gray-300 focus:border-[#0094CA]"
-                        }`}
+                      }`}
                     />
                   </div>
                   <div>
@@ -755,13 +759,14 @@ export default function BecomeHostPage() {
                         updateField("socialLinkedin", e.target.value)
                       }
                       placeholder="https://linkedin.com/in/yourprofile"
-                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
-                          !form.socialInstagram.trim() &&
-                          !form.socialLinkedin.trim() &&
-                          !form.socialWebsite.trim()
+                      className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                        showErrors &&
+                        !form.socialInstagram.trim() &&
+                        !form.socialLinkedin.trim() &&
+                        !form.socialWebsite.trim()
                           ? "border-red-500 bg-red-50"
                           : "border-gray-300 focus:border-[#0094CA]"
-                        }`}
+                      }`}
                     />
                   </div>
                 </div>
@@ -776,13 +781,14 @@ export default function BecomeHostPage() {
                       updateField("socialWebsite", e.target.value)
                     }
                     placeholder="https://yourwebsite.com"
-                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${showErrors &&
-                        !form.socialInstagram.trim() &&
-                        !form.socialLinkedin.trim() &&
-                        !form.socialWebsite.trim()
+                    className={`w-full rounded-lg border px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:ring-1 focus:ring-[#0094CA] ${
+                      showErrors &&
+                      !form.socialInstagram.trim() &&
+                      !form.socialLinkedin.trim() &&
+                      !form.socialWebsite.trim()
                         ? "border-red-500 bg-red-50"
                         : "border-gray-300 focus:border-[#0094CA]"
-                      }`}
+                    }`}
                   />
                 </div>
               </div>
@@ -812,10 +818,11 @@ export default function BecomeHostPage() {
                         key={key}
                         type="button"
                         onClick={() => toggleDay(key)}
-                        className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${selected
+                        className={`rounded-full border px-5 py-2.5 text-xs font-semibold tracking-wide uppercase transition ${
+                          selected
                             ? "border-[#0094CA] bg-[#0094CA] text-white"
                             : "border-gray-300 bg-white text-gray-700 hover:border-[#0094CA]"
-                          }`}
+                        }`}
                       >
                         {label}
                       </button>

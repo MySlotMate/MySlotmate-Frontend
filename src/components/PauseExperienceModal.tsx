@@ -110,9 +110,7 @@ export function PauseExperienceModal({
                     availability?.map((a: OccurrenceAvailability) => (
                       <div
                         key={a.date}
-                        onClick={() =>
-                          !a.is_paused && setSelectedDate(a.date)
-                        }
+                        onClick={() => !a.is_paused && setSelectedDate(a.date)}
                         className={`p-2 text-xs transition ${
                           a.is_paused
                             ? "cursor-not-allowed text-gray-400 line-through"
@@ -210,9 +208,7 @@ export function PauseExperienceModal({
           </button>
           <button
             onClick={handleConfirm}
-            disabled={
-              (option === "from" || option === "date") && !selectedDate
-            }
+            disabled={(option === "from" || option === "date") && !selectedDate}
             className="flex-1 rounded-lg bg-amber-600 py-3 font-semibold text-white transition hover:bg-amber-700 disabled:opacity-50"
           >
             Pause Now

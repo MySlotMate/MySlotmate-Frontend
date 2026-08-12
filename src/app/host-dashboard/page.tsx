@@ -39,6 +39,7 @@ import {
   LuChevronRight,
   LuLoader2,
   LuKeyRound,
+  LuFileSpreadsheet,
 } from "react-icons/lu";
 import {
   useHostDashboard,
@@ -203,9 +204,7 @@ function ScheduleItemMenu({
           void invalidateAfterMutation();
         },
         onError: (err) =>
-          toast.error(
-            err instanceof Error ? err.message : "Failed to pause",
-          ),
+          toast.error(err instanceof Error ? err.message : "Failed to pause"),
       },
     );
   };
@@ -335,7 +334,8 @@ export default function HostDashboardPage() {
   const { data: payoutHistory } = usePayoutHistory(storedHostId, idToken);
   const { data: hostSales } = useHostSales(idToken, { limit: 250, offset: 0 });
   const { data: attentionData } = useHostAttentionItems(storedHostId);
-  const { data: hostExperiences, isLoading: experiencesLoading } = useEventsByHost(storedHostId);
+  const { data: hostExperiences, isLoading: experiencesLoading } =
+    useEventsByHost(storedHostId);
 
   // Quick "codes & passkey" manager — which experience's panel is open.
   const [codesEvent, setCodesEvent] = useState<{
@@ -354,6 +354,7 @@ export default function HostDashboardPage() {
   const [activeTab, setActiveTab] = useState<"today" | "all">("today");
 
   const [showOnSpotPicker, setShowOnSpotPicker] = useState(false);
+  const [showBulkImportPicker, setShowBulkImportPicker] = useState(false);
   const [showCodesPicker, setShowCodesPicker] = useState(false);
 
   const [tipIndex, setTipIndex] = useState(0);
@@ -372,7 +373,8 @@ export default function HostDashboardPage() {
     },
   ];
   const nextTip = () => setTipIndex((prev) => (prev + 1) % HOST_TIPS.length);
-  const prevTip = () => setTipIndex((prev) => (prev - 1 + HOST_TIPS.length) % HOST_TIPS.length);
+  const prevTip = () =>
+    setTipIndex((prev) => (prev - 1 + HOST_TIPS.length) % HOST_TIPS.length);
 
   /* Bucket sales into the trailing 6 months (IST) for the overview chart.
    * Cancelled / refunded sales are excluded so the trend reflects real income.
@@ -427,8 +429,7 @@ export default function HostDashboardPage() {
     const todayStr = now.toISOString().slice(0, 10);
     return calendarEvents
       .filter(
-        (ev) =>
-          ev.status !== "draft" && ev.time.slice(0, 10) === todayStr,
+        (ev) => ev.status !== "draft" && ev.time.slice(0, 10) === todayStr,
       )
       .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
   }, [todayScheduleData, calendarEvents]);
@@ -475,7 +476,8 @@ export default function HostDashboardPage() {
       sub: "Events",
       badge: "All time",
       badgeColor: "bg-indigo-50 text-indigo-600 border border-indigo-100",
-      glowColor: "hover:border-indigo-300 hover:shadow-[0_10px_25px_rgba(99,102,241,0.06)]",
+      glowColor:
+        "hover:border-indigo-300 hover:shadow-[0_10px_25px_rgba(99,102,241,0.06)]",
       href: "/host-dashboard/experiences",
     },
     {
@@ -486,12 +488,13 @@ export default function HostDashboardPage() {
       sub: "Booked",
       badge: "All time",
       badgeColor: "bg-sky-50 text-sky-600 border border-sky-100",
-      glowColor: "hover:border-sky-300 hover:shadow-[0_10px_25px_rgba(56,189,248,0.06)]",
+      glowColor:
+        "hover:border-sky-300 hover:shadow-[0_10px_25px_rgba(56,189,248,0.06)]",
       href: "/host-dashboard/bookings",
     },
     {
       icon: (
-        <RupeeIcon className="inline-flex h-5 w-5 items-center justify-center text-emerald-500 font-semibold" />
+        <RupeeIcon className="inline-flex h-5 w-5 items-center justify-center font-semibold text-emerald-500" />
       ),
       iconBg: "bg-emerald-50",
       label: "Total Earnings",
@@ -499,7 +502,8 @@ export default function HostDashboardPage() {
       sub: "",
       badge: "All time",
       badgeColor: "bg-emerald-50 text-emerald-600 border border-emerald-100",
-      glowColor: "hover:border-emerald-300 hover:shadow-[0_10px_25px_rgba(16,185,129,0.06)]",
+      glowColor:
+        "hover:border-emerald-300 hover:shadow-[0_10px_25px_rgba(16,185,129,0.06)]",
       href: "/host-dashboard/earnings",
     },
     {
@@ -510,7 +514,8 @@ export default function HostDashboardPage() {
       sub: avgRating !== "–" ? "★★★★★" : "",
       badge: `${dashboard?.total_reviews ?? 0} reviews`,
       badgeColor: "bg-slate-50 text-slate-600 border border-slate-100",
-      glowColor: "hover:border-amber-300 hover:shadow-[0_10px_25px_rgba(245,158,11,0.06)]",
+      glowColor:
+        "hover:border-amber-300 hover:shadow-[0_10px_25px_rgba(245,158,11,0.06)]",
       href: "/host-dashboard/experiences",
     },
   ] as const;
@@ -521,33 +526,37 @@ export default function HostDashboardPage() {
       desc: "Host a new session",
       href: "/host-dashboard/experiences/new",
       icon: <LuPlus className="h-5 w-5 text-emerald-500" />,
-      color: "bg-emerald-50/50 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 border-gray-100",
+      color:
+        "bg-emerald-50/50 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 border-gray-100",
     },
     {
       title: "Manage Bookings",
       desc: "View guests & details",
       href: "/host-dashboard/bookings",
       icon: <LuBookOpen className="h-5 w-5 text-purple-500" />,
-      color: "bg-purple-50/50 text-purple-700 hover:bg-purple-50 hover:border-purple-200 border-gray-100",
+      color:
+        "bg-purple-50/50 text-purple-700 hover:bg-purple-50 hover:border-purple-200 border-gray-100",
     },
     {
       title: "Host Calendar",
       desc: "View schedules & dates",
       href: "/host-dashboard/calendar",
       icon: <LuCalendarDays className="h-5 w-5 text-sky-500" />,
-      color: "bg-sky-50/50 text-sky-700 hover:bg-sky-50 hover:border-sky-200 border-gray-100",
+      color:
+        "bg-sky-50/50 text-sky-700 hover:bg-sky-50 hover:border-sky-200 border-gray-100",
     },
     {
       title: "Earnings History",
       desc: "View payouts & bills",
       href: "/host-dashboard/earnings",
       icon: <LuWallet className="h-5 w-5 text-amber-500" />,
-      color: "bg-amber-50/50 text-amber-700 hover:bg-amber-50 hover:border-amber-200 border-gray-100",
+      color:
+        "bg-amber-50/50 text-amber-700 hover:bg-amber-50 hover:border-amber-200 border-gray-100",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-manrope text-[#16304c]">
+    <div className="font-manrope min-h-screen bg-[#f8fafc] text-[#16304c]">
       <HostNavbar />
 
       <main className="site-x mx-auto max-w-7xl py-6 sm:py-8">
@@ -561,14 +570,16 @@ export default function HostDashboardPage() {
           <div className="flex min-h-[45vh] items-center justify-center">
             <div className="flex flex-col items-center gap-3">
               <LuLoader2 className="h-10 w-10 animate-spin text-[#0e8ae0]" />
-              <p className="text-sm font-semibold text-gray-400">Loading your host portal...</p>
+              <p className="text-sm font-semibold text-gray-400">
+                Loading your host portal...
+              </p>
             </div>
           </div>
         )}
 
         {/* Error banner */}
         {error && (
-          <div className="mb-6 flex items-center justify-between rounded-2xl bg-amber-50 border border-amber-100 px-5 py-4 text-sm text-amber-700 shadow-sm">
+          <div className="mb-6 flex items-center justify-between rounded-2xl border border-amber-100 bg-amber-50 px-5 py-4 text-sm text-amber-700 shadow-sm">
             <div className="flex items-center gap-2">
               <LuAlertTriangle className="h-5 w-5 shrink-0" />
               <span>{error}</span>
@@ -591,7 +602,7 @@ export default function HostDashboardPage() {
               {/* glowing decorative blobs */}
               <div className="pointer-events-none absolute -top-24 -right-12 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
               <div className="pointer-events-none absolute -bottom-24 left-1/4 h-48 w-48 rounded-full bg-white/5 blur-3xl" />
-              
+
               <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4">
                   <div className="relative">
@@ -604,31 +615,32 @@ export default function HostDashboardPage() {
                       referrerPolicy="no-referrer"
                       className="hidden h-16 w-16 shrink-0 rounded-2xl border-2 border-white/20 object-cover shadow-lg sm:block"
                     />
-                    <span className="absolute bottom-0 right-0 hidden h-3.5 w-3.5 rounded-full border-2 border-[#0094CA] bg-emerald-400 sm:block animate-pulse" />
+                    <span className="absolute right-0 bottom-0 hidden h-3.5 w-3.5 animate-pulse rounded-full border-2 border-[#0094CA] bg-emerald-400 sm:block" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-white/70">
+                    <p className="text-xs font-semibold tracking-wider text-white/70 uppercase">
                       {greeting} 👋
                     </p>
                     <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight sm:text-3xl">
                       Welcome back, {firstName}
                     </h1>
-                    <p className="mt-1 text-sm text-white/90 max-w-md">
-                      Let&apos;s check what needs your attention or review your schedule for today.
+                    <p className="mt-1 max-w-md text-sm text-white/90">
+                      Let&apos;s check what needs your attention or review your
+                      schedule for today.
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex w-full items-center gap-2.5 sm:w-auto">
                   <Link
                     href="/host-dashboard/profile"
-                    className="flex h-11 flex-1 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-3 text-center text-xs font-bold text-white backdrop-blur-md transition hover:bg-white/20 whitespace-nowrap sm:flex-initial sm:px-5 sm:text-sm"
+                    className="flex h-11 flex-1 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-3 text-center text-xs font-bold whitespace-nowrap text-white backdrop-blur-md transition hover:bg-white/20 sm:flex-initial sm:px-5 sm:text-sm"
                   >
                     Edit Profile
                   </Link>
                   <Link
                     href="/host-dashboard/experiences/new"
-                    className="flex h-11 flex-1 items-center justify-center rounded-xl bg-white px-3 text-center text-xs font-extrabold text-[#0094CA] shadow-md transition hover:-translate-y-0.5 hover:shadow-lg whitespace-nowrap sm:flex-initial sm:px-5 sm:text-sm"
+                    className="flex h-11 flex-1 items-center justify-center rounded-xl bg-white px-3 text-center text-xs font-extrabold whitespace-nowrap text-[#0094CA] shadow-md transition hover:-translate-y-0.5 hover:shadow-lg sm:flex-initial sm:px-5 sm:text-sm"
                   >
                     + Create Experience
                   </Link>
@@ -660,11 +672,11 @@ export default function HostDashboardPage() {
                     {s.label}
                   </p>
                   <div className="mt-1 flex items-baseline gap-1">
-                    <p className="text-2xl font-extrabold text-[#16304c] tracking-tight sm:text-3xl">
+                    <p className="text-2xl font-extrabold tracking-tight text-[#16304c] sm:text-3xl">
                       {s.value}
                     </p>
                     {s.sub && (
-                      <span className="text-xs font-semibold text-[#9fb3c8] ml-1">
+                      <span className="ml-1 text-xs font-semibold text-[#9fb3c8]">
                         {s.sub}
                       </span>
                     )}
@@ -675,7 +687,9 @@ export default function HostDashboardPage() {
 
             {/* ── Quick Actions Hub ── */}
             <div>
-              <h2 className="text-sm font-extrabold tracking-wider text-[#6f8daa] uppercase mb-3">Quick Actions</h2>
+              <h2 className="mb-3 text-sm font-extrabold tracking-wider text-[#6f8daa] uppercase">
+                Quick Actions
+              </h2>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {QUICK_ACTIONS.map((act, i) => (
                   <Link
@@ -687,10 +701,10 @@ export default function HostDashboardPage() {
                       {act.icon}
                     </span>
                     <div className="min-w-0">
-                      <p className="text-xs font-extrabold text-gray-800 tracking-tight leading-none">
+                      <p className="text-xs leading-none font-extrabold tracking-tight text-gray-800">
                         {act.title}
                       </p>
-                      <p className="text-[10px] text-gray-400 font-semibold truncate mt-1">
+                      <p className="mt-1 truncate text-[10px] font-semibold text-gray-400">
                         {act.desc}
                       </p>
                     </div>
@@ -708,11 +722,31 @@ export default function HostDashboardPage() {
                     <LuUserPlus className="h-5 w-5 text-[#0094CA]" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-gray-800 tracking-tight leading-none">
+                    <p className="text-xs leading-none font-extrabold tracking-tight text-gray-800">
                       On-spot Booking
                     </p>
-                    <p className="text-[10px] text-gray-400 font-semibold truncate mt-1">
+                    <p className="mt-1 truncate text-[10px] font-semibold text-gray-400">
                       Book a walk-in guest
+                    </p>
+                  </div>
+                </button>
+
+                {/* Bulk add — the same guest-entry job as on-spot, from a
+                    spreadsheet. Reuses the picker in bulk-import mode. */}
+                <button
+                  type="button"
+                  onClick={() => setShowBulkImportPicker(true)}
+                  className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-sky-50/50 p-4 text-left text-sky-700 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:border-sky-200 hover:bg-sky-50 hover:shadow-[0_12px_24px_rgba(0,0,0,0.02)]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:scale-105">
+                    <LuFileSpreadsheet className="h-5 w-5 text-[#0094CA]" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs leading-none font-extrabold tracking-tight text-gray-800">
+                      Bulk Add Bookings
+                    </p>
+                    <p className="mt-1 truncate text-[10px] font-semibold text-gray-400">
+                      Upload a guest list
                     </p>
                   </div>
                 </button>
@@ -728,10 +762,10 @@ export default function HostDashboardPage() {
                     <LuKeyRound className="h-5 w-5 text-[#0094CA]" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-gray-800 tracking-tight leading-none">
+                    <p className="text-xs leading-none font-extrabold tracking-tight text-gray-800">
                       Codes &amp; Passkey
                     </p>
-                    <p className="text-[10px] text-gray-400 font-semibold truncate mt-1">
+                    <p className="mt-1 truncate text-[10px] font-semibold text-gray-400">
                       Passkey &amp; coupon codes
                     </p>
                   </div>
@@ -746,10 +780,8 @@ export default function HostDashboardPage() {
 
             {/* ── Main content grid: Sessions/Experiences vs Attention/Insights ── */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              
               {/* Left Side (2/3 width) - Tabbed Hub */}
-              <div className="lg:col-span-2 space-y-4">
-                
+              <div className="space-y-4 lg:col-span-2">
                 {/* Tab buttons */}
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                   <div className="flex gap-6">
@@ -763,12 +795,12 @@ export default function HostDashboardPage() {
                     >
                       Today&apos;s Sessions
                       {todaySchedule.length > 0 && (
-                        <span className="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-600 font-extrabold">
+                        <span className="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-extrabold text-sky-600">
                           {todaySchedule.length}
                         </span>
                       )}
                       {activeTab === "today" && (
-                        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[#0e8ae0] rounded-full" />
+                        <div className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-[#0e8ae0]" />
                       )}
                     </button>
                     <button
@@ -781,16 +813,16 @@ export default function HostDashboardPage() {
                     >
                       My Experiences
                       {hostExperiences && hostExperiences.length > 0 && (
-                        <span className="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-600 font-extrabold">
+                        <span className="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-extrabold text-sky-600">
                           {hostExperiences.length}
                         </span>
                       )}
                       {activeTab === "all" && (
-                        <div className="absolute bottom-0 left-0 h-0.5 w-full bg-[#0e8ae0] rounded-full" />
+                        <div className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-[#0e8ae0]" />
                       )}
                     </button>
                   </div>
-                  
+
                   {activeTab === "today" ? (
                     <Link
                       href="/host-dashboard/calendar"
@@ -812,7 +844,7 @@ export default function HostDashboardPage() {
                 <div>
                   {activeTab === "today" ? (
                     /* Timeline Style */
-                    <div className="relative pl-6 border-l border-sky-100 space-y-6 py-2 ml-4">
+                    <div className="relative ml-4 space-y-6 border-l border-sky-100 py-2 pl-6">
                       {todaySchedule.length === 0 && (
                         <div className="-ml-10 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#cfe6f8] bg-white p-10 text-center shadow-[0_8px_24px_-14px_rgba(58,119,172,0.18)]">
                           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f4ff]">
@@ -831,7 +863,9 @@ export default function HostDashboardPage() {
                       )}
                       {todaySchedule.map((item) => {
                         const startTime = new Date(item.time);
-                        const endTime = item.end_time ? new Date(item.end_time) : null;
+                        const endTime = item.end_time
+                          ? new Date(item.end_time)
+                          : null;
                         const fmt = (d: Date) =>
                           d.toLocaleTimeString("en-US", {
                             hour: "numeric",
@@ -843,25 +877,38 @@ export default function HostDashboardPage() {
                           : fmt(startTime);
                         const now = new Date();
                         const diffMs = startTime.getTime() - now.getTime();
-                        const isStartingSoon = diffMs > 0 && diffMs < 60 * 60 * 1000;
-                        const capacityPct = Math.min(((item.total_bookings ?? 0) / (item.capacity ?? 1)) * 100, 100);
+                        const isStartingSoon =
+                          diffMs > 0 && diffMs < 60 * 60 * 1000;
+                        const capacityPct = Math.min(
+                          ((item.total_bookings ?? 0) / (item.capacity ?? 1)) *
+                            100,
+                          100,
+                        );
 
                         return (
-                          <div key={item.id} className="relative flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.03)]">
+                          <div
+                            key={item.id}
+                            className="relative flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.03)]"
+                          >
                             {/* Timeline bullet node */}
-                            <div className="absolute -left-[31px] top-6 flex h-4 w-4 items-center justify-center rounded-full bg-white border-2 border-sky-400">
-                              <span className={`h-1.5 w-1.5 rounded-full ${
-                                isStartingSoon 
-                                  ? "bg-emerald-500 animate-pulse" 
-                                  : item.status === "live" 
-                                    ? "bg-sky-500" 
-                                    : "bg-gray-400"
-                              }`} />
+                            <div className="absolute top-6 -left-[31px] flex h-4 w-4 items-center justify-center rounded-full border-2 border-sky-400 bg-white">
+                              <span
+                                className={`h-1.5 w-1.5 rounded-full ${
+                                  isStartingSoon
+                                    ? "animate-pulse bg-emerald-500"
+                                    : item.status === "live"
+                                      ? "bg-sky-500"
+                                      : "bg-gray-400"
+                                }`}
+                              />
                             </div>
 
                             {/* Thumbnail */}
                             <img
-                              src={item.cover_image_url ?? "/assets/home/hiking.webp"}
+                              src={
+                                item.cover_image_url ??
+                                "/assets/home/hiking.webp"
+                              }
                               alt={item.title}
                               loading="lazy"
                               className="hidden h-28 w-40 shrink-0 rounded-xl object-cover sm:block"
@@ -874,10 +921,10 @@ export default function HostDashboardPage() {
                                   <span
                                     className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
                                       isStartingSoon
-                                        ? "bg-emerald-50 text-emerald-600 border border-emerald-100 animate-pulse"
+                                        ? "animate-pulse border border-emerald-100 bg-emerald-50 text-emerald-600"
                                         : item.status === "live"
-                                          ? "bg-sky-50 text-sky-600 border border-sky-100"
-                                          : "bg-amber-50 text-amber-600 border border-amber-100"
+                                          ? "border border-sky-100 bg-sky-50 text-sky-600"
+                                          : "border border-amber-100 bg-amber-50 text-amber-600"
                                     }`}
                                   >
                                     {isStartingSoon
@@ -892,11 +939,13 @@ export default function HostDashboardPage() {
                                 </h3>
                                 <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[#6f8daa]">
                                   <span className="flex items-center gap-1 font-semibold">
-                                    <FiClock className="h-3.5 w-3.5 text-gray-400" /> {timeRange}
+                                    <FiClock className="h-3.5 w-3.5 text-gray-400" />{" "}
+                                    {timeRange}
                                   </span>
                                   {item.location && (
                                     <span className="flex items-center gap-1 font-semibold">
-                                      <FiMapPin className="h-3.5 w-3.5 text-gray-400" /> {item.location}
+                                      <FiMapPin className="h-3.5 w-3.5 text-gray-400" />{" "}
+                                      {item.location}
                                     </span>
                                   )}
                                 </div>
@@ -904,13 +953,16 @@ export default function HostDashboardPage() {
 
                               {/* Progress bar */}
                               <div className="mt-3">
-                                <div className="flex items-center justify-between text-[11px] text-[#6f8daa] font-semibold mb-1">
+                                <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-[#6f8daa]">
                                   <span>Capacity booked</span>
-                                  <span>{item.total_bookings ?? 0} / {item.capacity ?? 0}</span>
+                                  <span>
+                                    {item.total_bookings ?? 0} /{" "}
+                                    {item.capacity ?? 0}
+                                  </span>
                                 </div>
-                                <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-gradient-to-r from-sky-400 to-sky-500 rounded-full" 
+                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                                  <div
+                                    className="h-full rounded-full bg-gradient-to-r from-sky-400 to-sky-500"
                                     style={{ width: `${capacityPct}%` }}
                                   />
                                 </div>
@@ -936,112 +988,124 @@ export default function HostDashboardPage() {
                     /* My Experiences tab panel */
                     <div className="space-y-4">
                       {experiencesLoading && (
-                        <div className="flex justify-center items-center py-10">
+                        <div className="flex items-center justify-center py-10">
                           <LuLoader2 className="h-8 w-8 animate-spin text-sky-500" />
                         </div>
                       )}
-                      {!experiencesLoading && (!hostExperiences || hostExperiences.length === 0) && (
-                        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#cfe6f8] bg-white p-10 text-center shadow-[0_8px_24px_-14px_rgba(58,119,172,0.18)]">
-                          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f4ff]">
-                            <LuBookOpen className="h-7 w-7 text-[#0e8ae0]" />
+                      {!experiencesLoading &&
+                        (!hostExperiences || hostExperiences.length === 0) && (
+                          <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-[#cfe6f8] bg-white p-10 text-center shadow-[0_8px_24px_-14px_rgba(58,119,172,0.18)]">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f4ff]">
+                              <LuBookOpen className="h-7 w-7 text-[#0e8ae0]" />
+                            </div>
+                            <p className="text-sm font-semibold text-gray-500">
+                              No experiences created yet
+                            </p>
+                            <Link
+                              href="/host-dashboard/experiences/new"
+                              className="rounded-xl bg-[#eaf5fe] px-4 py-2 text-sm font-semibold text-[#0e8ae0] transition hover:bg-[#d9eefc]"
+                            >
+                              Create first experience
+                            </Link>
                           </div>
-                          <p className="text-sm font-semibold text-gray-500">
-                            No experiences created yet
-                          </p>
-                          <Link
-                            href="/host-dashboard/experiences/new"
-                            className="rounded-xl bg-[#eaf5fe] px-4 py-2 text-sm font-semibold text-[#0e8ae0] transition hover:bg-[#d9eefc]"
-                          >
-                            Create first experience
-                          </Link>
-                        </div>
-                      )}
-                      {!experiencesLoading && hostExperiences?.map((exp) => {
-                        const isPaused = exp.status === "paused";
-                        return (
-                          <div 
-                            key={exp.id} 
-                            className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.03)]"
-                          >
-                            <img
-                              src={exp.cover_image_url ?? "/assets/home/hiking.webp"}
-                              alt={exp.title}
-                              loading="lazy"
-                              className="hidden h-24 w-32 shrink-0 rounded-xl object-cover sm:block"
-                            />
-                            
-                            <div className="flex flex-1 flex-col justify-between">
-                              <div>
-                                <div className="flex items-center gap-2">
-                                  {exp.mood && (
-                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-slate-500">
-                                      {exp.mood}
+                        )}
+                      {!experiencesLoading &&
+                        hostExperiences?.map((exp) => {
+                          const isPaused = exp.status === "paused";
+                          return (
+                            <div
+                              key={exp.id}
+                              className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.03)]"
+                            >
+                              <img
+                                src={
+                                  exp.cover_image_url ??
+                                  "/assets/home/hiking.webp"
+                                }
+                                alt={exp.title}
+                                loading="lazy"
+                                className="hidden h-24 w-32 shrink-0 rounded-xl object-cover sm:block"
+                              />
+
+                              <div className="flex flex-1 flex-col justify-between">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    {exp.mood && (
+                                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-extrabold tracking-wider text-slate-500 uppercase">
+                                        {exp.mood}
+                                      </span>
+                                    )}
+                                    <span
+                                      className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-extrabold tracking-wider uppercase ${
+                                        isPaused
+                                          ? "border border-amber-100 bg-amber-50 text-amber-600"
+                                          : exp.status === "live"
+                                            ? "border border-emerald-100 bg-emerald-50 text-emerald-600"
+                                            : "border border-slate-100 bg-slate-50 text-slate-600"
+                                      }`}
+                                    >
+                                      {exp.status}
                                     </span>
-                                  )}
-                                  <span className={`inline-block rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider ${
-                                    isPaused 
-                                      ? "bg-amber-50 text-amber-600 border border-amber-100" 
-                                      : exp.status === "live" 
-                                        ? "bg-emerald-50 text-emerald-600 border border-emerald-100" 
-                                        : "bg-slate-50 text-slate-600 border border-slate-100"
-                                  }`}>
-                                    {exp.status}
-                                  </span>
+                                  </div>
+                                  <h4 className="mt-1 line-clamp-1 text-sm font-extrabold text-[#16304c]">
+                                    {exp.title}
+                                  </h4>
+                                  <p className="mt-1 line-clamp-1 text-xs font-medium text-[#6f8daa]">
+                                    {exp.hook_line ??
+                                      exp.description ??
+                                      "No description provided."}
+                                  </p>
                                 </div>
-                                <h4 className="mt-1 text-sm font-extrabold text-[#16304c] line-clamp-1">
-                                  {exp.title}
-                                </h4>
-                                <p className="mt-1 text-xs text-[#6f8daa] line-clamp-1 font-medium">
-                                  {exp.hook_line ?? exp.description ?? "No description provided."}
-                                </p>
+
+                                <div className="mt-2 flex items-center justify-between gap-4">
+                                  <span className="text-xs font-semibold text-gray-500">
+                                    {exp.price_cents
+                                      ? `₹${Math.round(exp.price_cents / 100)}`
+                                      : "Free"}{" "}
+                                    / slot
+                                  </span>
+
+                                  <div className="flex items-center gap-3">
+                                    <Link
+                                      href={`/experience/${exp.slug}`}
+                                      className="text-xs font-bold text-[#6f8daa] transition hover:text-[#0e8ae0]"
+                                    >
+                                      View Page
+                                    </Link>
+                                    <button
+                                      onClick={() =>
+                                        setCodesEvent({
+                                          id: exp.id,
+                                          title: exp.title,
+                                        })
+                                      }
+                                      className="text-xs font-bold text-[#6f8daa] transition hover:text-[#0e8ae0]"
+                                    >
+                                      Codes &amp; passkey
+                                    </button>
+                                    <Link
+                                      href={`/host-dashboard/experiences/${exp.id}`}
+                                      className="text-xs font-bold text-[#0e8ae0] hover:underline"
+                                    >
+                                      Edit Experience
+                                    </Link>
+                                  </div>
+                                </div>
                               </div>
 
-                              <div className="mt-2 flex items-center justify-between gap-4">
-                                <span className="text-xs font-semibold text-gray-500">
-                                  {exp.price_cents ? `₹${Math.round(exp.price_cents / 100)}` : "Free"} / slot
-                                </span>
-                                
-                                <div className="flex items-center gap-3">
-                                  <Link
-                                    href={`/experience/${exp.slug}`}
-                                    className="text-xs font-bold text-[#6f8daa] hover:text-[#0e8ae0] transition"
-                                  >
-                                    View Page
-                                  </Link>
-                                  <button
-                                    onClick={() =>
-                                      setCodesEvent({
-                                        id: exp.id,
-                                        title: exp.title,
-                                      })
-                                    }
-                                    className="text-xs font-bold text-[#6f8daa] hover:text-[#0e8ae0] transition"
-                                  >
-                                    Codes &amp; passkey
-                                  </button>
-                                  <Link
-                                    href={`/host-dashboard/experiences/${exp.id}`}
-                                    className="text-xs font-bold text-[#0e8ae0] hover:underline"
-                                  >
-                                    Edit Experience
-                                  </Link>
-                                </div>
-                              </div>
+                              <ScheduleItemMenu
+                                event={{
+                                  id: exp.id,
+                                  slug: exp.slug,
+                                  title: exp.title,
+                                  is_recurring: exp.is_recurring ?? false,
+                                  status: exp.status,
+                                }}
+                                hostId={storedHostId}
+                              />
                             </div>
-                            
-                            <ScheduleItemMenu
-                              event={{
-                                id: exp.id,
-                                slug: exp.slug,
-                                title: exp.title,
-                                is_recurring: exp.is_recurring ?? false,
-                                status: exp.status,
-                              }}
-                              hostId={storedHostId}
-                            />
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   )}
                 </div>
@@ -1049,10 +1113,11 @@ export default function HostDashboardPage() {
 
               {/* Right Side (1/3 width) - Needs Attention, Target Goals & Tips */}
               <div className="space-y-6">
-                
                 {/* Needs Attention Panel */}
                 <div>
-                  <h2 className="text-sm font-extrabold tracking-wider text-[#6f8daa] uppercase mb-3">Needs Attention</h2>
+                  <h2 className="mb-3 text-sm font-extrabold tracking-wider text-[#6f8daa] uppercase">
+                    Needs Attention
+                  </h2>
                   <div className="space-y-3">
                     {attentionItems.length === 0 ? (
                       <div className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
@@ -1063,7 +1128,7 @@ export default function HostDashboardPage() {
                           <p className="text-sm font-bold text-[#16304c]">
                             You&apos;re all caught up
                           </p>
-                          <p className="text-xs text-[#6f8daa] font-semibold">
+                          <p className="text-xs font-semibold text-[#6f8daa]">
                             No items need attention right now.
                           </p>
                         </div>
@@ -1083,7 +1148,7 @@ export default function HostDashboardPage() {
                             <p className="text-sm font-bold text-[#16304c]">
                               {item.title}
                             </p>
-                            <p className="text-xs text-[#6f8daa] font-medium mt-0.5 leading-normal">
+                            <p className="mt-0.5 text-xs leading-normal font-medium text-[#6f8daa]">
                               {item.description}
                             </p>
                             <Link
@@ -1101,32 +1166,38 @@ export default function HostDashboardPage() {
 
                 {/* Target Progress Card */}
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-[0_8px_30px_rgb(0,0,0,0.005)]">
-                  <h3 className="text-sm font-extrabold text-[#16304c] flex items-center justify-between mb-4">
+                  <h3 className="mb-4 flex items-center justify-between text-sm font-extrabold text-[#16304c]">
                     <span>PRO HOST TARGETS</span>
-                    <span className="text-[10px] bg-sky-50 text-[#0e8ae0] border border-sky-100 px-2 py-0.5 rounded-full font-bold">Tier 1</span>
+                    <span className="rounded-full border border-sky-100 bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-[#0e8ae0]">
+                      Tier 1
+                    </span>
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
+                      <div className="mb-1 flex justify-between text-xs font-bold text-gray-500">
                         <span>Experiences Hosted</span>
                         <span>{totalEvents} / 10</span>
                       </div>
-                      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-sky-400 to-indigo-500 rounded-full" 
-                          style={{ width: `${Math.min((totalEvents / 10) * 100, 100)}%` }}
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-sky-400 to-indigo-500"
+                          style={{
+                            width: `${Math.min((totalEvents / 10) * 100, 100)}%`,
+                          }}
                         />
                       </div>
                     </div>
                     <div>
-                      <div className="flex justify-between text-xs font-bold text-gray-500 mb-1">
+                      <div className="mb-1 flex justify-between text-xs font-bold text-gray-500">
                         <span>Earnings Target</span>
                         <span>{fmtCurrency(earningsCents)} / ₹10,000</span>
                       </div>
-                      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full" 
-                          style={{ width: `${Math.min(((earningsCents / 100) / 10000) * 100, 100)}%` }}
+                      <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-500"
+                          style={{
+                            width: `${Math.min((earningsCents / 100 / 10000) * 100, 100)}%`,
+                          }}
                         />
                       </div>
                     </div>
@@ -1137,30 +1208,34 @@ export default function HostDashboardPage() {
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0094CA] via-[#0e8ae0] to-[#57c7ff] p-5 text-white shadow-[0_18px_40px_-14px_rgba(0,148,202,0.25)]">
                   <div className="pointer-events-none absolute -top-10 -right-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
                   <div className="relative">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="mb-4 flex items-center justify-between">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
                         <LuLightbulb className="h-5 w-5 text-amber-300" />
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <button 
+                        <button
                           onClick={prevTip}
-                          className="p-1 rounded-lg hover:bg-white/10 text-white/80 transition"
+                          className="rounded-lg p-1 text-white/80 transition hover:bg-white/10"
                           aria-label="Previous tip"
                         >
                           <LuChevronLeft className="h-4 w-4" />
                         </button>
-                        <button 
+                        <button
                           onClick={nextTip}
-                          className="p-1 rounded-lg hover:bg-white/10 text-white/80 transition"
+                          className="rounded-lg p-1 text-white/80 transition hover:bg-white/10"
                           aria-label="Next tip"
                         >
                           <LuChevronRight className="h-4 w-4" />
                         </button>
                       </div>
                     </div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-white/70">Host Tip</h3>
-                    <h4 className="mt-1 text-sm font-extrabold">{HOST_TIPS[tipIndex]?.title}</h4>
-                    <p className="mt-2 text-xs text-white/90 leading-normal min-h-[50px]">
+                    <h3 className="text-xs font-bold tracking-wider text-white/70 uppercase">
+                      Host Tip
+                    </h3>
+                    <h4 className="mt-1 text-sm font-extrabold">
+                      {HOST_TIPS[tipIndex]?.title}
+                    </h4>
+                    <p className="mt-2 min-h-[50px] text-xs leading-normal text-white/90">
                       {HOST_TIPS[tipIndex]?.desc}
                     </p>
                     <Link
@@ -1171,9 +1246,7 @@ export default function HostDashboardPage() {
                     </Link>
                   </div>
                 </div>
-
               </div>
-
             </div>
           </div>
         )}
@@ -1186,6 +1259,25 @@ export default function HostDashboardPage() {
           events={hostExperiences ?? []}
           isOpen={showOnSpotPicker}
           onClose={() => setShowOnSpotPicker(false)}
+          onBooked={() => {
+            void queryClient.invalidateQueries({
+              queryKey: ["eventsByHost", storedHostId],
+            });
+            void queryClient.invalidateQueries({
+              queryKey: ["todaySchedule", storedHostId],
+            });
+          }}
+        />
+      )}
+
+      {/* Bulk booking import — same picker, spreadsheet flow. */}
+      {storedHostId && (
+        <HostOnSpotPickerModal
+          hostId={storedHostId}
+          events={hostExperiences ?? []}
+          mode="bulk-import"
+          isOpen={showBulkImportPicker}
+          onClose={() => setShowBulkImportPicker(false)}
           onBooked={() => {
             void queryClient.invalidateQueries({
               queryKey: ["eventsByHost", storedHostId],

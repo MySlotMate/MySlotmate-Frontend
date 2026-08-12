@@ -30,7 +30,7 @@ export const metadata: Metadata = {
     "book people",
     "slot booking",
     "host an experience",
-    "learn from experts"
+    "learn from experts",
   ],
   applicationName: "MySlotMate",
   creator: "MySlotMate Team",
@@ -90,7 +90,9 @@ export const metadata: Metadata = {
 
   /* Verification Tags — set GOOGLE_SITE_VERIFICATION / YANDEX_VERIFICATION in env */
   verification: {
-    ...(env.GOOGLE_SITE_VERIFICATION && { google: env.GOOGLE_SITE_VERIFICATION }),
+    ...(env.GOOGLE_SITE_VERIFICATION && {
+      google: env.GOOGLE_SITE_VERIFICATION,
+    }),
     ...(env.YANDEX_VERIFICATION && { yandex: env.YANDEX_VERIFICATION }),
   },
 
@@ -212,9 +214,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="MySlotMate" />
       </head>
       <body className="max-w-screen overflow-x-clip">
-        <Providers>
-          {children}
-        </Providers>
+        <Providers>{children}</Providers>
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>

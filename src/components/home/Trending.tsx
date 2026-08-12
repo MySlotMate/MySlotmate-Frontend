@@ -166,11 +166,11 @@ const Trending = () => {
         const distance =
           event.location_lat !== null && event.location_lng !== null
             ? calculateDistance(
-              location.lat,
-              location.lng,
-              event.location_lat,
-              event.location_lng,
-            )
+                location.lat,
+                location.lng,
+                event.location_lat,
+                event.location_lng,
+              )
             : Number.POSITIVE_INFINITY;
 
         return { event, distance };
@@ -179,7 +179,6 @@ const Trending = () => {
       .slice(0, 8)
       .map(({ event }) => event);
   }, [events, location, mounted, selectedMoodKey]);
-
 
   const scrollCards = (direction: "left" | "right") => {
     const viewport = cardsViewportRef.current;

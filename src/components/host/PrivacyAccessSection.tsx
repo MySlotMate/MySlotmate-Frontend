@@ -2,9 +2,15 @@
 
 export type AccessMode = "shared" | "unique";
 
+/** Which gate a private event uses. Mirrors the API's private_access_mode. */
+export type PrivateAccessMode = "passkey" | "rsvp";
+
 interface Props {
   isPrivate: boolean;
-  /** "shared" = one passkey for everyone; "unique" = a code per guest. */
+  /** "passkey" = guests type a code; "rsvp" = guests ask and the host approves. */
+  privateAccessMode: PrivateAccessMode;
+  /** "shared" = one passkey for everyone; "unique" = a code per guest.
+   *  Only meaningful when privateAccessMode is "passkey". */
   accessMode: AccessMode;
   accessPasskey: string;
   showError?: boolean;
@@ -13,6 +19,7 @@ interface Props {
   onChange: (
     patch: Partial<{
       isPrivate: boolean;
+      privateAccessMode: PrivateAccessMode;
       accessMode: AccessMode;
       accessPasskey: string;
     }>,
@@ -20,12 +27,20 @@ interface Props {
 }
 
 // PrivacyAccessSection is the shared "Private experience" block. It controls
-// ACCESS ONLY — who can book. A private event stays listed with a lock; access
-// is granted by ONE shared passkey or by a UNIQUE per-guest passkey code. Whether
-// a booking is free is decided separately (event price, or free-booking codes) —
-// a passkey never implies free.
+// ACCESS ONLY — who can book. A private event stays listed with a lock, and is
+// unlocked one of two ways:
+//
+//   passkey — the guest types a code: either ONE shared passkey, or a UNIQUE
+//             per-guest code.
+//   rsvp    — the guest requests to join and fills in the attendee-details form
+//             configured for this experience; the host (or an admin) approves.
+//
+// Whether a booking is free is decided separately (event price, or free-booking
+// codes) — neither gate ever implies free. Approving an RSVP unlocks booking; it
+// does not book or charge anything on the guest's behalf.
 export default function PrivacyAccessSection({
   isPrivate,
+  privateAccessMode,
   accessMode,
   accessPasskey,
   showError,
@@ -63,6 +78,59 @@ export default function PrivacyAccessSection({
 
       {isPrivate && (
         <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+          {/* Which gate: a code the guest types, or a request the host approves */}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[
+              {
+                key: "passkey" as const,
+                title: "Unlock with a code",
+                desc: "Guests enter a passkey you share to book.",
+              },
+              {
+                key: "rsvp" as const,
+                title: "Request to join",
+                desc: "Guests apply with their details; you approve each one.",
+              },
+            ].map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => onChange({ privateAccessMode: opt.key })}
+                className={`rounded-lg border p-3 text-left transition ${
+                  privateAccessMode === opt.key
+                    ? "border-[#0094CA] bg-[#0094CA]/5 ring-1 ring-[#0094CA]"
+                    : "border-gray-200 bg-white hover:border-gray-300"
+                }`}
+              >
+                <span className="block text-sm font-medium text-gray-800">
+                  {opt.title}
+                </span>
+                <span className="mt-0.5 block text-xs text-gray-500">
+                  {opt.desc}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          {privateAccessMode === "rsvp" ? (
+            <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
+              <p className="text-sm text-gray-600">
+                Guests see a <strong>Request to join</strong> button instead of a
+                passkey prompt. They fill in the details you asked for in the
+                Attendee details step, plus an optional note, and their request
+                lands in your dashboard for approval.
+              </p>
+              <p className="text-xs text-gray-500">
+                Approving unlocks booking — the guest still books and pays as
+                normal. Their spot isn&apos;t held until they do.
+              </p>
+              <p className="text-xs font-medium text-amber-700">
+                Requires attendee details: turn them on and pick at least one
+                field, or there&apos;s nothing for you to judge a request on.
+              </p>
+            </div>
+          ) : (
+          <>
           {/* Access mode: one shared passkey vs a unique passkey per guest */}
           <div className="grid gap-2 sm:grid-cols-2">
             {[
@@ -144,6 +212,8 @@ export default function PrivacyAccessSection({
                 </span>
               )}
             </p>
+          )}
+          </>
           )}
         </div>
       )}

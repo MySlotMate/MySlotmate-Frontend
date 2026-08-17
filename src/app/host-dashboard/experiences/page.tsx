@@ -119,6 +119,8 @@ interface ExperienceCardProps {
     status: string;
     time: string;
     next_available_date: string | null;
+    /** Set on custom-dates events; `time` only ever holds the first of them. */
+    custom_dates?: string[] | null;
     avg_rating: number | null;
     total_bookings: number;
     total_reviews: number;
@@ -185,8 +187,19 @@ function ExperienceCard({
   // A non-recurring event whose start time has passed is expired — no on-spot
   // booking. Recurring events keep generating future occurrences, so the modal's
   // availability check (which only lists upcoming slots) guards those instead.
+  //
+  // `event.time` holds the FIRST date and is never rolled forward for a
+  // custom-dates event, so it says nothing about whether the event is over: a
+  // three-date trip would read as expired the moment its first date passed,
+  // while the other two were still bookable. Any future custom date keeps it
+  // live.
+  const hasFutureCustomDate = (event.custom_dates ?? []).some(
+    (d: string) => new Date(d).getTime() > Date.now(),
+  );
   const isExpired =
-    !event.is_recurring && new Date(event.time).getTime() <= Date.now();
+    !event.is_recurring &&
+    !hasFutureCustomDate &&
+    new Date(event.time).getTime() <= Date.now();
 
   // Active (pending/confirmed) bookings on this event — only fetched while
   // the Delete modal is open, to power the "you're about to refund N

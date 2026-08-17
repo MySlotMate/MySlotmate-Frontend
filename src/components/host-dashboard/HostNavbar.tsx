@@ -12,6 +12,7 @@ import {
   LuArrowLeft,
   LuHeart,
   LuCalendarDays,
+  LuInbox,
   LuFileText,
   LuHome,
   LuLayoutDashboard,
@@ -41,6 +42,11 @@ const NAV_LINKS: {
     label: "Messages",
     href: "/host-dashboard/messages",
     icon: LuMessageSquare,
+  },
+  {
+    label: "Requests",
+    href: "/host-dashboard/requests",
+    icon: LuInbox,
   },
   { label: "Earnings", href: "/host-dashboard/earnings", icon: LuWallet },
 ];

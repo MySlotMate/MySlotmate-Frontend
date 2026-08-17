@@ -858,6 +858,16 @@ export interface ApiSessionWindow {
   weekday?: number;
 }
 
+/**
+ * How a private event decides who may book.
+ *
+ * - `passkey` — the guest types a code at the Book step (the original gate).
+ * - `rsvp`    — the guest requests to join, fills in the event's attendee-details
+ *               form, and a host or admin approves. Approval unlocks booking;
+ *               the guest still books and still pays.
+ */
+export type PrivateAccessMode = "passkey" | "rsvp";
+
 export interface EventDTO {
   id: string;
   /** Clean, URL-safe identifier for public links (/experience/{slug}). */
@@ -914,6 +924,8 @@ export interface EventDTO {
   terms_and_conditions: string | null;
   /** Private events are listed with a lock; booking needs the passkey. */
   is_private: boolean;
+  /** Which gate a private event uses. Never stripped — the booking page needs it. */
+  private_access_mode?: PrivateAccessMode;
   /** True when the event's passkey also comps a paid booking to free. */
   passkey_grants_free: boolean;
   /** Only present when fetched with the owning host_id (see getEvent); else null. */
@@ -1404,6 +1416,7 @@ export interface EventCreatePayload {
   attendee_fields?: string[];
   /** Private events are listed with a lock; booking needs the passkey. */
   is_private?: boolean;
+  private_access_mode?: PrivateAccessMode;
   access_passkey?: string;
   /** When true, the passkey also comps a paid booking to free. */
   passkey_grants_free?: boolean;
@@ -1448,6 +1461,7 @@ export interface EventUpdatePayload {
   requires_attendee_details?: boolean;
   attendee_fields?: string[];
   is_private?: boolean;
+  private_access_mode?: PrivateAccessMode;
   /** Omit to keep the current passkey; send a value to replace it. */
   access_passkey?: string;
   passkey_grants_free?: boolean;
@@ -2180,5 +2194,139 @@ export function verifyTopupPayment(payload: TopupVerifyPayload) {
   return apiFetch<WalletBalanceDTO>("/users/wallet/topup/verify", {
     method: "POST",
     data: payload,
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Join requests (RSVP for private events)                            */
+/* ------------------------------------------------------------------ */
+
+// An RSVP-gated private event replaces the passkey prompt with "request to
+// join": the guest submits the event's attendee-details form plus an optional
+// note, and a host or admin approves. Approval only UNLOCKS booking — the guest
+// still books and still pays, so nothing here moves money.
+//
+// Every route derives its identity (guest, host, admin) from the auth token, so
+// all of these must send `Authorization: Bearer <token>`.
+
+export type JoinRequestStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "withdrawn";
+
+export interface JoinRequestDTO {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: JoinRequestStatus;
+  message?: string;
+  /** The attendee answers as submitted, for the host's review screen. */
+  answers_snapshot: Record<string, unknown>;
+  reviewed_by_kind?: "host" | "admin";
+  reviewed_by_label?: string;
+  reviewed_at?: string;
+  review_note?: string;
+  created_at: string;
+  updated_at: string;
+  // Joined for the review queues.
+  user_name?: string;
+  user_email?: string;
+  user_phone?: string;
+  user_avatar_url?: string | null;
+  event_title?: string;
+  event_slug?: string;
+}
+
+/** The attendee-detail answers, keyed as in the attendee-field catalog. */
+export interface JoinRequestAnswers {
+  name?: string | null;
+  age?: number | null;
+  gender?: string | null;
+  qualification?: string | null;
+  occupation?: string | null;
+  marital_status?: string | null;
+  contact_number?: string | null;
+  whatsapp_number?: string | null;
+  registration_type?: string | null;
+  govt_id_url?: string | null;
+  travel?: boolean | null;
+  social_link?: string | null;
+}
+
+/** POST /events/{id}/join-requests — ask to join a private RSVP event. */
+export function submitJoinRequest(
+  eventId: string,
+  idToken: string,
+  body: { message?: string; answers?: JoinRequestAnswers },
+) {
+  return apiFetch<JoinRequestDTO>(`/events/${eventId}/join-requests`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: body,
+  });
+}
+
+/** GET /events/{id}/join-requests/me — my request, or null if I never asked. */
+export function getMyJoinRequest(eventId: string, idToken: string) {
+  return apiFetch<JoinRequestDTO | null>(
+    `/events/${eventId}/join-requests/me`,
+    { headers: getAuthHeader(idToken) },
+  );
+}
+
+/** POST /join-requests/{id}/withdraw — retract my own pending request. */
+export function withdrawJoinRequest(requestId: string, idToken: string) {
+  return apiFetch<null>(`/join-requests/${requestId}/withdraw`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** GET /join-requests/host — every request across the host's events. */
+export function listHostJoinRequests(
+  idToken: string,
+  params: { status?: JoinRequestStatus; limit?: number; offset?: number } = {},
+) {
+  const qs = new URLSearchParams();
+  if (params.status) qs.set("status", params.status);
+  if (params.limit) qs.set("limit", String(params.limit));
+  if (params.offset) qs.set("offset", String(params.offset));
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return apiFetch<JoinRequestDTO[]>(`/join-requests/host${suffix}`, {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** GET /join-requests/host/pending-count — for the dashboard badge. */
+export function getHostPendingJoinRequestCount(idToken: string) {
+  return apiFetch<{ pending: number }>("/join-requests/host/pending-count", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** POST /join-requests/{id}/approve — host approves; unlocks booking. */
+export function approveJoinRequest(
+  requestId: string,
+  idToken: string,
+  note?: string,
+) {
+  return apiFetch<JoinRequestDTO>(`/join-requests/${requestId}/approve`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: { note },
+  });
+}
+
+/** POST /join-requests/{id}/reject — host declines. */
+export function rejectJoinRequest(
+  requestId: string,
+  idToken: string,
+  note?: string,
+) {
+  return apiFetch<JoinRequestDTO>(`/join-requests/${requestId}/reject`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: { note },
   });
 }

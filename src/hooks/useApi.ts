@@ -38,6 +38,10 @@ export const queryKeys = {
     ["isExperienceSaved", eventId, userId] as const,
   bookingsByUser: (userId: string) => ["bookingsByUser", userId] as const,
   booking: (bookingId: string) => ["booking", bookingId] as const,
+  myJoinRequest: (eventId: string) => ["myJoinRequest", eventId] as const,
+  hostJoinRequests: (status?: string) =>
+    ["hostJoinRequests", status ?? "all"] as const,
+  hostPendingJoinRequests: ["hostPendingJoinRequests"] as const,
   payoutMethods: (hostId: string) => ["payoutMethods", hostId] as const,
   earnings: (hostId: string) => ["earnings", hostId] as const,
   payoutHistory: (hostId: string) => ["payoutHistory", hostId] as const,
@@ -1414,6 +1418,107 @@ export function useVerifyTopupPayment() {
     onSuccess: (_data, variables) => {
       void qc.invalidateQueries({
         queryKey: walletKeys.balance(variables.user_id),
+      });
+    },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Join requests (RSVP for private events)                            */
+/* ------------------------------------------------------------------ */
+
+// All of these need a Firebase ID token; components fetch one with
+// `user.getIdToken()` and hold it in state (see host-dashboard/page.tsx).
+// Queries stay disabled until the token arrives.
+
+/** The signed-in guest's own request for one event — null if never asked. */
+export function useMyJoinRequest(
+  eventId: string | null,
+  idToken: string | null,
+) {
+  return useQuery({
+    queryKey: queryKeys.myJoinRequest(eventId ?? ""),
+    queryFn: () => api.getMyJoinRequest(eventId!, idToken!),
+    enabled: !!eventId && !!idToken,
+    select: (res) => res.data,
+  });
+}
+
+export function useSubmitJoinRequest(idToken: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: {
+      eventId: string;
+      message?: string;
+      answers?: api.JoinRequestAnswers;
+    }) =>
+      api.submitJoinRequest(vars.eventId, idToken!, {
+        message: vars.message,
+        answers: vars.answers,
+      }),
+    onSuccess: (_res, vars) => {
+      void qc.invalidateQueries({
+        queryKey: queryKeys.myJoinRequest(vars.eventId),
+      });
+    },
+  });
+}
+
+export function useWithdrawJoinRequest(idToken: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { requestId: string; eventId: string }) =>
+      api.withdrawJoinRequest(vars.requestId, idToken!),
+    onSuccess: (_res, vars) => {
+      void qc.invalidateQueries({
+        queryKey: queryKeys.myJoinRequest(vars.eventId),
+      });
+    },
+  });
+}
+
+/** The host's review queue across every event they own. */
+export function useHostJoinRequests(
+  idToken: string | null,
+  status?: api.JoinRequestStatus,
+) {
+  return useQuery({
+    queryKey: queryKeys.hostJoinRequests(status),
+    queryFn: () => api.listHostJoinRequests(idToken!, { status }),
+    enabled: !!idToken,
+    select: (res) => res.data,
+  });
+}
+
+/** Badge count for the dashboard nav. */
+export function useHostPendingJoinRequestCount(idToken: string | null) {
+  return useQuery({
+    queryKey: queryKeys.hostPendingJoinRequests,
+    queryFn: () => api.getHostPendingJoinRequestCount(idToken!),
+    enabled: !!idToken,
+    select: (res) => res.data.pending,
+  });
+}
+
+/**
+ * Approve or decline. Both queues and the badge are invalidated together —
+ * a decision changes the pending list, the decided list and the count at once.
+ */
+export function useReviewJoinRequest(idToken: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: {
+      requestId: string;
+      approve: boolean;
+      note?: string;
+    }) =>
+      vars.approve
+        ? api.approveJoinRequest(vars.requestId, idToken!, vars.note)
+        : api.rejectJoinRequest(vars.requestId, idToken!, vars.note),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["hostJoinRequests"] });
+      void qc.invalidateQueries({
+        queryKey: queryKeys.hostPendingJoinRequests,
       });
     },
   });

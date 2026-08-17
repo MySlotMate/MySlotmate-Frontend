@@ -16,6 +16,7 @@ import {
   LuArrowLeft,
   LuHome,
   LuHeart,
+  LuUser,
 } from "react-icons/lu";
 import Link from "next/link";
 import GoogleLogin from "./GoogleLogin";
@@ -483,6 +484,17 @@ export default function Navbar() {
                                 <FiChevronRight className="h-4 w-4 text-gray-400" />
                               </Link>
                               <Link
+                                href="/host-dashboard/profile"
+                                onClick={() => setProfileOpen(false)}
+                                className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                              >
+                                <span className="flex items-center gap-3">
+                                  <LuUser className="h-5 w-5 text-gray-600" />
+                                  Host profile
+                                </span>
+                                <FiChevronRight className="h-4 w-4 text-gray-400" />
+                              </Link>
+                              <Link
                                 href="/activities"
                                 onClick={() => setProfileOpen(false)}
                                 className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
@@ -792,17 +804,30 @@ export default function Navbar() {
 
                 <div className="mb-3 space-y-1.5">
                   {hostStatus === "approved" && (
-                    <Link
-                      href="/host-dashboard"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
-                    >
-                      <span className="flex items-center gap-3">
-                        <LuHome className="h-5 w-5 text-gray-600" />
-                        Host dashboard
-                      </span>
-                      <FiChevronRight className="h-4 w-4 text-gray-400" />
-                    </Link>
+                    <>
+                      <Link
+                        href="/host-dashboard"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                      >
+                        <span className="flex items-center gap-3">
+                          <LuHome className="h-5 w-5 text-gray-600" />
+                          Host dashboard
+                        </span>
+                        <FiChevronRight className="h-4 w-4 text-gray-400" />
+                      </Link>
+                      <Link
+                        href="/host-dashboard/profile"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                      >
+                        <span className="flex items-center gap-3">
+                          <LuUser className="h-5 w-5 text-gray-600" />
+                          Host profile
+                        </span>
+                        <FiChevronRight className="h-4 w-4 text-gray-400" />
+                      </Link>
+                    </>
                   )}
                   <Link
                     href="/activities"

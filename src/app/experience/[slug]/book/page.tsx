@@ -26,6 +26,14 @@ import { LuWallet, LuLoader2 } from "react-icons/lu";
 import { format } from "date-fns";
 import { formatIST } from "~/lib/datetime";
 import { unlockEvent, validateCoupon } from "~/lib/api";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "~/utils/firebase";
+import {
+  useMyJoinRequest,
+  useSubmitJoinRequest,
+  useWithdrawJoinRequest,
+} from "~/hooks/useApi";
+import JoinRequestModal from "~/components/experience/JoinRequestModal";
 import { toast } from "sonner";
 
 export const runtime = "edge";
@@ -212,6 +220,19 @@ function BookingContent({ eventId }: { eventId: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
+  // RSVP-gated private events swap the passkey prompt for a join request: the
+  // gate is an APPROVED request, checked server-side in CreateBooking too.
+  const [authUser] = useAuthState(auth);
+  const [idToken, setIdToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (authUser) {
+      void authUser.getIdToken().then(setIdToken);
+    } else {
+      setIdToken(localStorage.getItem("msm_auth_token"));
+    }
+  }, [authUser]);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+
   // Private-event access gate (listed but booking-locked).
   const [passkey, setPasskey] = useState("");
   const [passkeyValid, setPasskeyValid] = useState(false);
@@ -326,10 +347,23 @@ function BookingContent({ eventId }: { eventId: string }) {
   const hasInsufficientBalance =
     !event?.is_free && totalPriceCents > 0 && walletBalance < totalPriceCents;
   const shortfall = totalPriceCents - walletBalance;
-  // Private events are booking-locked until the passkey is verified.
-  const needsUnlock =
-    (Boolean(event?.is_private) || Boolean(event?.access_passkey)) &&
-    !passkeyValid;
+  // Which gate this private event uses. RSVP events have no passkey at all.
+  const isRsvpGated =
+    Boolean(event?.is_private) && event?.private_access_mode === "rsvp";
+  const { data: myJoinRequest } = useMyJoinRequest(
+    isRsvpGated ? eventId : null,
+    idToken,
+  );
+  const submitJoinRequest = useSubmitJoinRequest(idToken);
+  const withdrawJoinRequest = useWithdrawJoinRequest(idToken);
+  const joinApproved = myJoinRequest?.status === "approved";
+
+  // Private events are booking-locked until their gate opens: an approved join
+  // request for RSVP events, a verified passkey for everything else.
+  const needsUnlock = isRsvpGated
+    ? !joinApproved
+    : (Boolean(event?.is_private) || Boolean(event?.access_passkey)) &&
+      !passkeyValid;
 
   const handleUnlock = async () => {
     const code = passkey.trim();
@@ -440,8 +474,17 @@ function BookingContent({ eventId }: { eventId: string }) {
       return;
     }
 
-    // Private-event gate: the passkey must be verified before booking.
+    // Private-event gate: the passkey must be verified (or the join request
+    // approved) before booking. The server re-checks either way.
     if (needsUnlock) {
+      if (isRsvpGated) {
+        toast.error(
+          myJoinRequest?.status === "pending"
+            ? "Your request is still awaiting the host's approval"
+            : "Request to join this experience first",
+        );
+        return;
+      }
       setPasskeyError(true);
       toast.error("Enter the passkey to book this private experience");
       return;
@@ -755,8 +798,81 @@ function BookingContent({ eventId }: { eventId: string }) {
           </div>
         )}
 
-        {/* Private-event / passkey gate */}
-        {(Boolean(event.is_private) || Boolean(event.access_passkey)) && (
+        {/* Private-event gate — a join request for RSVP events, else a passkey */}
+        {isRsvpGated ? (
+          <div className="mt-6">
+            {joinApproved ? (
+              <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
+                <FiLock size={16} /> Your request was approved — you can book
+              </div>
+            ) : myJoinRequest?.status === "pending" ? (
+              <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+                <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-amber-800">
+                  <FiLock size={16} /> Request sent
+                </div>
+                <p className="text-sm text-amber-700">
+                  The host is reviewing your request. We&apos;ll email you as
+                  soon as they decide.
+                </p>
+                {/* A live request blocks sending another one, so the guest needs
+                    a way to take it back and start over. */}
+                <button
+                  type="button"
+                  disabled={withdrawJoinRequest.isPending}
+                  onClick={() =>
+                    withdrawJoinRequest.mutate(
+                      { requestId: myJoinRequest.id, eventId },
+                      {
+                        onSuccess: () => toast.success("Request withdrawn"),
+                        onError: (err: Error) =>
+                          toast.error(
+                            err.message || "Could not withdraw the request",
+                          ),
+                      },
+                    )
+                  }
+                  className="mt-3 text-sm font-semibold text-amber-800 underline underline-offset-2 transition hover:text-amber-900 disabled:opacity-50"
+                >
+                  {withdrawJoinRequest.isPending
+                    ? "Withdrawing…"
+                    : "Withdraw my request"}
+                </button>
+              </div>
+            ) : myJoinRequest?.status === "rejected" ? (
+              <div className="rounded-xl border-2 border-gray-200 bg-gray-50 p-4">
+                <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <FiLock size={16} /> Request declined
+                </div>
+                <p className="text-sm text-gray-500">
+                  The host wasn&apos;t able to accept your request for this
+                  experience.
+                </p>
+                {myJoinRequest.review_note && (
+                  <p className="mt-2 text-sm text-gray-600 italic">
+                    &ldquo;{myJoinRequest.review_note}&rdquo;
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-xl border-2 border-gray-200 bg-gray-50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <FiLock size={16} /> Private experience
+                </div>
+                <p className="mb-3 text-sm text-gray-500">
+                  This experience is by request. Send the host your details and
+                  they&apos;ll get back to you.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowJoinModal(true)}
+                  className="rounded-xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:shadow-lg"
+                >
+                  Request to join
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (Boolean(event.is_private) || Boolean(event.access_passkey)) ? (
           <div className="mt-6">
             {passkeyValid ? (
               <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
@@ -804,7 +920,7 @@ function BookingContent({ eventId }: { eventId: string }) {
               </div>
             )}
           </div>
-        )}
+        ) : null}
 
         {/* Coupon field — passkey and coupon are independent. The coupon is
             always available on a paid booking; for a private event it appears
@@ -933,7 +1049,20 @@ function BookingContent({ eventId }: { eventId: string }) {
               Processing...
             </>
           ) : needsUnlock ? (
-            "Enter passkey to book"
+            // The label has to name the gate that's actually blocking. An RSVP
+            // event has no passkey at all, so "enter passkey" would send the
+            // guest looking for a code that doesn't exist.
+            isRsvpGated ? (
+              myJoinRequest?.status === "pending" ? (
+                "Waiting for the host to approve"
+              ) : myJoinRequest?.status === "rejected" ? (
+                "Request declined"
+              ) : (
+                "Request to join first"
+              )
+            ) : (
+              "Enter passkey to book"
+            )
           ) : totalPriceCents === 0 ? (
             isComped ? (
               "Confirm free booking"
@@ -968,6 +1097,28 @@ function BookingContent({ eventId }: { eventId: string }) {
           </span>
         </div>
       </div>
+
+      <JoinRequestModal
+        open={showJoinModal}
+        eventTitle={event.title}
+        attendeeFields={attendeeFields}
+        initialValues={attendeeValues}
+        isSubmitting={submitJoinRequest.isPending}
+        onClose={() => setShowJoinModal(false)}
+        onSubmit={({ message, answers }) => {
+          submitJoinRequest.mutate(
+            { eventId, message, answers },
+            {
+              onSuccess: () => {
+                setShowJoinModal(false);
+                toast.success("Request sent — the host will be in touch");
+              },
+              onError: (err: Error) =>
+                toast.error(err.message || "Could not send your request"),
+            },
+          );
+        }}
+      />
     </main>
   );
 }

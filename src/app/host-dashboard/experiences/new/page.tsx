@@ -113,6 +113,7 @@ interface FormData {
   attendeeFields: string[];
   // Privacy & access
   isPrivate: boolean;
+  privateAccessMode: "passkey" | "rsvp";
   accessMode: "shared" | "unique";
   accessPasskey: string;
   passkeyGrantsFree: boolean;
@@ -1011,6 +1012,7 @@ export default function CreateExperiencePage() {
     requiresAttendeeDetails: false,
     attendeeFields: [],
     isPrivate: false,
+    privateAccessMode: "passkey",
     accessMode: "shared",
     accessPasskey: "",
     passkeyGrantsFree: false,
@@ -1346,13 +1348,30 @@ export default function CreateExperiencePage() {
         return false;
       }
     }
+    // RSVP-gated events have no passkey at all — access comes from an approved
+    // request — so the passkey requirement applies only to the passkey gate.
     if (
       form.isPrivate &&
+      form.privateAccessMode === "passkey" &&
       form.accessMode === "shared" &&
       !form.accessPasskey.trim()
     ) {
       setShowErrors(true);
       toast.error("A private experience needs a passkey");
+      return false;
+    }
+    // An RSVP host approves people on the strength of what they submit, so the
+    // request form can't be empty — without required fields every request would
+    // arrive as a bare name and there'd be nothing to judge.
+    if (
+      form.isPrivate &&
+      form.privateAccessMode === "rsvp" &&
+      (!form.requiresAttendeeDetails || form.attendeeFields.length === 0)
+    ) {
+      setShowErrors(true);
+      toast.error(
+        "Request-to-join needs attendee details — turn them on and pick at least one field",
+      );
       return false;
     }
     return true;
@@ -1539,6 +1558,7 @@ export default function CreateExperiencePage() {
           ? form.attendeeFields
           : [],
         is_private: form.isPrivate,
+        private_access_mode: form.privateAccessMode,
         // Shared mode sends the one passkey; unique mode clears it (access comes
         // from the per-guest access codes generated after saving).
         access_passkey:
@@ -2746,6 +2766,7 @@ export default function CreateExperiencePage() {
 
               <PrivacyAccessSection
                 isPrivate={form.isPrivate}
+                privateAccessMode={form.privateAccessMode}
                 accessMode={form.accessMode}
                 accessPasskey={form.accessPasskey}
                 showError={showErrors}

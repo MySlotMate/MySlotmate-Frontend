@@ -83,6 +83,7 @@ interface EventFormData {
   requiresAttendeeDetails: boolean;
   attendeeFields: string[];
   isPrivate: boolean;
+  privateAccessMode: "passkey" | "rsvp";
   accessMode: "shared" | "unique";
   accessPasskey: string;
   passkeyGrantsFree: boolean;
@@ -694,6 +695,7 @@ export default function EditEventPage({
     requiresAttendeeDetails: false,
     attendeeFields: [],
     isPrivate: false,
+    privateAccessMode: "passkey",
     accessMode: "shared",
     accessPasskey: "",
     passkeyGrantsFree: false,
@@ -818,6 +820,7 @@ export default function EditEventPage({
         requiresAttendeeDetails: event.requires_attendee_details ?? false,
         attendeeFields: event.attendee_fields ?? [],
         isPrivate: event.is_private ?? false,
+        privateAccessMode: event.private_access_mode === "rsvp" ? "rsvp" : "passkey",
         // Corrected by the passkey refetch below (shared if a passkey exists,
         // otherwise unique — access via per-guest codes).
         accessMode: "shared",
@@ -984,12 +987,29 @@ export default function EditEventPage({
 
     // A shared-passkey private event is unbookable without its passkey. (Unique
     // mode needs no passkey — access comes from the per-guest codes.)
+    // RSVP-gated events have no passkey at all — access comes from an approved
+    // request — so the passkey requirement applies only to the passkey gate.
     if (
       form.isPrivate &&
+      form.privateAccessMode === "passkey" &&
       form.accessMode === "shared" &&
       !form.accessPasskey.trim()
     ) {
       toast.error("A private experience needs a passkey");
+      return;
+    }
+
+    // An RSVP host approves people on the strength of what they submit, so the
+    // request form can't be empty — without required fields every request would
+    // arrive as a bare name and there'd be nothing to judge.
+    if (
+      form.isPrivate &&
+      form.privateAccessMode === "rsvp" &&
+      (!form.requiresAttendeeDetails || form.attendeeFields.length === 0)
+    ) {
+      toast.error(
+        "Request-to-join needs attendee details — turn them on and pick at least one field",
+      );
       return;
     }
 
@@ -1195,6 +1215,7 @@ export default function EditEventPage({
             ? form.attendeeFields
             : [],
           is_private: form.isPrivate,
+          private_access_mode: form.privateAccessMode,
           // Unique mode clears the shared passkey (access via per-guest codes).
           access_passkey:
             form.isPrivate && form.accessMode === "shared"
@@ -1957,6 +1978,7 @@ export default function EditEventPage({
                 <div className="mb-4">
                   <PrivacyAccessSection
                     isPrivate={form.isPrivate}
+                    privateAccessMode={form.privateAccessMode}
                     accessMode={form.accessMode}
                     accessPasskey={form.accessPasskey}
                     canGenerateCodes

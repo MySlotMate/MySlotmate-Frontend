@@ -24,6 +24,7 @@ import Breadcrumb from "~/components/Breadcrumb";
 import { ExperienceCard } from "~/components/ExperienceCard";
 import { eventPriceLabel } from "~/lib/price";
 import { PeopleCard } from "~/components/home/people";
+import { eventHasPassed } from "~/lib/eventDates";
 
 const EXPLORE_PILLS = [
   "All",
@@ -281,17 +282,13 @@ export default function ExplorePage() {
       }
     };
 
-    // Hide one-off events that have already happened. Recurring events stay —
-    // they repeat, so a past `time` just reflects the first/last occurrence.
+    // Hide experiences that have nothing left to book. See eventHasPassed —
+    // `time` alone is wrong for custom-dates events, whose later sessions are
+    // still on sale after the first one goes by.
     const now = Date.now();
-    const hasPassed = (event: (typeof list)[number]) => {
-      const ref = event.end_time ?? event.time;
-      const t = new Date(ref).getTime();
-      return Number.isFinite(t) && t < now;
-    };
 
     return list
-      .filter((event) => event.is_recurring || !hasPassed(event))
+      .filter((event) => !eventHasPassed(event, now))
       .filter((event) => byPrice(event.price_cents, priceFilter))
       .filter((event) => byDuration(event.duration_minutes, durationFilter))
       .filter((event) =>

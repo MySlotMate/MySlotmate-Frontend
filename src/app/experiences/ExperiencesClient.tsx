@@ -12,6 +12,7 @@ import Breadcrumb from "~/components/Breadcrumb";
 import { ExperienceCard } from "~/components/ExperienceCard";
 import { eventPriceLabel } from "~/lib/price";
 import type { EventDTO } from "~/lib/api";
+import { eventHasPassed } from "~/lib/eventDates";
 
 export default function ExperiencesClient({
   initialEvents,
@@ -36,12 +37,11 @@ export default function ExperiencesClient({
 
     let filtered = events;
 
-    // Filter out past events
-    const now = new Date();
-    filtered = filtered.filter((event) => {
-      const eventDate = new Date(event.time);
-      return eventDate > now;
-    });
+    // Filter out experiences with nothing left to book. See eventHasPassed —
+    // a custom-dates event keeps its FIRST date in `time`, so comparing that
+    // alone would hide a trip whose later sessions are still on sale.
+    const now = Date.now();
+    filtered = filtered.filter((event) => !eventHasPassed(event, now));
 
     // Filter by location
     if (filterByLocation && location) {

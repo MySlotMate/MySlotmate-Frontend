@@ -362,6 +362,21 @@ function BookingContent({ eventId }: { eventId: string }) {
   const withdrawJoinRequest = useWithdrawJoinRequest(idToken);
   const joinApproved = myJoinRequest?.status === "approved";
 
+  // An RSVP guest already filled these details in to request the session, and
+  // the server saved them onto their attendee profile — so asking again at
+  // checkout is pure repetition.
+  //
+  // The form is skipped only once the saved profile actually covers every field
+  // this event requires. If it doesn't — say the host added a field after
+  // approving someone — it reappears, rather than hiding a form the guest needs
+  // to get past the server-side attendee gate. While the profile is still
+  // loading we assume it's covered, so the form never flashes in and out.
+  const attendeeCollectedAtRequest =
+    isRsvpGated &&
+    requiresAttendee &&
+    attendeeFields.length > 0 &&
+    (!attendeePrefilled || attendeeFormValid(attendeeFields, attendeeValues));
+
   // Private events are booking-locked until their gate opens: an approved join
   // request for RSVP events, a verified passkey for everything else.
   const needsUnlock = isRsvpGated
@@ -495,7 +510,9 @@ function BookingContent({ eventId }: { eventId: string }) {
     }
 
     // Attendee-details gate: collect + save required details before booking.
-    if (requiresAttendee && attendeeFields.length > 0) {
+    // Skipped for an RSVP guest whose profile already carries them — re-saving
+    // identical values would just be a wasted round trip.
+    if (requiresAttendee && attendeeFields.length > 0 && !attendeeCollectedAtRequest) {
       if (!attendeeFormValid(attendeeFields, attendeeValues)) {
         setShowAttendeeErrors(true);
         toast.error("Please complete the attendee details");
@@ -790,17 +807,29 @@ function BookingContent({ eventId }: { eventId: string }) {
           />
         </div>
 
-        {/* Attendee details (only when the event requires them) */}
-        {requiresAttendee && attendeeFields.length > 0 && (
-          <div className="mt-6">
-            <AttendeeDetailsForm
-              fields={attendeeFields}
-              values={attendeeValues}
-              onChange={setAttendeeValue}
-              showErrors={showAttendeeErrors}
-            />
+        {/* Say so rather than silently omitting the form — a guest who filled
+            these in to request the session should see that they carried over. */}
+        {attendeeCollectedAtRequest && (
+          <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            We&apos;ve used the details you sent with your request — nothing more
+            to fill in.
           </div>
         )}
+
+        {/* Attendee details — required by the event, and not already gathered
+            with the guest's join request. */}
+        {requiresAttendee &&
+          attendeeFields.length > 0 &&
+          !attendeeCollectedAtRequest && (
+            <div className="mt-6">
+              <AttendeeDetailsForm
+                fields={attendeeFields}
+                values={attendeeValues}
+                onChange={setAttendeeValue}
+                showErrors={showAttendeeErrors}
+              />
+            </div>
+          )}
 
         {/* Private-event gate — a join request for RSVP events, else a passkey */}
         {isRsvpGated ? (

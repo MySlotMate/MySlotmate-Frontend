@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Navbar from "~/components/Navbar";
 import { RichTextView } from "~/components/RichTextView";
 import ExperienceSkeleton from "./loading";
 import Footer from "~/components/home/Footer";
@@ -1446,6 +1447,7 @@ export default function ExperienceDetailClient({
 
   return (
     <>
+      <Navbar />
       <main className="min-h-screen bg-white pb-28 lg:pb-0">
         <div className="site-x mx-auto w-full max-w-[77rem] px-4 py-8 md:px-6 lg:px-8">
           {/* Title and Actions */}

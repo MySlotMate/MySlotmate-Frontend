@@ -1,5 +1,4 @@
 import { type Metadata } from "next";
-import Navbar from "~/components/Navbar";
 import { getPublicEvent } from "~/lib/server-api";
 
 type Props = {
@@ -48,20 +47,20 @@ export async function generateMetadata({
 }
 
 /**
- * The Navbar lives here rather than inside each page so it survives the
- * `loading.tsx` boundary — `loading` replaces only the page slot, so a Navbar
- * rendered inside the page cannot appear while the event fetch is in flight.
- * Previously the skeleton drew a blank grey bar in its place.
+ * Deliberately holds NO client components.
+ *
+ * `loading.tsx` is a Suspense fallback rendered *inside* this layout, so the
+ * router must load every client chunk this layout references before it can
+ * paint the skeleton. Rendering <Navbar /> here (it calls useAuthState, which
+ * pulls Firebase) pushed the skeleton's paint cost from 6 chunks / 343 KB to
+ * 21 chunks / 799 KB — 146 KB of it Firebase — and the instant paint was lost.
+ * The Navbar therefore stays in the pages; `loading.tsx` draws a matching
+ * static header instead.
  */
 export default function ExperienceDetailLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <Navbar />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 }

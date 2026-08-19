@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Navbar from "~/components/Navbar";
 import Link from "next/link";
 import Breadcrumb from "~/components/Breadcrumb";
 import {
@@ -1148,6 +1149,7 @@ export default function BookingReviewPage({
 
   return (
     <>
+      <Navbar />
       <div className="site-x mx-auto max-w-xl py-6">
         <Breadcrumb
           items={[

@@ -95,8 +95,8 @@ function mapAttentionItem(it: AttentionItemDTO): AttentionItem {
         iconBg: TONE.amber,
         title: "Awaiting guest reviews",
         description: it.message,
-        linkText: "View experiences",
-        linkHref: "/host-dashboard/experiences",
+        linkText: "View requests",
+        linkHref: "/host-dashboard/requests",
       };
     case "unread_message":
       return {
@@ -351,7 +351,7 @@ export default function HostDashboardPage() {
     else setGreeting("Good evening");
   }, []);
 
-  const [activeTab, setActiveTab] = useState<"today" | "all">("today");
+  const [activeTab, setActiveTab] = useState<"today" | "all">("all");
 
   const [showOnSpotPicker, setShowOnSpotPicker] = useState(false);
   const [showBulkImportPicker, setShowBulkImportPicker] = useState(false);
@@ -786,24 +786,6 @@ export default function HostDashboardPage() {
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2">
                   <div className="flex gap-6">
                     <button
-                      onClick={() => setActiveTab("today")}
-                      className={`relative pb-3 text-sm font-bold transition-all ${
-                        activeTab === "today"
-                          ? "text-[#0e8ae0]"
-                          : "text-gray-400 hover:text-gray-600"
-                      }`}
-                    >
-                      Today&apos;s Sessions
-                      {todaySchedule.length > 0 && (
-                        <span className="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-extrabold text-sky-600">
-                          {todaySchedule.length}
-                        </span>
-                      )}
-                      {activeTab === "today" && (
-                        <div className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-[#0e8ae0]" />
-                      )}
-                    </button>
-                    <button
                       onClick={() => setActiveTab("all")}
                       className={`relative pb-3 text-sm font-bold transition-all ${
                         activeTab === "all"
@@ -818,6 +800,24 @@ export default function HostDashboardPage() {
                         </span>
                       )}
                       {activeTab === "all" && (
+                        <div className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-[#0e8ae0]" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setActiveTab("today")}
+                      className={`relative pb-3 text-sm font-bold transition-all ${
+                        activeTab === "today"
+                          ? "text-[#0e8ae0]"
+                          : "text-gray-400 hover:text-gray-600"
+                      }`}
+                    >
+                      Today&apos;s Sessions
+                      {todaySchedule.length > 0 && (
+                        <span className="ml-1.5 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-extrabold text-sky-600">
+                          {todaySchedule.length}
+                        </span>
+                      )}
+                      {activeTab === "today" && (
                         <div className="absolute bottom-0 left-0 h-0.5 w-full rounded-full bg-[#0e8ae0]" />
                       )}
                     </button>

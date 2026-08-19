@@ -38,7 +38,8 @@ export const queryKeys = {
     ["isExperienceSaved", eventId, userId] as const,
   bookingsByUser: (userId: string) => ["bookingsByUser", userId] as const,
   booking: (bookingId: string) => ["booking", bookingId] as const,
-  myJoinRequest: (eventId: string) => ["myJoinRequest", eventId] as const,
+  myJoinRequest: (eventId: string, occurrenceDate: string) =>
+    ["myJoinRequest", eventId, occurrenceDate] as const,
   hostJoinRequests: (status?: string) =>
     ["hostJoinRequests", status ?? "all"] as const,
   hostPendingJoinRequests: ["hostPendingJoinRequests"] as const,
@@ -1435,10 +1436,11 @@ export function useVerifyTopupPayment() {
 export function useMyJoinRequest(
   eventId: string | null,
   idToken: string | null,
+  occurrenceDate?: string,
 ) {
   return useQuery({
-    queryKey: queryKeys.myJoinRequest(eventId ?? ""),
-    queryFn: () => api.getMyJoinRequest(eventId!, idToken!),
+    queryKey: queryKeys.myJoinRequest(eventId ?? "", occurrenceDate ?? ""),
+    queryFn: () => api.getMyJoinRequest(eventId!, idToken!, occurrenceDate),
     enabled: !!eventId && !!idToken,
     select: (res) => res.data,
   });
@@ -1451,14 +1453,19 @@ export function useSubmitJoinRequest(idToken: string | null) {
       eventId: string;
       message?: string;
       answers?: api.JoinRequestAnswers;
+      occurrenceDate?: string;
     }) =>
       api.submitJoinRequest(vars.eventId, idToken!, {
         message: vars.message,
         answers: vars.answers,
+        occurrence_date: vars.occurrenceDate,
       }),
     onSuccess: (_res, vars) => {
       void qc.invalidateQueries({
-        queryKey: queryKeys.myJoinRequest(vars.eventId),
+        queryKey: queryKeys.myJoinRequest(
+          vars.eventId,
+          vars.occurrenceDate ?? "",
+        ),
       });
     },
   });
@@ -1467,11 +1474,17 @@ export function useSubmitJoinRequest(idToken: string | null) {
 export function useWithdrawJoinRequest(idToken: string | null) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (vars: { requestId: string; eventId: string }) =>
-      api.withdrawJoinRequest(vars.requestId, idToken!),
+    mutationFn: (vars: {
+      requestId: string;
+      eventId: string;
+      occurrenceDate?: string;
+    }) => api.withdrawJoinRequest(vars.requestId, idToken!),
     onSuccess: (_res, vars) => {
       void qc.invalidateQueries({
-        queryKey: queryKeys.myJoinRequest(vars.eventId),
+        queryKey: queryKeys.myJoinRequest(
+          vars.eventId,
+          vars.occurrenceDate ?? "",
+        ),
       });
     },
   });

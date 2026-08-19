@@ -10,7 +10,13 @@ import { useHostJoinRequests, useReviewJoinRequest } from "~/hooks/useApi";
 import { ATTENDEE_FIELDS } from "~/lib/attendeeFields";
 import { formatIST } from "~/lib/datetime";
 import type { JoinRequestDTO, JoinRequestStatus } from "~/lib/api";
-import { FiCheck, FiX, FiExternalLink, FiInbox } from "react-icons/fi";
+import {
+  FiCheck,
+  FiX,
+  FiExternalLink,
+  FiInbox,
+  FiCalendar,
+} from "react-icons/fi";
 import { LuLoader2 } from "react-icons/lu";
 import { toast } from "sonner";
 
@@ -72,7 +78,7 @@ export default function HostJoinRequestsPage() {
         onSuccess: () =>
           toast.success(
             approve
-              ? `${req.user_name ?? "Guest"} can now book`
+              ? `${req.user_name ?? "Guest"} can now book that session`
               : "Request declined",
           ),
         onError: (err: Error) =>
@@ -98,8 +104,9 @@ export default function HostJoinRequestsPage() {
           <header className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Join requests</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Guests asking to join your request-only experiences. Approving
-              lets them book — it doesn&apos;t hold a spot or take payment.
+              Guests asking to join your request-only experiences. Each request
+              is for one session — approving lets them book that date only, and
+              doesn&apos;t hold a spot or take payment.
             </p>
           </header>
 
@@ -164,6 +171,15 @@ export default function HostJoinRequestsPage() {
                             {req.event_title}
                             <FiExternalLink size={12} />
                           </Link>
+                        )}
+                        {/* The session being asked about. Approval covers this
+                            date only, so it has to be on the card the host
+                            decides from. */}
+                        {req.occurrence_date && (
+                          <p className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-[#0094CA]/5 px-2 py-1 text-xs font-semibold text-[#16304c]">
+                            <FiCalendar size={12} className="text-[#0094CA]" />
+                            {formatIST(req.occurrence_date, "eee d MMM, h:mm a")}
+                          </p>
                         )}
                       </div>
                       <div className="text-right">

@@ -84,7 +84,14 @@ export default function ExplorePage() {
   const [query, setQuery] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [pill, setPill] = useState<ExplorePill>("All");
-  const [professionalOnly, setProfessionalOnly] = useState(false);
+  // Explore splits into two browsing modes rather than one on/off toggle:
+  // group experiences, or one-on-one professional sessions. They are mutually
+  // exclusive — someone after a private session doesn't want group workshops in
+  // the list, and vice versa.
+  const [browseMode, setBrowseMode] = useState<"experiences" | "professional">(
+    "experiences",
+  );
+  const professionalOnly = browseMode === "professional";
   const [priceFilter, setPriceFilter] = useState<PriceFilter>("any");
   const [durationFilter, setDurationFilter] = useState<DurationFilter>("any");
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>("any");
@@ -158,17 +165,23 @@ export default function ExplorePage() {
     ).slice(0, 4);
   }, [normalizedQuery]);
 
-  // IDs of hosts flagged professional — used to gate both hosts and their
-  // events when the "Professionals only" toggle is on.
-  const professionalHostIds = useMemo(
+  // Hosts who actually run one-on-one sessions, derived from the events feed.
+  // "Professionals only" means the same thing in both rows: 1:1 offerings. A
+  // host flagged is_professional who has never listed a 1:1 session has nothing
+  // to offer someone filtering for one, so the flag alone isn't the question.
+  const oneOnOneHostIds = useMemo(
     () =>
-      new Set((hosts ?? []).filter((h) => h.is_professional).map((h) => h.id)),
-    [hosts],
+      new Set(
+        (events ?? [])
+          .filter((e) => e.session_type === "one_on_one")
+          .map((e) => e.host_id),
+      ),
+    [events],
   );
 
   const filteredHosts = useMemo(() => {
     const list = professionalOnly
-      ? (hosts ?? []).filter((h) => h.is_professional)
+      ? (hosts ?? []).filter((h) => oneOnOneHostIds.has(h.id))
       : (hosts ?? []);
 
     const searched = normalizedQuery
@@ -196,14 +209,20 @@ export default function ExplorePage() {
           );
 
     return pillFiltered.slice(0, 4);
-  }, [hosts, normalizedQuery, pill, professionalOnly]);
+  }, [hosts, normalizedQuery, pill, professionalOnly, oneOnOneHostIds]);
 
   const filteredExperiences = useMemo(() => {
     let list = [...(events ?? [])];
 
-    if (professionalOnly) {
-      list = list.filter((event) => professionalHostIds.has(event.host_id));
-    }
+    // The two modes split the catalogue rather than narrowing it: Professional
+    // shows one-on-one sessions, Experiences shows everything else. An event
+    // created before session_type existed has no value set, so treat anything
+    // that isn't explicitly one_on_one as a group experience.
+    list = list.filter((event) =>
+      professionalOnly
+        ? event.session_type === "one_on_one"
+        : event.session_type !== "one_on_one",
+    );
 
     if (normalizedQuery) {
       list = list.filter((event) =>
@@ -306,7 +325,6 @@ export default function ExplorePage() {
     normalizedQuery,
     pill,
     professionalOnly,
-    professionalHostIds,
   ]);
 
   const visibleEvents = filteredExperiences.slice(0, visibleExperiences);
@@ -342,38 +360,50 @@ export default function ExplorePage() {
             items={[{ label: "Home", href: "/" }, { label: "Explore" }]}
           />
 
-          {/* Professional hosts toggle — mirrors the active category-pill style
-              (brand gradient + soft shadow) when switched on */}
-          <button
-            type="button"
-            role="switch"
-            aria-checked={professionalOnly}
-            aria-label="Show professional hosts only"
-            onClick={() => setProfessionalOnly((prev) => !prev)}
-            className={`inline-flex items-center gap-2.5 rounded-full border px-4 py-2 text-xs font-extrabold transition-all duration-200 ${
-              professionalOnly
-                ? "border-transparent bg-gradient-to-r from-[#0094CA] to-[#00b4ef] text-white shadow-[0_8px_20px_rgba(0,148,202,0.3)]"
-                : "border-[#bfe6f7] bg-gradient-to-r from-[#f2fbff] to-[#e9f6ff] text-[#0077a3] shadow-[0_10px_24px_rgba(74,141,194,0.12)] hover:-translate-y-px hover:border-[#7cd0f0] hover:shadow-[0_12px_28px_rgba(0,148,202,0.2)]"
-            }`}
+          {/* Browse mode — two exclusive buttons. The selected one takes the
+              active category-pill styling (brand gradient + soft shadow). */}
+          <div
+            role="group"
+            aria-label="Browse mode"
+            className="inline-flex items-center gap-2"
           >
-            <BadgeCheck
-              className={`h-[18px] w-[18px] ${
-                professionalOnly ? "text-white" : "text-[#0094CA]"
-              }`}
-            />
-            <span className="whitespace-nowrap">Professionals only</span>
-            <span
-              className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ${
-                professionalOnly ? "bg-white/30" : "bg-slate-200"
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                  professionalOnly ? "translate-x-4" : "translate-x-0.5"
-                }`}
-              />
-            </span>
-          </button>
+            {(
+              [
+                {
+                  key: "experiences" as const,
+                  label: "Experiences",
+                  icon: Compass,
+                },
+                {
+                  key: "professional" as const,
+                  label: "Professional",
+                  icon: BadgeCheck,
+                },
+              ]
+            ).map(({ key, label, icon: Icon }) => {
+              const active = browseMode === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setBrowseMode(key)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-extrabold transition-all duration-200 ${
+                    active
+                      ? "border-transparent bg-gradient-to-r from-[#0094CA] to-[#00b4ef] text-white shadow-[0_8px_20px_rgba(0,148,202,0.3)]"
+                      : "border-[#bfe6f7] bg-gradient-to-r from-[#f2fbff] to-[#e9f6ff] text-[#0077a3] shadow-[0_10px_24px_rgba(74,141,194,0.12)] hover:-translate-y-px hover:border-[#7cd0f0] hover:shadow-[0_12px_28px_rgba(0,148,202,0.2)]"
+                  }`}
+                >
+                  <Icon
+                    className={`h-[18px] w-[18px] ${
+                      active ? "text-white" : "text-[#0094CA]"
+                    }`}
+                  />
+                  <span className="whitespace-nowrap">{label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <section className="pb-2">

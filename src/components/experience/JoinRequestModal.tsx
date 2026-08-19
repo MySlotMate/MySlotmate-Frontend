@@ -24,6 +24,7 @@ import type { JoinRequestAnswers } from "~/lib/api";
 export default function JoinRequestModal({
   open,
   eventTitle,
+  sessionLabel,
   attendeeFields,
   initialValues,
   isSubmitting,
@@ -32,6 +33,8 @@ export default function JoinRequestModal({
 }: {
   open: boolean;
   eventTitle: string;
+  /** The session being requested — approval covers this date only. */
+  sessionLabel?: string;
   attendeeFields: string[];
   /** Prefill from the guest's saved attendee profile, as the booking form does. */
   initialValues?: AttendeeValues;
@@ -65,7 +68,10 @@ export default function JoinRequestModal({
             <h2 className="text-base font-bold text-[#16304c]">
               Request to join
             </h2>
-            <p className="mt-0.5 text-xs text-[#6f8daa]">{eventTitle}</p>
+            <p className="mt-0.5 text-xs text-[#6f8daa]">
+              {eventTitle}
+              {sessionLabel ? ` · ${sessionLabel}` : ""}
+            </p>
           </div>
           <button
             type="button"
@@ -81,6 +87,9 @@ export default function JoinRequestModal({
           <p className="rounded-lg bg-[#0094CA]/5 px-3 py-2 text-xs text-[#16304c]">
             The host reviews every request. If they say yes, you&apos;ll be able
             to book — your spot isn&apos;t held until you do.
+            {sessionLabel
+              ? " This request covers that session only; other dates need their own request."
+              : ""}
           </p>
 
           {attendeeFields.length > 0 && (

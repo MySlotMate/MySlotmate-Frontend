@@ -2219,6 +2219,8 @@ export interface JoinRequestDTO {
   id: string;
   event_id: string;
   user_id: string;
+  /** The session this request is for — approval is per slot, not per event. */
+  occurrence_date: string;
   status: JoinRequestStatus;
   message?: string;
   /** The attendee answers as submitted, for the host's review screen. */
@@ -2254,11 +2256,19 @@ export interface JoinRequestAnswers {
   social_link?: string | null;
 }
 
-/** POST /events/{id}/join-requests — ask to join a private RSVP event. */
+/**
+ * POST /events/{id}/join-requests — ask to join ONE session of a private RSVP
+ * event. `occurrence_date` names the slot; omit it only for a single-date
+ * event, where the server falls back to the event's own time.
+ */
 export function submitJoinRequest(
   eventId: string,
   idToken: string,
-  body: { message?: string; answers?: JoinRequestAnswers },
+  body: {
+    message?: string;
+    answers?: JoinRequestAnswers;
+    occurrence_date?: string;
+  },
 ) {
   return apiFetch<JoinRequestDTO>(`/events/${eventId}/join-requests`, {
     method: "POST",
@@ -2267,10 +2277,20 @@ export function submitJoinRequest(
   });
 }
 
-/** GET /events/{id}/join-requests/me — my request, or null if I never asked. */
-export function getMyJoinRequest(eventId: string, idToken: string) {
+/**
+ * GET /events/{id}/join-requests/me — my request for ONE slot, or null if I
+ * never asked about it. A request on another date is a different request.
+ */
+export function getMyJoinRequest(
+  eventId: string,
+  idToken: string,
+  occurrenceDate?: string,
+) {
+  const qs = occurrenceDate
+    ? `?occurrence_date=${encodeURIComponent(occurrenceDate)}`
+    : "";
   return apiFetch<JoinRequestDTO | null>(
-    `/events/${eventId}/join-requests/me`,
+    `/events/${eventId}/join-requests/me${qs}`,
     { headers: getAuthHeader(idToken) },
   );
 }

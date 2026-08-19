@@ -350,9 +350,13 @@ function BookingContent({ eventId }: { eventId: string }) {
   // Which gate this private event uses. RSVP events have no passkey at all.
   const isRsvpGated =
     Boolean(event?.is_private) && event?.private_access_mode === "rsvp";
+  // Approval is per session, so the request state is looked up for the exact
+  // slot the guest picked on the detail page (?date=). Being approved for the
+  // 23rd tells us nothing about the 30th.
   const { data: myJoinRequest } = useMyJoinRequest(
     isRsvpGated ? eventId : null,
     idToken,
+    date || undefined,
   );
   const submitJoinRequest = useSubmitJoinRequest(idToken);
   const withdrawJoinRequest = useWithdrawJoinRequest(idToken);
@@ -803,7 +807,9 @@ function BookingContent({ eventId }: { eventId: string }) {
           <div className="mt-6">
             {joinApproved ? (
               <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
-                <FiLock size={16} /> Your request was approved — you can book
+                <FiLock size={16} /> Approved
+                {date ? ` for ${formatIST(date, "eee d MMM, h:mm a")}` : ""} —
+                you can book
               </div>
             ) : myJoinRequest?.status === "pending" ? (
               <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
@@ -811,8 +817,9 @@ function BookingContent({ eventId }: { eventId: string }) {
                   <FiLock size={16} /> Request sent
                 </div>
                 <p className="text-sm text-amber-700">
-                  The host is reviewing your request. We&apos;ll email you as
-                  soon as they decide.
+                  The host is reviewing your request
+                  {date ? ` for ${formatIST(date, "eee d MMM, h:mm a")}` : ""}.
+                  We&apos;ll email you as soon as they decide.
                 </p>
                 {/* A live request blocks sending another one, so the guest needs
                     a way to take it back and start over. */}
@@ -821,7 +828,11 @@ function BookingContent({ eventId }: { eventId: string }) {
                   disabled={withdrawJoinRequest.isPending}
                   onClick={() =>
                     withdrawJoinRequest.mutate(
-                      { requestId: myJoinRequest.id, eventId },
+                      {
+                        requestId: myJoinRequest.id,
+                        eventId,
+                        occurrenceDate: date || undefined,
+                      },
                       {
                         onSuccess: () => toast.success("Request withdrawn"),
                         onError: (err: Error) =>
@@ -1101,13 +1112,16 @@ function BookingContent({ eventId }: { eventId: string }) {
       <JoinRequestModal
         open={showJoinModal}
         eventTitle={event.title}
+        sessionLabel={
+          date ? formatIST(date, "eee d MMM, h:mm a") : undefined
+        }
         attendeeFields={attendeeFields}
         initialValues={attendeeValues}
         isSubmitting={submitJoinRequest.isPending}
         onClose={() => setShowJoinModal(false)}
         onSubmit={({ message, answers }) => {
           submitJoinRequest.mutate(
-            { eventId, message, answers },
+            { eventId, message, answers, occurrenceDate: date || undefined },
             {
               onSuccess: () => {
                 setShowJoinModal(false);

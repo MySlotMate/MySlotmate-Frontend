@@ -3,8 +3,8 @@
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Navbar from "~/components/Navbar";
 import { RichTextView } from "~/components/RichTextView";
+import ExperienceSkeleton from "./loading";
 import Footer from "~/components/home/Footer";
 import {
   useEvent,
@@ -1424,12 +1424,11 @@ export default function ExperienceDetailClient({
     );
   };
 
+  // Same skeleton the route's `loading.tsx` shows, so the server boundary and
+  // this client-side branch look identical instead of swapping a full skeleton
+  // for a lone spinner on white.
   if (eventLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
-      </div>
-    );
+    return <ExperienceSkeleton />;
   }
 
   if (!event) {
@@ -1447,8 +1446,6 @@ export default function ExperienceDetailClient({
 
   return (
     <>
-      <Navbar />
-
       <main className="min-h-screen bg-white pb-28 lg:pb-0">
         <div className="site-x mx-auto w-full max-w-[77rem] px-4 py-8 md:px-6 lg:px-8">
           {/* Title and Actions */}

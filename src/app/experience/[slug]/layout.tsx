@@ -1,5 +1,6 @@
 import { type Metadata } from "next";
-import { env } from "~/env";
+import Navbar from "~/components/Navbar";
+import { getPublicEvent } from "~/lib/server-api";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -18,19 +19,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/events/${slug}`, {
-      next: { revalidate: 300 },
-    });
-    if (!res.ok) return {};
-    const json = (await res.json()) as {
-      data: {
-        title?: string;
-        hook_line?: string | null;
-        description?: string | null;
-        cover_image_url?: string | null;
-      };
-    };
-    const event = json.data;
+    // Shares one request with `page.tsx` via React cache() — see getPublicEvent.
+    const event = await getPublicEvent(slug);
     if (!event?.title) return {};
 
     const description = clamp(
@@ -57,10 +47,21 @@ export async function generateMetadata({
   }
 }
 
+/**
+ * The Navbar lives here rather than inside each page so it survives the
+ * `loading.tsx` boundary — `loading` replaces only the page slot, so a Navbar
+ * rendered inside the page cannot appear while the event fetch is in flight.
+ * Previously the skeleton drew a blank grey bar in its place.
+ */
 export default function ExperienceDetailLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <>
+      <Navbar />
+      {children}
+    </>
+  );
 }

@@ -3,7 +3,6 @@
 import { use, Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Navbar from "~/components/Navbar";
 import Breadcrumb from "~/components/Breadcrumb";
 import { RecommendationPopup } from "~/components/RecommendationPopup";
 import {
@@ -884,7 +883,6 @@ export default function ConfirmationPage({
 
   return (
     <>
-      <Navbar />
       <div className="site-x mx-auto max-w-xl py-6">
         <Breadcrumb
           items={[

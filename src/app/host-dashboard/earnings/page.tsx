@@ -297,8 +297,8 @@ export default function HostEarningsPage() {
 
   // Effective commission split for THIS host — the backend applies any
   // admin-set per-host override on top of the platform default and returns it
-  // as `platform_fee`. Fall back to the 70/30 default only while loading.
-  const platformFeePercent = earnings?.platform_fee?.platform_percentage ?? 30;
+  // as `platform_fee`. Fall back to the 100/0 default only while loading.
+  const platformFeePercent = earnings?.platform_fee?.platform_percentage ?? 0;
   const hostPercent =
     earnings?.platform_fee?.host_percentage ?? 100 - platformFeePercent;
   const avgBookingValue = 15000;

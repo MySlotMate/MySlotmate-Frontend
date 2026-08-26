@@ -14,34 +14,38 @@ export interface RecommendationResult {
 }
 
 /**
+ * An event is recommendable only if it is live (the public feed also serves
+ * `paused` events so existing bookings keep working), still upcoming, has a
+ * mood to match on, and has spots left.
+ */
+export function isRecommendable(
+  event: EventDTO,
+  bookedEvent: EventDTO,
+): boolean {
+  if (event.id === bookedEvent.id) return false;
+  if (event.status !== "live") return false;
+  if (!event.mood) return false;
+  if (event.total_bookings >= event.capacity) return false;
+  return new Date(event.time) >= new Date();
+}
+
+/**
  * Simple local recommendation based on mood matching
  */
 function recommendByMoodLocal(
   bookedEvent: EventDTO,
   availableEvents: EventDTO[],
 ): RecommendationResult {
-  // Filter events that are:
-  // 1. Not the booked event
-  // 2. Have the same or similar mood
-  // 3. Have available spots
-  // 4. And haven't passed yet
-
-  const now = new Date();
+  const bookedMood = (bookedEvent.mood ?? "").toLowerCase();
   const similarEvents = availableEvents.filter((event) => {
-    if (event.id === bookedEvent.id) return false;
-    if (!event.mood) return false;
-    if (event.total_bookings >= event.capacity) return false;
-
-    const eventDate = new Date(event.time);
-    if (eventDate < now) return false;
+    if (!isRecommendable(event, bookedEvent)) return false;
 
     // Match mood exactly or partial match
+    const mood = (event.mood ?? "").toLowerCase();
     return (
-      event.mood.toLowerCase() === bookedEvent.mood?.toLowerCase() ||
-      event.mood
-        .toLowerCase()
-        .includes((bookedEvent.mood ?? "").toLowerCase()) ||
-      (bookedEvent.mood ?? "").toLowerCase().includes(event.mood.toLowerCase())
+      mood === bookedMood ||
+      mood.includes(bookedMood) ||
+      bookedMood.includes(mood)
     );
   });
 
@@ -87,15 +91,9 @@ async function recommendByMoodAI(
     return recommendByMoodLocal(bookedEvent, availableEvents);
   }
 
-  // Filter to viable events (same filtering as local)
-  const now = new Date();
-  const viableEvents = availableEvents.filter((event) => {
-    if (event.id === bookedEvent.id) return false;
-    if (!event.mood) return false;
-    if (event.total_bookings >= event.capacity) return false;
-    if (new Date(event.time) < now) return false;
-    return true;
-  });
+  const viableEvents = availableEvents.filter((event) =>
+    isRecommendable(event, bookedEvent),
+  );
 
   if (viableEvents.length === 0) {
     return {

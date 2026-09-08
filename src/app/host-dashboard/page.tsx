@@ -619,7 +619,7 @@ export default function HostDashboardPage() {
                   </div>
                   <div>
                     <p className="text-xs font-semibold tracking-wider text-white/70 uppercase">
-                      {greeting} 👋
+                      {greeting}
                     </p>
                     <h1 className="mt-0.5 text-2xl font-extrabold tracking-tight sm:text-3xl">
                       Welcome back, {firstName}

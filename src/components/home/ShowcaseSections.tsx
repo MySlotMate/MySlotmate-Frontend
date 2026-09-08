@@ -204,33 +204,23 @@ const STORY_FALLBACK_DATA: StoryItem[] = [
 
 const COMMUNITY_SETS: CommunitySet[] = [
   {
-    label: "Adventure",
-    note: "Trekking, kayaking, riverside trails, and outdoor sessions with a sense of discovery.",
+    label: "Crochet Event",
+    note: "Creative crochet sessions, hands-on yarn crafts, and memorable community workshops.",
     images: [
-      "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1511988617509-a57c8a288659?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=600&q=80",
+      "/Event Photos/Chrochet event/IMG_1134.jpg",
+      "/Event Photos/Chrochet event/IMG_1141.jpg",
+      "/Event Photos/Chrochet event/IMG_1142.jpg",
+      "/Event Photos/Chrochet event/IMG_1155.jpg",
     ],
   },
   {
-    label: "Creative",
-    note: "Pottery, painting, photography, and hands-on workshops built around making.",
+    label: "Plate to Fame",
+    note: "Culinary cook-offs, plating masterpieces, food stories, and shared kitchen moments.",
     images: [
-      "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=600&q=80",
-    ],
-  },
-  {
-    label: "Food",
-    note: "Cooking, spice markets, tea tastings, kitchens, and food stories worth following.",
-    images: [
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=600&q=80",
-      "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80",
+      "/Event Photos/plate-to-fame/IMG-20260621-WA0023.jpg",
+      "/Event Photos/plate-to-fame/IMG-20260621-WA0051.jpg",
+      "/Event Photos/plate-to-fame/IMG-20260621-WA0069.jpg",
+      "/Event Photos/plate-to-fame/WhatsApp Image 2026-06-22 at 9.02.51 AM.jpeg",
     ],
   },
 ];
@@ -1483,29 +1473,24 @@ const ShowcaseSections = ({
           </article>
 
           <article className="flex flex-col rounded-3xl border border-[#aeddf89e] bg-white p-6 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div>
-                <h3 className="text-[15px] font-bold text-[#16304c]">
-                  Community Moments
-                </h3>
-                <p className="mt-1 line-clamp-2 min-h-[38px] text-[0.78rem] leading-[1.55] text-[#6f8daa]">
-                  {community.note}
-                </p>
-              </div>
-              <span className="shrink-0 rounded-full bg-[#dff3ff] px-3.5 py-1.5 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase">
-                {community.label}
-              </span>
+            <div className="mb-4">
+              <h3 className="text-[15px] font-bold text-[#16304c]">
+                Community Moments
+              </h3>
+              <p className="mt-1 text-[0.78rem] leading-[1.55] text-[#6f8daa]">
+                Shared experiences, new connections, and moments worth remembering
+              </p>
             </div>
 
             <div className="mt-auto grid grid-cols-2 gap-3">
               {community.images.slice(0, 4).map((img, idx) => (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  key={`${img}-${idx}`}
+                  key={`${community.label}-${img}-${idx}`}
                   src={img}
-                  alt={`${community.label} moment ${idx + 1}`}
+                  alt={`Community moment ${idx + 1}`}
                   loading="lazy"
-                  className="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm transition-transform hover:scale-[1.02]"
+                  className="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm transition-transform duration-300 hover:scale-[1.02]"
                 />
               ))}
             </div>

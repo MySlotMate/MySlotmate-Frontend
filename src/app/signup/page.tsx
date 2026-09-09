@@ -17,6 +17,10 @@ export default function SignUpPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  // Set when an admin already registered this person (host onboarding). Their
+  // number is on file and is what the host record uses, so it is shown and
+  // locked rather than asked for a second time.
+  const [prefilled, setPrefilled] = useState(false);
 
   const signUpMutation = useSignUp();
   const submitting = signUpMutation.isPending;
@@ -25,6 +29,37 @@ export default function SignUpPage() {
   useEffect(() => {
     if (user?.displayName) setName(user.displayName);
   }, [user?.displayName]);
+
+  /* Pre-fill from the record an admin created for this email, if any. The
+     backend identifies the caller by the verified token, so no email is sent. */
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/signup-prefill`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        if (!res.ok || cancelled) return;
+        const body = (await res.json()) as {
+          data?: { name?: string; phn_number?: string };
+        };
+        const digits = (body.data?.phn_number ?? "").replace(/\D/g, "").slice(-10);
+        if (cancelled || digits.length !== 10) return;
+        setPhone(digits);
+        setPrefilled(true);
+        // Google's display name wins if it filled the field already.
+        if (body.data?.name) setName((prev) => prev || body.data!.name!);
+      } catch (err) {
+        console.error("Signup prefill failed:", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   /* Guard: must be logged in via Google first */
   useEffect(() => {
@@ -225,14 +260,21 @@ export default function SignUpPage() {
                         }
                         if (val.length <= 10) setPhone(val);
                       }}
+                      readOnly={prefilled}
                       placeholder="98765 43210"
                       type="tel"
                       maxLength={10}
-                      className="w-full rounded-lg border border-gray-300 py-3 pr-4 pl-[78px] text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      className={`w-full rounded-lg border py-3 pr-4 pl-[78px] text-sm outline-none transition ${
+                        prefilled
+                          ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500"
+                          : "border-gray-300 text-gray-900 focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      }`}
                     />
                   </div>
                   <p className="mt-1 text-xs text-gray-400">
-                    We&apos;ll use this to send you booking updates.
+                    {prefilled
+                      ? "This is the number already on your record. Ask support to change it."
+                      : "We'll use this to send you booking updates."}
                   </p>
                 </div>
 

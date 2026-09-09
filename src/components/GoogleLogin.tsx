@@ -12,7 +12,7 @@ import { auth } from "~/utils/firebase";
 import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
 import { FiPhone, FiLock, FiArrowRight, FiEdit2, FiUser } from "react-icons/fi";
-import { setStoredUserId } from "~/lib/auth-storage";
+import { clearStoredAuth, setStoredUserId } from "~/lib/auth-storage";
 import { sendLoginOTP, verifyLoginOTP, updateUserProfile } from "~/lib/api";
 
 interface GoogleLoginProps {
@@ -91,41 +91,36 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
 
-      // Check if user ID is already in localStorage
-      let userId = localStorage.getItem("msm_user_id");
-
-      // If not in localStorage, check if user exists in database by Firebase UID
-      if (!userId) {
-        try {
-          const profileRes = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/users/by-firebase/${firebaseUser.uid}`,
-          );
-          if (profileRes.ok) {
-            const response = (await profileRes.json()) as {
-              data?: { id?: string };
-            };
-            userId = response.data?.id ?? null;
-          }
-        } catch (fetchErr) {
-          console.error("Error fetching user by Firebase UID:", fetchErr);
+      // Always resolve the account from the Firebase UID just signed in with.
+      // A stored msm_user_id may belong to whoever logged in on this browser
+      // last, so trusting it would show one person another's account.
+      let userId: string | null = null;
+      try {
+        const profileRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/by-firebase/${firebaseUser.uid}`,
+        );
+        if (profileRes.ok) {
+          const response = (await profileRes.json()) as {
+            data?: { id?: string };
+          };
+          userId = response.data?.id ?? null;
         }
-
-        // If user exists in database, save ID and welcome back
-        if (userId) {
-          setStoredUserId(userId);
-          toast.success("Welcome back!");
-          onClose();
-          return;
-        } else {
-          // User doesn't exist yet — redirect to signup
-          onClose();
-          router.push("/signup");
-          return;
-        }
+      } catch (fetchErr) {
+        console.error("Error fetching user by Firebase UID:", fetchErr);
       }
 
-      // User already has ID in localStorage, close modal
+      if (userId) {
+        setStoredUserId(userId);
+        toast.success("Welcome back!");
+        onClose();
+        return;
+      }
+
+      // No account for this UID yet. Drop the previous session's ids so the
+      // signup page isn't skipped by its own "already signed up" guard.
+      clearStoredAuth();
       onClose();
+      router.push("/signup");
     } catch (err) {
       console.error("Google sign-in error:", err);
       toast.error("Failed to sign in. Please try again.");

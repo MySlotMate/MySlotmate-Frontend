@@ -85,6 +85,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "yearly",
       priority: 0.2,
     },
+    // Google Play checks both of these are reachable before a release is
+    // allowed, so they belong in the sitemap like any other public page.
+    {
+      url: `${SITE_URL}/privacy`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${SITE_URL}/delete-account`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.2,
+    },
     {
       url: `${SITE_URL}/support/report`,
       lastModified: now,

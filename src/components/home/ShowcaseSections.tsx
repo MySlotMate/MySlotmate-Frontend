@@ -207,20 +207,20 @@ const COMMUNITY_SETS: CommunitySet[] = [
     label: "Crochet Event",
     note: "Creative crochet sessions, hands-on yarn crafts, and memorable community workshops.",
     images: [
-      "/Event Photos/Chrochet event/IMG_1134.jpg",
-      "/Event Photos/Chrochet event/IMG_1141.jpg",
-      "/Event Photos/Chrochet event/IMG_1142.jpg",
-      "/Event Photos/Chrochet event/IMG_1155.jpg",
+      "/Event Photos/Chrochet event/IMG_1134.webp",
+      "/Event Photos/Chrochet event/IMG_1141.webp",
+      "/Event Photos/Chrochet event/IMG_1142.webp",
+      "/Event Photos/Chrochet event/IMG_1155.webp",
     ],
   },
   {
     label: "Plate to Fame",
     note: "Culinary cook-offs, plating masterpieces, food stories, and shared kitchen moments.",
     images: [
-      "/Event Photos/plate-to-fame/IMG-20260621-WA0023.jpg",
-      "/Event Photos/plate-to-fame/IMG-20260621-WA0051.jpg",
-      "/Event Photos/plate-to-fame/IMG-20260621-WA0069.jpg",
-      "/Event Photos/plate-to-fame/WhatsApp Image 2026-06-22 at 9.02.51 AM.jpeg",
+      "/Event Photos/plate-to-fame/IMG-20260621-WA0023.webp",
+      "/Event Photos/plate-to-fame/IMG-20260621-WA0051.webp",
+      "/Event Photos/plate-to-fame/IMG-20260621-WA0069.webp",
+      "/Event Photos/plate-to-fame/WhatsApp Image 2026-06-22 at 9.02.51 AM.webp",
     ],
   },
 ];
@@ -517,7 +517,6 @@ const ShowcaseSections = ({
 
   const featured = featuredData[featuredIndex] ?? featuredData[0]!;
   const story = storyData[storyIndex] ?? storyData[0]!;
-  const community = COMMUNITY_SETS[communityIndex]!;
   const featuredHref = featured.slug
     ? `/experience/${featured.slug}`
     : "/experiences";
@@ -1483,15 +1482,32 @@ const ShowcaseSections = ({
             </div>
 
             <div className="mt-auto grid grid-cols-2 gap-3">
-              {community.images.slice(0, 4).map((img, idx) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={`${community.label}-${img}-${idx}`}
-                  src={img}
-                  alt={`Community moment ${idx + 1}`}
-                  loading="lazy"
-                  className="aspect-[4/3] w-full rounded-2xl object-cover shadow-sm transition-transform duration-300 hover:scale-[1.02]"
-                />
+              {/* All sets stay mounted and stacked so rotation crossfades
+                  instead of remounting and reloading images. */}
+              {[0, 1, 2, 3].map((idx) => (
+                <div
+                  key={idx}
+                  className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-sm transition-transform duration-300 hover:scale-[1.02]"
+                >
+                  {COMMUNITY_SETS.map((set, setIdx) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={set.label}
+                      src={set.images[idx]}
+                      alt={
+                        setIdx === communityIndex
+                          ? `Community moment ${idx + 1}`
+                          : ""
+                      }
+                      aria-hidden={setIdx !== communityIndex}
+                      loading="lazy"
+                      decoding="async"
+                      className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out motion-reduce:transition-none ${
+                        setIdx === communityIndex ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                  ))}
+                </div>
               ))}
             </div>
           </article>

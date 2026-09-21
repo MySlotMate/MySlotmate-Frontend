@@ -41,6 +41,7 @@ import {
 import type { SessionType } from "~/lib/api";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
 import { toast } from "sonner";
+import PassHoldersPanel from "~/components/host/PassHoldersPanel";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImageCropModal } from "~/components/ImageCropModal";
 import { downloadTicketPdf } from "~/lib/ticket";
@@ -68,6 +69,12 @@ interface EventFormData {
   priceCents: number;
   useTiers: boolean;
   priceTiers: { name: string; priceStr: string }[];
+  // Monthly pass: one payment covers a month of sessions. Recurring, paid
+  // experiences only.
+  monthlyPassEnabled: boolean;
+  monthlyPassPriceStr: string;
+  monthlyPassSessionsStr: string; // "" = every session
+  monthlyPassCapacityStr: string; // "" = unlimited passes
   eventDate: string;
   eventTime: string;
   endTime: string;
@@ -680,6 +687,10 @@ export default function EditEventPage({
     priceCents: 50000,
     useTiers: false,
     priceTiers: [{ name: "", priceStr: "" }],
+    monthlyPassEnabled: false,
+    monthlyPassPriceStr: "",
+    monthlyPassSessionsStr: "",
+    monthlyPassCapacityStr: "",
     eventDate: "",
     eventTime: "",
     endTime: "",
@@ -787,6 +798,13 @@ export default function EditEventPage({
                 priceStr: (t.price_cents / 100).toString(),
               }))
             : [{ name: "", priceStr: "" }],
+        monthlyPassEnabled: !!event.monthly_pass_price_cents,
+        monthlyPassPriceStr: event.monthly_pass_price_cents
+          ? (event.monthly_pass_price_cents / 100).toString()
+          : "",
+        monthlyPassSessionsStr:
+          event.monthly_pass_session_limit?.toString() ?? "",
+        monthlyPassCapacityStr: event.monthly_pass_capacity?.toString() ?? "",
         eventDate: dateStr,
         eventTime: timeStr,
         endTime: endTime,
@@ -1188,6 +1206,20 @@ export default function EditEventPage({
                     price_cents: Math.round(Number(t.priceStr) * 100),
                   }))
               : [],
+          monthly_pass: {
+            price_cents:
+              form.monthlyPassEnabled &&
+              !form.isFree &&
+              form.scheduleType !== "one_time"
+                ? Math.round(Number(form.monthlyPassPriceStr) * 100)
+                : 0,
+            session_limit: form.monthlyPassSessionsStr
+              ? Number(form.monthlyPassSessionsStr)
+              : undefined,
+            capacity: form.monthlyPassCapacityStr
+              ? Number(form.monthlyPassCapacityStr)
+              : undefined,
+          },
           is_recurring: isWeeklyOneOnOne || form.scheduleType === "recurring",
           recurrence_rule: isWeeklyOneOnOne
             ? "FREQ=WEEKLY"
@@ -1827,6 +1859,103 @@ export default function EditEventPage({
                     >
                       + Add ticket type
                     </button>
+                  </div>
+                )}
+
+
+                {/* Monthly Pass — one payment covers a month of sessions. */}
+                {!form.isFree && (
+                  <div className="space-y-4 rounded-xl border border-gray-200 p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-900">
+                          Monthly Pass
+                        </h4>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          Guests pay once and attend for 30 days. Recurring
+                          experiences only.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={form.scheduleType === "one_time"}
+                        onClick={() =>
+                          updateForm(
+                            "monthlyPassEnabled",
+                            !form.monthlyPassEnabled,
+                          )
+                        }
+                        className={`shrink-0 rounded-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-40 ${
+                          form.monthlyPassEnabled
+                            ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA]"
+                            : "border-gray-200 bg-white text-gray-700"
+                        }`}
+                      >
+                        {form.monthlyPassEnabled ? "On" : "Off"}
+                      </button>
+                    </div>
+
+                    {form.monthlyPassEnabled && <PassHoldersPanel eventId={id} />}
+
+                    {form.monthlyPassEnabled &&
+                      form.scheduleType !== "one_time" && (
+                        <div className="grid gap-3 sm:grid-cols-3">
+                          <div>
+                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                              Pass price (₹)
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={form.monthlyPassPriceStr}
+                              onChange={(e) =>
+                                updateForm(
+                                  "monthlyPassPriceStr",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="2500"
+                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                              Sessions included
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={form.monthlyPassSessionsStr}
+                              onChange={(e) =>
+                                updateForm(
+                                  "monthlyPassSessionsStr",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="All"
+                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                              Passes available
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={form.monthlyPassCapacityStr}
+                              onChange={(e) =>
+                                updateForm(
+                                  "monthlyPassCapacityStr",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Unlimited"
+                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
+                            />
+                          </div>
+                        </div>
+                      )}
                   </div>
                 )}
 

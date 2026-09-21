@@ -18,6 +18,7 @@ import {
   useEventAvailability,
 } from "~/hooks/useApi";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
+import MonthlyPassCard from "~/components/experience/MonthlyPassCard";
 import {
   FiBookmark,
   FiShare2,
@@ -267,6 +268,7 @@ function BookingWidget({
   isOneOnOne,
   cancellationPolicy,
   onBook,
+  passSlot,
 }: {
   price: number | null;
   isFree: boolean;
@@ -284,6 +286,9 @@ function BookingWidget({
   isOneOnOne: boolean;
   cancellationPolicy: string | null;
   onBook: (date: string, guests: number, tierId?: string) => void;
+  /** Rendered under the widget, inside the same sticky column (desktop only).
+      The mobile layout puts it in the page flow instead. */
+  passSlot?: React.ReactNode;
 }) {
   const [selectedDate, setSelectedDate] = useState(_eventDate);
   const [guests, setGuests] = useState(1);
@@ -714,6 +719,8 @@ function BookingWidget({
             </div>
           )}
         </div>
+
+        {passSlot ? <div className="mt-4">{passSlot}</div> : null}
       </div>
 
       {/* Mobile Floating Bottom Bar */}
@@ -826,6 +833,10 @@ function BookingWidget({
                 <FiX className="h-4 w-4" />
               </button>
             </div>
+
+            {/* Monthly pass — the alternative to paying per session, offered
+                before the per-session choices below. */}
+            {passSlot ? <div className="mb-5">{passSlot}</div> : null}
 
             {/* Choose Date (Conditional for recurring event or multi-slot experience) */}
             {(isRecurring || (availability && availability.length > 1)) && (
@@ -1445,6 +1456,19 @@ export default function ExperienceDetailClient({
 
   const allImages = event.gallery_urls ?? [];
 
+  // Built once and handed to both layouts: the sticky sidebar renders it under
+  // the booking widget, the mobile layout keeps it in the page flow.
+  const passCard = event.monthly_pass_price_cents ? (
+    <MonthlyPassCard
+      eventId={event.id}
+      priceCents={event.monthly_pass_price_cents}
+      sessionLimit={event.monthly_pass_session_limit ?? null}
+      singleSessionPriceCents={event.price_cents}
+      availability={availability}
+      onRequireLogin={() => setShowLogin(true)}
+    />
+  ) : null;
+
   return (
     <>
       <Navbar />
@@ -1590,7 +1614,10 @@ export default function ExperienceDetailClient({
                 the floating bottom bar (fixed-positioned, so its DOM slot here
                 is inert). */}
             <div className="lg:col-span-5">
+              {/* Monthly pass — only for events whose host switched one on. Sits
+                  above the per-session widget: the two are alternatives. */}
               <BookingWidget
+                passSlot={event.monthly_pass_price_cents ? passCard : undefined}
                 price={event.price_cents}
                 isFree={event.is_free}
                 priceTiers={event.price_tiers ?? []}

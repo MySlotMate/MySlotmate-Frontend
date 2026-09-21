@@ -918,6 +918,10 @@ export interface EventDTO {
   next_available_date: string | null;
   bookings_last_week?: number;
   price_tiers: PriceTierDTO[];
+  /** Monthly pass — null price means this experience has no pass. */
+  monthly_pass_price_cents?: number | null;
+  monthly_pass_session_limit?: number | null;
+  monthly_pass_capacity?: number | null;
   requires_attendee_details: boolean;
   attendee_fields: string[];
   /** Per-experience terms, printed on the ticket PDF. */
@@ -1412,6 +1416,7 @@ export interface EventCreatePayload {
   google_maps_url?: string;
   status?: "draft" | "live";
   price_tiers?: PriceTierInput[];
+  monthly_pass?: MonthlyPassInput;
   requires_attendee_details?: boolean;
   attendee_fields?: string[];
   /** Private events are listed with a lock; booking needs the passkey. */
@@ -1458,6 +1463,7 @@ export interface EventUpdatePayload {
   meeting_link?: string;
   google_maps_url?: string;
   price_tiers?: PriceTierInput[];
+  monthly_pass?: MonthlyPassInput;
   requires_attendee_details?: boolean;
   attendee_fields?: string[];
   is_private?: boolean;
@@ -1654,6 +1660,8 @@ export interface BookingDTO {
   // Submitted attendee details — present on the host attendees endpoint when
   // the guest filled the attendee form.
   attendee_profile?: AttendeeProfileDTO | null;
+  /** Set when a monthly pass covered this seat, instead of a wallet charge. */
+  pass_id?: string | null;
 }
 
 export interface CreateBookingPayload {
@@ -2348,5 +2356,93 @@ export function rejectJoinRequest(
     method: "POST",
     headers: getAuthHeader(idToken),
     data: { note },
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Monthly passes                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Host-side pass settings. price_cents 0 turns the pass off. */
+export interface MonthlyPassInput {
+  price_cents: number;
+  /** Omit for "every session". */
+  session_limit?: number | null;
+  /** Omit for unlimited passes. */
+  capacity?: number | null;
+}
+
+export interface UserPassDTO {
+  id: string;
+  event_id: string;
+  user_id: string;
+  price_cents: number;
+  sessions_included: number | null;
+  sessions_used: number;
+  valid_from: string;
+  valid_until: string;
+  status: "active" | "expired" | "refunded";
+  created_at: string;
+}
+
+export interface PassHolderDTO extends UserPassDTO {
+  user_name: string;
+  user_email: string;
+  user_phone: string;
+}
+
+/** GET /passes/event/{eventID} — the caller's live pass + how many are left. */
+export function getPassForEvent(eventId: string, idToken: string) {
+  return apiFetch<{ pass: UserPassDTO | null; passes_left: number | null }>(
+    `/passes/event/${eventId}`,
+    { headers: getAuthHeader(idToken) },
+  );
+}
+
+/** POST /passes/ — buy the event's monthly pass (wallet debit). */
+export function purchasePass(
+  eventId: string,
+  idToken: string,
+  idempotencyKey?: string,
+) {
+  return apiFetch<UserPassDTO>("/passes/", {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: { event_id: eventId, idempotency_key: idempotencyKey },
+  });
+}
+
+/** POST /passes/{passID}/reserve — hold a seat on one covered date (free). */
+export function reservePassSession(
+  passId: string,
+  occurrenceDate: string,
+  idToken: string,
+) {
+  return apiFetch<BookingDTO>(`/passes/${passId}/reserve`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: { occurrence_date: occurrenceDate },
+  });
+}
+
+/** POST /passes/{passID}/cancel — refund an unused pass inside the window. */
+export function cancelPass(passId: string, idToken: string) {
+  return apiFetch<UserPassDTO>(`/passes/${passId}/cancel`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** GET /passes/me — every pass the caller has ever bought, newest first. */
+export function getMyPasses(idToken: string) {
+  return apiFetch<UserPassDTO[]>("/passes/me", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** GET /passes/host/event/{eventID} — the host's pass-holder roster. */
+export function listPassHolders(eventId: string, idToken: string) {
+  return apiFetch<PassHolderDTO[]>(`/passes/host/event/${eventId}`, {
+    headers: getAuthHeader(idToken),
   });
 }

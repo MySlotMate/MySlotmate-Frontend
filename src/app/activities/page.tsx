@@ -11,7 +11,11 @@ import {
 import { type BookingDTO, type EventDTO } from "~/lib/api";
 import { downloadTicketPdf } from "~/lib/ticket";
 import * as components from "~/components";
-import { InboxSidebar, ReviewModal } from "~/components/activities";
+import {
+  InboxSidebar,
+  MyPassesSection,
+  ReviewModal,
+} from "~/components/activities";
 import {
   FiCalendar,
   FiUsers,
@@ -180,6 +184,15 @@ export default function ActivitiesPage() {
             {bookingsWithEvents.length === 1 ? "booking" : "bookings"}
           </p>
         </div>
+
+        <MyPassesSection
+          events={allEvents ?? []}
+          bookings={bookings ?? []}
+          onDownloadTicket={(booking, event) =>
+            void handleDownloadTicket(booking, event)
+          }
+          downloadingTicketId={downloadingTicketId}
+        />
 
         {/* Loading State */}
         {bookingsLoading && isHydrated ? (

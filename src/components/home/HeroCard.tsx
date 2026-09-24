@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface CardProps {
   photo: string;
@@ -22,30 +22,13 @@ const HeroCard = ({
   id,
   slug,
 }: CardProps) => {
-  const router = useRouter();
-
-  const goToExperience = () => {
-    const ref = slug ?? id;
-    if (ref) {
-      router.push(`/experience/${ref}`);
-      return;
-    }
-
-    router.push("/experiences");
-  };
+  const ref = slug ?? id;
+  const href = ref ? `/experience/${ref}` : "/experiences";
 
   return (
-    <article
-      className="w-[236px] cursor-pointer rounded-3xl border border-[#aeddf899] bg-white/94 p-[14px] shadow-[0_20px_42px_rgba(60,121,175,0.14)] transition hover:-translate-y-1 hover:shadow-[0_26px_54px_rgba(60,121,175,0.18)] focus:ring-2 focus:ring-[#1fa7ff]/40 focus:outline-none sm:w-[264px] md:w-[300px]"
-      role="link"
-      tabIndex={0}
-      onClick={goToExperience}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          goToExperience();
-        }
-      }}
+    <Link
+      href={href}
+      className="block w-[236px] cursor-pointer rounded-3xl border border-[#aeddf899] bg-white/94 p-[14px] shadow-[0_20px_42px_rgba(60,121,175,0.14)] transition hover:-translate-y-1 hover:shadow-[0_26px_54px_rgba(60,121,175,0.18)] focus:ring-2 focus:ring-[#1fa7ff]/40 focus:outline-none sm:w-[264px] md:w-[300px]"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -73,7 +56,7 @@ const HeroCard = ({
           </span>
         </div>
       </div>
-    </article>
+    </Link>
   );
 };
 

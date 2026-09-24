@@ -1,8 +1,7 @@
 ﻿"use client";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const Banner = () => {
-  const router = useRouter();
 
   return (
     <section className="site-x w-full">
@@ -52,12 +51,12 @@ const Banner = () => {
             ))}
           </div>
 
-          <button
-            onClick={() => router.push("/experiences")}
-            className="rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-6 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5"
+          <Link
+            href="/experiences"
+            className="inline-block rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-6 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5"
           >
             Book This Experience
-          </button>
+          </Link>
         </div>
       </div>
     </section>

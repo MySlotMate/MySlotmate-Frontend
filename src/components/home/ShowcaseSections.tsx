@@ -1158,7 +1158,7 @@ const ShowcaseSections = ({
                       muted
                       loop
                       playsInline
-                      preload="auto"
+                      preload="none"
                       poster={card.image}
                       className="absolute inset-0 h-full w-full object-cover transition duration-500"
                     >

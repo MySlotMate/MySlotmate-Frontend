@@ -496,6 +496,20 @@ export function usePayoutMethods(
   });
 }
 
+/** Does co-hosting touch this host at all — invited to someone else's
+ *  experience, or sharing one of their own? Returns nothing (not an error) for
+ *  anyone who is not a host, so it is safe to call from the navbar. */
+export function useCoHostSummary(idToken?: string | null) {
+  return useQuery({
+    queryKey: ["cohostSummary", idToken ?? ""] as const,
+    queryFn: () => api.getCoHostSummary(idToken!),
+    enabled: !!idToken,
+    retry: false,
+    staleTime: 2 * 60 * 1000,
+    select: (res) => res.data,
+  });
+}
+
 export function useEarnings(hostId: string | null, idToken?: string | null) {
   return useQuery({
     queryKey: [...queryKeys.earnings(hostId ?? ""), idToken ?? ""] as const,

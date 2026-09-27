@@ -21,11 +21,17 @@ import {
   LuScanLine,
   LuShield,
   LuUser,
+  LuUsers,
   LuWallet,
 } from "react-icons/lu";
 import type { IconType } from "react-icons";
 import { auth } from "~/utils/firebase";
-import { useMyProfile, useApplicationStatus } from "~/hooks/useApi";
+import {
+  useMyProfile,
+  useApplicationStatus,
+  useCoHostSummary,
+} from "~/hooks/useApi";
+import { useIdToken } from "~/hooks/useIdToken";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
 import { WalletDisplay } from "../wallet";
@@ -50,6 +56,15 @@ const NAV_LINKS: {
   },
   { label: "Earnings", href: "/host-dashboard/earnings", icon: LuWallet },
 ];
+
+// Co-hosting concerns only hosts on one side of a share — invited to someone
+// else's experience, or sharing one of their own — so its tab is appended at
+// runtime rather than living in NAV_LINKS.
+const CO_HOSTING_LINK = {
+  label: "Co-hosts",
+  href: "/host-dashboard/co-hosting",
+  icon: LuUsers,
+};
 
 export default function HostNavbar() {
   const pathname = usePathname();
@@ -118,6 +133,14 @@ export default function HostNavbar() {
   const { data: hostData } = useApplicationStatus(validUserId);
   const hostStatus = hostData?.status?.application_status ?? null;
 
+  const navIdToken = useIdToken();
+  const { data: cohostSummary } = useCoHostSummary(navIdToken);
+  // Either side counts: invited to someone else's experience, or sharing one of
+  // your own with a co-host.
+  const hasCoHosting =
+    (cohostSummary?.received ?? 0) > 0 || (cohostSummary?.granted ?? 0) > 0;
+  const navLinks = hasCoHosting ? [...NAV_LINKS, CO_HOSTING_LINK] : NAV_LINKS;
+
   useEffect(() => {
     if (hostData?.status?.id) {
       setStoredHostId(hostData.status.id);
@@ -146,7 +169,7 @@ export default function HostNavbar() {
     void signOut(auth);
   };
 
-  const isNavActive = (href: (typeof NAV_LINKS)[number]["href"]) =>
+  const isNavActive = (href: string) =>
     href === "/host-dashboard" ? pathname === href : pathname.startsWith(href);
 
   return (
@@ -170,7 +193,7 @@ export default function HostNavbar() {
           </Link>
 
           <div className="hidden items-center gap-8 md:flex">
-            {NAV_LINKS.map(({ label, href }) => {
+            {navLinks.map(({ label, href }) => {
               const active = isNavActive(href);
               return (
                 <Link
@@ -296,6 +319,19 @@ export default function HostNavbar() {
                             </div>
 
                             <div className="mb-4 divide-y divide-gray-200 rounded-xl border border-gray-200">
+                              {hasCoHosting && (
+                                <Link
+                                  href="/host-dashboard/co-hosting"
+                                  onClick={() => setProfileOpen(false)}
+                                  className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                                >
+                                  <span className="flex items-center gap-3">
+                                    <LuUsers className="h-5 w-5 text-gray-600" />
+                                    Co-hosting
+                                  </span>
+                                  <FiChevronRight className="h-4 w-4 text-gray-400" />
+                                </Link>
+                              )}
                               <Link
                                 href="/host-dashboard/profile"
                                 onClick={() => setProfileOpen(false)}
@@ -410,7 +446,7 @@ export default function HostNavbar() {
         <div className="border-t border-gray-100 bg-white/95 md:hidden">
           <div className="site-x mx-auto max-w-7xl">
             <div className="flex h-14 items-center justify-around">
-              {NAV_LINKS.map(({ label, href, icon: Icon }) => {
+              {navLinks.map(({ label, href, icon: Icon }) => {
                 const active = isNavActive(href);
                 return (
                   <Link

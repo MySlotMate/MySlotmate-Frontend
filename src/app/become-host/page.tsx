@@ -10,6 +10,7 @@ import {
   OTPVerificationModal,
 } from "~/components/become-host";
 import { Home } from "~/components";
+import { SharedEventsCard } from "~/components/host-dashboard";
 import { FiArrowRight, FiCheck, FiShield, FiUsers } from "react-icons/fi";
 import { toast } from "sonner";
 import {
@@ -251,6 +252,12 @@ export default function BecomeHostPage() {
                 <p className="mt-2.5 text-sm font-medium text-gray-500">
                   {config.description}
                 </p>
+              </div>
+
+              {/* Co-host invitations — these do not wait on host approval, so a
+                  half-onboarded host can still accept one from here. */}
+              <div className="mb-6">
+                <SharedEventsCard />
               </div>
 
               {/* Refined Glassmorphic Card */}
@@ -528,6 +535,13 @@ export default function BecomeHostPage() {
           items={[{ label: "Home", href: "/" }, { label: "Become a Host" }]}
           className="mb-6"
         />
+
+        {/* Co-host invitations. Accepting one needs no approved application, so
+            surface them here too — otherwise the invitee has to guess the
+            /host-dashboard/co-hosting URL. Renders nothing when there are none. */}
+        <div className="mb-6">
+          <SharedEventsCard />
+        </div>
 
         {/* Header row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">

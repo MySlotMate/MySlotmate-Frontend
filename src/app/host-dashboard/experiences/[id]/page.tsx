@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { HostNavbar } from "~/components/host-dashboard";
+import { CoHostManager, HostNavbar } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
 import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
 import CouponsManager from "~/components/host/CouponsManager";
@@ -2125,6 +2125,13 @@ export default function EditEventPage({
                       hostId={host.id}
                       kind="access"
                     />
+                  </div>
+                )}
+
+                {/* Co-hosts — share this event's earnings with another host */}
+                {event?.id && (
+                  <div className="mb-4 border-t border-gray-100 pt-6">
+                    <CoHostManager eventId={event.id} />
                   </div>
                 )}
 

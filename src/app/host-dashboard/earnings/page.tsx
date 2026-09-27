@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
-import { HostNavbar } from "~/components/host-dashboard";
+import { HostNavbar, SharedEventsCard } from "~/components/host-dashboard";
 import Breadcrumb from "~/components/Breadcrumb";
 import {
   useEarnings,
@@ -895,6 +895,11 @@ export default function HostEarningsPage() {
                     ` · ${visibleSales.length} matching the filters`}
                 </div>
               )}
+            </div>
+
+            {/* ── Events another host shared with me (co-host) ── */}
+            <div className="mb-6">
+              <SharedEventsCard />
             </div>
 
             {/* ── Fee Breakdown + Payout Methods ── */}

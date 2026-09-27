@@ -27,7 +27,12 @@ import LocationModal, {
 } from "./LocationModal";
 import { BecomeHostModal } from "./become-host";
 import { WalletDisplay } from "./wallet";
-import { useMyProfile, useApplicationStatus } from "~/hooks/useApi";
+import {
+  useMyProfile,
+  useApplicationStatus,
+  useCoHostSummary,
+} from "~/hooks/useApi";
+import { useIdToken } from "~/hooks/useIdToken";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { env } from "~/env";
@@ -170,6 +175,18 @@ export default function Navbar() {
     useApplicationStatus(validUserId);
 
   const hostStatus = hostData?.status?.application_status ?? null;
+
+  // Co-hosting is independent of host approval: someone can be invited to
+  // co-host an experience while their own application is still a draft, and they
+  // still need a way in. Show the entry only when they actually have invites.
+  const navIdToken = useIdToken();
+  const { data: cohostSummary } = useCoHostSummary(navIdToken);
+  const hasCoHostInvites = (cohostSummary?.received ?? 0) > 0;
+  // A co-host needs the dashboard to edit the shared experience, work its door
+  // and withdraw its earnings — with or without an approved application of their
+  // own. The entry vanishes on its own once the share goes inactive (see
+  // coHostActive in cohost_repository.go), so nothing has to be revoked by hand.
+  const canOpenHostDashboard = hostStatus === "approved" || hasCoHostInvites;
 
   const isAdminUser = useMemo(() => {
     if (!user?.email) return false;
@@ -425,8 +442,8 @@ export default function Navbar() {
                         )}
 
                         <div className="flex-1 overflow-y-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                          {/* Host Dashboard card - Approved hosts */}
-                          {hostStatus === "approved" && (
+                          {/* Host Dashboard card — approved hosts and co-hosts */}
+                          {canOpenHostDashboard && (
                             <div className="mb-4 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
                               <div>
                                 <p className="text-sm font-bold text-gray-900">
@@ -442,6 +459,26 @@ export default function Navbar() {
                                 className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
                               >
                                 Go Now
+                              </Link>
+                            </div>
+                          )}
+
+                          {hasCoHostInvites && hostStatus !== "approved" && (
+                            <div className="mb-4 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
+                              <div>
+                                <p className="text-sm font-bold text-gray-900">
+                                  Co-hosting
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  Experiences shared with you
+                                </p>
+                              </div>
+                              <Link
+                                href="/host-dashboard/co-hosting"
+                                onClick={() => setProfileOpen(false)}
+                                className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+                              >
+                                Open
                               </Link>
                             </div>
                           )}
@@ -470,7 +507,7 @@ export default function Navbar() {
                           )}
 
                           {/* Host dashboard items */}
-                          {hostStatus === "approved" && (
+                          {canOpenHostDashboard && (
                             <div className="mb-4 divide-y divide-gray-200 rounded-xl border border-gray-200">
                               <Link
                                 href="/host-dashboard"
@@ -483,17 +520,21 @@ export default function Navbar() {
                                 </span>
                                 <FiChevronRight className="h-4 w-4 text-gray-400" />
                               </Link>
-                              <Link
-                                href="/host-dashboard/profile"
-                                onClick={() => setProfileOpen(false)}
-                                className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <LuUser className="h-5 w-5 text-gray-600" />
-                                  Host profile
-                                </span>
-                                <FiChevronRight className="h-4 w-4 text-gray-400" />
-                              </Link>
+                              {/* Host profile assumes an approved application —
+                                  a co-host without one has nothing to show there. */}
+                              {hostStatus === "approved" && (
+                                <Link
+                                  href="/host-dashboard/profile"
+                                  onClick={() => setProfileOpen(false)}
+                                  className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-gray-800 transition hover:bg-gray-50"
+                                >
+                                  <span className="flex items-center gap-3">
+                                    <LuUser className="h-5 w-5 text-gray-600" />
+                                    Host profile
+                                  </span>
+                                  <FiChevronRight className="h-4 w-4 text-gray-400" />
+                                </Link>
+                              )}
                               <Link
                                 href="/activities"
                                 onClick={() => setProfileOpen(false)}
@@ -781,8 +822,28 @@ export default function Navbar() {
                   </div>
                 )}
 
-                {/* Host Dashboard card — mobile - Approved hosts */}
-                {hostStatus === "approved" && (
+                {hasCoHostInvites && hostStatus !== "approved" && (
+                  <div className="mb-3 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
+                    <div>
+                      <p className="text-sm font-bold text-gray-900">
+                        Co-hosting
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Experiences shared with you
+                      </p>
+                    </div>
+                    <Link
+                      href="/host-dashboard/co-hosting"
+                      onClick={() => setMobileOpen(false)}
+                      className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+                    >
+                      Open
+                    </Link>
+                  </div>
+                )}
+
+                {/* Host Dashboard card — mobile: approved hosts and co-hosts */}
+                {canOpenHostDashboard && (
                   <div className="mb-3 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
                     <div>
                       <p className="text-sm font-bold text-gray-900">
@@ -803,7 +864,7 @@ export default function Navbar() {
                 )}
 
                 <div className="mb-3 space-y-1.5">
-                  {hostStatus === "approved" && (
+                  {canOpenHostDashboard && (
                     <>
                       <Link
                         href="/host-dashboard"
@@ -816,17 +877,19 @@ export default function Navbar() {
                         </span>
                         <FiChevronRight className="h-4 w-4 text-gray-400" />
                       </Link>
-                      <Link
-                        href="/host-dashboard/profile"
-                        onClick={() => setMobileOpen(false)}
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
-                      >
-                        <span className="flex items-center gap-3">
-                          <LuUser className="h-5 w-5 text-gray-600" />
-                          Host profile
-                        </span>
-                        <FiChevronRight className="h-4 w-4 text-gray-400" />
-                      </Link>
+                      {hostStatus === "approved" && (
+                        <Link
+                          href="/host-dashboard/profile"
+                          onClick={() => setMobileOpen(false)}
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                        >
+                          <span className="flex items-center gap-3">
+                            <LuUser className="h-5 w-5 text-gray-600" />
+                            Host profile
+                          </span>
+                          <FiChevronRight className="h-4 w-4 text-gray-400" />
+                        </Link>
+                      )}
                     </>
                   )}
                   <Link

@@ -2004,6 +2004,149 @@ export function getPayoutHistory(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Co-hosting                                                         */
+/* ------------------------------------------------------------------ */
+
+/** One co-host of an event, as the owner sees them. */
+export interface CoHostDTO {
+  id: string;
+  event_id: string;
+  host_id: string;
+  invited_by_host_id: string;
+  status: "pending" | "accepted" | "declined" | "revoked";
+  /** Owner-controlled: may this co-host withdraw the event's earnings? */
+  can_withdraw: boolean;
+  responded_at: string | null;
+  created_at: string;
+  updated_at: string;
+  host_name: string;
+  host_email: string;
+  host_avatar_url: string | null;
+  /** Reserved or already paid out to this co-host from this event. */
+  claimed_cents: number;
+}
+
+/** One event another host shared with the caller. */
+export interface SharedEventDTO {
+  cohost_id: string;
+  event_id: string;
+  event_title: string;
+  event_slug: string | null;
+  status: "pending" | "accepted" | "declined" | "revoked";
+  can_withdraw: boolean;
+  owner_name: string;
+  /** When the invitation was sent, and when the experience itself runs. */
+  invited_at: string;
+  event_time: string;
+  /** The event's withdrawable pool (sessions that already happened). */
+  passed_cents: number;
+  /** Taken by co-hosts so far — passed − claimed is what is left. */
+  claimed_cents: number;
+  available_cents: number;
+  my_claimed_cents: number;
+}
+
+/** POST /cohosts/invite — invite an existing host to co-host one event.
+ *  can_withdraw grants earnings access up front; it can also be flipped later. */
+export function inviteCoHost(
+  body: { event_id: string; email: string; can_withdraw: boolean },
+  idToken: string,
+) {
+  return apiFetch<CoHostDTO>("/cohosts/invite", {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: body,
+  });
+}
+
+/** GET /cohosts/event/{eventID} — the event's co-host roster. */
+export function listEventCoHosts(eventId: string, idToken: string) {
+  return apiFetch<CoHostDTO[]>(`/cohosts/event/${eventId}`, {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** PATCH /cohosts/{id}/withdraw-permission — flip the withdraw toggle. */
+export function setCoHostCanWithdraw(
+  cohostId: string,
+  canWithdraw: boolean,
+  idToken: string,
+) {
+  return apiFetch<{ can_withdraw: boolean }>(
+    `/cohosts/${cohostId}/withdraw-permission`,
+    {
+      method: "PATCH",
+      headers: getAuthHeader(idToken),
+      data: { can_withdraw: canWithdraw },
+    },
+  );
+}
+
+/** DELETE /cohosts/{id} — revoke co-hosting. */
+export function revokeCoHost(cohostId: string, idToken: string) {
+  return apiFetch<{ status: string }>(`/cohosts/${cohostId}`, {
+    method: "DELETE",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** POST /cohosts/{id}/resend — email a still-pending invitation again. */
+export function resendCoHostInvite(cohostId: string, idToken: string) {
+  return apiFetch<{ status: string }>(`/cohosts/${cohostId}/resend`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** Whether co-hosting concerns this host at all: invitations they received, and
+ *  co-hosts they granted on their own experiences. Drives the dashboard tab. */
+export interface CoHostSummaryDTO {
+  received: number;
+  granted: number;
+}
+
+/** GET /cohosts/summary — counts for the signed-in host. */
+export function getCoHostSummary(idToken: string) {
+  return apiFetch<CoHostSummaryDTO>("/cohosts/summary", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** GET /cohosts/shared — events shared WITH the caller. */
+export function listSharedEvents(idToken: string) {
+  return apiFetch<SharedEventDTO[]>("/cohosts/shared", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** POST /cohosts/{id}/respond — accept or decline an invitation. */
+export function respondToCoHostInvite(
+  cohostId: string,
+  accept: boolean,
+  idToken: string,
+) {
+  return apiFetch<{ accepted: boolean }>(`/cohosts/${cohostId}/respond`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: { accept },
+  });
+}
+
+/** POST /cohosts/{id}/withdraw — pull this event's earnings to the co-host's
+ *  own primary payout method. amount_cents 0 = whatever is left. */
+export function requestCoHostWithdrawal(
+  cohostId: string,
+  body: { amount_cents: number; idempotency_key?: string },
+  idToken: string,
+) {
+  return apiFetch<PaymentDTO>(`/cohosts/${cohostId}/withdraw`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+    data: body,
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Reviews (write)                                                    */
 /* ------------------------------------------------------------------ */
 

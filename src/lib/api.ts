@@ -41,6 +41,36 @@ export async function apiFetch<T>(
   }
 }
 
+
+/**
+ * Authorization header for the endpoints that now require a signed-in host.
+ *
+ * Read the token lazily and client-side only: firebase is imported dynamically
+ * so this module stays importable during SSR, and the phone-login flow (which
+ * has no firebase user) falls back to the token it stored.
+ */
+async function currentAuthHeader(): Promise<Record<string, string>> {
+  if (typeof window === "undefined") return {};
+  try {
+    const { auth } = await import("~/utils/firebase");
+    const user = auth.currentUser;
+    if (user) return { Authorization: `Bearer ${await user.getIdToken()}` };
+  } catch {
+    // firebase unavailable — fall through to the stored token
+  }
+  const stored = localStorage.getItem("msm_auth_token");
+  return stored ? { Authorization: `Bearer ${stored}` } : {};
+}
+
+/** apiFetch with the caller's identity attached. */
+async function authedFetch<T>(
+  path: string,
+  config?: Parameters<typeof api.request>[0],
+): Promise<Envelope<T>> {
+  const headers = { ...(config?.headers ?? {}), ...(await currentAuthHeader()) };
+  return apiFetch<T>(path, { ...config, headers });
+}
+
 /* ------------------------------------------------------------------ */
 /*  Auth                                                               */
 /* ------------------------------------------------------------------ */
@@ -264,7 +294,10 @@ export async function uploadFiles(
   try {
     const res = await api.post<Envelope<UploadResult[]>>("/upload/", formData, {
       params: { folder },
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: {
+        ...(await currentAuthHeader()),
+        "Content-Type": "multipart/form-data",
+      },
     });
     return res.data;
   } catch (err) {
@@ -1475,12 +1508,12 @@ export interface EventUpdatePayload {
 
 /** POST /events/ — create a new event */
 export function createEvent(body: EventCreatePayload) {
-  return apiFetch<EventDTO>("/events/", { method: "POST", data: body });
+  return authedFetch<EventDTO>("/events/", { method: "POST", data: body });
 }
 
 /** PUT /events/{eventID} — update an event */
 export function updateEvent(eventId: string, body: EventUpdatePayload) {
-  return apiFetch<EventDTO>(`/events/${eventId}`, {
+  return authedFetch<EventDTO>(`/events/${eventId}`, {
     method: "PUT",
     data: body,
   });
@@ -1510,7 +1543,7 @@ export function getCalendarEvents(hostId: string) {
 
 /** POST /events/{eventID}/publish — publish a draft event */
 export function publishEvent(eventId: string, hostId: string) {
-  return apiFetch<EventDTO>(`/events/${eventId}/publish`, {
+  return authedFetch<EventDTO>(`/events/${eventId}/publish`, {
     method: "POST",
     data: { host_id: hostId },
   });
@@ -1523,7 +1556,7 @@ export function pauseEvent(
   pausedFrom?: string,
   pausedDate?: string,
 ) {
-  return apiFetch<EventDTO>(`/events/${eventId}/pause`, {
+  return authedFetch<EventDTO>(`/events/${eventId}/pause`, {
     method: "POST",
     data: {
       host_id: hostId,
@@ -1535,7 +1568,7 @@ export function pauseEvent(
 
 /** POST /events/{eventID}/resume — resume a paused event */
 export function resumeEvent(eventId: string, hostId: string) {
-  return apiFetch<EventDTO>(`/events/${eventId}/resume`, {
+  return authedFetch<EventDTO>(`/events/${eventId}/resume`, {
     method: "POST",
     data: { host_id: hostId },
   });

@@ -840,9 +840,12 @@ export function getHostAttentionItems(hostId: string) {
   });
 }
 
-/** GET /events/today/{hostID} — get today's schedule for a host */
+/**
+ * GET /events/today/{hostID} — get today's schedule for a host.
+ * Host-scoped on the server, so it must carry the token.
+ */
 export function getTodaySchedule(hostId: string) {
-  return apiFetch<EventDTO[]>(`/events/today/${hostId}`);
+  return authedFetch<EventDTO[]>(`/events/today/${hostId}`);
 }
 
 /* ------------------------------------------------------------------ */
@@ -980,9 +983,9 @@ export interface OccurrenceAvailability {
   is_paused?: boolean;
 }
 
-/** GET /events/host/{hostID} */
+/** GET /events/host/{hostID} — includes drafts, so host-scoped and authed. */
 export function getEventsByHost(hostId: string) {
-  return apiFetch<EventDTO[]>(`/events/host/${hostId}`);
+  return authedFetch<EventDTO[]>(`/events/host/${hostId}`);
 }
 
 /** GET /events/ — list all published (live) events (public) */
@@ -1531,14 +1534,14 @@ export function getHostEventsFiltered(
     offset?: string;
   },
 ) {
-  return apiFetch<EventDTO[]>(`/events/host/${hostId}/filtered`, {
+  return authedFetch<EventDTO[]>(`/events/host/${hostId}/filtered`, {
     params: filters,
   });
 }
 
-/** GET /events/calendar/{hostID} — calendar view of events */
+/** GET /events/calendar/{hostID} — calendar view of events. Host-scoped. */
 export function getCalendarEvents(hostId: string) {
-  return apiFetch<EventDTO[]>(`/events/calendar/${hostId}`);
+  return authedFetch<EventDTO[]>(`/events/calendar/${hostId}`);
 }
 
 /** POST /events/{eventID}/publish — publish a draft event */
@@ -1574,11 +1577,16 @@ export function resumeEvent(eventId: string, hostId: string) {
   });
 }
 
-/** GET /events/{eventID}/attendees — list confirmed attendees */
+/**
+ * GET /events/{eventID}/attendees — the roster for one event.
+ *
+ * Carries guests' contact details and government-ID links, so the server
+ * restricts it to the host running the event. Must be authed.
+ */
 export function getEventAttendees(eventId: string, date?: string) {
   let url = `/events/${eventId}/attendees`;
   if (date) url += `?date=${encodeURIComponent(date)}`;
-  return apiFetch<BookingDTO[]>(url);
+  return authedFetch<BookingDTO[]>(url);
 }
 
 /* ------------------------------------------------------------------ */

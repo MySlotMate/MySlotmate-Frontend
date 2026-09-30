@@ -49,7 +49,7 @@ export async function apiFetch<T>(
  * so this module stays importable during SSR, and the phone-login flow (which
  * has no firebase user) falls back to the token it stored.
  */
-async function currentAuthHeader(): Promise<Record<string, string>> {
+export async function currentAuthHeader(): Promise<Record<string, string>> {
   if (typeof window === "undefined") return {};
   try {
     const { auth } = await import("~/utils/firebase");
@@ -1718,9 +1718,15 @@ export interface CreateBookingPayload {
   coupon_code?: string;
 }
 
-/** POST /bookings/ — create a booking */
+/**
+ * POST /bookings/ — create a booking.
+ *
+ * Debits the buyer's wallet, and the buyer is now the signed-in user: the
+ * server ignores a body user_id that agrees and refuses one that does not.
+ * Must be authed.
+ */
 export function createBooking(body: CreateBookingPayload) {
-  return apiFetch<BookingDTO>("/bookings/", { method: "POST", data: body });
+  return authedFetch<BookingDTO>("/bookings/", { method: "POST", data: body });
 }
 
 /** POST /events/{slugOrId}/unlock — dry-run check of a private event's passkey.
@@ -1833,7 +1839,7 @@ export function deleteCoupon(couponId: string, hostId: string) {
 
 /** POST /bookings/{bookingID}/confirm — confirm a pending booking */
 export function confirmBooking(bookingId: string) {
-  return apiFetch<BookingDTO>(`/bookings/${bookingId}/confirm`, {
+  return authedFetch<BookingDTO>(`/bookings/${bookingId}/confirm`, {
     method: "POST",
   });
 }
@@ -1848,7 +1854,9 @@ export function cancelBooking(
   userId: string,
   refundDestination: "wallet" | "source" = "wallet",
 ) {
-  return apiFetch<BookingDTO>(`/bookings/${bookingId}/cancel`, {
+  // user_id is kept for older servers; the current one resolves the booking's
+  // owner itself and ignores it.
+  return authedFetch<BookingDTO>(`/bookings/${bookingId}/cancel`, {
     method: "POST",
     data: { user_id: userId, refund_destination: refundDestination },
   });
@@ -1856,12 +1864,12 @@ export function cancelBooking(
 
 /** GET /bookings/user/{userID} — list bookings for a user */
 export function getBookingsByUser(userId: string) {
-  return apiFetch<BookingDTO[]>(`/bookings/user/${userId}`);
+  return authedFetch<BookingDTO[]>(`/bookings/user/${userId}`);
 }
 
 /** GET /bookings/{bookingID} — get a single booking */
 export function getBooking(bookingId: string) {
-  return apiFetch<BookingDTO>(`/bookings/${bookingId}`);
+  return authedFetch<BookingDTO>(`/bookings/${bookingId}`);
 }
 
 /* ------------------------------------------------------------------ */

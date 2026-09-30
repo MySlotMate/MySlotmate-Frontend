@@ -22,7 +22,7 @@ import {
 import { formatIST } from "~/lib/datetime";
 import { pdfSafe } from "~/lib/pdfText";
 import { getRecommendedEventSync } from "~/lib/recommendations";
-import type { EventDTO } from "~/lib/api";
+import { currentAuthHeader, type EventDTO } from "~/lib/api";
 import { toast } from "sonner";
 import { env } from "~/env";
 
@@ -624,6 +624,9 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           {
             method: "POST",
             body: sendFormData,
+            // The route is host/guest-scoped now, so this raw fetch has to
+            // carry the token too — apiFetch is not in the path here.
+            headers: await currentAuthHeader(),
           },
         );
 

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 import { formatIST } from "./datetime";
+import { currentAuthHeader } from "~/lib/api";
 import { pdfSafe } from "./pdfText";
 import { toast } from "sonner";
 import { env } from "~/env";
@@ -539,7 +540,9 @@ export async function sendTicketPdfNotification(
 
     const res = await fetch(
       `${env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/ticket-notification`,
-      { method: "POST", body: form },
+      // The route is host/guest-scoped now, so this raw fetch has to carry the
+      // token too — apiFetch is not in the path here.
+      { method: "POST", body: form, headers: await currentAuthHeader() },
     );
     if (!res.ok) {
       const errData = (await res.json().catch(() => ({}))) as {

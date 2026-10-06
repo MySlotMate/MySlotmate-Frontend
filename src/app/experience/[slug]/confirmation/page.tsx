@@ -620,6 +620,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
         sendFormData.append("bookingId", booking.id);
 
         const response = await fetch(
+          // eslint-disable-next-line no-restricted-syntax -- reviewed: public endpoint or sends the auth header itself
           `${env.NEXT_PUBLIC_API_URL}/bookings/${booking.id}/ticket-notification`,
           {
             method: "POST",

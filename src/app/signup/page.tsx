@@ -39,6 +39,7 @@ export default function SignUpPage() {
       try {
         const token = await user.getIdToken();
         const res = await fetch(
+          // eslint-disable-next-line no-restricted-syntax -- reviewed: public endpoint or sends the auth header itself
           `${process.env.NEXT_PUBLIC_API_URL}/users/signup-prefill`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
@@ -111,6 +112,7 @@ export default function SignUpPage() {
         // User already exists — fetch their ID from Firebase UID
         try {
           const profileRes = await fetch(
+            // eslint-disable-next-line no-restricted-syntax -- reviewed: public endpoint or sends the auth header itself
             `${process.env.NEXT_PUBLIC_API_URL}/users/by-firebase/${user.uid}`,
           );
           if (profileRes.ok) {

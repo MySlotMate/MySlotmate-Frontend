@@ -36,6 +36,27 @@ export default tseslint.config(
     },
   },
   {
+    // Raw fetch() to the API skips the auth header that apiFetch adds, which
+    // ships as 401s. Go through src/lib/api.ts instead.
+    files: ["src/**/*.ts", "src/**/*.tsx"],
+    ignores: [
+      "src/env.js",
+      "src/lib/api.ts",
+      "src/lib/server-api.ts",
+      "src/lib/socket.ts",
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "MemberExpression[property.name='NEXT_PUBLIC_API_URL']",
+          message:
+            "Call the API through src/lib/api.ts (apiFetch attaches the auth token). If a raw fetch is unavoidable, send headers: await currentAuthHeader() and disable this line.",
+        },
+      ],
+    },
+  },
+  {
     linterOptions: {
       reportUnusedDisableDirectives: true,
     },

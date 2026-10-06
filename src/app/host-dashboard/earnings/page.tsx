@@ -46,6 +46,7 @@ interface AddMethodForm {
 }
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
+// eslint-disable-next-line no-restricted-syntax -- reviewed: public endpoint or sends the auth header itself
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 // All three helpers send `Authorization: Bearer <idToken>` so they pass

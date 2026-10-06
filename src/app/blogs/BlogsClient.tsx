@@ -631,6 +631,7 @@ export default function BlogsClient({
 
       try {
         const response = await fetch(
+          // eslint-disable-next-line no-restricted-syntax -- reviewed: public endpoint or sends the auth header itself
           `${env.NEXT_PUBLIC_API_URL}/users/by-firebase/${user.uid}`,
         );
 

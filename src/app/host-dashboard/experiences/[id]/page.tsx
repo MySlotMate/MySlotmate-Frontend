@@ -29,7 +29,12 @@ import {
   FiUsers,
   FiDownload,
 } from "react-icons/fi";
-import { getEvent, type BookingDTO } from "~/lib/api";
+import {
+  deleteEvent,
+  getEvent,
+  getEventAttendees,
+  type BookingDTO,
+} from "~/lib/api";
 import { istInputToUTCISO, utcToISTInputs } from "~/lib/datetime";
 import {
   generateSessionSlots,
@@ -560,13 +565,8 @@ function AttendeesList({
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     (async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/events/${eventId}/attendees`,
-        );
-        if (response.ok) {
-          const data = (await response.json()) as { data: BookingDTO[] };
-          setAttendees(data.data ?? []);
-        }
+        const res = await getEventAttendees(eventId);
+        setAttendees(res.data ?? []);
       } catch (err) {
         console.error("Failed to fetch attendees:", err);
       } finally {
@@ -1296,18 +1296,7 @@ export default function EditEventPage({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/events/${event.id}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ host_id: host.id }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete event");
-      }
+      await deleteEvent(event.id, host.id);
 
       toast.success("Experience deleted successfully!");
       await queryClient.invalidateQueries({ queryKey: ["events"] });

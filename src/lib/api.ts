@@ -4,6 +4,7 @@
  */
 import axios, { type AxiosError } from "axios";
 import { env } from "~/env";
+import { clearStoredAuth, getStoredUserId } from "~/lib/auth-storage";
 
 const BASE: string = env.NEXT_PUBLIC_API_URL;
 
@@ -24,12 +25,17 @@ export async function apiFetch<T>(
   config?: Parameters<typeof api.request>[0],
 ): Promise<Envelope<T>> {
   try {
-    const res = await api.request<Envelope<T>>({ url: path, ...config });
+    // Always send the caller's token when there is one; an explicit header wins.
+    const headers = { ...(await currentAuthHeader()), ...(config?.headers ?? {}) };
+    const res = await api.request<Envelope<T>>({ url: path, ...config, headers });
     return res.data;
   } catch (err) {
     const axErr = err as AxiosError<Envelope<T>>;
     const data = axErr.response?.data;
-    const msg = data?.error ?? data?.message ?? axErr.message;
+    let msg = data?.error ?? data?.message ?? axErr.message;
+    if (axErr.response?.status === 401 && SESSION_DEAD.has(msg)) {
+      msg = await endDeadSession(msg);
+    }
     const error = new Error(msg);
     (error as Error & { status: number; data?: Envelope<T> }).status =
       axErr.response?.status ?? 500;
@@ -42,6 +48,27 @@ export async function apiFetch<T>(
 }
 
 
+// The auth middleware's own 401s. Other 401s (e.g. a wrong event password)
+// are not about the session and must not log anyone out.
+const SESSION_DEAD = new Set([
+  "missing Authorization header",
+  "invalid Authorization header format",
+  "invalid or expired token",
+]);
+
+/** A signed-in UI whose token the server rejects: log out instead of looping on errors. */
+async function endDeadSession(msg: string): Promise<string> {
+  if (typeof window === "undefined" || !getStoredUserId()) return msg;
+  clearStoredAuth();
+  try {
+    const { auth } = await import("~/utils/firebase");
+    await auth.signOut();
+  } catch {
+    // already signed out of firebase
+  }
+  return "Your session has expired. Please log in again.";
+}
+
 /**
  * Authorization header for the endpoints that now require a signed-in host.
  *
@@ -53,6 +80,9 @@ export async function currentAuthHeader(): Promise<Record<string, string>> {
   if (typeof window === "undefined") return {};
   try {
     const { auth } = await import("~/utils/firebase");
+    // On a fresh page load currentUser is null until Firebase restores the
+    // saved session; reading it early sends the request with no token.
+    await auth.authStateReady();
     const user = auth.currentUser;
     if (user) return { Authorization: `Bearer ${await user.getIdToken()}` };
   } catch {
@@ -62,14 +92,8 @@ export async function currentAuthHeader(): Promise<Record<string, string>> {
   return stored ? { Authorization: `Bearer ${stored}` } : {};
 }
 
-/** apiFetch with the caller's identity attached. */
-async function authedFetch<T>(
-  path: string,
-  config?: Parameters<typeof api.request>[0],
-): Promise<Envelope<T>> {
-  const headers = { ...(config?.headers ?? {}), ...(await currentAuthHeader()) };
-  return apiFetch<T>(path, { ...config, headers });
-}
+/** apiFetch already attaches the caller's token; kept as the name existing helpers use. */
+const authedFetch = apiFetch;
 
 /* ------------------------------------------------------------------ */
 /*  Auth                                                               */
@@ -1573,6 +1597,22 @@ export function pauseEvent(
 export function resumeEvent(eventId: string, hostId: string) {
   return authedFetch<EventDTO>(`/events/${eventId}/resume`, {
     method: "POST",
+    data: { host_id: hostId },
+  });
+}
+
+/** POST /events/{eventID}/cancel — cancel an event and refund upcoming bookings */
+export function cancelEvent(eventId: string, hostId: string) {
+  return authedFetch<EventDTO>(`/events/${eventId}/cancel`, {
+    method: "POST",
+    data: { host_id: hostId },
+  });
+}
+
+/** DELETE /events/{eventID} — delete an event with no active bookings */
+export function deleteEvent(eventId: string, hostId: string) {
+  return authedFetch<{ message: string }>(`/events/${eventId}`, {
+    method: "DELETE",
     data: { host_id: hostId },
   });
 }

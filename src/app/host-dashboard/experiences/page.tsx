@@ -8,7 +8,7 @@ import {
   useEventOccurrencesForHost,
   useEventAttendees,
 } from "~/hooks/useApi";
-import type { BookingDTO } from "~/lib/api";
+import { cancelEvent, deleteEvent, type BookingDTO } from "~/lib/api";
 import type { OccurrenceAvailability } from "~/lib/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback } from "react";
@@ -602,44 +602,8 @@ function ExperienceCard({
                     // then delete (now allowed because no active bookings
                     // remain). Calling cancel on an event with no active
                     // bookings is a no-op refund-wise — it just marks status.
-                    const cancelRes = await fetch(
-                      `${process.env.NEXT_PUBLIC_API_URL}/events/${event.id}/cancel`,
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ host_id: _hostId }),
-                      },
-                    );
-                    if (!cancelRes.ok) {
-                      const errBody = (await cancelRes
-                        .json()
-                        .catch(() => ({}))) as { error?: string };
-                      throw new Error(
-                        errBody?.error ??
-                          "Could not refund upcoming attendees — please try again.",
-                      );
-                    }
-
-                    const delRes = await fetch(
-                      `${process.env.NEXT_PUBLIC_API_URL}/events/${event.id}`,
-                      {
-                        method: "DELETE",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ host_id: _hostId }),
-                      },
-                    );
-                    if (!delRes.ok) {
-                      // Refunds succeeded but the row couldn't be removed —
-                      // the event is already marked cancelled, so the host is
-                      // not stuck. Surface honestly.
-                      const errBody = (await delRes
-                        .json()
-                        .catch(() => ({}))) as { error?: string };
-                      throw new Error(
-                        errBody?.error ??
-                          "Attendees were refunded, but the experience couldn't be fully removed. It's marked Cancelled — refresh to confirm.",
-                      );
-                    }
+                    await cancelEvent(event.id, _hostId);
+                    await deleteEvent(event.id, _hostId);
 
                     toast.success(
                       "Experience cancelled and removed. Refunds sent to attendees' wallets.",

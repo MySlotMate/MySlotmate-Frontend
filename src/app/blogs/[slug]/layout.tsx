@@ -16,6 +16,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   try {
+    // eslint-disable-next-line no-restricted-syntax -- reviewed: public endpoint or sends the auth header itself
     const res = await fetch(`${env.NEXT_PUBLIC_API_URL}/blogs/${slug}`, {
       next: { revalidate: 300 },
     });

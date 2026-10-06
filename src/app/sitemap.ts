@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { env } from "~/env";
 
 const SITE_URL = "https://www.myslotmate.com";
+// eslint-disable-next-line no-restricted-syntax -- reviewed: public endpoint or sends the auth header itself
 const API_BASE = env.NEXT_PUBLIC_API_URL;
 
 export const revalidate = 3600;

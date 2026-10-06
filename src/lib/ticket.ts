@@ -539,6 +539,7 @@ export async function sendTicketPdfNotification(
     form.append("bookingId", bookingId);
 
     const res = await fetch(
+      // eslint-disable-next-line no-restricted-syntax -- reviewed: public endpoint or sends the auth header itself
       `${env.NEXT_PUBLIC_API_URL}/bookings/${bookingId}/ticket-notification`,
       // The route is host/guest-scoped now, so this raw fetch has to carry the
       // token too — apiFetch is not in the path here.

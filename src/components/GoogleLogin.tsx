@@ -189,6 +189,7 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
             await signInWithCustomToken(auth, firebase_custom_token);
           } catch (fbErr) {
             console.error("Firebase custom token login failed:", fbErr);
+            toast.warning("Signed in, but some features may need a re-login.");
           }
         }
 

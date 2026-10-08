@@ -23,6 +23,7 @@ const api = axios.create({
 export async function apiFetch<T>(
   path: string,
   config?: Parameters<typeof api.request>[0],
+  retried = false,
 ): Promise<Envelope<T>> {
   try {
     // Always send the caller's token when there is one; an explicit header wins.
@@ -34,6 +35,10 @@ export async function apiFetch<T>(
     const data = axErr.response?.data;
     let msg = data?.error ?? data?.message ?? axErr.message;
     if (axErr.response?.status === 401 && SESSION_DEAD.has(msg)) {
+      // A Firebase token can lapse mid-session; refresh once before giving up.
+      if (!retried && (await refreshFirebaseToken())) {
+        return apiFetch<T>(path, config, true);
+      }
       msg = await endDeadSession(msg);
     }
     const error = new Error(msg);
@@ -48,13 +53,25 @@ export async function apiFetch<T>(
 }
 
 
-// The auth middleware's own 401s. Other 401s (e.g. a wrong event password)
-// are not about the session and must not log anyone out.
-const SESSION_DEAD = new Set([
-  "missing Authorization header",
-  "invalid Authorization header format",
-  "invalid or expired token",
-]);
+// Only a token the server actively rejects ends the session. A missing or
+// malformed header means this client failed to attach one (e.g. Firebase not
+// restored yet), which must not log the user out. Other 401s (e.g. a wrong
+// event password) are not about the session either.
+const SESSION_DEAD = new Set(["invalid or expired token"]);
+
+/** Force-refresh the Firebase ID token; false if there is no Firebase user. */
+async function refreshFirebaseToken(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
+  try {
+    const { auth } = await import("~/utils/firebase");
+    await auth.authStateReady();
+    if (!auth.currentUser) return false;
+    await auth.currentUser.getIdToken(true);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 /** A signed-in UI whose token the server rejects: log out instead of looping on errors. */
 async function endDeadSession(msg: string): Promise<string> {

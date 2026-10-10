@@ -705,7 +705,7 @@ function BookingWidget({
           </div>
 
           {/* Rare find banner */}
-          {!eventHasPassed && spotsLeft <= 3 && spotsLeft > 0 && (
+          {!eventHasPassed && capacity > 1 && spotsLeft <= 3 && spotsLeft > 0 && (
             <div className="mt-4 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 p-3">
               <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-500">
                 <LuSparkles className="text-white" size={12} />
@@ -771,7 +771,7 @@ function BookingWidget({
               </>
             )}
 
-            {!eventHasPassed && spotsLeft <= 3 && spotsLeft > 0 && (
+            {!eventHasPassed && capacity > 1 && spotsLeft <= 3 && spotsLeft > 0 && (
               <span className="animate-pulse rounded-md bg-red-50 px-1.5 py-0.5 text-[9px] leading-none font-bold text-red-500">
                 Only {spotsLeft} left!
               </span>

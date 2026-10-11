@@ -36,8 +36,12 @@ export async function apiFetch<T>(
     let msg = data?.error ?? data?.message ?? axErr.message;
     if (axErr.response?.status === 401 && SESSION_DEAD.has(msg)) {
       // A Firebase token can lapse mid-session; refresh once before giving up.
+      // Drop any caller-supplied Authorization: it is usually a token cached
+      // in component state (useIdToken), and resending it would fail again.
       if (!retried && (await refreshFirebaseToken())) {
-        return apiFetch<T>(path, config, true);
+        const headers = { ...(config?.headers as Record<string, string>) };
+        delete headers.Authorization;
+        return apiFetch<T>(path, { ...config, headers }, true);
       }
       msg = await endDeadSession(msg);
     }

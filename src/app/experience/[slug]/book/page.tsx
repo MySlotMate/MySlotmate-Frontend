@@ -16,6 +16,7 @@ import {
   useUserProfile,
   useAttendeeProfile,
   useUpdateAttendeeProfile,
+  usePlatformSetting,
 } from "~/hooks/useApi";
 import AttendeeDetailsForm, {
   attendeeFormValid,
@@ -336,13 +337,25 @@ function BookingContent({ eventId }: { eventId: string }) {
     : selectedTier
       ? selectedTier.price_cents / 100
       : (event?.price_cents ?? 0) / 100;
-  const totalPrice = pricePerPerson * guests;
-  const grossPriceCents = totalPrice * 100;
+  const grossPriceCents = Math.round(pricePerPerson * 100) * guests;
   // A booking is comped only when a free-booking code was applied. Access
   // (passkey) never comps — a private paid event is still paid. A free-priced
   // event is handled by the price itself (grossPriceCents = 0).
   const isComped = couponComps;
-  const totalPriceCents = isComped ? 0 : grossPriceCents;
+  // Guest-paid platform fee: admin-set flat amount, once per paid booking
+  // (0 = off). Mirrors the server, or the shortfall top-up below comes up short.
+  const { data: bookingFee, isSuccess: feeReady } = usePlatformSetting<{
+    amount_cents?: number;
+  }>("booking_fee");
+  const feeSettingCents = bookingFee?.amount_cents ?? 0;
+  const platformFeeCents =
+    isComped || grossPriceCents <= 0 || feeSettingCents <= 0
+      ? 0
+      : feeSettingCents;
+  const totalPriceCents = isComped ? 0 : grossPriceCents + platformFeeCents;
+  const totalPrice = totalPriceCents / 100;
+  const formatRupees = (cents: number) =>
+    `₹${(cents / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
   const walletBalance = wallet?.balance_cents ?? 0;
   const hasInsufficientBalance =
     !event?.is_free && totalPriceCents > 0 && walletBalance < totalPriceCents;
@@ -512,7 +525,11 @@ function BookingContent({ eventId }: { eventId: string }) {
     // Attendee-details gate: collect + save required details before booking.
     // Skipped for an RSVP guest whose profile already carries them — re-saving
     // identical values would just be a wasted round trip.
-    if (requiresAttendee && attendeeFields.length > 0 && !attendeeCollectedAtRequest) {
+    if (
+      requiresAttendee &&
+      attendeeFields.length > 0 &&
+      !attendeeCollectedAtRequest
+    ) {
       if (!attendeeFormValid(attendeeFields, attendeeValues)) {
         setShowAttendeeErrors(true);
         toast.error("Please complete the attendee details");
@@ -811,8 +828,8 @@ function BookingContent({ eventId }: { eventId: string }) {
             these in to request the session should see that they carried over. */}
         {attendeeCollectedAtRequest && (
           <div className="mt-6 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-            We&apos;ve used the details you sent with your request — nothing more
-            to fill in.
+            We&apos;ve used the details you sent with your request — nothing
+            more to fill in.
           </div>
         )}
 
@@ -912,7 +929,7 @@ function BookingContent({ eventId }: { eventId: string }) {
               </div>
             )}
           </div>
-        ) : (Boolean(event.is_private) || Boolean(event.access_passkey)) ? (
+        ) : Boolean(event.is_private) || Boolean(event.access_passkey) ? (
           <div className="mt-6">
             {passkeyValid ? (
               <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
@@ -1020,9 +1037,30 @@ function BookingContent({ eventId }: { eventId: string }) {
           <div className="mt-6 rounded-xl border-2 border-green-200 bg-green-50 p-4">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-500 line-through">
-                ₹{totalPrice.toLocaleString("en-IN")}
+                {formatRupees(grossPriceCents)}
               </span>
               <span className="text-lg font-bold text-green-700">FREE</span>
+            </div>
+          </div>
+        )}
+
+        {/* Price breakdown — only when a platform fee applies */}
+        {platformFeeCents > 0 && (
+          <div className="mt-6 space-y-2 rounded-xl border border-gray-200 bg-white p-4 text-sm">
+            <div className="flex justify-between text-gray-600">
+              <span>
+                Tickets ({guests} ×{" "}
+                {formatRupees(Math.round(pricePerPerson * 100))})
+              </span>
+              <span>{formatRupees(grossPriceCents)}</span>
+            </div>
+            <div className="flex justify-between text-gray-600">
+              <span>Platform fee</span>
+              <span>{formatRupees(platformFeeCents)}</span>
+            </div>
+            <div className="flex justify-between border-t border-gray-100 pt-2 font-semibold text-gray-900">
+              <span>Total</span>
+              <span>{formatRupees(totalPriceCents)}</span>
             </div>
           </div>
         )}
@@ -1080,7 +1118,13 @@ function BookingContent({ eventId }: { eventId: string }) {
         {/* Confirm Button */}
         <button
           onClick={handleConfirmBooking}
-          disabled={isSubmitting || isProcessingPayment || needsUnlock}
+          disabled={
+            isSubmitting ||
+            isProcessingPayment ||
+            needsUnlock ||
+            // Until the fee is known the total (and any top-up) would be short.
+            (grossPriceCents > 0 && !isComped && !feeReady)
+          }
           className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-4 font-semibold text-white transition hover:bg-[#007ba8] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSubmitting || isProcessingPayment ? (
@@ -1112,7 +1156,7 @@ function BookingContent({ eventId }: { eventId: string }) {
           ) : hasInsufficientBalance ? (
             `Pay ₹${(shortfall / 100).toFixed(0)} & Confirm (₹${(walletBalance / 100).toFixed(0)} from wallet)`
           ) : (
-            `Pay ₹${totalPrice.toFixed(0)} & Confirm`
+            `Pay ${formatRupees(totalPriceCents)} & Confirm`
           )}
         </button>
 
@@ -1141,9 +1185,7 @@ function BookingContent({ eventId }: { eventId: string }) {
       <JoinRequestModal
         open={showJoinModal}
         eventTitle={event.title}
-        sessionLabel={
-          date ? formatIST(date, "eee d MMM, h:mm a") : undefined
-        }
+        sessionLabel={date ? formatIST(date, "eee d MMM, h:mm a") : undefined}
         attendeeFields={attendeeFields}
         initialValues={attendeeValues}
         isSubmitting={submitJoinRequest.isPending}

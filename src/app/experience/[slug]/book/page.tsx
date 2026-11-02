@@ -342,16 +342,21 @@ function BookingContent({ eventId }: { eventId: string }) {
   // (passkey) never comps — a private paid event is still paid. A free-priced
   // event is handled by the price itself (grossPriceCents = 0).
   const isComped = couponComps;
-  // Guest-paid platform fee: admin-set flat amount, once per paid booking
-  // (0 = off). Mirrors the server, or the shortfall top-up below comes up short.
+  // Guest-paid platform fee: admin-set, once per paid booking — flat, or a
+  // percentage of the tickets floored like the server (0 = off). Must match
+  // the server exactly, or the shortfall top-up below comes up short.
   const { data: bookingFee, isSuccess: feeReady } = usePlatformSetting<{
+    type?: "flat" | "percentage";
     amount_cents?: number;
+    percentage?: number;
   }>("booking_fee");
-  const feeSettingCents = bookingFee?.amount_cents ?? 0;
+  const feeIsPercentage = bookingFee?.type === "percentage";
+  const feePercentage = bookingFee?.percentage ?? 0;
+  const feeRawCents = feeIsPercentage
+    ? Math.floor((grossPriceCents * feePercentage) / 100)
+    : (bookingFee?.amount_cents ?? 0);
   const platformFeeCents =
-    isComped || grossPriceCents <= 0 || feeSettingCents <= 0
-      ? 0
-      : feeSettingCents;
+    isComped || grossPriceCents <= 0 || feeRawCents <= 0 ? 0 : feeRawCents;
   const totalPriceCents = isComped ? 0 : grossPriceCents + platformFeeCents;
   const totalPrice = totalPriceCents / 100;
   const formatRupees = (cents: number) =>
@@ -1055,7 +1060,9 @@ function BookingContent({ eventId }: { eventId: string }) {
               <span>{formatRupees(grossPriceCents)}</span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>Platform fee</span>
+              <span>
+                Platform fee{feeIsPercentage ? ` (${feePercentage}%)` : ""}
+              </span>
               <span>{formatRupees(platformFeeCents)}</span>
             </div>
             <div className="flex justify-between border-t border-gray-100 pt-2 font-semibold text-gray-900">

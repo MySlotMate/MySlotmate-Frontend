@@ -2135,6 +2135,17 @@ export default function EditEventPage({
                   </div>
                 )}
 
+                {/* Percentage discount codes (paid events) */}
+                {host?.id && event?.id && !form.isFree && (
+                  <div className="mb-4 border-t border-gray-100 pt-6">
+                    <CouponsManager
+                      eventId={event.id}
+                      hostId={host.id}
+                      kind="discount"
+                    />
+                  </div>
+                )}
+
                 {/* Recurring */}
                 <div className="mb-4 space-y-2">
                   <label className="flex items-center gap-2">

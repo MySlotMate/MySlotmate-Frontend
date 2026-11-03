@@ -2927,11 +2927,18 @@ export default function CreateExperiencePage() {
                   )}
                   {/* Free-booking coupons only matter for a paid event. */}
                   {!form.isFree && (
-                    <CouponsManager
-                      eventId={createdEventId}
-                      hostId={host.id}
-                      kind="free"
-                    />
+                    <>
+                      <CouponsManager
+                        eventId={createdEventId}
+                        hostId={host.id}
+                        kind="free"
+                      />
+                      <CouponsManager
+                        eventId={createdEventId}
+                        hostId={host.id}
+                        kind="discount"
+                      />
+                    </>
                   )}
                 </div>
               ) : (

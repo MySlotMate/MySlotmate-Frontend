@@ -1802,7 +1802,12 @@ export function unlockEvent(slugOrId: string, passkey: string) {
 
 /** POST /coupons/validate — dry-run check of a comp code for this event+user. */
 export function validateCoupon(eventId: string, userId: string, code: string) {
-  return apiFetch<{ valid: boolean; comps_booking: boolean; code: string }>(
+  return apiFetch<{
+    valid: boolean;
+    comps_booking: boolean;
+    discount_percent?: number | null;
+    code: string;
+  }>(
     "/coupons/validate",
     { method: "POST", data: { event_id: eventId, user_id: userId, code } },
   );
@@ -1811,14 +1816,19 @@ export function validateCoupon(eventId: string, userId: string, code: string) {
 /** Verify a coupon without a specific guest (walk-in / on-spot). The per-guest
  *  limit is re-checked at booking; comps_booking indicates a free-booking code. */
 export function verifyCoupon(eventId: string, code: string) {
-  return apiFetch<{ valid: boolean; comps_booking: boolean; code: string }>(
+  return apiFetch<{
+    valid: boolean;
+    comps_booking: boolean;
+    discount_percent?: number | null;
+    code: string;
+  }>(
     "/coupons/validate",
     { method: "POST", data: { event_id: eventId, code } },
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Coupons (host comp codes — always full waivers)                    */
+/*  Coupons (access, free-booking, or percentage-discount codes)      */
 /* ------------------------------------------------------------------ */
 
 export interface CouponDTO {
@@ -1828,6 +1838,8 @@ export interface CouponDTO {
   code: string;
   /** true = free-booking code (comp); false = access code (unlocks, guest pays). */
   grants_free: boolean;
+  /** Set (1–99) on a percentage-discount code; null otherwise. */
+  discount_percent: number | null;
   max_redemptions: number | null;
   times_redeemed: number;
   per_user_limit: number | null;
@@ -1844,6 +1856,7 @@ export interface CouponPayload {
   code: string;
   /** true = free-booking code (comp); false = access code. Defaults to true. */
   grants_free?: boolean;
+  discount_percent?: number | null;
   max_redemptions?: number | null;
   per_user_limit?: number | null;
   valid_from?: string | null;
@@ -1868,6 +1881,7 @@ export interface CouponBatchPayload {
   prefix?: string;
   /** true = free-booking codes (comp); false = access codes. Defaults to true. */
   grants_free?: boolean;
+  discount_percent?: number | null;
   /** Defaults to single-use (max_redemptions=1, per_user_limit=1). */
   max_redemptions?: number | null;
   per_user_limit?: number | null;

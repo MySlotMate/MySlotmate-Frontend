@@ -246,6 +246,10 @@ function BookingContent({ eventId }: { eventId: string }) {
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponComps, setCouponComps] = useState(false);
+  // Set when the applied code is a percentage-discount code (1–99).
+  const [couponDiscountPct, setCouponDiscountPct] = useState<number | null>(
+    null,
+  );
   const [couponChecking, setCouponChecking] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
 
@@ -352,12 +356,19 @@ function BookingContent({ eventId }: { eventId: string }) {
   }>("booking_fee");
   const feeIsPercentage = bookingFee?.type === "percentage";
   const feePercentage = bookingFee?.percentage ?? 0;
+  // A discount code comes off the tickets first (floored, like the server);
+  // the platform fee is then charged on the discounted tickets.
+  const discountCents =
+    couponDiscountPct && grossPriceCents > 0
+      ? Math.floor((grossPriceCents * couponDiscountPct) / 100)
+      : 0;
+  const ticketsCents = grossPriceCents - discountCents;
   const feeRawCents = feeIsPercentage
-    ? Math.floor((grossPriceCents * feePercentage) / 100)
+    ? Math.floor((ticketsCents * feePercentage) / 100)
     : (bookingFee?.amount_cents ?? 0);
   const platformFeeCents =
     isComped || grossPriceCents <= 0 || feeRawCents <= 0 ? 0 : feeRawCents;
-  const totalPriceCents = isComped ? 0 : grossPriceCents + platformFeeCents;
+  const totalPriceCents = isComped ? 0 : ticketsCents + platformFeeCents;
   const totalPrice = totalPriceCents / 100;
   const formatRupees = (cents: number) =>
     `₹${(cents / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
@@ -428,6 +439,11 @@ function BookingContent({ eventId }: { eventId: string }) {
             if (cres.data.comps_booking) {
               setAppliedCoupon(cres.data.code);
               setCouponComps(true);
+            } else if (cres.data.discount_percent) {
+              // The server applies a discount code used as the passkey, so
+              // the price shown here must too.
+              setAppliedCoupon(cres.data.code);
+              setCouponDiscountPct(cres.data.discount_percent);
             }
             return;
           }
@@ -460,6 +476,9 @@ function BookingContent({ eventId }: { eventId: string }) {
       if (res.data.valid && res.data.comps_booking) {
         setAppliedCoupon(res.data.code);
         setCouponComps(true);
+      } else if (res.data.valid && res.data.discount_percent) {
+        setAppliedCoupon(res.data.code);
+        setCouponDiscountPct(res.data.discount_percent);
       } else {
         setCouponError("This coupon can't be applied");
       }
@@ -475,6 +494,7 @@ function BookingContent({ eventId }: { eventId: string }) {
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setCouponComps(false);
+    setCouponDiscountPct(null);
     setCouponInput("");
     setCouponError(null);
   };
@@ -940,6 +960,7 @@ function BookingContent({ eventId }: { eventId: string }) {
               <div className="flex items-center gap-2 rounded-xl border-2 border-green-200 bg-green-50 p-4 text-sm font-medium text-green-700">
                 <FiLock size={16} /> Unlocked
                 {couponComps && " — this booking is free"}
+                {couponDiscountPct && ` — ${couponDiscountPct}% off`}
               </div>
             ) : (
               <div className="rounded-xl border-2 border-gray-200 bg-gray-50 p-4">
@@ -996,14 +1017,21 @@ function BookingContent({ eventId }: { eventId: string }) {
                   ✓ {appliedCoupon} applied
                   {couponComps
                     ? " — this booking is free"
-                    : " — access unlocked, you’ll still pay"}
+                    : couponDiscountPct
+                      ? ` — ${couponDiscountPct}% off`
+                      : " — access unlocked, you’ll still pay"}
                 </span>
-                <button
-                  onClick={removeCoupon}
-                  className="text-sm font-medium text-gray-500 hover:text-gray-700"
-                >
-                  Remove
-                </button>
+                {/* A code that unlocked the event is sent as the passkey and
+                    applied by the server anyway, so it can't be removed. */}
+                {appliedCoupon.toLowerCase() !==
+                  passkey.trim().toLowerCase() && (
+                  <button
+                    onClick={removeCoupon}
+                    className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                  >
+                    Remove
+                  </button>
+                )}
               </div>
             ) : (
               <div>
@@ -1049,8 +1077,8 @@ function BookingContent({ eventId }: { eventId: string }) {
           </div>
         )}
 
-        {/* Price breakdown — only when a platform fee applies */}
-        {platformFeeCents > 0 && (
+        {/* Price breakdown — only when a platform fee or discount applies */}
+        {(platformFeeCents > 0 || discountCents > 0) && !isComped && (
           <div className="mt-6 space-y-2 rounded-xl border border-gray-200 bg-white p-4 text-sm">
             <div className="flex justify-between text-gray-600">
               <span>
@@ -1059,12 +1087,20 @@ function BookingContent({ eventId }: { eventId: string }) {
               </span>
               <span>{formatRupees(grossPriceCents)}</span>
             </div>
-            <div className="flex justify-between text-gray-600">
-              <span>
-                Platform fee{feeIsPercentage ? ` (${feePercentage}%)` : ""}
-              </span>
-              <span>{formatRupees(platformFeeCents)}</span>
-            </div>
+            {discountCents > 0 && (
+              <div className="flex justify-between text-green-700">
+                <span>Discount ({couponDiscountPct}%)</span>
+                <span>−{formatRupees(discountCents)}</span>
+              </div>
+            )}
+            {platformFeeCents > 0 && (
+              <div className="flex justify-between text-gray-600">
+                <span>
+                  Platform fee{feeIsPercentage ? ` (${feePercentage}%)` : ""}
+                </span>
+                <span>{formatRupees(platformFeeCents)}</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-gray-100 pt-2 font-semibold text-gray-900">
               <span>Total</span>
               <span>{formatRupees(totalPriceCents)}</span>

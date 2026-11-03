@@ -187,7 +187,14 @@ export default function ManageCodesModal({
 
             {/* Free-booking coupons — only meaningful for a paid event. */}
             {!isFree && (
-              <CouponsManager eventId={eventId} hostId={hostId} kind="free" />
+              <>
+                <CouponsManager eventId={eventId} hostId={hostId} kind="free" />
+                <CouponsManager
+                  eventId={eventId}
+                  hostId={hostId}
+                  kind="discount"
+                />
+              </>
             )}
           </div>
         )}

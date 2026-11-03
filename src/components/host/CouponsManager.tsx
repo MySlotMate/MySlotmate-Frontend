@@ -14,12 +14,24 @@ import {
 
 // couponsToCsv renders the list to a CSV string the host can hand out / import.
 function couponsToCsv(rows: CouponDTO[]): string {
-  const header = ["code", "scope", "used", "status", "expires"];
+  const header = [
+    "code",
+    "scope",
+    "discount_percent",
+    "used",
+    "status",
+    "expires",
+  ];
   const body = rows.map((c) =>
     [
       c.code,
       c.event_id === null ? "all_events" : "this_event",
-      c.times_redeemed > 0 ? "used" : "available",
+      c.discount_percent ?? "",
+      c.max_redemptions === 1
+        ? c.times_redeemed > 0
+          ? "used"
+          : "available"
+        : `${c.times_redeemed}/${c.max_redemptions ?? "unlimited"}`,
       c.is_active ? "active" : "paused",
       c.valid_until ? new Date(c.valid_until).toISOString().slice(0, 10) : "",
     ].join(","),
@@ -31,8 +43,9 @@ interface Props {
   eventId: string;
   hostId: string;
   /** "access" = passkey codes (unlock a private event, guest pays);
-   *  "free"   = free-booking codes (comp — book at ₹0). */
-  kind: "access" | "free";
+   *  "free"   = free-booking codes (comp — book at ₹0);
+   *  "discount" = percentage-discount codes (guest pays the rest). */
+  kind: "access" | "free" | "discount";
 }
 
 // CouponsManager manages ONE kind of single-use code for an experience: either
@@ -40,9 +53,19 @@ interface Props {
 // payment are decoupled, so the two are managed independently.
 export default function CouponsManager({ eventId, hostId, kind }: Props) {
   const isFree = kind === "free";
+  const isDiscount = kind === "discount";
+  const [discountPercent, setDiscountPercent] = useState("10");
+  // Percent sent with every new code of the discount kind; null otherwise.
+  const pct = isDiscount ? Number(discountPercent) : null;
+  const pctValid =
+    !isDiscount || (Number.isInteger(pct) && pct! >= 1 && pct! <= 99);
   const [coupons, setCoupons] = useState<CouponDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [code, setCode] = useState("");
+  // Shared = one code many guests can use (each guest once), capped by maxUses
+  // (blank = unlimited). Otherwise a custom code is single-use like the rest.
+  const [shared, setShared] = useState(false);
+  const [maxUses, setMaxUses] = useState("");
   const [validUntil, setValidUntil] = useState("");
   const [creating, setCreating] = useState(false);
   const [batchCount, setBatchCount] = useState("10");
@@ -60,7 +83,9 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
         res.data.filter(
           (c) =>
             (c.event_id === eventId || c.event_id === null) &&
-            c.grants_free === isFree,
+            (isDiscount
+              ? c.discount_percent != null
+              : c.grants_free === isFree && c.discount_percent == null),
         ),
       );
     } catch {
@@ -68,7 +93,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [hostId, eventId, isFree]);
+  }, [hostId, eventId, isFree, isDiscount]);
 
   useEffect(() => {
     void load();
@@ -79,6 +104,15 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
       toast.error("Enter a code");
       return;
     }
+    if (!pctValid) {
+      toast.error("Discount must be a whole number from 1 to 99");
+      return;
+    }
+    const cap = maxUses.trim() ? Number(maxUses) : null;
+    if (shared && cap !== null && (!Number.isInteger(cap) || cap < 1)) {
+      toast.error("Max uses must be a whole number of at least 1");
+      return;
+    }
     setCreating(true);
     try {
       await createCoupon({
@@ -86,8 +120,9 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
         event_id: eventId,
         code: code.trim(),
         grants_free: isFree,
-        // Every code is single-use, one per guest.
-        max_redemptions: 1,
+        discount_percent: pct,
+        // Single-use unless shared; a guest can use any code only once.
+        max_redemptions: shared ? cap : 1,
         per_user_limit: 1,
         valid_until: validUntil ? new Date(validUntil).toISOString() : null,
         is_active: true,
@@ -95,6 +130,8 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
       toast.success("Code created");
       setCode("");
       setValidUntil("");
+      setShared(false);
+      setMaxUses("");
       void load();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not create code");
@@ -109,12 +146,19 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
       toast.error("Enter a count between 1 and 500");
       return;
     }
+    if (!pctValid) {
+      toast.error("Discount must be a whole number from 1 to 99");
+      return;
+    }
     // Free codes move money — make the effect explicit before firing.
-    const confirmMsg = isFree
-      ? `Generate ${count} free-booking code${count > 1 ? "s" : ""}? Each one ` +
-        `books this experience for FREE (₹0) — you comp the guest.`
-      : `Generate ${count} access code${count > 1 ? "s" : ""}? Each one lets ` +
-        `one guest into this private event; they pay the normal price.`;
+    const confirmMsg = isDiscount
+      ? `Generate ${count} discount code${count > 1 ? "s" : ""}? Each one ` +
+        `takes ${pct}% off one booking — you absorb the discount.`
+      : isFree
+        ? `Generate ${count} free-booking code${count > 1 ? "s" : ""}? Each one ` +
+          `books this experience for FREE (₹0) — you comp the guest.`
+        : `Generate ${count} access code${count > 1 ? "s" : ""}? Each one lets ` +
+          `one guest into this private event; they pay the normal price.`;
     if (!window.confirm(confirmMsg)) {
       return;
     }
@@ -125,6 +169,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
         event_id: eventId,
         count,
         grants_free: isFree,
+        discount_percent: pct,
         prefix: batchPrefix.trim() || undefined,
       });
       setLastBatch(res.data);
@@ -199,19 +244,29 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
     }
   };
 
-  const filePrefix = isFree ? "free-codes" : "access-codes";
+  const filePrefix = isDiscount
+    ? "discount-codes"
+    : isFree
+      ? "free-codes"
+      : "access-codes";
 
   return (
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-semibold text-gray-900">
-            {isFree ? "Free-booking codes" : "Passkey codes (access)"}
+            {isDiscount
+              ? "Percentage discount codes"
+              : isFree
+                ? "Free-booking codes"
+                : "Passkey codes (access)"}
           </h3>
           <p className="text-sm text-gray-500">
-            {isFree
-              ? "Each code books this experience for ₹0 — hand a unique one to each guest you want to comp."
-              : "Each code lets one guest into this private event; they pay the normal price. A unique passkey per guest."}
+            {isDiscount
+              ? "Each code takes a percentage off one booking — the guest pays the rest."
+              : isFree
+                ? "Each code books this experience for ₹0 — hand a unique one to each guest you want to comp."
+                : "Each code lets one guest into this private event; they pay the normal price. A unique passkey per guest."}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -242,10 +297,27 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
         <p
           className={`mb-2 text-xs ${isFree ? "text-amber-600" : "text-gray-500"}`}
         >
-          {isFree
-            ? "Each code books this experience for ₹0 — you comp the guest."
-            : "Each code unlocks booking; guests still pay the normal price."}
+          {isDiscount
+            ? `Each code takes ${pctValid ? pct : "?"}% off — you absorb the discount.`
+            : isFree
+              ? "Each code books this experience for ₹0 — you comp the guest."
+              : "Each code unlocks booking; guests still pay the normal price."}
         </p>
+        {isDiscount && (
+          <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+            Discount
+            <input
+              type="number"
+              min={1}
+              max={99}
+              value={discountPercent}
+              onChange={(e) => setDiscountPercent(e.target.value)}
+              className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              aria-label="Discount percent"
+            />
+            % off (applies to new codes)
+          </label>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="number"
@@ -307,6 +379,29 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
           <FiPlus size={15} /> Add
         </button>
       </div>
+      {isDiscount && (
+        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={shared}
+              onChange={(e) => setShared(e.target.checked)}
+            />
+            Shared code — many guests can use it (once each)
+          </label>
+          {shared && (
+            <input
+              type="number"
+              min={1}
+              value={maxUses}
+              onChange={(e) => setMaxUses(e.target.value)}
+              placeholder="Max uses (blank = unlimited)"
+              className="w-56 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              aria-label="Max uses"
+            />
+          )}
+        </div>
+      )}
       <div>
         <label className="mb-1 block text-xs font-medium text-gray-500">
           Expires (optional)
@@ -356,9 +451,18 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
                     <tr key={c.id} className="border-t border-gray-50">
                       <td className="px-3 py-2 font-semibold text-gray-800">
                         {c.code}
+                        {c.discount_percent != null && (
+                          <span className="ml-2 text-xs font-medium text-[#0094CA]">
+                            {c.discount_percent}% off
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-gray-600">
-                        {c.times_redeemed > 0 ? "Used" : "Available"}
+                        {c.max_redemptions === 1
+                          ? c.times_redeemed > 0
+                            ? "Used"
+                            : "Available"
+                          : `${c.times_redeemed} / ${c.max_redemptions ?? "∞"}`}
                       </td>
                       <td className="px-3 py-2">
                         <button

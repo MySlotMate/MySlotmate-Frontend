@@ -20,249 +20,237 @@ import {
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import MonthlyPassCard from "~/components/experience/MonthlyPassCard";
 import {
-  FiBookmark,
-  FiShare2,
-  FiMapPin,
-  FiClock,
-  FiUsers,
-  FiStar,
+  FiArrowLeft,
   FiCalendar,
-  FiGrid,
   FiChevronDown,
-  FiShield,
-  FiUser,
-  FiCheck,
-  FiArrowRight,
-  FiMessageCircle,
-  FiPlus,
+  FiClock,
+  FiGrid,
+  FiHeart,
+  FiMapPin,
   FiMinus,
+  FiPlus,
+  FiShare,
+  FiStar,
+  FiUsers,
   FiX,
 } from "react-icons/fi";
-import {
-  LuLanguages,
-  LuBadgeCheck,
-  LuSparkles,
-  LuTicket,
-} from "react-icons/lu";
+import { LuBadgeCheck, LuLock } from "react-icons/lu";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { formatIST, sameInstant } from "~/lib/datetime";
+import { getMoodDisplayLabel } from "~/lib/moods";
 import SessionSlotPicker from "~/components/experience/SessionSlotPicker";
-import type { EventDTO, OccurrenceAvailability, PriceTierDTO } from "~/lib/api";
+import type {
+  EventDTO,
+  OccurrenceAvailability,
+  PriceTierDTO,
+  PublicHostProfileDTO,
+} from "~/lib/api";
 import GoogleLogin from "~/components/GoogleLogin";
 
 export const runtime = "edge";
 
+// Sizes follow the Figma "Experience detail" frames (Desktop 1440 → Mobile 390).
+const CARD = "rounded-[20px] border border-white/[0.06] bg-[#131328]";
+const GRADIENT_BTN =
+  "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:brightness-100";
+const DIVIDER = "border-t border-[#9B30FF]/25";
+const SELECT =
+  "w-full appearance-none rounded-xl border border-white/10 bg-[#121426] px-3.5 py-2.5 pr-10 text-sm font-medium text-white outline-none focus:border-[#9B30FF]";
+
+const rupees = (cents: number) => `₹${(cents / 100).toFixed(0)}`;
+
+const formatDuration = (mins: number) => {
+  if (mins < 60) return `${mins} mins`;
+  const hours = Math.floor(mins / 60);
+  const rest = mins % 60;
+  return rest > 0
+    ? `${hours}h ${rest}m`
+    : `${hours} Hour${hours > 1 ? "s" : ""}`;
+};
+
 /* ------------------------------------------------------------------ */
-/*  Photo Gallery Component                                            */
+/*  Hero gallery                                                       */
 /* ------------------------------------------------------------------ */
-function PhotoGallery({
-  coverImage,
-  gallery = [],
+function Hero({
+  images,
+  title,
+  saved,
+  onSave,
+  onShare,
+  onBack,
   onShowAll,
 }: {
-  coverImage: string | null;
-  gallery: string[] | null;
+  images: string[];
+  title: string;
+  saved: boolean;
+  onSave: () => void;
+  onShare: () => void;
+  onBack: () => void;
   onShowAll: () => void;
 }) {
-  const images = coverImage
-    ? [coverImage, ...(gallery ?? [])]
-    : (gallery ?? []);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-  if (images.length === 0) {
-    return (
-      <div className="flex aspect-[16/9] w-full items-center justify-center rounded-xl bg-gray-200">
-        <span className="text-gray-500">No photos available</span>
-      </div>
-    );
-  }
-
-  const handlePrev = () => {
-    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  };
-
-  const handleNext = () => {
-    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-  };
+  const [index, setIndex] = useState(0);
+  const src = images[index];
+  const iconBtn =
+    "flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition hover:bg-black/60";
 
   return (
-    <div className="group relative">
-      {/* Fixed 16:9 frame so every event reads the same size and the image sits
-          flush beside the sticky booking card. Uploaded images vary in ratio
-          (flyers are often wider than 16:9), so a blurred copy fills the frame
-          while the foreground uses object-contain — the whole image shows, no
-          crop. Mirrors the ExperienceCard treatment. */}
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
-        {/* Blurred backdrop fill */}
-        <img
-          src={images[currentImageIndex]}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+    <div className="group relative h-[260px] w-full overflow-hidden bg-[#131328] md:h-[300px] md:rounded-[20px] lg:h-[380px]">
+      {src ? (
+        <>
+          {/* Uploaded flyers vary in ratio, so a blurred copy fills the frame
+              and the foreground is uncropped. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt={title}
+            fetchPriority="high"
+            className="relative block h-full w-full object-contain"
+          />
+        </>
+      ) : (
+        <div className="flex h-full items-center justify-center text-sm text-white/40">
+          No photos available
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onBack}
+        aria-label="Go back"
+        className={`absolute top-4 left-4 md:hidden ${iconBtn}`}
+      >
+        <FiArrowLeft className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={onSave}
+        aria-label={saved ? "Remove from saved" : "Save experience"}
+        className={`absolute top-4 right-4 ${iconBtn}`}
+      >
+        <FiHeart
+          className={`h-4 w-4 ${saved ? "fill-[#E040FB] text-[#E040FB]" : ""}`}
         />
-        {/* Main Image (uncropped) */}
-        <img
-          src={images[currentImageIndex]}
-          alt={`Experience gallery ${currentImageIndex + 1}`}
-          fetchPriority="high"
-          className="relative z-[1] block h-full w-full object-contain transition-opacity duration-300"
-        />
+      </button>
+      <button
+        type="button"
+        onClick={onShare}
+        aria-label="Copy link"
+        className={`absolute right-4 bottom-4 ${iconBtn}`}
+      >
+        <FiShare className="h-4 w-4" />
+      </button>
 
-        {/* Navigation Arrows */}
-        {images.length > 1 && (
-          <>
-            {/* Left Arrow */}
-            <button
-              onClick={handlePrev}
-              className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-3 opacity-0 shadow-lg transition group-hover:opacity-100 hover:bg-white"
-              aria-label="Previous image"
-            >
-              <svg
-                className="h-5 w-5 text-gray-800"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </button>
-
-            {/* Right Arrow */}
-            <button
-              onClick={handleNext}
-              className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-3 opacity-0 shadow-lg transition group-hover:opacity-100 hover:bg-white"
-              aria-label="Next image"
-            >
-              <svg
-                className="h-5 w-5 text-gray-800"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </button>
-
-            {/* Image Counter */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm font-medium text-white opacity-0 transition group-hover:opacity-100">
-              {currentImageIndex + 1} / {images.length}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Show All Photos Button */}
       {images.length > 1 && (
-        <button
-          onClick={onShowAll}
-          className="absolute right-4 bottom-4 flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium shadow-lg transition hover:shadow-xl"
-        >
-          <FiGrid size={16} />
-          Show all photos
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={() =>
+              setIndex((i) => (i === 0 ? images.length - 1 : i - 1))
+            }
+            aria-label="Previous image"
+            className={`absolute top-1/2 left-4 -translate-y-1/2 opacity-0 transition group-hover:opacity-100 max-md:hidden ${iconBtn}`}
+          >
+            <FiArrowLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setIndex((i) => (i === images.length - 1 ? 0 : i + 1))
+            }
+            aria-label="Next image"
+            className={`absolute top-1/2 right-4 -translate-y-1/2 opacity-0 transition group-hover:opacity-100 max-md:hidden ${iconBtn}`}
+          >
+            <FiArrowLeft className="h-4 w-4 rotate-180" />
+          </button>
+          <button
+            type="button"
+            onClick={onShowAll}
+            className="absolute bottom-4 left-4 flex h-9 items-center gap-2 rounded-full bg-black/40 px-3.5 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-black/60"
+          >
+            <FiGrid className="h-3.5 w-3.5" />
+            {index + 1} / {images.length}
+          </button>
+        </>
       )}
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Info Pills Component                                               */
+/*  Details rows (date, time, place, spots)                            */
 /* ------------------------------------------------------------------ */
-function InfoPills({
-  duration,
-  groupSize,
-  languages,
-  level,
+function DetailRows({
+  date,
+  durationMinutes,
+  place,
+  spotsLeft,
+  capacity,
 }: {
-  duration: number | null;
-  groupSize: { min: number | null; max: number | null };
-  languages?: string[] | null;
-  level?: string | null;
+  date: string | null;
+  durationMinutes: number | null;
+  place: string;
+  spotsLeft: number;
+  capacity: number;
 }) {
-  const languageLabel =
-    languages && languages.length > 0 ? languages.join(", ") : "English";
-  const formatDuration = (mins: number) => {
-    if (mins < 60) return `${mins} mins`;
-    const hours = Math.floor(mins / 60);
-    const remaining = mins % 60;
-    return remaining > 0 ? `${hours}h ${remaining}m` : `${hours} Hours`;
-  };
+  const end =
+    date && durationMinutes
+      ? new Date(new Date(date).getTime() + durationMinutes * 60_000)
+      : null;
+  const row = "flex items-start gap-2.5 text-[13px] leading-5 text-white/70";
+  const icon = "mt-0.5 h-4 w-4 shrink-0 text-white/50";
 
   return (
-    <div className="mb-6 flex flex-wrap gap-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-blue-50/30 to-transparent px-4 py-6 md:px-6">
-      <div className="flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-          <FiClock className="text-[#0094CA]" size={18} />
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">Duration</p>
-          <p className="text-sm font-semibold">
-            {duration ? formatDuration(duration) : "N/A"}
-          </p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-          <FiUsers className="text-[#0094CA]" size={18} />
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">Capacity</p>
-          <p className="text-sm font-semibold">
-            Up to {groupSize.max ?? 10} guests
-          </p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-          <LuLanguages className="text-[#0094CA]" size={18} />
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">
-            {languages && languages.length > 1 ? "Languages" : "Language"}
-          </p>
-          <p className="text-sm font-semibold">{languageLabel}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-          <LuSparkles className="text-[#0094CA]" size={18} />
-        </div>
-        <div>
-          <p className="text-xs text-gray-500">Level</p>
-          <p className="text-sm font-semibold">
-            {level ?? "Beginner Friendly"}
-          </p>
-        </div>
-      </div>
-    </div>
+    <ul className="flex flex-col gap-2.5">
+      {date && (
+        <li className={row}>
+          <FiCalendar className={icon} />
+          {formatIST(date, "EEEE, MMM d, yyyy")}
+        </li>
+      )}
+      {date && (
+        <li className={row}>
+          <FiClock className={icon} />
+          {formatIST(date, "h:mm a")}
+          {end && ` - ${formatIST(end, "h:mm a")}`}
+          {durationMinutes ? ` (${formatDuration(durationMinutes)})` : ""}
+        </li>
+      )}
+      <li className={row}>
+        <FiMapPin className={icon} />
+        {place}
+      </li>
+      {capacity > 1 && (
+        <li className={row}>
+          <FiUsers className={icon} />
+          {spotsLeft > 0
+            ? `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left of ${capacity} total`
+            : "Fully booked"}
+        </li>
+      )}
+    </ul>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Booking Widget Component                                           */
+/*  Booking widget                                                     */
 /* ------------------------------------------------------------------ */
 function BookingWidget({
   price,
   isFree,
   priceTiers,
-  rating,
-  totalReviews,
-  eventId: _eventId,
-  eventDate: _eventDate,
+  eventDate,
   capacity,
   totalBookings,
-  bookingsLastWeek,
+  durationMinutes,
+  place,
   availability,
   isRecurring,
   isOneOnOne,
@@ -273,26 +261,23 @@ function BookingWidget({
   price: number | null;
   isFree: boolean;
   priceTiers: PriceTierDTO[];
-  rating: number | null;
-  totalReviews: number;
-  eventId: string;
   eventDate: string;
   capacity: number;
   totalBookings: number;
-  bookingsLastWeek: number;
+  durationMinutes: number | null;
+  place: string;
   availability?: OccurrenceAvailability[];
   isRecurring: boolean;
   /** One-on-one events get the day/time picker instead of the flat slot row. */
   isOneOnOne: boolean;
   cancellationPolicy: string | null;
   onBook: (date: string, guests: number, tierId?: string) => void;
-  /** Rendered under the widget, inside the same sticky column (desktop only).
-      The mobile layout puts it in the page flow instead. */
+  /** Monthly pass card — under the desktop card, at the top of the drawer. */
   passSlot?: React.ReactNode;
 }) {
-  const [selectedDate, setSelectedDate] = useState(_eventDate);
+  const [selectedDate, setSelectedDate] = useState(eventDate);
   const [guests, setGuests] = useState(1);
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Ticket tiers: when present, the guest must pick one and its price drives the
   // total. Falls back to the single `price` when the event has no tiers.
@@ -321,7 +306,6 @@ function BookingWidget({
   const maxGuests = Math.max(0, Math.min(spotsLeft, 10));
   const guestOptions = Array.from({ length: maxGuests }, (_, i) => i + 1);
 
-  // Check if selected date has passed
   const eventHasPassed = selectedDate
     ? new Date(selectedDate) < new Date()
     : false;
@@ -357,6 +341,8 @@ function BookingWidget({
             } as OccurrenceAvailability,
           ]
         : [];
+  const showSessions =
+    isRecurring || (availability ? availability.length > 1 : false);
 
   const cancellationCopy =
     cancellationPolicy === "flexible"
@@ -369,659 +355,244 @@ function BookingWidget({
             ? "This experience is non-refundable once booked."
             : "Standard cancellation policy applies.";
 
-  const cancellationBadge =
-    cancellationPolicy === "flexible"
-      ? { label: "Flexible", sub: "cancellation" }
-      : cancellationPolicy === "moderate"
-        ? { label: "Moderate", sub: "cancellation" }
-        : cancellationPolicy === "strict"
-          ? { label: "Strict", sub: "cancellation" }
-          : cancellationPolicy === "no_refund"
-            ? { label: "No refunds", sub: "policy" }
-            : { label: "Standard", sub: "policy" };
+  const book = () => {
+    setDrawerOpen(false);
+    onBook(selectedDate, guests, hasTiers ? selectedTierId : undefined);
+  };
+  const bookDisabled = !selectedDate || spotsLeft <= 0;
+  const bookLabel = spotsLeft <= 0 ? "Fully Booked" : "Book Now";
+
+  const priceBlock = (
+    <div>
+      <p className="text-[10px] font-medium tracking-wider text-white/50 uppercase">
+        Total price
+      </p>
+      <p className="font-outfit mt-0.5 text-2xl leading-7 font-bold text-white">
+        {isFree ? (
+          "Free"
+        ) : hasTiers && !selectedTier ? (
+          <>
+            <span className="text-xs font-medium text-white/60">From </span>
+            {rupees(minTierCents)}
+          </>
+        ) : (
+          <>
+            {rupees(effectivePrice * guests)}
+            <span className="ml-1 text-xs font-normal text-white/60">
+              {guests > 1 ? `for ${guests}` : "/ person"}
+            </span>
+          </>
+        )}
+      </p>
+    </div>
+  );
+
+  const sessionPicker = showSessions ? (
+    <div>
+      <h3 className="mb-2 text-[13px] font-semibold text-white">
+        Choose your session
+      </h3>
+      {isOneOnOne ? (
+        <SessionSlotPicker
+          sessions={sessionDates}
+          selectedDate={selectedDate}
+          onSelect={setSelectedDate}
+        />
+      ) : sessionDates.length > 0 ? (
+        <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {sessionDates.map((occ) => {
+            const isSelected = sameInstant(selectedDate, occ.date);
+            return (
+              <button
+                key={occ.date}
+                type="button"
+                onClick={() => setSelectedDate(occ.date)}
+                disabled={occ.is_fully_booked}
+                className={`flex min-w-[92px] shrink-0 flex-col items-start rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                  isSelected
+                    ? "border-transparent bg-gradient-to-br from-[#7038F5] to-[#B724EA] text-white"
+                    : "border-white/10 bg-[#121426] text-white hover:border-[#9B30FF]/60"
+                }`}
+              >
+                <span className="text-[13px] font-semibold">
+                  {formatIST(occ.date, "eee d MMM")}
+                </span>
+                <span
+                  className={`text-xs ${isSelected ? "text-white/85" : "text-white/55"}`}
+                >
+                  {formatIST(occ.date, "h:mm a")}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="rounded-xl border border-white/10 bg-[#121426] px-4 py-3 text-sm text-white/60">
+          No upcoming sessions
+        </p>
+      )}
+    </div>
+  ) : null;
+
+  const tierSelect =
+    !eventHasPassed && hasTiers && !isFree ? (
+      <label className="block">
+        <span className="mb-2 block text-[13px] font-semibold text-white">
+          Ticket type
+        </span>
+        <span className="relative block">
+          <select
+            value={selectedTierId}
+            onChange={(e) => setSelectedTierId(e.target.value)}
+            className={SELECT}
+          >
+            {priceTiers.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name} — {rupees(t.price_cents)}
+              </option>
+            ))}
+          </select>
+          <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-white/50" />
+        </span>
+      </label>
+    ) : null;
+
+  const guestStepper = !eventHasPassed ? (
+    <div className="flex items-center justify-between">
+      <span className="text-[13px] font-semibold text-white">Guests</span>
+      {maxGuests > 0 ? (
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Fewer guests"
+            onClick={() => setGuests((g) => Math.max(1, g - 1))}
+            disabled={guests <= 1}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white transition hover:bg-white/10 disabled:opacity-30"
+          >
+            <FiMinus className="h-3.5 w-3.5" />
+          </button>
+          <span className="min-w-5 text-center text-sm font-semibold">
+            {guests}
+          </span>
+          <button
+            type="button"
+            aria-label="More guests"
+            onClick={() => setGuests((g) => Math.min(maxGuests, g + 1))}
+            disabled={guests >= maxGuests}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white transition hover:bg-white/10 disabled:opacity-30"
+          >
+            <FiPlus className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      ) : (
+        <span className="text-xs font-semibold text-red-400">Fully booked</span>
+      )}
+    </div>
+  ) : null;
 
   return (
     <>
-      {/* Desktop Widget */}
-      <div className="sticky top-20 mx-auto hidden h-max w-full max-w-[360px] pl-4 lg:ml-auto lg:block">
-        <div className="relative overflow-hidden rounded-3xl border border-[#cfe8fa] bg-gradient-to-br from-white via-[#f4faff] to-[#e9f5ff] p-5 shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
-          {/* Header */}
-          <div className="mb-3 flex items-start gap-2.5">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[#cfe8fa] bg-white shadow-[0_8px_20px_rgba(31,167,255,0.18)]">
-              <LuTicket className="h-4 w-4 -rotate-12 text-[#0094CA]" />
-            </div>
-            <div className="flex-1">
-              <h2 className="font-outfit text-xl leading-none font-extrabold tracking-tight text-[#16304c]">
-                {isFree ? (
-                  "FREE EXPERIENCE"
-                ) : hasTiers ? (
-                  <>
-                    <span className="text-sm font-medium text-[#6f8daa]">
-                      From{" "}
-                    </span>
-                    ₹{(minTierCents / 100).toFixed(0)}
-                  </>
-                ) : (
-                  <>
-                    ₹{(effectivePrice / 100).toFixed(0)}
-                    <span className="text-sm font-medium text-[#6f8daa]">
-                      /person
-                    </span>
-                  </>
-                )}
-              </h2>
-              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#5f7e9a]">
-                Hosted by verified host
-                <LuBadgeCheck
-                  className="h-3.5 w-3.5 text-[#0094CA]"
-                  fill="#0094CA"
-                  stroke="#ffffff"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Row */}
-          {/* <div className="mb-3 flex items-center justify-start gap-4 border-b border-[#dbeaf5] pb-3 text-xs"> */}
-          {/* <div className="flex items-center gap-2">
-              {rating !== null && rating > 0 && totalReviews > 0 ? (
-                <>
-                  <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-[#16304c]">
-                    {rating.toFixed(1)}
-                  </span>
-                  <span className="text-[#6f8daa]">
-                    ({totalReviews} reviews)
-                  </span>
-                </>
-              ) : (
-                <span className="font-bold text-[#0094CA] uppercase">NEW</span>
-              )}
-            </div> */}
-          {/* <div className="h-4 w-px bg-[#dbeaf5]" /> */}
-          {/* <div className="flex items-center gap-2">
-              <FiUsers className="h-4 w-4 text-[#0094CA]" />
-              <span className="font-bold text-[#16304c]">{totalBookings}</span>
-              <span className="text-[#6f8daa]">people joined</span>
-            </div> */}
-          {/* </div> */}
-
-          {/* Choose Your Session */}
-          {(isRecurring || (availability && availability.length > 1)) && (
-            <div className="mb-3">
-              <div className="flex items-center gap-1.5">
-                <FiCalendar className="h-4 w-4 text-[#0094CA]" />
-                <h3 className="text-sm font-bold text-[#16304c]">
-                  Choose your session
-                </h3>
-              </div>
-              <p className="mb-4 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
-                Pick a time
+      {/* Desktop: sticky "Details" card in the right column */}
+      <aside className="hidden lg:block">
+        <div className="sticky top-10 flex flex-col gap-4">
+          <div className={`flex flex-col gap-5 p-5 ${CARD}`}>
+            <h2 className="font-outfit text-[15px] font-semibold text-white">
+              Details
+            </h2>
+            <DetailRows
+              date={selectedDate}
+              durationMinutes={durationMinutes}
+              place={place}
+              spotsLeft={spotsLeft}
+              capacity={capacity}
+            />
+            {sessionPicker}
+            {tierSelect}
+            {guestStepper}
+            <div className={`pt-4 ${DIVIDER}`}>{priceBlock}</div>
+            {eventHasPassed ? (
+              <p className="rounded-full bg-white/5 py-3 text-center text-sm font-medium text-white/50">
+                Event has passed
               </p>
-
-              {isOneOnOne ? (
-                <SessionSlotPicker
-                  sessions={sessionDates}
-                  selectedDate={selectedDate}
-                  onSelect={setSelectedDate}
-                />
-              ) : sessionDates.length > 0 ? (
-                <div
-                  className={`${
-                    sessionDates.length === 1
-                      ? "flex"
-                      : "hide-scrollbar -mx-1 flex gap-3 overflow-x-auto px-1 pb-1"
-                  }`}
-                >
-                  {sessionDates.map((occ) => {
-                    const isSelected = selectedDate === occ.date;
-                    const isDisabled = occ.is_fully_booked;
-                    const isSingle = sessionDates.length === 1;
-
-                    if (isSingle) {
-                      return (
-                        <button
-                          key={occ.date}
-                          type="button"
-                          onClick={() =>
-                            !isDisabled && setSelectedDate(occ.date)
-                          }
-                          disabled={isDisabled}
-                          className={`relative flex w-full items-center gap-2.5 rounded-2xl border-2 px-3.5 py-2.5 text-left transition ${
-                            isSelected
-                              ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_14px_30px_rgba(31,167,255,0.35)]"
-                              : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
-                          } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
-                        >
-                          <FiClock
-                            className={`h-4 w-4 flex-shrink-0 ${
-                              isSelected ? "text-white/90" : "text-[#6f8daa]"
-                            }`}
-                          />
-                          <div className="flex flex-1 items-baseline gap-2">
-                            <span className="text-sm font-bold">
-                              {formatIST(occ.date, "eee d MMM")},
-                            </span>
-                            <span
-                              className={`text-sm ${
-                                isSelected ? "text-white/90" : "text-[#6f8daa]"
-                              }`}
-                            >
-                              {formatIST(occ.date, "h:mm a")}
-                            </span>
-                          </div>
-                          {isSelected && (
-                            <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white">
-                              <FiCheck className="h-3 w-3 stroke-[3] text-[#0094CA]" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    }
-
-                    return (
-                      <button
-                        key={occ.date}
-                        type="button"
-                        onClick={() => !isDisabled && setSelectedDate(occ.date)}
-                        disabled={isDisabled}
-                        className={`relative flex min-w-[95px] flex-shrink-0 flex-col items-start gap-1 rounded-2xl border-2 p-3 text-left transition ${
-                          isSelected
-                            ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_14px_30px_rgba(31,167,255,0.35)]"
-                            : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
-                        } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
-                      >
-                        <FiClock
-                          className={`h-4 w-4 ${
-                            isSelected ? "text-white/90" : "text-[#6f8daa]"
-                          }`}
-                        />
-                        <div className="text-sm leading-tight font-bold">
-                          {formatIST(occ.date, "eee d MMM")}
-                        </div>
-                        <div
-                          className={`text-sm leading-tight ${
-                            isSelected ? "text-white/90" : "text-[#6f8daa]"
-                          }`}
-                        >
-                          {formatIST(occ.date, "h:mm a")}
-                        </div>
-                        {isSelected && (
-                          <div className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-sm">
-                            <FiCheck className="h-2.5 w-2.5 stroke-[3] text-[#0094CA]" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm text-[#6f8daa]">
-                  No upcoming sessions
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Ticket type */}
-          {!eventHasPassed && hasTiers && !isFree && (
-            <div className="mb-3">
-              <div className="flex items-center gap-1.5">
-                <LuTicket className="h-4 w-4 text-[#0094CA]" />
-                <h3 className="text-sm font-bold text-[#16304c]">
-                  Ticket type
-                </h3>
-              </div>
-              <p className="mb-2 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
-                Choose your ticket
-              </p>
-              <div className="relative">
-                <select
-                  value={selectedTierId}
-                  onChange={(e) => setSelectedTierId(e.target.value)}
-                  className="w-full appearance-none rounded-2xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                >
-                  {priceTiers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} — ₹{(t.price_cents / 100).toFixed(0)}
-                    </option>
-                  ))}
-                </select>
-                <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-[#6f8daa]" />
-              </div>
-            </div>
-          )}
-
-          {/* Guests */}
-          {!eventHasPassed && (
-            <div className="mb-3">
-              <div className="flex items-center gap-1.5">
-                <FiUser className="h-4 w-4 text-[#0094CA]" />
-                <h3 className="text-sm font-bold text-[#16304c]">Guests</h3>
-              </div>
-              <p className="mb-2 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
-                How many are joining?
-              </p>
-              {guestOptions.length > 0 ? (
-                <div className="relative">
-                  <select
-                    value={guests}
-                    onChange={(e) => setGuests(Number(e.target.value))}
-                    className="w-full appearance-none rounded-2xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                  >
-                    {guestOptions.map((n) => (
-                      <option key={n} value={n}>
-                        {n} Guest{n > 1 ? "s" : ""}
-                      </option>
-                    ))}
-                  </select>
-                  <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-[#6f8daa]" />
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm font-medium text-[#6f8daa]">
-                  No guest slots available
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Reserve Button or Event Passed */}
-          {eventHasPassed ? (
-            <div className="rounded-2xl bg-[#f0f6fb] p-3.5 text-center text-sm font-medium text-[#6f8daa]">
-              Event has passed
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() =>
-                onBook(
-                  selectedDate,
-                  guests,
-                  hasTiers ? selectedTierId : undefined,
-                )
-              }
-              disabled={!selectedDate || spotsLeft <= 0}
-              className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.4)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-            >
-              <span>{spotsLeft <= 0 ? "Fully Booked" : "Reserve My Spot"}</span>
-              {spotsLeft > 0 && (
-                <FiArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-              )}
-            </button>
-          )}
-
-          {/* Booking activity hint */}
-          {!eventHasPassed && bookingsLastWeek > 0 && (
-            <div className="mt-2 flex items-center justify-center gap-2 text-[11px] text-[#5f7e9a]">
-              {/* <span aria-hidden>🔥</span> */}
-              {/* <span>
-                {bookingsLastWeek} {bookingsLastWeek === 1 ? "person" : "people"}{" "}
-                booked this week
-              </span> */}
-            </div>
-          )}
-
-          {/* Trust Badges */}
-          <div className="mt-3 grid grid-cols-3 gap-1 border-t border-[#dbeaf5] pt-3">
-            <div className="flex flex-col items-center gap-1 px-1 text-center">
-              <FiShield className="h-4 w-4 text-[#0094CA]" />
-              <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
-                {cancellationBadge.label}
-                <br />
-                {cancellationBadge.sub}
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-1 border-x border-[#dbeaf5] px-1 text-center">
-              <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-              <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
-                Verified
-                <br />
-                host
-              </span>
-            </div>
-            <div className="flex flex-col items-center gap-1 px-1 text-center">
-              <FiMessageCircle className="h-4 w-4 text-[#0094CA]" />
-              <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
-                Instant
-                <br />
-                confirmation
-              </span>
-            </div>
-          </div>
-
-          {/* Footer Note */}
-          <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px] text-[#5f7e9a]">
-            <svg
-              aria-hidden
-              viewBox="0 0 24 24"
-              className="h-3.5 w-3.5 flex-shrink-0 text-[#5fc781]"
-            >
-              <path
-                fill="currentColor"
-                d="M17 3c-4 0-9 3-11 9-1.4 4.2.4 7.4 3 9 2-5 5.5-8 10-9-3 2-5 5-6 9 5 0 9-4 9-9V3h-5Z"
-              />
-            </svg>
-            <span>{cancellationCopy}</span>
-          </div>
-
-          {/* Rare find banner */}
-          {!eventHasPassed && capacity > 1 && spotsLeft <= 3 && spotsLeft > 0 && (
-            <div className="mt-4 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 p-3">
-              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-500">
-                <LuSparkles className="text-white" size={12} />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-red-600">Rare find</p>
-                <p className="text-xs text-red-500">
-                  Only {spotsLeft} spot{spotsLeft > 1 ? "s" : ""} left!
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {passSlot ? <div className="mt-4">{passSlot}</div> : null}
-      </div>
-
-      {/* Mobile Floating Bottom Bar */}
-      <div className="pb-safe-bottom fixed right-0 bottom-0 left-0 z-40 flex items-center justify-between border-t border-[#dbeaf5]/60 bg-white/90 p-4.5 shadow-[0_-12px_40px_rgba(22,48,76,0.06)] backdrop-blur-xl transition-all duration-300 lg:hidden">
-        <div className="flex flex-col items-start">
-          <div className="flex items-baseline gap-1">
-            <span className="font-outfit text-2xl font-black tracking-tight text-[#16304c]">
-              {isFree ? (
-                "FREE"
-              ) : hasTiers ? (
-                <>
-                  <span className="text-xs font-semibold text-[#6f8daa]">
-                    From{" "}
-                  </span>
-                  ₹{(minTierCents / 100).toFixed(0)}
-                </>
-              ) : (
-                <>₹{(effectivePrice / 100).toFixed(0)}</>
-              )}
-            </span>
-            {!isFree && !hasTiers && (
-              <span className="text-xs font-semibold text-[#6f8daa]">
-                /person
-              </span>
-            )}
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
-            {rating !== null && rating > 0 && totalReviews > 0 ? (
-              <span className="flex items-center gap-1 font-bold text-gray-700">
-                <FiStar className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                <span>{rating.toFixed(1)}</span>
-                <span className="text-[10px] font-normal text-[#6f8daa]">
-                  ({totalReviews})
-                </span>
-              </span>
             ) : (
-              <span className="rounded-md bg-[#e6f6fd] px-1.5 py-0.5 text-[9px] font-extrabold tracking-wider text-[#0094CA] uppercase">
-                NEW
-              </span>
-            )}
-
-            {selectedDate && (
-              <>
-                <span className="h-2.5 w-px bg-gray-200" />
-                <span className="font-semibold text-[#16304c]">
-                  {formatIST(selectedDate, "MMM d")}
-                </span>
-              </>
-            )}
-
-            {!eventHasPassed && capacity > 1 && spotsLeft <= 3 && spotsLeft > 0 && (
-              <span className="animate-pulse rounded-md bg-red-50 px-1.5 py-0.5 text-[9px] leading-none font-bold text-red-500">
-                Only {spotsLeft} left!
-              </span>
-            )}
-          </div>
-        </div>
-
-        <div>
-          {eventHasPassed ? (
-            <div className="rounded-xl bg-gray-100 px-6 py-3 text-center text-sm font-bold text-gray-400">
-              Passed
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsMobileDrawerOpen(true)}
-              disabled={spotsLeft <= 0}
-              className="group flex items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-[#1fa7ff] via-[#00a8e8] to-[#0094CA] px-7 py-3 text-sm font-bold text-white shadow-[0_8px_24px_rgba(0,148,202,0.22)] transition-all duration-150 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-            >
-              <span>{spotsLeft <= 0 ? "Fully Booked" : "Book Now"}</span>
-              {spotsLeft > 0 && (
-                <FiArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-              )}
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile Booking Drawer (Modal Bottom Sheet) */}
-      {isMobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center lg:hidden">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-[2px] transition-opacity duration-300"
-            onClick={() => setIsMobileDrawerOpen(false)}
-          />
-
-          {/* Drawer Content */}
-          <div className="animate-slide-up relative max-h-[85vh] w-full overflow-y-auto rounded-t-[32px] border-t border-[#cfe8fa] bg-gradient-to-b from-white via-[#f4faff] to-[#e9f5ff] p-6 pb-8 shadow-[0_-10px_40px_rgba(31,167,255,0.15)]">
-            {/* Header */}
-            <div className="mb-5 flex items-center justify-between border-b border-[#dbeaf5] pb-3">
-              <div>
-                <h3 className="font-outfit text-lg font-extrabold text-[#16304c]">
-                  Select Booking Details
-                </h3>
-                <p className="text-xs text-[#6f8daa]">
-                  {isFree
-                    ? "Free Experience"
-                    : hasTiers
-                      ? `From ₹${(minTierCents / 100).toFixed(0)}`
-                      : `₹${(effectivePrice / 100).toFixed(0)} per person`}
-                </p>
-              </div>
               <button
                 type="button"
-                onClick={() => setIsMobileDrawerOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbeaf5] bg-white text-gray-500 shadow-sm transition hover:bg-gray-50 active:scale-95"
+                onClick={book}
+                disabled={bookDisabled}
+                className={`h-11 rounded-full text-sm font-semibold ${GRADIENT_BTN}`}
+              >
+                {bookLabel}
+              </button>
+            )}
+            <p className="-mt-2 text-center text-[11px] leading-4 text-white/45">
+              {cancellationCopy}
+            </p>
+          </div>
+          {passSlot}
+        </div>
+      </aside>
+
+      {/* Tablet + mobile: price bar pinned to the bottom, opens the drawer */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0E0F1F]/95 px-6 pt-3 pb-[max(16px,env(safe-area-inset-bottom))] backdrop-blur-xl md:left-20 lg:hidden">
+        <div className="mx-auto flex max-w-[608px] items-center justify-between gap-4">
+          {priceBlock}
+          {eventHasPassed ? (
+            <span className="rounded-full bg-white/5 px-6 py-3 text-sm font-medium text-white/50">
+              Passed
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              disabled={spotsLeft <= 0}
+              className={`h-11 w-40 rounded-full text-sm font-semibold md:w-56 ${GRADIENT_BTN}`}
+            >
+              {bookLabel}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {drawerOpen && (
+        <div className="fixed inset-0 z-[260] flex items-end justify-center lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+            onClick={() => setDrawerOpen(false)}
+          />
+          <div className="animate-slide-up relative flex max-h-[85vh] w-full max-w-[608px] flex-col gap-5 overflow-y-auto rounded-t-[28px] border-t border-white/10 bg-[#0E0F1F] p-6 pb-8 text-white">
+            <div className="flex items-center justify-between">
+              <h3 className="font-outfit text-lg font-semibold">
+                Booking details
+              </h3>
+              <button
+                type="button"
+                aria-label="Close"
+                onClick={() => setDrawerOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/15"
               >
                 <FiX className="h-4 w-4" />
               </button>
             </div>
-
-            {/* Monthly pass — the alternative to paying per session, offered
-                before the per-session choices below. */}
-            {passSlot ? <div className="mb-5">{passSlot}</div> : null}
-
-            {/* Choose Date (Conditional for recurring event or multi-slot experience) */}
-            {(isRecurring || (availability && availability.length > 1)) && (
-              <div className="mb-5">
-                <div className="mb-2 flex items-center gap-1.5">
-                  <FiCalendar className="h-4 w-4 text-[#0094CA]" />
-                  <h4 className="text-sm font-bold text-[#16304c]">
-                    Choose your session
-                  </h4>
-                </div>
-                {isOneOnOne ? (
-                  <SessionSlotPicker
-                    sessions={sessionDates}
-                    selectedDate={selectedDate}
-                    onSelect={setSelectedDate}
-                  />
-                ) : sessionDates.length > 0 ? (
-                  <div className="hide-scrollbar -mx-2 flex gap-3 overflow-x-auto px-2 pb-2">
-                    {sessionDates.map((occ) => {
-                      const isSelected = selectedDate === occ.date;
-                      const isDisabled = occ.is_fully_booked;
-
-                      return (
-                        <button
-                          key={occ.date}
-                          type="button"
-                          onClick={() =>
-                            !isDisabled && setSelectedDate(occ.date)
-                          }
-                          disabled={isDisabled}
-                          className={`relative flex min-w-[105px] flex-shrink-0 flex-col items-start gap-1 rounded-2xl border-2 p-3 text-left transition ${
-                            isSelected
-                              ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_10px_20px_rgba(31,167,255,0.25)]"
-                              : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
-                          } ${isDisabled ? "cursor-not-allowed opacity-50" : ""}`}
-                        >
-                          <FiClock
-                            className={`h-4 w-4 ${
-                              isSelected ? "text-white/90" : "text-[#6f8daa]"
-                            }`}
-                          />
-                          <div className="text-sm leading-tight font-bold">
-                            {formatIST(occ.date, "eee d MMM")}
-                          </div>
-                          <div
-                            className={`text-[11px] leading-tight ${
-                              isSelected ? "text-white/90" : "text-[#6f8daa]"
-                            }`}
-                          >
-                            {formatIST(occ.date, "h:mm a")}
-                          </div>
-                          {isSelected && (
-                            <div className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-sm">
-                              <FiCheck className="h-2.5 w-2.5 stroke-[3] text-[#0094CA]" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm text-[#6f8daa]">
-                    No upcoming sessions
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Ticket type selector (mobile drawer) */}
-            {!eventHasPassed && hasTiers && !isFree && (
-              <div className="mb-4 rounded-2xl border border-[#dbeaf5] bg-white p-4">
-                <div className="mb-2 flex items-center gap-2">
-                  <div className="rounded-lg bg-[#eef7ff] p-2 text-[#0094CA]">
-                    <LuTicket className="h-5 w-5" />
-                  </div>
-                  <h4 className="text-sm font-bold text-[#16304c]">
-                    Ticket type
-                  </h4>
-                </div>
-                <div className="relative">
-                  <select
-                    value={selectedTierId}
-                    onChange={(e) => setSelectedTierId(e.target.value)}
-                    className="w-full appearance-none rounded-xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                  >
-                    {priceTiers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} — ₹{(t.price_cents / 100).toFixed(0)}
-                      </option>
-                    ))}
-                  </select>
-                  <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-[#6f8daa]" />
-                </div>
-              </div>
-            )}
-
-            {/* Guest Count selector with plus/minus buttons */}
-            {!eventHasPassed && (
-              <div className="mb-6 rounded-2xl border border-[#dbeaf5] bg-white p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-lg bg-[#eef7ff] p-2 text-[#0094CA]">
-                      <FiUser className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-[#16304c]">
-                        Number of Guests
-                      </h4>
-                    </div>
-                  </div>
-
-                  {maxGuests > 0 ? (
-                    <div className="flex items-center gap-4">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setGuests((prev) => Math.max(1, prev - 1))
-                        }
-                        disabled={guests <= 1}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbeaf5] bg-white text-[#16304c] shadow-sm transition hover:bg-gray-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
-                      >
-                        <FiMinus className="h-4 w-4" />
-                      </button>
-                      <span className="font-outfit min-w-[20px] text-center text-base font-bold text-[#16304c]">
-                        {guests}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setGuests((prev) => Math.min(maxGuests, prev + 1))
-                        }
-                        disabled={guests >= maxGuests}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#dbeaf5] bg-white text-[#16304c] shadow-sm transition hover:bg-gray-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-30"
-                      >
-                        <FiPlus className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-xs font-semibold text-red-500">
-                      Fully Booked
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Total summary info */}
-            {!eventHasPassed && !isFree && effectivePrice > 0 && (
-              <div className="mb-6 flex items-center justify-between px-2">
-                <span className="text-sm font-medium text-[#5f7e9a]">
-                  Total booking price:
-                </span>
-                <span className="font-outfit text-xl font-extrabold text-[#16304c]">
-                  ₹{((effectivePrice * guests) / 100).toFixed(0)}
-                </span>
-              </div>
-            )}
-
-            {/* Final Book Button */}
-            {eventHasPassed ? (
-              <div className="rounded-2xl bg-gray-100 p-4 text-center text-sm font-medium text-gray-400">
-                Event has passed
-              </div>
-            ) : (
+            {passSlot}
+            {sessionPicker}
+            {tierSelect}
+            {guestStepper}
+            <div
+              className={`flex items-center justify-between gap-4 pt-4 ${DIVIDER}`}
+            >
+              {priceBlock}
               <button
                 type="button"
-                onClick={() => {
-                  setIsMobileDrawerOpen(false);
-                  onBook(
-                    selectedDate,
-                    guests,
-                    hasTiers ? selectedTierId : undefined,
-                  );
-                }}
-                disabled={!selectedDate || spotsLeft <= 0}
-                className="w-full rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-3.5 text-center text-base font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.3)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.38)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={book}
+                disabled={bookDisabled}
+                className={`h-11 w-40 rounded-full text-sm font-semibold ${GRADIENT_BTN}`}
               >
-                {spotsLeft <= 0 ? "Fully Booked" : "Reserve My Spot"}
+                {spotsLeft <= 0 ? "Fully Booked" : "Continue"}
               </button>
-            )}
-
-            {/* Cancellation info */}
-            <div className="mt-4 flex items-center justify-center gap-1.5 px-4 text-center text-[10px] text-[#5f7e9a]">
-              <span>{cancellationCopy}</span>
             </div>
+            <p className="text-center text-[11px] text-white/45">
+              {cancellationCopy}
+            </p>
           </div>
         </div>
       )}
@@ -1030,86 +601,49 @@ function BookingWidget({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Meet Your Host Component                                           */
+/*  Host row                                                           */
 /* ------------------------------------------------------------------ */
-function MeetYourHost({
-  host,
-  onContact,
-  onViewProfile,
-}: {
-  host: {
-    id: string;
-    first_name: string;
-    last_name: string;
-    avatar_url: string | null;
-    bio: string | null;
-    is_identity_verified: boolean;
-    is_super_host: boolean;
-  } | null;
-  onContact: () => void;
-  onViewProfile: () => void;
-}) {
-  if (!host) return null;
-
+function HostRow({ host }: { host: PublicHostProfileDTO }) {
   return (
-    <div className="mb-8 rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div className="flex flex-shrink-0 items-center gap-4 sm:flex-col sm:items-center">
-          {host.avatar_url ? (
-            <img
-              src={host.avatar_url}
-              alt={host.first_name}
-              className="h-14 w-14 rounded-full object-cover shadow-sm"
+    <div className="flex items-center gap-3">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        // Some hosts have avatar_url = "" — `??` would keep the empty string.
+        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+        src={host.avatar_url || "/assets/home/profile1.png"}
+        alt=""
+        className="h-10 w-10 shrink-0 rounded-full object-cover"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
+          <span className="truncate">
+            {host.first_name} {host.last_name}
+          </span>
+          {host.is_identity_verified && (
+            <LuBadgeCheck
+              className="h-4 w-4 shrink-0 text-[#B57BFF]"
+              aria-label="Verified host"
             />
-          ) : (
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#0094CA] text-xl font-bold text-white shadow-sm">
-              {host.first_name[0]}
-            </div>
           )}
-          <div className="text-left sm:text-center">
-            <p className="text-sm font-semibold text-gray-900">
-              {host.first_name} {host.last_name?.[0]}.
-            </p>
-            {host.is_identity_verified ? (
-              <p className="flex items-center gap-1 text-xs font-medium text-green-600 sm:justify-center">
-                <LuBadgeCheck size={14} />
-                Verified
-              </p>
-            ) : (
-              <p className="text-xs text-gray-500">Host</p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex-1">
-          <p className="text-sm leading-relaxed text-gray-600">
-            {host.bio ??
-              `Hi, I'm ${host.first_name}! I'm excited to share this experience with you.`}
-          </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              onClick={onContact}
-              className="rounded-lg bg-[#f0f9ff] px-4 py-2 text-xs font-semibold text-[#0094CA] transition hover:bg-[#e6f6ff]"
-            >
-              Contact Host
-            </button>
-            <button
-              onClick={onViewProfile}
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
-            >
-              View Profile
-            </button>
-          </div>
-        </div>
+        </p>
+        <p className="truncate text-xs text-white/55">
+          {host.tagline ?? (host.city ? `Host in ${host.city}` : "Host")}
+        </p>
       </div>
+      <Link
+        href={`/host/${host.slug}`}
+        className="shrink-0 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/15"
+      >
+        View Profile
+      </Link>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Where We'll Meet Component                                         */
+/*  Location                                                           */
 /* ------------------------------------------------------------------ */
-function WhereWellMeet({
+function LocationSection({
   location,
   isOnline,
   meetingLink,
@@ -1120,90 +654,79 @@ function WhereWellMeet({
   meetingLink?: string | null;
   googleMapsUrl?: string | null;
 }) {
-  if (isOnline) {
-    return (
-      <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-blue-50/20 to-transparent px-4 py-8 md:px-6">
-        <h2 className="mb-6 text-2xl font-bold">Where we&apos;ll meet</h2>
-        <div className="flex items-center justify-center rounded-xl bg-gray-100 p-6">
-          <div className="text-center">
-            <div className="mb-2 text-4xl">🌐</div>
-            <p className="font-semibold">Online Experience</p>
-            <p className="text-sm text-gray-500">
-              Join from anywhere via video call
-            </p>
-            {meetingLink && (
-              <a
-                href={meetingLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-block rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#007ba8]"
-              >
-                Join Meeting
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const directions =
+    googleMapsUrl ??
+    (location
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`
+      : null);
 
   return (
-    <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-transparent to-blue-50/20 px-4 py-8 md:px-6">
-      <h2 className="mb-6 text-2xl font-bold">Where we&apos;ll meet</h2>
-      <div className="relative h-64 w-full overflow-hidden rounded-xl bg-gray-100 shadow-inner">
-        {location ? (
-          <iframe
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            loading="lazy"
-            allowFullScreen
-            referrerPolicy="no-referrer-when-downgrade"
-            src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-            title="Meeting Location Map"
-            className="rounded-xl grayscale-[20%] transition-all hover:grayscale-0"
-          ></iframe>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
-            <div className="text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm">
-                <FiMapPin className="text-[#0094CA]" size={24} />
+    <section>
+      <h2 className="font-outfit mb-3 text-[15px] font-semibold text-white">
+        Location
+      </h2>
+      {isOnline ? (
+        <div className={`p-5 text-sm text-white/70 ${CARD}`}>
+          <p className="font-semibold text-white">Online experience</p>
+          <p className="mt-1">Join from anywhere via video call.</p>
+          {meetingLink && (
+            <a
+              href={meetingLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-block text-sm font-semibold text-[#B57BFF] hover:text-[#D4ABFF]"
+            >
+              Join meeting
+            </a>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="h-[180px] overflow-hidden rounded-2xl bg-[#131328]">
+            {location ? (
+              <iframe
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+                title="Meeting location map"
+                // Google's embed has no dark style; invert it to sit on the dark page.
+                className="[filter:invert(90%)_hue-rotate(180deg)_saturate(0.6)]"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-white/45">
+                Exact meeting point shared after booking
               </div>
-              <p className="mt-3 text-sm font-medium text-gray-400">
-                Exact meeting point visible after booking
-              </p>
-            </div>
+            )}
           </div>
-        )}
-      </div>
-      <div className="mt-2 flex items-center justify-between">
-        <p className="text-sm text-gray-500">
-          {location ?? "Exact location provided after booking"}
-        </p>
-        {googleMapsUrl && (
-          <a
-            href={googleMapsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-sm font-medium text-[#0094CA] transition hover:text-[#007ba8]"
-          >
-            View on Maps
-            <FiMapPin size={14} />
-          </a>
-        )}
-      </div>
-    </div>
+          <p className="mt-3 text-sm font-semibold text-white">
+            {location ?? "Location shared after booking"}
+          </p>
+          {directions && (
+            <a
+              href={directions}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-block text-[13px] font-semibold text-[#B57BFF] hover:text-[#D4ABFF]"
+            >
+              Get Directions
+            </a>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  Guest Reviews Component                                            */
+/*  Reviews                                                            */
 /* ------------------------------------------------------------------ */
 function GuestReviews({
   reviews,
   rating,
   totalReviews,
-  onShowAll,
 }: {
   reviews: Array<{
     id: string;
@@ -1214,104 +737,53 @@ function GuestReviews({
   }>;
   rating: number | null;
   totalReviews: number;
-  onShowAll: () => void;
 }) {
   if (totalReviews === 0) return null;
 
-  // Rating distribution (mock for now)
-  const distribution = [
-    { stars: 5, percent: 80 },
-    { stars: 4, percent: 15 },
-    { stars: 3, percent: 5 },
-    { stars: 2, percent: 0 },
-    { stars: 1, percent: 0 },
-  ];
-
   return (
-    <div className="rounded-lg bg-gradient-to-r from-blue-50/20 to-transparent px-4 py-8 md:px-6">
-      <h2 className="mb-6 text-2xl font-bold">Guest Reviews</h2>
-
-      {/* Rating Summary */}
-      <div className="mb-6 flex gap-8">
-        <div className="text-center">
-          <p className="text-4xl font-bold">
-            {rating && rating > 0 ? rating.toFixed(1) : "NEW"}
-          </p>
-          {rating && rating > 0 && (
-            <div className="my-1 flex justify-center gap-0.5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <FiStar
-                  key={star}
-                  size={14}
-                  className={
-                    star <= rating
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300"
-                  }
-                />
-              ))}
-            </div>
-          )}
-          {totalReviews > 0 && (
-            <p className="text-sm text-gray-500">{totalReviews} reviews</p>
-          )}
-        </div>
-
-        {/* Distribution Bars */}
-        <div className="flex-1 space-y-1">
-          {distribution.map(({ stars, percent }) => (
-            <div key={stars} className="flex items-center gap-2">
-              <span className="w-3 text-sm">{stars}</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
-                <div
-                  className="h-full rounded-full bg-[#0094CA]"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Individual Reviews */}
-      <div className="space-y-4">
+    <section>
+      <h2 className="font-outfit mb-3 flex items-center gap-2 text-[15px] font-semibold text-white">
+        Guest Reviews
+        {rating ? (
+          <span className="flex items-center gap-1 text-sm font-semibold text-amber-400">
+            <FiStar className="h-3.5 w-3.5 fill-amber-400" />
+            {rating.toFixed(1)}
+            <span className="font-normal text-white/50">({totalReviews})</span>
+          </span>
+        ) : null}
+      </h2>
+      <div className="flex flex-col gap-3">
         {reviews.slice(0, 3).map((review) => (
-          <div
-            key={review.id}
-            className="border-b border-gray-100 pb-4 last:border-0"
-          >
-            <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-semibold">
+          <div key={review.id} className={`p-4 ${CARD}`}>
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#9B30FF]/20 text-sm font-semibold text-[#D8B4FE]">
                 {review.name?.[0] ?? "G"}
-              </div>
-              <div>
-                <p className="font-semibold">{review.name ?? "Guest"}</p>
-                <p className="text-xs text-gray-500">
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">
+                  {review.name ?? "Guest"}
+                </p>
+                <p className="text-xs text-white/45">
                   {format(new Date(review.created_at), "MMMM yyyy")}
                 </p>
               </div>
+              <span className="flex items-center gap-1 text-xs font-semibold text-amber-400">
+                <FiStar className="h-3 w-3 fill-amber-400" />
+                {review.rating}
+              </span>
             </div>
-            <p className="text-sm text-gray-600">
-              &quot;{review.description}&quot;
+            <p className="mt-3 text-sm leading-6 text-white/70">
+              {review.description}
             </p>
           </div>
         ))}
       </div>
-
-      {totalReviews > 3 && (
-        <button
-          onClick={onShowAll}
-          className="mt-4 text-sm font-medium text-[#0094CA] hover:underline"
-        >
-          Show all {totalReviews} reviews
-        </button>
-      )}
-    </div>
+    </section>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/*  All Photos Modal                                                   */
+/*  All photos modal                                                   */
 /* ------------------------------------------------------------------ */
 function AllPhotosModal({
   isOpen,
@@ -1326,23 +798,26 @@ function AllPhotosModal({
 
   return (
     <div className="fixed inset-0 z-[250] overflow-y-auto bg-black/90">
-      <div className="site-x mx-auto w-full max-w-[1120px] py-8">
+      <div className="mx-auto w-full max-w-[1120px] px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">All photos</h2>
           <button
+            type="button"
+            aria-label="Close"
             onClick={onClose}
-            className="text-2xl text-white hover:text-gray-300"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
           >
-            ×
+            <FiX className="h-4 w-4" />
           </button>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {images.map((img, i) => (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               key={i}
               src={img}
               alt={`Photo ${i + 1}`}
-              className="h-64 w-full rounded-lg object-cover"
+              className="h-64 w-full rounded-xl object-cover"
             />
           ))}
         </div>
@@ -1352,7 +827,7 @@ function AllPhotosModal({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Main Page Component                                                */
+/*  Page                                                               */
 /* ------------------------------------------------------------------ */
 export default function ExperienceDetailClient({
   params,
@@ -1409,13 +884,17 @@ export default function ExperienceDetailClient({
   };
 
   const handleShare = async () => {
-    const url = window.location.href;
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(window.location.href);
       toast.success("Link copied to clipboard!");
     } catch {
       toast.error("Failed to copy link");
     }
+  };
+
+  const handleBack = () => {
+    if (window.history.length > 1) router.back();
+    else router.push("/explore");
   };
 
   const handleBook = (date: string, guests: number, tierId?: string) => {
@@ -1437,27 +916,34 @@ export default function ExperienceDetailClient({
   };
 
   // Same skeleton the route's `loading.tsx` shows, so the server boundary and
-  // this client-side branch look identical instead of swapping a full skeleton
-  // for a lone spinner on white.
+  // this client-side branch look identical.
   if (eventLoading) {
     return <ExperienceSkeleton />;
   }
 
   if (!event) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-white">
-        <p className="mb-4 text-xl text-gray-600">Experience not found</p>
-        <Link href="/" className="text-[#0094CA] hover:underline">
-          Go back home
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#080914] text-white">
+        <p className="mb-4 text-xl text-white/70">Experience not found</p>
+        <Link href="/explore" className="text-[#B57BFF] hover:underline">
+          Back to Explore
         </Link>
       </div>
     );
   }
 
-  const allImages = event.gallery_urls ?? [];
+  const images = event.gallery_urls?.length
+    ? event.gallery_urls
+    : event.cover_image_url
+      ? [event.cover_image_url]
+      : [];
+  const place = event.is_online
+    ? "Online"
+    : (event.location ?? "Location shared after booking");
+  const rating = ratingData?.average_rating ?? null;
+  const totalReviews = ratingData?.total_reviews ?? 0;
+  const baseDate = event.next_available_date ?? event.time;
 
-  // Built once and handed to both layouts: the sticky sidebar renders it under
-  // the booking widget, the mobile layout keeps it in the page flow.
   const passCard = event.monthly_pass_price_cents ? (
     <MonthlyPassCard
       eventId={event.id}
@@ -1471,163 +957,137 @@ export default function ExperienceDetailClient({
 
   return (
     <>
-      <Navbar />
-      <main className="min-h-screen bg-white pb-28 lg:pb-0">
-        <div className="site-x mx-auto w-full max-w-[77rem] px-4 py-8 md:px-6 lg:px-8">
-          {/* Title and Actions */}
-          <div className="mt-16 mb-6 flex items-start justify-between">
-            <div>
-              <h1 className="mb-3 text-2xl font-bold text-gray-900 md:text-4xl">
+      <Navbar dark />
+
+      <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-lg:pb-24 md:pl-20 min-[90rem]:pl-[230px]">
+        <div className="mx-auto w-full max-w-[1216px] pb-12 md:px-10 md:pt-10">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="mb-5 hidden items-center gap-2 text-sm text-white/70 transition hover:text-white md:inline-flex"
+          >
+            <FiArrowLeft className="h-4 w-4" /> Explore
+          </button>
+
+          <Hero
+            images={images}
+            title={event.title}
+            saved={isSaved}
+            onSave={handleSave}
+            onShare={handleShare}
+            onBack={handleBack}
+            onShowAll={() => setShowAllPhotos(true)}
+          />
+
+          <div className="px-6 md:px-0">
+            <header className="mt-5">
+              {event.mood && (
+                <span className="inline-block rounded-full bg-[#9333EA] px-3 py-1 text-[11px] leading-none font-bold tracking-wider text-white uppercase">
+                  {getMoodDisplayLabel(event.mood)}
+                </span>
+              )}
+              <h1 className="font-outfit mt-3 flex items-center gap-2 text-[22px] leading-7 font-bold text-white">
+                {event.is_private && (
+                  <LuLock className="h-5 w-5 shrink-0 text-white/60" />
+                )}
                 {event.title}
               </h1>
-              <div className="mt-3 flex flex-wrap items-center gap-4 text-sm">
-                <span className="flex items-center gap-1 text-gray-600">
-                  <FiMapPin size={14} />
-                  {event.is_online ? (
-                    "Online"
-                  ) : event.google_maps_url ? (
-                    <a
-                      href={event.google_maps_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#0094CA] underline transition hover:text-[#007ba8]"
-                    >
-                      View on Maps
-                    </a>
-                  ) : (
-                    (event.location ?? "Location TBD")
-                  )}
-                </span>
-                {ratingData && (
+              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/60">
+                {rating && totalReviews > 0 ? (
                   <span className="flex items-center gap-1">
-                    <FiStar
-                      className="fill-yellow-400 text-yellow-400"
-                      size={14}
-                    />
-                    <span className="font-semibold">
-                      {ratingData.average_rating &&
-                      ratingData.average_rating > 0
-                        ? ratingData.average_rating.toFixed(1)
-                        : "NEW"}
+                    <FiStar className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                    <span className="font-semibold text-amber-400">
+                      {rating.toFixed(2)}
                     </span>
-                    {ratingData.total_reviews > 0 && (
-                      <span className="text-gray-500">
-                        ({ratingData.total_reviews} reviews)
-                      </span>
-                    )}
+                    ({totalReviews} reviews)
                   </span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleSave}
-                className={`rounded-lg border p-2 transition ${
-                  isSaved
-                    ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA]"
-                    : "border-gray-200 hover:bg-gray-50"
-                }`}
-              >
-                <FiBookmark
-                  size={20}
-                  className={isSaved ? "fill-current" : ""}
-                />
-              </button>
-              <button
-                onClick={handleShare}
-                className="rounded-lg border border-gray-200 p-2 transition hover:bg-gray-50"
-              >
-                <FiShare2 size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Main Content Grid — hero image + all content on the left, the
-              sticky booking widget on the right (side by side from lg up). */}
-          <div className="mt-6 grid gap-8 lg:grid-cols-12">
-            {/* Left Column — image, details, host, location, reviews */}
-            <div className="lg:col-span-7">
-              {/* Photo Gallery (16:9) */}
-              <PhotoGallery
-                coverImage={null}
-                gallery={event.gallery_urls}
-                onShowAll={() => setShowAllPhotos(true)}
-              />
-
-              <div className="mt-8">
-                <InfoPills
-                  duration={event.duration_minutes}
-                  groupSize={{
-                    min: event.min_group_size,
-                    max: event.max_group_size,
-                  }}
-                  languages={event.languages}
-                  level={event.level}
-                />
-              </div>
-
-              {/* About the Experience */}
-              <div className="mb-6 rounded-lg border-b border-gray-100 bg-gradient-to-r from-transparent to-blue-50/20 px-4 py-8 md:px-6">
-                <h2 className="mb-4 text-2xl font-bold">
-                  About the experience
-                </h2>
-                {event.description ? (
-                  <RichTextView
-                    html={event.description}
-                    className="text-gray-600"
-                  />
                 ) : (
-                  <p className="text-gray-600">No description available.</p>
+                  <span className="font-semibold text-[#B57BFF]">NEW</span>
                 )}
-                {event.hook_line && (
-                  <p className="mt-4 text-gray-600 italic">{event.hook_line}</p>
+                {event.duration_minutes ? (
+                  <>
+                    <span aria-hidden>•</span>
+                    {formatDuration(event.duration_minutes)}
+                  </>
+                ) : null}
+                <span aria-hidden>•</span>
+                <span className="truncate">{place}</span>
+              </p>
+            </header>
+
+            <div className={`mt-5 ${DIVIDER}`} />
+
+            <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="flex min-w-0 flex-col gap-6">
+                {host && (
+                  <>
+                    <HostRow host={host} />
+                    <div className={DIVIDER} />
+                  </>
                 )}
+
+                <section>
+                  <h2 className="font-outfit mb-2 text-[15px] font-semibold text-white">
+                    About the Experience
+                  </h2>
+                  {event.hook_line && (
+                    <p className="mb-2 text-sm leading-6 font-medium text-white/85">
+                      {event.hook_line}
+                    </p>
+                  )}
+                  {event.description ? (
+                    <RichTextView
+                      html={event.description}
+                      className="text-sm leading-6 !text-white/70 [&_*]:![background-color:transparent] [&_*]:![color:inherit] [&_a]:![color:#B57BFF] [&_h1]:mt-4 [&_h1]:font-semibold [&_h1]:![color:#fff] [&_h2]:mt-4 [&_h2]:font-semibold [&_h2]:![color:#fff] [&_h3]:mt-3 [&_h3]:font-semibold [&_h3]:![color:#fff] [&_li]:mt-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-2 [&_strong]:![color:#fff] [&_ul]:list-disc [&_ul]:pl-5"
+                    />
+                  ) : (
+                    <p className="text-sm text-white/55">
+                      No description available.
+                    </p>
+                  )}
+                </section>
+
+                {/* Desktop shows these in the sticky card instead */}
+                <section className="lg:hidden">
+                  <div className={`mb-6 ${DIVIDER}`} />
+                  <h2 className="font-outfit mb-3 text-[15px] font-semibold text-white">
+                    Details
+                  </h2>
+                  <DetailRows
+                    date={baseDate}
+                    durationMinutes={event.duration_minutes}
+                    place={place}
+                    spotsLeft={event.capacity - event.total_bookings}
+                    capacity={event.capacity}
+                  />
+                </section>
+
+                <div className={DIVIDER} />
+
+                <LocationSection
+                  location={event.location}
+                  isOnline={event.is_online}
+                  meetingLink={event.meeting_link}
+                  googleMapsUrl={event.google_maps_url}
+                />
+
+                <GuestReviews
+                  reviews={reviews ?? []}
+                  rating={rating}
+                  totalReviews={totalReviews}
+                />
               </div>
 
-              {/* Meet Your Host */}
-              <MeetYourHost
-                host={host ?? null}
-                onContact={() => toast.info("Contact feature coming soon!")}
-                onViewProfile={() =>
-                  router.push(`/host/${host?.slug ?? event.host_id}`)
-                }
-              />
-
-              {/* Where We'll Meet */}
-              <WhereWellMeet
-                location={event.location}
-                isOnline={event.is_online}
-                meetingLink={event.meeting_link}
-                googleMapsUrl={event.google_maps_url}
-              />
-
-              {/* Guest Reviews */}
-              <GuestReviews
-                reviews={reviews ?? []}
-                rating={ratingData?.average_rating ?? null}
-                totalReviews={ratingData?.total_reviews ?? 0}
-                onShowAll={() => toast.info("All reviews modal coming soon!")}
-              />
-            </div>
-
-            {/* Booking Widget — sticky sidebar on desktop; on mobile it renders
-                the floating bottom bar (fixed-positioned, so its DOM slot here
-                is inert). */}
-            <div className="lg:col-span-5">
-              {/* Monthly pass — only for events whose host switched one on. Sits
-                  above the per-session widget: the two are alternatives. */}
               <BookingWidget
-                passSlot={event.monthly_pass_price_cents ? passCard : undefined}
+                passSlot={passCard ?? undefined}
                 price={event.price_cents}
                 isFree={event.is_free}
                 priceTiers={event.price_tiers ?? []}
-                rating={ratingData?.average_rating ?? null}
-                totalReviews={ratingData?.total_reviews ?? 0}
-                eventId={event.id}
                 eventDate={event.time}
                 capacity={event.capacity}
                 totalBookings={event.total_bookings}
-                bookingsLastWeek={event.bookings_last_week ?? 0}
+                durationMinutes={event.duration_minutes}
+                place={place}
                 availability={availability}
                 isRecurring={
                   event.is_recurring ||
@@ -1641,15 +1101,14 @@ export default function ExperienceDetailClient({
             </div>
           </div>
         </div>
+
+        <Footer dark />
       </main>
 
-      <Footer />
-
-      {/* All Photos Modal */}
       <AllPhotosModal
         isOpen={showAllPhotos}
         onClose={() => setShowAllPhotos(false)}
-        images={allImages}
+        images={images}
       />
       <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
     </>

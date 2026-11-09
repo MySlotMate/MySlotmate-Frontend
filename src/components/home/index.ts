@@ -7,7 +7,11 @@ import Idea from "./Idea";
 import Footer from "./Footer";
 import AllHosts from "./AllHosts";
 import ShowcaseSections from "./ShowcaseSections";
+import HomeFeed from "./HomeFeed";
+import HomeSidebar from "./HomeSidebar";
 export {
+  HomeFeed,
+  HomeSidebar,
   Hero,
   people,
   Trending,

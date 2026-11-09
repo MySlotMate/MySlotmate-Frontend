@@ -22,7 +22,6 @@ export default function HomeClient({
   initialMarketingConfig: HomepageMarketingConfig | null;
 }) {
   const mainRef = useRef<HTMLElement>(null);
-  const filterBarRef = useRef<HTMLDivElement>(null);
 
   // hostId and mounted were unused because of commented out code
 
@@ -51,16 +50,12 @@ export default function HomeClient({
     <MoodProvider>
       <main
         ref={mainRef}
-        className="flex min-h-screen flex-col items-center gap-14 overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(31,167,255,0.10),transparent_30%),linear-gradient(180deg,#fbfeff_0%,#f3faff_100%)] text-[#16304c]"
+        className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[90rem]:pl-[230px]"
       >
-        <components.Navbar />
+        <components.Navbar dark />
 
         <div className="scroll-fade w-full">
-          <components.Home.Hero filterBarRef={filterBarRef} />
-        </div>
-
-        <div className="scroll-fade w-full">
-          <components.Home.ShowcaseSections
+          <components.Home.HomeFeed
             initialEvents={initialEvents}
             initialHosts={initialHosts}
             initialMarketingConfig={initialMarketingConfig}
@@ -79,7 +74,7 @@ export default function HomeClient({
         </div>
 
         <div className="scroll-fade flex w-full flex-col gap-14">
-          <components.Home.Footer />
+          <components.Home.Footer dark />
         </div>
       </main>
     </MoodProvider>

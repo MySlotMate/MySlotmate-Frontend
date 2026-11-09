@@ -18,11 +18,14 @@ export default function AttendeeDetailsForm({
   values,
   onChange,
   showErrors,
+  dark = false,
 }: {
   fields: string[];
   values: AttendeeValues;
   onChange: (key: string, value: string) => void;
   showErrors: boolean;
+  /** Dark-theme palette for the dark booking page. */
+  dark?: boolean;
 }) {
   const [uploadingId, setUploadingId] = useState(false);
 
@@ -30,11 +33,15 @@ export default function AttendeeDetailsForm({
   if (enabled.length === 0) return null;
 
   const inputClass = (key: string) =>
-    `w-full rounded-lg border px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20 ${
-      showErrors && !values[key]
-        ? "border-red-400 bg-red-50"
-        : "border-gray-200"
-    }`;
+    dark
+      ? `w-full rounded-xl border bg-[#121426] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-white/40 focus:border-[#9B30FF] ${
+          showErrors && !values[key] ? "border-red-400" : "border-white/10"
+        }`
+      : `w-full rounded-lg border px-3 py-2.5 text-sm text-gray-900 outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20 ${
+          showErrors && !values[key]
+            ? "border-red-400 bg-red-50"
+            : "border-gray-200"
+        }`;
 
   const handleIdUpload = async (file: File) => {
     setUploadingId(true);
@@ -51,11 +58,19 @@ export default function AttendeeDetailsForm({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5">
-      <h3 className="mb-1 text-base font-semibold text-gray-900">
+    <div
+      className={
+        dark
+          ? "rounded-2xl border border-white/[0.06] bg-[#131328] p-5"
+          : "rounded-xl border border-gray-200 bg-white p-5"
+      }
+    >
+      <h3
+        className={`mb-1 text-base font-semibold ${dark ? "text-white" : "text-gray-900"}`}
+      >
         Attendee details
       </h3>
-      <p className="mb-4 text-xs text-gray-500">
+      <p className={`mb-4 text-xs ${dark ? "text-white/55" : "text-gray-500"}`}>
         The host needs a few details to confirm your spot. We&apos;ll save these
         for next time.
       </p>
@@ -66,7 +81,9 @@ export default function AttendeeDetailsForm({
             key={f.key}
             className={f.type === "file" ? "sm:col-span-2" : undefined}
           >
-            <label className="mb-1.5 block text-xs font-semibold text-gray-600">
+            <label
+              className={`mb-1.5 block text-xs font-semibold ${dark ? "text-white/70" : "text-gray-600"}`}
+            >
               {f.label} <span className="text-red-500">*</span>
             </label>
 

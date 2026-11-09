@@ -1,23 +1,24 @@
 "use client";
 
-import { use, useMemo, useRef, useState } from "react";
+import { use, useMemo, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
-import {
-  ProfileHeader,
-  PhotoGallery,
-  StatsBar,
-  AboutSection,
-  RatingsSection,
-  ExperiencesList,
-} from "~/components/host";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { FiArrowLeft, FiMapPin, FiShare, FiStar } from "react-icons/fi";
+import { LuBadgeCheck } from "react-icons/lu";
 import { splitEventsByTime } from "~/components/host/ExperiencesList";
-import { Navbar, Breadcrumb } from "~/components";
+import { Navbar, Home } from "~/components";
 import { ReviewsModal } from "~/components/ReviewsModal";
 import { ReviewModal } from "~/components/activities";
+import { eventPriceLabel } from "~/lib/price";
+import { formatIST } from "~/lib/datetime";
+import { getMoodDisplayLabel } from "~/lib/moods";
+import { toast } from "sonner";
 import {
   usePublicHostProfile,
   useEventsByHost,
+  useListPublicEvents,
   useReviewsByEvent,
   useMyHost,
 } from "~/hooks/useApi";
@@ -32,7 +33,7 @@ export default function HostProfileClient({
 }) {
   const { slug: _hostSlug } = use(params);
   const [user] = useAuthState(auth);
-  const experiencesRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showAllReviewsModal, setShowAllReviewsModal] = useState(false);
 
@@ -45,7 +46,12 @@ export default function HostProfileClient({
   const hostLoading = hostQueryLoading && !host;
   // Listing a host's events keys off the real host UUID, not the slug.
   const hostId = host?.id ?? "";
-  const { data: allEvents } = useEventsByHost(hostId);
+  const { data: hostEventsAuthed } = useEventsByHost(hostId);
+  // /events/host needs a login; visitors fall back to the public list.
+  const { data: publicEvents } = useListPublicEvents();
+  const allEvents = hostEventsAuthed?.length
+    ? hostEventsAuthed
+    : publicEvents?.filter((e) => e.host_id === hostId);
   const { data: currentUserHost } = useMyHost(user?.uid ?? null);
 
   // Events shown anywhere on the public profile: exclude drafts (never
@@ -112,112 +118,298 @@ export default function HostProfileClient({
   }, [events]);
 
   // Handler functions
-  const handleViewExperiences = () => {
-    experiencesRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   const handleReadAllReviews = () => {
     setShowAllReviewsModal(true);
   };
 
   if (hostLoading || !host) {
     return (
-      <main className="min-h-screen bg-gray-50">
-        <Navbar />
+      <main className="flex min-h-screen flex-col items-center bg-[#080914] text-white md:pl-20 min-[90rem]:pl-[230px]">
+        <Navbar dark />
         <div className="flex items-center justify-center py-32">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#B57BFF] border-t-transparent" />
         </div>
       </main>
     );
   }
 
-  const fullName = `${host.first_name} ${host.last_name}`;
+  const fullName = `${host.first_name} ${host.last_name}`.trim();
+  const role = host.is_professional
+    ? "Professional Host"
+    : host.is_super_host
+      ? "Super Host"
+      : "Community Host";
+  const CARD = "rounded-2xl border border-white/[0.06] bg-[#131328]";
+  const FALLBACK = "/assets/home/hiking.webp";
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <Navbar />
+    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28 md:pl-20 min-[90rem]:pl-[230px]">
+      <Navbar dark />
 
-      <div className="site-x mx-auto w-full max-w-[1120px] py-8">
-        <Breadcrumb
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Hosts", href: "/hosts" },
-            { label: fullName },
-          ]}
-          className="mb-6"
-        />
+      <div className="mx-auto w-full max-w-[1210px] px-6 pt-6 pb-16 md:px-10 md:pt-10">
+        <div className="grid gap-10 lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-12">
+          {/* Identity */}
+          <section className="flex flex-col">
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                aria-label="Go back"
+                onClick={() =>
+                  window.history.length > 1 ? router.back() : router.push("/")
+                }
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#131328] transition hover:bg-[#1B1C33]"
+              >
+                <FiArrowLeft className="h-4 w-4" />
+              </button>
+              <span className="text-sm text-white/60">Host profile</span>
+              <button
+                type="button"
+                aria-label="Copy link"
+                onClick={() => void share()}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#131328] transition hover:bg-[#1B1C33]"
+              >
+                <FiShare className="h-4 w-4" />
+              </button>
+            </div>
 
-        {/* Profile Header */}
-        <ProfileHeader
-          host={host}
-          onViewExperiences={handleViewExperiences}
-          // onWriteReview={handleWriteReview}
-        />
+            <div className="mt-5 flex flex-col items-center text-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                // Some hosts have avatar_url = "" — `??` would keep the empty string.
+                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                src={host.avatar_url || "/assets/home/profile1.png"}
+                alt={fullName}
+                className="h-24 w-24 rounded-full border-2 border-[#9B30FF] object-cover"
+              />
+              <h1 className="font-outfit mt-3 flex items-center gap-2 text-[26px] leading-8 font-bold">
+                {fullName}
+                {host.is_identity_verified && (
+                  <LuBadgeCheck
+                    className="h-5 w-5 text-[#B57BFF]"
+                    aria-label="Verified"
+                  />
+                )}
+              </h1>
+              {host.tagline && (
+                <p className="mt-1 max-w-xs text-sm text-white/55">
+                  {host.tagline}
+                </p>
+              )}
+              <span className="mt-2.5 rounded-full border border-[#9B30FF]/40 bg-[#9B30FF]/15 px-3 py-1 text-xs font-medium text-[#E3CCFF]">
+                {role}
+              </span>
+              {host.city && (
+                <p className="mt-2 flex items-center gap-1 text-[13px] text-white/55">
+                  <FiMapPin className="h-3.5 w-3.5" />
+                  {host.city}
+                </p>
+              )}
+            </div>
 
-        {/* Gallery */}
-        {galleryUrls.length > 0 && (
-          <div className="mt-6">
-            <PhotoGallery
-              images={galleryUrls}
-              instagramUrls={host.gallery_urls ?? []}
-            />
-          </div>
-        )}
+            <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 text-center">
+              {[
+                [totalEvents, "Experiences Hosted"],
+                [totalPeopleMet, "Participants Reached"],
+                [displayRating ? displayRating.toFixed(1) : "New", "Rating"],
+              ].map(([value, label]) => (
+                <div key={label} className="px-2">
+                  <p className="font-outfit text-2xl font-bold">{value}</p>
+                  <p className="mt-0.5 text-[11px] leading-4 text-white/55">
+                    {label}
+                  </p>
+                </div>
+              ))}
+            </div>
 
-        {/* Stats */}
-        <div className="mt-6">
-          <StatsBar
-            total_events_hosted={totalEvents}
-            total_people_met={totalPeopleMet}
-            avg_rating={displayRating}
-          />
-        </div>
+            {(Boolean(host.bio) || (host.expertise_tags ?? []).length > 0) && (
+              <div className={`mt-7 p-5 ${CARD}`}>
+                <h2 className="font-outfit text-lg font-semibold">About Me</h2>
+                {host.bio && (
+                  <p className="mt-2 text-sm leading-6 whitespace-pre-line text-white/70">
+                    {host.bio}
+                  </p>
+                )}
+                {[
+                  ...(host.expertise_tags ?? []),
+                  ...moods.map(getMoodDisplayLabel),
+                ].length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {Array.from(
+                      new Set([
+                        ...(host.expertise_tags ?? []),
+                        ...moods.map(getMoodDisplayLabel),
+                      ]),
+                    ).map((t) => (
+                      <span
+                        key={t}
+                        className="rounded-full border border-white/10 bg-[#1B1C33] px-3 py-1 text-xs text-white/75"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
 
-        {/* About + Ratings side by side */}
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-5">
-          <div className="lg:col-span-3">
-            <AboutSection
-              first_name={host.first_name}
-              bio={host.bio}
-              expertise_tags={host.expertise_tags ?? []}
-              moods={moods}
-            />
-          </div>
-          <div className="lg:col-span-2">
-            <RatingsSection
-              avg_rating={displayRating}
-              total_reviews={host.total_reviews}
-              reviews={reviews}
-              hostId={currentUserHost?.id}
-              eventHostId={hostId}
-              onReadAllReviews={handleReadAllReviews}
-            />
-          </div>
-        </div>
-
-        {/* Experiences — the ref wraps both lists so "view experiences" still
-            scrolls here for a host whose events are all in the past. */}
-        {(upcomingEvents.length > 0 || pastEvents.length > 0) && (
-          <div ref={experiencesRef}>
-            {upcomingEvents.length > 0 && (
-              <div className="mt-10 mb-12">
-                <ExperiencesList events={upcomingEvents} />
+          {/* Highlights + experiences */}
+          <section className="flex min-w-0 flex-col gap-8">
+            {galleryUrls.length > 0 && (
+              <div>
+                <h2 className="font-outfit mb-3 text-lg font-semibold">
+                  Event Highlights
+                </h2>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {galleryUrls.slice(0, 3).map((url) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={url}
+                      src={url}
+                      alt=""
+                      loading="lazy"
+                      className="h-[130px] w-full rounded-2xl border border-white/[0.06] object-cover"
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Already held — kept separate so they don't look bookable */}
+            <div>
+              <h2 className="font-outfit mb-3 text-lg font-semibold">
+                Active Experiences
+              </h2>
+              {upcomingEvents.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {upcomingEvents.map((e) => (
+                    <Link
+                      key={e.id}
+                      href={`/experience/${e.slug}`}
+                      className={`flex items-center gap-4 p-3 transition hover:border-white/15 ${CARD}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={e.cover_image_url ?? FALLBACK}
+                        alt=""
+                        className="h-20 w-24 shrink-0 rounded-xl object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        {e.mood && (
+                          <span className="text-[11px] font-bold tracking-wide text-[#C084FC] uppercase">
+                            {getMoodDisplayLabel(e.mood)}
+                          </span>
+                        )}
+                        <p className="font-outfit truncate text-[15px] font-semibold">
+                          {e.title}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-white/55">
+                          {formatIST(
+                            e.next_available_date ?? e.time,
+                            "MMM d · h:mm a",
+                          )}
+                          {e.is_online
+                            ? " · Online"
+                            : e.location
+                              ? ` · ${e.location}`
+                              : ""}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-bold">
+                          {eventPriceLabel(e)}
+                        </p>
+                        <p className="mt-0.5 text-xs font-semibold text-[#D8B4FE]">
+                          View
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className={`p-5 text-sm text-white/55 ${CARD}`}>
+                  No upcoming experiences right now.
+                </div>
+              )}
+            </div>
+
+            {reviews.length > 0 && (
+              <div>
+                <div className="mb-3 flex items-center justify-between">
+                  <h2 className="font-outfit flex items-center gap-2 text-lg font-semibold">
+                    Reviews
+                    {displayRating > 0 && (
+                      <span className="flex items-center gap-1 text-sm text-amber-400">
+                        <FiStar className="h-3.5 w-3.5 fill-amber-400" />
+                        {displayRating.toFixed(1)}
+                        <span className="font-normal text-white/50">
+                          ({host.total_reviews})
+                        </span>
+                      </span>
+                    )}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={handleReadAllReviews}
+                    className="text-sm font-medium text-[#D8B4FE] hover:text-white"
+                  >
+                    Read all
+                  </button>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {reviews.slice(0, 3).map((r) => (
+                    <div key={r.id} className={`p-4 ${CARD}`}>
+                      <p className="text-sm font-semibold">
+                        {r.name ?? "Guest"}
+                      </p>
+                      <p className="mt-1.5 text-sm leading-6 text-white/70">
+                        {r.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {pastEvents.length > 0 && (
-              <div className="mt-10 mb-12">
-                <ExperiencesList
-                  events={pastEvents}
-                  title="Past Experiences"
-                  isPast
-                />
+              <div>
+                <h2 className="font-outfit mb-3 text-lg font-semibold text-white/80">
+                  Past Experiences
+                </h2>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {pastEvents.slice(0, 6).map((e) => (
+                    <Link
+                      key={e.id}
+                      href={`/experience/${e.slug}`}
+                      className={`overflow-hidden opacity-80 transition hover:opacity-100 ${CARD}`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={e.cover_image_url ?? FALLBACK}
+                        alt=""
+                        loading="lazy"
+                        className="h-[100px] w-full object-cover"
+                      />
+                      <p className="truncate p-2.5 text-xs font-semibold">
+                        {e.title}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
-        )}
+          </section>
+        </div>
       </div>
+
+      <Home.Footer dark />
 
       {/* Review Modal */}
       {events && events.length > 0 && user?.uid && (

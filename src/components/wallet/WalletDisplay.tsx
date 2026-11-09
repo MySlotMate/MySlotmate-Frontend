@@ -12,6 +12,8 @@ interface WalletDisplayProps {
   userEmail?: string;
   userPhone?: string;
   variant?: "navbar" | "sidebar" | "compact";
+  /** Dark palette for the sidebar variant (redesigned pages). */
+  dark?: boolean;
 }
 
 export default function WalletDisplay({
@@ -20,6 +22,7 @@ export default function WalletDisplay({
   userEmail,
   userPhone,
   variant = "navbar",
+  dark = false,
 }: WalletDisplayProps) {
   const [showTopUp, setShowTopUp] = useState(false);
 
@@ -112,13 +115,21 @@ export default function WalletDisplay({
   // Sidebar variant (for profile panel)
   return (
     <>
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <div
+        className={`${dark ? "rounded-2xl border border-white/[0.08] bg-[#131328] p-4" : "rounded-xl border border-gray-200 bg-white p-4"}`}
+      >
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e6f8ff]">
-              <LuWallet className="h-4 w-4 text-[#0094CA]" />
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full ${dark ? "bg-[#9B30FF]/15" : "bg-[#e6f8ff]"}`}
+            >
+              <LuWallet
+                className={`h-4 w-4 ${dark ? "text-[#D8B4FE]" : "text-[#0094CA]"}`}
+              />
             </div>
-            <span className="text-sm font-medium text-gray-700">
+            <span
+              className={`text-sm font-medium ${dark ? "text-white/80" : "text-gray-700"}`}
+            >
               Wallet Balance
             </span>
           </div>
@@ -127,13 +138,25 @@ export default function WalletDisplay({
         <div className="mb-3">
           {isLoading ? (
             <div className="flex items-center gap-2">
-              <LuLoader2 className="h-5 w-5 animate-spin text-gray-400" />
-              <span className="text-sm text-gray-400">Loading...</span>
+              <LuLoader2
+                className={`h-5 w-5 animate-spin ${dark ? "text-white/45" : "text-gray-400"}`}
+              />
+              <span
+                className={`text-sm ${dark ? "text-white/45" : "text-gray-400"}`}
+              >
+                Loading...
+              </span>
             </div>
           ) : error ? (
-            <p className="text-sm text-gray-500">Unable to load</p>
+            <p
+              className={`text-sm ${dark ? "text-white/55" : "text-gray-500"}`}
+            >
+              Unable to load
+            </p>
           ) : (
-            <p className="text-2xl font-bold text-gray-900">
+            <p
+              className={`text-2xl font-bold ${dark ? "text-white" : "text-gray-900"}`}
+            >
               {formatCurrency(balance)}
             </p>
           )}
@@ -141,7 +164,7 @@ export default function WalletDisplay({
 
         <button
           onClick={() => setShowTopUp(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+          className={`flex w-full items-center justify-center gap-2 rounded-lg ${dark ? "bg-gradient-to-r from-[#7038F5] to-[#B724EA] py-2.5 text-sm font-semibold text-white transition hover:brightness-110" : "bg-[#0094CA] py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab]"}`}
         >
           <LuPlus className="h-4 w-4" />
           Add Money
@@ -149,7 +172,7 @@ export default function WalletDisplay({
 
         <Link
           href="/wallet"
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+          className={`mt-2 flex w-full items-center justify-center gap-2 ${dark ? "rounded-lg border border-white/10 py-2 text-xs font-medium text-white/70 transition hover:bg-white/5" : "rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50"}`}
         >
           <LuHistory className="h-3.5 w-3.5" />
           View transactions

@@ -1,8 +1,9 @@
 import "../styles/globals.css";
 
 import { type Metadata, type Viewport } from "next";
-import { Geist, Manrope, Outfit } from "next/font/google";
+import { Geist, Inter, Manrope, Outfit } from "next/font/google";
 import Providers from "~/components/Providers";
+import AppSidebar from "~/components/home/AppSidebar";
 import { env } from "~/env";
 import { Toaster } from "sonner";
 
@@ -146,6 +147,11 @@ const outfit = Outfit({
   variable: "--font-outfit",
 });
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -183,7 +189,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geist.variable} ${manrope.variable} ${outfit.variable} max-w-screen overflow-x-clip`}
+      className={`${geist.variable} ${manrope.variable} ${outfit.variable} ${inter.variable} max-w-screen overflow-x-clip`}
       suppressHydrationWarning
     >
       <head>
@@ -214,7 +220,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="MySlotMate" />
       </head>
       <body className="max-w-screen overflow-x-clip">
-        <Providers>{children}</Providers>
+        <Providers>
+          <AppSidebar />
+          {children}
+        </Providers>
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>

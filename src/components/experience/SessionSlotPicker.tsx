@@ -67,7 +67,7 @@ export default function SessionSlotPicker({
 
   if (days.length === 0) {
     return (
-      <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm text-[#6f8daa]">
+      <div className="rounded-2xl border border-white/10 bg-[#121426] px-4 py-3 text-sm text-white/60">
         No upcoming sessions
       </div>
     );
@@ -89,8 +89,8 @@ export default function SessionSlotPicker({
               disabled={day.isFullyBooked}
               className={`flex min-w-[74px] flex-shrink-0 flex-col items-center gap-0.5 rounded-2xl border-2 px-3 py-2 transition ${
                 isActive
-                  ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_10px_22px_rgba(31,167,255,0.3)]"
-                  : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
+                  ? "border-transparent bg-gradient-to-br from-[#7038F5] to-[#B724EA] text-white"
+                  : "border-white/10 bg-[#121426] text-white hover:border-[#9B30FF]/60"
               } ${day.isFullyBooked ? "cursor-not-allowed opacity-50" : ""}`}
             >
               <span className="text-[10px] font-semibold tracking-wide uppercase opacity-80">
@@ -104,7 +104,7 @@ export default function SessionSlotPicker({
               </span>
               <span
                 className={`text-[10px] font-medium ${
-                  isActive ? "text-white/85" : "text-[#6f8daa]"
+                  isActive ? "text-white/85" : "text-white/55"
                 }`}
               >
                 {day.isFullyBooked ? "Full" : `${openCount} left`}
@@ -127,14 +127,14 @@ export default function SessionSlotPicker({
               disabled={isDisabled}
               className={`flex items-center gap-1.5 rounded-xl border-2 px-3 py-2 text-sm font-semibold transition ${
                 isSelected
-                  ? "border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] text-white shadow-[0_10px_22px_rgba(31,167,255,0.3)]"
-                  : "border-[#dbeaf5] bg-white text-[#16304c] hover:border-[#9fd1ee]"
+                  ? "border-transparent bg-gradient-to-br from-[#7038F5] to-[#B724EA] text-white"
+                  : "border-white/10 bg-[#121426] text-white hover:border-[#9B30FF]/60"
               } ${isDisabled ? "cursor-not-allowed line-through opacity-45" : ""}`}
             >
               {formatIST(slot.date, "h:mm a")}
               {isSelected && (
                 <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white">
-                  <FiCheck className="h-2.5 w-2.5 stroke-[3] text-[#0094CA]" />
+                  <FiCheck className="h-2.5 w-2.5 stroke-[3] text-[#9B30FF]" />
                 </span>
               )}
             </button>

@@ -9,6 +9,8 @@ import { LuLoader2 } from "react-icons/lu";
 import { toast } from "sonner";
 import { Navbar, Home } from "~/components";
 import { useBlog, useListBlogs } from "~/hooks/useApi";
+import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { BecomeHostModal } from "~/components/become-host";
 import { auth } from "~/utils/firebase";
 import {
   BlockRenderer,
@@ -27,6 +29,14 @@ export default function BlogDetailPage({
 }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  // Hosts go straight to creating an experience; everyone else sees the
+  // become-a-host prompt (same rule as the rest of the site).
+  const {
+    closeBecomeHostModal,
+    handleListTimeClick,
+    hostStatus,
+    showBecomeHostModal,
+  } = useListTimeAction();
 
   // Resolve the Firebase ID token so admins can open their own unpublished
   // drafts (the backend returns 404 for drafts to anonymous visitors).
@@ -321,12 +331,15 @@ export default function BlogDetailPage({
                 matter, and create time people are genuinely excited to book.
               </p>
               <div className="mt-2 flex flex-wrap gap-3.5">
-                <Link
-                  href="/host-dashboard/experiences/new"
+                <button
+                  type="button"
+                  onClick={handleListTimeClick}
                   className="inline-flex items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#1fa7ff,#0e8ae0)] px-6 py-3.5 text-sm font-extrabold tracking-[0.02em] text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_40px_rgba(31,167,255,0.35)]"
                 >
-                  Become a Host
-                </Link>
+                  {hostStatus === "approved"
+                    ? "Create an Experience"
+                    : "Become a Host"}
+                </button>
                 <Link
                   href="/explore"
                   className="inline-flex items-center justify-center rounded-2xl border border-[#aeddf899] bg-white/90 px-6 py-3.5 text-sm font-extrabold text-[#0e8ae0] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5 hover:bg-[#ebf6ff]"
@@ -465,6 +478,10 @@ export default function BlogDetailPage({
           </div>
         </section>
       </main>
+      <BecomeHostModal
+        open={showBecomeHostModal}
+        onClose={closeBecomeHostModal}
+      />
 
       <Home.Footer />
     </div>

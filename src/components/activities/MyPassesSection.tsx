@@ -41,7 +41,9 @@ export default function MyPassesSection({
 
   return (
     <div className="mb-8">
-      <h2 className="mb-3 text-lg font-semibold text-gray-900">My Passes</h2>
+      <h2 className="font-outfit mb-3 text-lg font-semibold text-white">
+        My Passes
+      </h2>
       <div className="grid gap-3 sm:grid-cols-2">
         {active.map((pass) => {
           const event = events.find((e) => e.id === pass.event_id);
@@ -61,7 +63,7 @@ export default function MyPassesSection({
           return (
             <div
               key={pass.id}
-              className="rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-4"
+              className="rounded-2xl border border-[#9B30FF]/40 bg-[#9B30FF]/10 p-4"
             >
               <button
                 type="button"
@@ -69,37 +71,37 @@ export default function MyPassesSection({
                 className="w-full text-left"
               >
                 <div className="mb-1 flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#0094CA] uppercase">
+                  <span className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#D8B4FE] uppercase">
                     <LuTicket className="h-4 w-4" />
                     Monthly Pass
                   </span>
                   <FiChevronDown
-                    className={`h-4 w-4 text-[#0094CA] transition-transform ${
+                    className={`h-4 w-4 text-[#D8B4FE] transition-transform ${
                       isOpen ? "rotate-180" : ""
                     }`}
                   />
                 </div>
-                <p className="text-base font-semibold text-gray-900">
+                <p className="text-base font-semibold text-white">
                   {event ? event.title : "Your experience"}
                 </p>
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-white/60">
                   Active until {formatIST(pass.valid_until, "d MMM")} · {used}
                 </p>
               </button>
 
               {isOpen && (
-                <div className="mt-3 space-y-2 border-t border-[#0094CA]/20 pt-3">
+                <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
                   {sessions.length === 0 ? (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-white/50">
                       No sessions booked on this pass yet.
                     </p>
                   ) : (
                     sessions.map((booking) => (
                       <div
                         key={booking.id}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2"
+                        className="flex items-center justify-between gap-3 rounded-lg bg-[#131328] px-3 py-2"
                       >
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-white">
                           {formatIST(
                             booking.occurrence_date,
                             "EEE d MMM, h:mm a",
@@ -110,7 +112,7 @@ export default function MyPassesSection({
                             type="button"
                             disabled={downloadingTicketId === booking.id}
                             onClick={() => onDownloadTicket(booking, event)}
-                            className="flex items-center gap-1.5 rounded-lg border border-[#0094CA]/40 px-2.5 py-1.5 text-xs font-medium text-[#0094CA] transition hover:bg-[#0094CA]/5 disabled:opacity-50"
+                            className="flex items-center gap-1.5 rounded-lg border border-[#9B30FF]/50 px-2.5 py-1.5 text-xs font-medium text-[#E3CCFF] transition hover:bg-[#9B30FF]/15 disabled:opacity-50"
                           >
                             <FiDownload className="h-3.5 w-3.5" />
                             {downloadingTicketId === booking.id
@@ -124,7 +126,7 @@ export default function MyPassesSection({
                   {event && (
                     <Link
                       href={`/experience/${event.slug}`}
-                      className="block pt-1 text-xs text-[#0094CA] hover:underline"
+                      className="block pt-1 text-xs text-[#D8B4FE] hover:underline"
                     >
                       View experience
                     </Link>

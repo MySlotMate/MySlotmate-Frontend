@@ -7,75 +7,107 @@ import { FiArrowRight } from "react-icons/fi";
 import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 
-const Footer = () => {
+const Footer = ({ dark = false }: { dark?: boolean } = {}) => {
   const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
     useListTimeAction();
+  // Light (default) and dark (home feed) palettes.
+  const c = dark
+    ? {
+        footer: "border-white/5 bg-[#0B0C18]",
+        heading: "text-white",
+        text: "text-white/55",
+        hover: "hover:text-[#D4ABFF]",
+        divider: "border-white/10",
+        bottom: "text-white/60",
+        icon: "border-white/15 text-white/70 hover:border-[#9B30FF] hover:text-white",
+        input:
+          "border-white/10 bg-[#131425] text-white placeholder:text-white/40 focus:ring-[#9B30FF]",
+        button:
+          "bg-gradient-to-r from-[#8B1CF6] to-[#D61CF2] hover:brightness-110",
+      }
+    : {
+        footer:
+          "border-[#aeddf873] bg-[linear-gradient(180deg,#dff2ff,#f4fbff)]",
+        heading: "text-[#16304c]",
+        text: "text-[#5e88ab]",
+        hover: "hover:text-[#0e8ae0]",
+        divider: "border-[#aeddf873]",
+        bottom: "text-[#000000]",
+        icon: "border-[#7ea4bb73]",
+        input:
+          "border-[#aeddf873] bg-white text-[#0A142F] focus:ring-[#0094CA]",
+        button: "bg-[#0094CA] hover:bg-[#007ba8]",
+      };
 
   return (
-    <footer className="mt-4 w-full border-t border-[#aeddf873] bg-[linear-gradient(180deg,#dff2ff,#f4fbff)] pb-[env(safe-area-inset-bottom)]">
+    <footer
+      className={`mt-4 w-full border-t pb-[env(safe-area-inset-bottom)] ${c.footer}`}
+    >
       <div className="site-x">
         <div className="mx-auto w-full max-w-[1120px] py-10">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
+          <div
+            className={`grid grid-cols-1 gap-8 ${dark ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-4"}`}
+          >
             <div className="flex flex-col items-center text-center md:items-start md:text-left">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/assets/home/logo.png"
-                alt="Myslotmate"
-                loading="lazy"
-                className="mb-3 h-10 w-auto"
-              />
-              <p className="text-sm text-[#5e88ab]">
+              {dark ? (
+                <span className="font-outfit mb-3 text-2xl font-bold text-white">
+                  MySlotMate
+                </span>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src="/assets/home/logo.png"
+                  alt="Myslotmate"
+                  loading="lazy"
+                  className="mb-3 h-10 w-auto"
+                />
+              )}
+              <p className={`text-sm ${c.text}`}>
                 A product of Moodverse Pvt Ltd
               </p>
-              <p className="mt-1 text-sm text-[#5e88ab]">
-                support@myslotmate.com
-              </p>
+              <p className={`mt-1 text-sm ${c.text}`}>support@myslotmate.com</p>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 md:col-span-2 md:grid-cols-2">
+            <div
+              className={`grid grid-cols-2 gap-8 md:col-span-2 md:grid-cols-2 ${dark ? "max-lg:md:order-last" : ""}`}
+            >
               <div className="flex w-full flex-col items-center text-center md:w-auto md:items-start md:text-left">
-                <h4 className="text-sm font-bold text-[#16304c]">
+                <h4 className={`text-sm font-bold ${c.heading}`}>
                   Quick Links
                 </h4>
-                <div className="mt-3 space-y-2 text-sm text-[#5e88ab]">
-                  <Link href="/support" className="block hover:text-[#0e8ae0]">
+                <div className={`mt-3 space-y-2 text-sm ${c.text}`}>
+                  <Link href="/support" className={`block ${c.hover}`}>
                     Safety
                   </Link>
                   <Link
                     href="/support/terms-conditions"
-                    className="block hover:text-[#0e8ae0]"
+                    className={`block ${c.hover}`}
                   >
                     Guidelines
                   </Link>
-                  <Link href="/hosts" className="block hover:text-[#0e8ae0]">
+                  <Link href="/hosts" className={`block ${c.hover}`}>
                     Community
                   </Link>
-                  <Link href="/blogs" className="block hover:text-[#0e8ae0]">
+                  <Link href="/blogs" className={`block ${c.hover}`}>
                     Blog & Stories
                   </Link>
                 </div>
               </div>
 
               <div className="flex w-full flex-col items-center text-center md:w-auto md:items-start md:text-left">
-                <h4 className="text-sm font-bold text-[#16304c]">For Hosts</h4>
-                <div className="mt-3 space-y-2 text-sm text-[#5e88ab]">
+                <h4 className={`text-sm font-bold ${c.heading}`}>For Hosts</h4>
+                <div className={`mt-3 space-y-2 text-sm ${c.text}`}>
                   <button
                     type="button"
                     onClick={handleListTimeClick}
-                    className="block w-full text-center transition hover:text-[#0e8ae0] md:w-auto md:text-left"
+                    className={`block w-full text-center transition md:w-auto md:text-left ${c.hover}`}
                   >
                     List Your Time
                   </button>
-                  <Link
-                    href="/host-dashboard"
-                    className="block hover:text-[#0e8ae0]"
-                  >
+                  <Link href="/host-dashboard" className={`block ${c.hover}`}>
                     Host Corner
                   </Link>
-                  <Link
-                    href="/experiences"
-                    className="block hover:text-[#0e8ae0]"
-                  >
+                  <Link href="/experiences" className={`block ${c.hover}`}>
                     Stories
                   </Link>
                 </div>
@@ -83,17 +115,17 @@ const Footer = () => {
             </div>
 
             <div className="flex flex-col items-center justify-start text-center md:items-start md:text-left">
-              <h4 className="text-sm font-bold text-[#16304c]">Subscribe</h4>
+              <h4 className={`text-sm font-bold ${c.heading}`}>Subscribe</h4>
               <div className="mt-3 flex w-full flex-row items-center">
                 <input
                   type="text"
                   placeholder="Get Product Updates"
                   suppressHydrationWarning
-                  className="w-full rounded-l-2xl border border-r-0 border-[#aeddf873] bg-white px-4 py-2 text-sm text-[#0A142F] outline-none focus:ring-1 focus:ring-[#0094CA]"
+                  className={`w-full rounded-l-2xl border border-r-0 px-4 py-2 text-sm outline-none focus:ring-1 ${c.input}`}
                 />
                 <button
                   suppressHydrationWarning
-                  className="flex h-[38px] items-center rounded-r-2xl bg-[#0094CA] px-3 transition hover:bg-[#007ba8]"
+                  className={`flex h-[38px] items-center rounded-r-2xl px-3 transition ${c.button}`}
                 >
                   <FiArrowRight className="h-5 w-5 text-white" />
                 </button>
@@ -101,14 +133,16 @@ const Footer = () => {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-col items-center justify-between border-t border-[#aeddf873] pt-4 text-center text-sm text-[#000000] md:flex-row md:text-left">
+          <div
+            className={`mt-8 flex flex-col items-center justify-between border-t pt-4 text-center text-sm md:flex-row md:text-left ${c.divider} ${c.bottom}`}
+          >
             <p>MADE WITH &#x2764; FOR THE CURIOUS</p>
             <div className="mt-3 flex flex-row items-center justify-center gap-3 md:mt-0">
               <a
                 href="https://www.instagram.com/myslotmate/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border-2 border-[#7ea4bb73] p-2"
+                className={`rounded-full border-2 p-2 transition ${c.icon}`}
               >
                 <FaInstagram className="h-5 w-5" />
               </a>
@@ -116,7 +150,7 @@ const Footer = () => {
                 href="https://www.facebook.com/share/1E1dpBwZd3/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border-2 border-[#7ea4bb73] p-2"
+                className={`rounded-full border-2 p-2 transition ${c.icon}`}
               >
                 <FaFacebook className="h-5 w-5" />
               </a>
@@ -124,7 +158,7 @@ const Footer = () => {
                 href="https://www.linkedin.com/company/myslotmate/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border-2 border-[#7ea4bb73] p-2"
+                className={`rounded-full border-2 p-2 transition ${c.icon}`}
               >
                 <FaLinkedin className="h-5 w-5" />
               </a>
@@ -132,7 +166,7 @@ const Footer = () => {
                 href="https://x.com/myslotmate?s=20"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border-2 border-[#7ea4bb73] p-2"
+                className={`rounded-full border-2 p-2 transition ${c.icon}`}
               >
                 <FaXTwitter className="h-5 w-5" />
               </a>

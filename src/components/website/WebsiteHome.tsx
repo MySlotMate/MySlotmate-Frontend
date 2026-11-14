@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useListHosts, useListPublicEvents } from "~/hooks/useApi";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
-import AnimatedHero from "./AnimatedHero";
+import Hero from "./Hero";
 import DiscoverGrid from "./DiscoverGrid";
 import HostBand from "./HostBand";
 import StoriesTeaser from "./StoriesTeaser";
@@ -39,7 +39,7 @@ export default function WebsiteHome({
     <div className="flex min-h-screen w-full flex-col bg-[#080914] font-[family-name:var(--font-inter)] text-white">
       <div className="relative">
         <WebsiteNav />
-        <AnimatedHero events={upcoming} hostById={hostById} />
+        <Hero />
       </div>
       <DiscoverGrid events={upcoming} hostById={hostById} />
       <HostBand />

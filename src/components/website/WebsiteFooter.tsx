@@ -47,12 +47,13 @@ const SOCIALS = [
 export default function WebsiteFooter() {
   return (
     <footer className="relative isolate w-full overflow-hidden bg-gradient-to-br from-[#7B2FFF] via-[#8420DC] to-[#6414AA] pb-[env(safe-area-inset-bottom)] text-white">
-      <span
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         aria-hidden
-        className="font-outfit pointer-events-none absolute -bottom-[0.22em] left-1/2 -z-10 -translate-x-1/2 text-[clamp(96px,21vw,300px)] leading-none font-extrabold tracking-[-0.04em] whitespace-nowrap text-white/10 select-none"
-      >
-        MySlotMate
-      </span>
+        alt=""
+        src="/assets/brand/logo-horizontal-white.png"
+        className="pointer-events-none absolute bottom-[-3%] left-1/2 -z-10 w-[min(92%,1200px)] -translate-x-1/2 opacity-10 select-none"
+      />
 
       <div className="mx-auto max-w-[1280px] px-5 pt-16 pb-10 md:px-10 md:pt-20">
         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-center">
@@ -73,10 +74,17 @@ export default function WebsiteFooter() {
 
         <div className="mt-12 grid gap-10 border-t border-white/20 pt-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
           <div className="flex flex-col gap-3">
-            <span className="font-outfit text-2xl font-bold">MySlotMate</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/brand/logo-horizontal-white.png"
+              alt="MySlotMate"
+              width={1048}
+              height={209}
+              className="h-8 w-fit"
+            />
             <p className="max-w-[300px] text-sm leading-relaxed text-white/80">
-              Book people’s time. Experiences, communities and expertise from
-              real people near you.
+              Discover more. Connect deeper. Experience life. Meet the people
+              behind experiences near you.
             </p>
             <div className="mt-1 flex gap-2">
               {SOCIALS.map(({ href, label, Icon }) => (

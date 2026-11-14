@@ -12,7 +12,7 @@ const appUrl = "https://www.myslotmate.com";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "MySlotMate - Book People's Time.",
+    default: "MySlotMate - Life happens when you show up.",
     template: "%s | MySlotMate",
   },
   description:
@@ -28,7 +28,6 @@ export const metadata: Metadata = {
     "adventure booking",
     "skill sharing",
     "myslotmate",
-    "book people",
     "slot booking",
     "host an experience",
     "learn from experts",
@@ -45,9 +44,9 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: appUrl,
     siteName: "MySlotMate",
-    title: "MySlotMate - Book People's Time.",
+    title: "MySlotMate - Life happens when you show up.",
     description:
-      "From coffee chats to travel experiences — book people for real-life moments, anytime.",
+      "Workshops, meetups, trails and one-on-one sessions with real people near you. Find one, step outside, and meet them.",
     images: [
       {
         url: "/og-image.jpg",
@@ -71,9 +70,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@MySlotMate",
     creator: "@MySlotMate",
-    title: "MySlotMate - Book People's Time.",
+    title: "MySlotMate - Life happens when you show up.",
     description:
-      "From coffee chats to travel experiences — book people for real-life moments, anytime.",
+      "Workshops, meetups, trails and one-on-one sessions with real people near you. Find one, step outside, and meet them.",
     images: ["/og-image.jpg"],
   },
 

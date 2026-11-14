@@ -368,7 +368,7 @@ button,
 
 
 /* ------------------------------------------------------------------ */
-/*  Public website (logged-out home). Animated hero + slot board.      */
+/*  Public website (logged-out home): hero entrance + floating photos. */
 /* ------------------------------------------------------------------ */
 @keyframes msm-rise {
   from {
@@ -385,23 +385,46 @@ button,
     transform: translate(-120px, 80px) scale(1.15);
   }
 }
-@keyframes msm-ping {
-  to {
-    box-shadow: 0 0 0 9px rgb(52 211 153 / 0);
+@keyframes msm-float {
+  50% {
+    transform: translateY(-14px);
   }
 }
-@keyframes msm-shine {
-  0% {
-    transform: translateX(-120%);
-  }
-  40%,
+@keyframes msm-star {
+  0%,
   100% {
-    transform: translateX(120%);
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.95;
   }
 }
-@keyframes msm-board {
-  to {
-    transform: translateX(-50%);
+@keyframes msm-window {
+  0%,
+  88%,
+  100% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 0.35;
+  }
+}
+/* Points down-left (155deg) and streaks along its own x axis. */
+@keyframes msm-shooting {
+  0% {
+    opacity: 0;
+    transform: rotate(155deg) translateX(0);
+  }
+  1.5% {
+    opacity: 1;
+  }
+  9% {
+    opacity: 0;
+    transform: rotate(155deg) translateX(720px);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(155deg) translateX(720px);
   }
 }
 
@@ -413,36 +436,35 @@ button,
   .msm-drift {
     animation: msm-drift 16s ease-in-out infinite alternate;
   }
-  .msm-drift-rev {
-    animation: msm-drift 20s ease-in-out infinite alternate-reverse;
+  .msm-float-a {
+    animation: msm-float 7s ease-in-out infinite;
   }
-  .msm-ping {
-    animation: msm-ping 1.8s ease-out infinite;
+  .msm-float-b {
+    animation: msm-float 8.5s ease-in-out -2s infinite;
   }
-  .msm-shine::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      100deg,
-      transparent 30%,
-      rgb(255 255 255 / 0.35) 50%,
-      transparent 70%
-    );
-    transform: translateX(-120%);
-    animation: msm-shine 3.6s ease-in-out 1.6s infinite;
+  .msm-float-c {
+    animation: msm-float 6.5s ease-in-out -4s infinite;
   }
-  .msm-board-track {
-    animation: msm-board 80s linear infinite;
+  .msm-star {
+    animation: msm-star 4s ease-in-out infinite;
   }
-  .msm-board:hover .msm-board-track,
-  .msm-board:focus-within .msm-board-track {
-    animation-play-state: paused;
+  .msm-window {
+    animation: msm-window 9s steps(1, end) infinite;
+  }
+  .msm-shooting {
+    animation: msm-shooting 10s ease-out infinite;
   }
 }
-
-.msm-board {
-  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+.msm-star {
+  opacity: 0.6;
+}
+.msm-shooting {
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, rgb(216 180 254 / 0.6) 70%, #fff);
+  filter: drop-shadow(0 0 6px rgb(216 180 254 / 0.9));
+}
+.msm-window {
+  filter: drop-shadow(0 0 2px rgb(216 180 254 / 0.4));
 }
 
 /* ------------------------------------------------------------------ */

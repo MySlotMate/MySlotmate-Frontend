@@ -24,11 +24,15 @@ export default function WebsiteNav() {
   return (
     <>
       <nav className="relative z-20 mx-auto flex w-full max-w-[1280px] items-center justify-between gap-4 px-5 py-5 md:px-10">
-        <Link
-          href="/"
-          className="font-outfit text-2xl font-bold tracking-tight text-white"
-        >
-          MySlotMate
+        <Link href="/" aria-label="MySlotMate home" className="shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/assets/brand/logo-horizontal-white.png"
+            alt="MySlotMate"
+            width={1048}
+            height={209}
+            className="h-7 w-auto md:h-8"
+          />
         </Link>
 
         <div className="hidden items-center gap-8 text-[15px] font-medium text-white/65 lg:flex">

@@ -33,10 +33,20 @@ export default function HomeSidebar({
         <Link
           href="/"
           aria-label="MySlotMate home"
-          className="font-outfit text-[28px] leading-9 font-bold text-white"
+          className="flex h-9 items-center"
         >
-          <span className="min-[80rem]:hidden">M</span>
-          <span className="hidden min-[80rem]:inline">MySlotMate</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/assets/brand/logo-mark.png"
+            alt="MySlotMate"
+            className="h-10 w-10 min-[80rem]:hidden"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/assets/brand/logo-horizontal-white.png"
+            alt="MySlotMate"
+            className="hidden h-8 w-auto min-[80rem]:block"
+          />
         </Link>
         <nav className="mt-10 flex flex-col gap-4 min-[80rem]:mt-[38px]">
           <Link

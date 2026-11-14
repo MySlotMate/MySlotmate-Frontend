@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useStoredAuth } from "~/hooks/useStoredAuth";
 import HomeSidebar from "./HomeSidebar";
 
 /**
@@ -10,8 +12,13 @@ import HomeSidebar from "./HomeSidebar";
  */
 export default function AppSidebar() {
   const path = usePathname() ?? "";
+  const { userId } = useStoredAuth();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  if (path === "/") return <HomeSidebar active="home" />;
+  // Logged-out visitors get the public website at "/", which has its own nav.
+  if (path === "/")
+    return mounted && userId ? <HomeSidebar active="home" /> : null;
   if (path === "/explore") return <HomeSidebar active="explore" />;
   if (path === "/activities") return <HomeSidebar active="journey" />;
   if (path === "/profile") return <HomeSidebar active="profile" />;

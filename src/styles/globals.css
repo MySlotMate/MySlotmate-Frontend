@@ -368,6 +368,84 @@ button,
 
 
 /* ------------------------------------------------------------------ */
+/*  Public website (logged-out home). Animated hero + slot board.      */
+/* ------------------------------------------------------------------ */
+@keyframes msm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes msm-drift {
+  to {
+    transform: translate(-120px, 80px) scale(1.15);
+  }
+}
+@keyframes msm-ping {
+  to {
+    box-shadow: 0 0 0 9px rgb(52 211 153 / 0);
+  }
+}
+@keyframes msm-shine {
+  0% {
+    transform: translateX(-120%);
+  }
+  40%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+@keyframes msm-board {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .msm-rise {
+    opacity: 0;
+    animation: msm-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+  .msm-drift {
+    animation: msm-drift 16s ease-in-out infinite alternate;
+  }
+  .msm-drift-rev {
+    animation: msm-drift 20s ease-in-out infinite alternate-reverse;
+  }
+  .msm-ping {
+    animation: msm-ping 1.8s ease-out infinite;
+  }
+  .msm-shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      rgb(255 255 255 / 0.35) 50%,
+      transparent 70%
+    );
+    transform: translateX(-120%);
+    animation: msm-shine 3.6s ease-in-out 1.6s infinite;
+  }
+  .msm-board-track {
+    animation: msm-board 80s linear infinite;
+  }
+  .msm-board:hover .msm-board-track,
+  .msm-board:focus-within .msm-board-track {
+    animation-play-state: paused;
+  }
+}
+
+.msm-board {
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+/* ------------------------------------------------------------------ */
 /*  Dark form scope (host create-experience). Shared children such as  */
 /*  RichTextEditor and PrivacyAccessSection are still light-themed, so */
 /*  remap their utilities here instead of forking them.                */

@@ -1,5 +1,6 @@
 "use client";
 
+import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -315,12 +316,10 @@ export default function HostDashboardPage() {
     }
   }, [user]);
 
-  const [userId, setUserId] = useState<string | null>(null);
-  const [storedHostId, setStoredHostId] = useState<string | null>(null);
-  useEffect(() => {
-    setUserId(localStorage.getItem("msm_user_id"));
-    setStoredHostId(localStorage.getItem("msm_host_id"));
-  }, []);
+  // Reactive: the host id is stored a moment after the status call resolves
+  // (HostNavbar), so reading localStorage once on mount showed "No host
+  // profile found" until a refresh.
+  const { userId, hostId: storedHostId } = useStoredAuth();
 
   const {
     data: dashboard,

@@ -878,7 +878,7 @@ function BookingContent({ eventId }: { eventId: string }) {
   const hostName = host ? `${host.first_name} ${host.last_name}`.trim() : null;
 
   return (
-    <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-lg:pb-28 md:pl-20 min-[90rem]:pl-[230px]">
+    <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-lg:pb-28 md:pl-20 min-[80rem]:pl-[230px]">
       <div className="mx-auto w-full max-w-[1160px] px-6 pt-6 pb-12 md:px-10 md:pt-10">
         <header className="flex items-center gap-3">
           <button

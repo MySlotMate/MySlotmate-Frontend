@@ -366,3 +366,90 @@ button,
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
+
+/* ------------------------------------------------------------------ */
+/*  Dark form scope (host create-experience). Shared children such as  */
+/*  RichTextEditor and PrivacyAccessSection are still light-themed, so */
+/*  remap their utilities here instead of forking them.                */
+/* ------------------------------------------------------------------ */
+.msm-dark-form {
+  color-scheme: dark;
+}
+@layer base {
+  .msm-dark-form
+    :where(
+      input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+      select,
+      textarea
+    ) {
+    background-color: #121426;
+    color: #fff;
+    border-color: rgb(255 255 255 / 0.1);
+  }
+  .msm-dark-form :where(input, textarea)::placeholder {
+    color: rgb(255 255 255 / 0.3);
+  }
+  .msm-dark-form :where(.row-input) {
+    background-color: transparent;
+    border-width: 0;
+  }
+  .msm-dark-form :where(select option) {
+    background-color: #131328;
+  }
+}
+.msm-dark-form .bg-white {
+  background-color: #131328;
+}
+.msm-dark-form .bg-gray-50 {
+  background-color: rgb(255 255 255 / 0.04);
+}
+.msm-dark-form .bg-gray-100 {
+  background-color: rgb(255 255 255 / 0.06);
+}
+.msm-dark-form .hover\:bg-gray-50:hover,
+.msm-dark-form .hover\:bg-gray-100:hover {
+  background-color: rgb(255 255 255 / 0.08);
+}
+.msm-dark-form .border-gray-100 {
+  border-color: rgb(255 255 255 / 0.06);
+}
+.msm-dark-form .border-gray-200,
+.msm-dark-form .border-gray-300 {
+  border-color: rgb(255 255 255 / 0.12);
+}
+.msm-dark-form .text-gray-900,
+.msm-dark-form .text-gray-800 {
+  color: #fff;
+}
+.msm-dark-form .text-gray-700,
+.msm-dark-form .text-gray-600 {
+  color: rgb(255 255 255 / 0.8);
+}
+.msm-dark-form .text-gray-500 {
+  color: rgb(255 255 255 / 0.5);
+}
+.msm-dark-form .text-gray-400 {
+  color: rgb(255 255 255 / 0.4);
+}
+.msm-dark-form .bg-\[\#0094CA\] {
+  background-image: linear-gradient(to right, #7038f5, #b724ea);
+  background-color: transparent;
+}
+.msm-dark-form .text-\[\#0094CA\] {
+  color: #d8b4fe;
+}
+.msm-dark-form .border-\[\#0094CA\] {
+  border-color: #b57bfd;
+}
+.msm-dark-form .bg-\[\#0094CA\]\/5,
+.msm-dark-form .bg-\[\#0094CA\]\/10 {
+  background-color: rgb(112 56 245 / 0.15);
+}
+.msm-dark-form .rich-text-content {
+  color: rgb(255 255 255 / 0.85);
+}
+.msm-dark-form .rich-text-content h1,
+.msm-dark-form .rich-text-content h2,
+.msm-dark-form .rich-text-content h3 {
+  color: #fff;
+}

@@ -12,8 +12,6 @@ import { cancelEvent, deleteEvent, type BookingDTO } from "~/lib/api";
 import type { OccurrenceAvailability } from "~/lib/api";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { HostNavbar } from "~/components/host-dashboard";
-import Breadcrumb from "~/components/Breadcrumb";
 import {
   FiSearch,
   FiStar,
@@ -789,8 +787,7 @@ export default function ExperiencesPage() {
 
   if (hostLoading || eventsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <HostNavbar />
+      <div className="msm-dark-form min-h-screen bg-[#080914] pb-24 text-white md:pb-0 md:pl-20 min-[80rem]:pl-[230px]">
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
         </div>
@@ -800,8 +797,7 @@ export default function ExperiencesPage() {
 
   if (!host) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <HostNavbar />
+      <div className="msm-dark-form min-h-screen bg-[#080914] pb-24 text-white md:pb-0 md:pl-20 min-[80rem]:pl-[230px]">
         <div className="flex min-h-[60vh] items-center justify-center">
           <p className="text-gray-500">Host profile not found.</p>
         </div>
@@ -810,19 +806,9 @@ export default function ExperiencesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <HostNavbar />
+    <div className="msm-dark-form min-h-screen bg-[#080914] pb-24 text-white md:pb-0 md:pl-20 min-[80rem]:pl-[230px]">
 
       <main className="site-x mx-auto max-w-7xl py-8">
-        <Breadcrumb
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Dashboard", href: "/host-dashboard" },
-            { label: "Experiences" },
-          ]}
-          className="mb-6"
-        />
-
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>

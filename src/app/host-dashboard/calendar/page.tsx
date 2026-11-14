@@ -1,5 +1,6 @@
 "use client";
 
+import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -33,10 +34,9 @@ import {
 import type { EventDTO } from "~/lib/api";
 
 export default function HostCalendarPage() {
-  const [userId, setUserId] = useState<string | null>(null);
+  const { userId } = useStoredAuth();
   const [isHydrated, setIsHydrated] = useState(false);
   useEffect(() => {
-    setUserId(localStorage.getItem("msm_user_id"));
     setIsHydrated(true);
   }, []);
 

@@ -124,7 +124,7 @@ export default function HostProfileClient({
 
   if (hostLoading || !host) {
     return (
-      <main className="flex min-h-screen flex-col items-center bg-[#080914] text-white md:pl-20 min-[90rem]:pl-[230px]">
+      <main className="flex min-h-screen flex-col items-center bg-[#080914] text-white md:pl-20 min-[80rem]:pl-[230px]">
         <Navbar dark />
         <div className="flex items-center justify-center py-32">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#B57BFF] border-t-transparent" />
@@ -151,7 +151,7 @@ export default function HostProfileClient({
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28 md:pl-20 min-[90rem]:pl-[230px]">
+    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]">
       <Navbar dark />
 
       <div className="mx-auto w-full max-w-[1210px] px-6 pt-6 pb-16 md:px-10 md:pt-10">

@@ -959,7 +959,7 @@ export default function ExperienceDetailClient({
     <>
       <Navbar dark />
 
-      <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-lg:pb-24 md:pl-20 min-[90rem]:pl-[230px]">
+      <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-lg:pb-24 md:pl-20 min-[80rem]:pl-[230px]">
         <div className="mx-auto w-full max-w-[1216px] pb-12 md:px-10 md:pt-10">
           <button
             type="button"
@@ -969,56 +969,56 @@ export default function ExperienceDetailClient({
             <FiArrowLeft className="h-4 w-4" /> Explore
           </button>
 
-          <Hero
-            images={images}
-            title={event.title}
-            saved={isSaved}
-            onSave={handleSave}
-            onShare={handleShare}
-            onBack={handleBack}
-            onShowAll={() => setShowAllPhotos(true)}
-          />
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="flex min-w-0 flex-col">
+              <Hero
+                images={images}
+                title={event.title}
+                saved={isSaved}
+                onSave={handleSave}
+                onShare={handleShare}
+                onBack={handleBack}
+                onShowAll={() => setShowAllPhotos(true)}
+              />
 
-          <div className="px-6 md:px-0">
-            <header className="mt-5">
-              {event.mood && (
-                <span className="inline-block rounded-full bg-[#9333EA] px-3 py-1 text-[11px] leading-none font-bold tracking-wider text-white uppercase">
-                  {getMoodDisplayLabel(event.mood)}
-                </span>
-              )}
-              <h1 className="font-outfit mt-3 flex items-center gap-2 text-[22px] leading-7 font-bold text-white">
-                {event.is_private && (
-                  <LuLock className="h-5 w-5 shrink-0 text-white/60" />
-                )}
-                {event.title}
-              </h1>
-              <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/60">
-                {rating && totalReviews > 0 ? (
-                  <span className="flex items-center gap-1">
-                    <FiStar className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                    <span className="font-semibold text-amber-400">
-                      {rating.toFixed(2)}
+              <div className="flex flex-col gap-6 px-6 pt-5 md:px-0">
+                <header>
+                  {event.mood && (
+                    <span className="inline-block rounded-full bg-[#9333EA] px-3 py-1 text-[11px] leading-none font-bold tracking-wider text-white uppercase">
+                      {getMoodDisplayLabel(event.mood)}
                     </span>
-                    ({totalReviews} reviews)
-                  </span>
-                ) : (
-                  <span className="font-semibold text-[#B57BFF]">NEW</span>
-                )}
-                {event.duration_minutes ? (
-                  <>
+                  )}
+                  <h1 className="font-outfit mt-3 flex items-center gap-2 text-[22px] leading-7 font-bold text-white">
+                    {event.is_private && (
+                      <LuLock className="h-5 w-5 shrink-0 text-white/60" />
+                    )}
+                    {event.title}
+                  </h1>
+                  <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/60">
+                    {rating && totalReviews > 0 ? (
+                      <span className="flex items-center gap-1">
+                        <FiStar className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span className="font-semibold text-amber-400">
+                          {rating.toFixed(2)}
+                        </span>
+                        ({totalReviews} reviews)
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-[#B57BFF]">NEW</span>
+                    )}
+                    {event.duration_minutes ? (
+                      <>
+                        <span aria-hidden>•</span>
+                        {formatDuration(event.duration_minutes)}
+                      </>
+                    ) : null}
                     <span aria-hidden>•</span>
-                    {formatDuration(event.duration_minutes)}
-                  </>
-                ) : null}
-                <span aria-hidden>•</span>
-                <span className="truncate">{place}</span>
-              </p>
-            </header>
+                    <span className="truncate">{place}</span>
+                  </p>
+                </header>
 
-            <div className={`mt-5 ${DIVIDER}`} />
+                <div className={DIVIDER} />
 
-            <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="flex min-w-0 flex-col gap-6">
                 {host && (
                   <>
                     <HostRow host={host} />
@@ -1077,28 +1077,28 @@ export default function ExperienceDetailClient({
                   totalReviews={totalReviews}
                 />
               </div>
-
-              <BookingWidget
-                passSlot={passCard ?? undefined}
-                price={event.price_cents}
-                isFree={event.is_free}
-                priceTiers={event.price_tiers ?? []}
-                eventDate={event.time}
-                capacity={event.capacity}
-                totalBookings={event.total_bookings}
-                durationMinutes={event.duration_minutes}
-                place={place}
-                availability={availability}
-                isRecurring={
-                  event.is_recurring ||
-                  event.schedule_type === "custom_dates" ||
-                  (!!event.custom_dates && event.custom_dates.length > 0)
-                }
-                isOneOnOne={event.session_type === "one_on_one"}
-                cancellationPolicy={event.cancellation_policy}
-                onBook={handleBook}
-              />
             </div>
+
+            <BookingWidget
+              passSlot={passCard ?? undefined}
+              price={event.price_cents}
+              isFree={event.is_free}
+              priceTiers={event.price_tiers ?? []}
+              eventDate={event.time}
+              capacity={event.capacity}
+              totalBookings={event.total_bookings}
+              durationMinutes={event.duration_minutes}
+              place={place}
+              availability={availability}
+              isRecurring={
+                event.is_recurring ||
+                event.schedule_type === "custom_dates" ||
+                (!!event.custom_dates && event.custom_dates.length > 0)
+              }
+              isOneOnOne={event.session_type === "one_on_one"}
+              cancellationPolicy={event.cancellation_policy}
+              onBook={handleBook}
+            />
           </div>
         </div>
 

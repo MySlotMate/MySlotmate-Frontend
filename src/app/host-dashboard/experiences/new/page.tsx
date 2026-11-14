@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { HostNavbar } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
 import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
 import CouponsManager from "~/components/host/CouponsManager";
-import Breadcrumb from "~/components/Breadcrumb";
 import {
   useMyHost,
   useCreateEvent,
@@ -204,39 +202,260 @@ const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 /* ------------------------------------------------------------------ */
-/*  Step Indicator Component                                           */
+/*  Form building blocks — glass row-cards, pill chips, toggle rows    */
 /* ------------------------------------------------------------------ */
-function StepIndicator({ currentStep }: { currentStep: number }) {
+const GRADIENT = "bg-gradient-to-r from-[#7038F5] to-[#B724EA]";
+const FIELD =
+  "w-full rounded-2xl border border-white/10 bg-[#121426] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#B57BFF]";
+const ROW_INPUT =
+  "row-input min-w-0 flex-1 bg-transparent text-right text-sm text-white outline-none placeholder:text-white/30";
+
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
-    <div className="mb-8 flex items-center justify-center gap-2">
-      <div
-        className={`flex items-center gap-2 ${currentStep >= 1 ? "text-[#0094CA]" : "text-gray-400"}`}
-      >
-        <div
-          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${currentStep >= 1 ? "bg-[#0094CA] text-white" : "bg-gray-200"}`}
-        >
-          {currentStep > 1 ? <FiCheck /> : "1"}
-        </div>
-        <span className="hidden text-sm font-medium sm:inline">The Basics</span>
+    <section className="space-y-3">
+      <div className="border-b border-white/[0.08] pb-2">
+        <h2 className="font-outfit text-base font-semibold text-white">
+          {title}
+        </h2>
+        {hint && <p className="mt-0.5 text-xs text-white/40">{hint}</p>}
       </div>
-      <div
-        className={`h-0.5 w-12 ${currentStep > 1 ? "bg-[#0094CA]" : "bg-gray-200"}`}
-      />
-      <div
-        className={`flex items-center gap-2 ${currentStep >= 2 ? "text-[#0094CA]" : "text-gray-400"}`}
-      >
-        <div
-          className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${currentStep >= 2 ? "bg-[#0094CA] text-white" : "bg-gray-200"}`}
-        >
-          2
-        </div>
-        <span className="hidden text-sm font-medium sm:inline">
-          Schedule & Pricing
-        </span>
-      </div>
+      {children}
+    </section>
+  );
+}
+
+function Rows({ children }: { children: ReactNode }) {
+  return (
+    <div className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.06] bg-[#131328] px-4">
+      {children}
     </div>
   );
 }
+
+function Row({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <label className="flex min-h-[52px] items-center justify-between gap-4 py-2">
+      <span
+        className={`shrink-0 text-sm ${error ? "text-red-400" : "text-white/50"}`}
+      >
+        {label}
+      </span>
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+        {children}
+      </div>
+    </label>
+  );
+}
+
+function Chip({
+  active,
+  onClick,
+  disabled,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`rounded-full border px-4 py-2 text-sm font-medium transition disabled:opacity-40 ${
+        active
+          ? `border-transparent ${GRADIENT} text-white`
+          : "border-white/10 bg-white/[0.06] text-white/70 hover:bg-white/10"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
+  options: { value: T; label: ReactNode }[];
+  value: T;
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex gap-1 rounded-full border border-white/[0.06] bg-[#131328] p-1">
+      {options.map((o) => (
+        <button
+          key={o.value}
+          type="button"
+          onClick={() => onChange(o.value)}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+            value === o.value
+              ? "bg-white/15 text-white"
+              : "text-white/50 hover:text-white/80"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ToggleRow({
+  label,
+  hint,
+  checked,
+  onChange,
+  disabled,
+}: {
+  label: string;
+  hint?: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.06] bg-[#131328] px-4 py-3.5">
+      <div className="min-w-0">
+        <p className="text-sm text-white">{label}</p>
+        {hint && <p className="mt-0.5 text-xs text-white/40">{hint}</p>}
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={label}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-40 ${
+          checked ? GRADIENT : "bg-white/15"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-[#fff] shadow transition-transform ${
+            checked ? "translate-x-5" : ""
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
+function AddPill({
+  onClick,
+  children,
+}: {
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full items-center justify-between rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-sm text-white transition hover:bg-white/10"
+    >
+      <span>{children}</span>
+      <span className="text-lg leading-none text-white/70">+</span>
+    </button>
+  );
+}
+
+/* Poster-style cover: shows the profile image, or a gradient with the live title. */
+function CoverPoster({
+  preview,
+  title,
+  mood,
+  onUpload,
+  onRemove,
+}: {
+  preview: string | null;
+  title: string;
+  mood: string;
+  onUpload: (files: File[]) => void;
+  onRemove: () => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    const ok = files.filter((f) => f.size <= MAX_FILE_SIZE_BYTES);
+    if (ok.length < files.length) {
+      toast.error(`Max size is ${MAX_FILE_SIZE_MB}MB per file.`);
+    }
+    if (ok.length > 0) onUpload(ok);
+    e.target.value = "";
+  };
+
+  return (
+    <div className="relative aspect-video w-full overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-[#2b1470] via-[#5a1fc4] to-[#B724EA]">
+      {preview ? (
+        <Image
+          src={preview}
+          alt="Cover preview"
+          fill
+          unoptimized
+          className="object-cover"
+        />
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+          <LuSparkles className="h-6 w-6 text-white/70" />
+          <p className="font-outfit line-clamp-3 text-2xl leading-tight font-extrabold tracking-tight break-words text-white/90">
+            {title.trim() || "Your experience starts here"}
+          </p>
+          {mood && (
+            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white capitalize">
+              {mood}
+            </span>
+          )}
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        onChange={pick}
+        className="hidden"
+      />
+      {preview && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label="Remove cover image"
+          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70"
+        >
+          <FiX size={16} />
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        aria-label={preview ? "Change cover image" : "Upload cover image"}
+        className="absolute right-4 bottom-4 flex h-11 w-11 items-center justify-center rounded-full bg-[#fff] text-[#5a1fc4] shadow-lg transition hover:scale-105"
+      >
+        <FiUpload size={18} />
+      </button>
+    </div>
+  );
+}
+
 
 /* ------------------------------------------------------------------ */
 /*  Image Upload Component                                             */
@@ -320,8 +539,10 @@ function ImageUpload({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+      {label && (
+        <label className="block text-sm font-medium text-white/80">{label}</label>
+      )}
+      {helpText && <p className="text-xs text-white/50">{helpText}</p>}
 
       {!multiple && preview && (
         <div className="relative inline-block w-full max-w-md">
@@ -348,7 +569,7 @@ function ImageUpload({
           <div className="group relative">
             {/* Photos are cropped to 16:9 on upload, so this preview matches the
                 fixed 16:9 frame the live experience page renders them in. */}
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-white/[0.06]">
               {/* Main Image */}
               <img
                 src={previews[currentImageIndex]}
@@ -373,7 +594,7 @@ function ImageUpload({
                     aria-label="Previous image"
                   >
                     <svg
-                      className="h-4 w-4 text-gray-800"
+                      className="h-4 w-4 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -400,7 +621,7 @@ function ImageUpload({
                     aria-label="Next image"
                   >
                     <svg
-                      className="h-4 w-4 text-gray-800"
+                      className="h-4 w-4 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -431,7 +652,7 @@ function ImageUpload({
                 onClick={() => setCurrentImageIndex(i)}
                 className={`relative cursor-pointer overflow-hidden rounded-lg border-2 transition ${
                   currentImageIndex === i
-                    ? "border-[#0094CA]"
+                    ? "border-[#B57BFF]"
                     : "border-transparent"
                 }`}
               >
@@ -447,7 +668,7 @@ function ImageUpload({
                     e.stopPropagation();
                     onRemoveMultiple?.(i);
                   }}
-                  className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white shadow transition hover:bg-red-600"
+                  className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/100 text-white shadow transition hover:bg-red-600"
                 >
                   <FiX size={10} />
                 </button>
@@ -468,22 +689,22 @@ function ImageUpload({
           onClick={() => inputRef.current?.click()}
           className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition ${
             isDragging
-              ? "scale-105 border-[#0094CA] bg-[#0094CA]/5"
-              : "border-gray-300 hover:border-[#0094CA] hover:bg-gray-50"
+              ? "scale-105 border-[#B57BFF] bg-[#7038F5]/15"
+              : "border-white/10 hover:border-[#B57BFF] hover:bg-white/[0.06]"
           }`}
         >
           <FiUpload
-            className={`mx-auto mb-2 transition ${isDragging ? "text-[#0094CA]" : "text-gray-400"}`}
+            className={`mx-auto mb-2 transition ${isDragging ? "text-[#D8B4FE]" : "text-white/40"}`}
             size={24}
           />
           <p
-            className={`text-sm transition ${isDragging ? "font-semibold text-[#0094CA]" : "text-gray-500"}`}
+            className={`text-sm transition ${isDragging ? "font-semibold text-[#D8B4FE]" : "text-white/50"}`}
           >
             {isDragging
               ? `Drop ${multiple ? "images" : "image"} here`
               : `Click to upload or drag ${multiple ? "images" : "image"}`}
           </p>
-          <p className="mt-1 text-xs text-gray-400">PNG, JPG up to 5MB</p>
+          <p className="mt-1 text-xs text-white/40">PNG, JPG up to 5MB</p>
         </div>
       )}
 
@@ -513,14 +734,11 @@ function MoodSelector({
 }) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        Experience Mood
-      </label>
-      <p className="text-xs text-gray-500">
+      <p className="text-sm text-white/50">
         What vibe best describes your experience?
       </p>
       <div
-        className={`flex flex-wrap gap-2 rounded-xl p-1 transition ${hasError ? "bg-red-50 ring-1 ring-red-500" : ""}`}
+        className={`flex flex-wrap gap-2 rounded-xl p-1 transition ${hasError ? "bg-red-500/10 ring-1 ring-red-500" : ""}`}
       >
         {MOODS.map((mood) => (
           <button
@@ -529,8 +747,8 @@ function MoodSelector({
             onClick={() => onChange(mood.toLowerCase())}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               value === mood.toLowerCase()
-                ? "bg-[#0094CA] text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white"
+                : "bg-white/[0.06] text-white/80 hover:bg-white/10"
             }`}
           >
             {mood}
@@ -578,9 +796,6 @@ function TitleAutocomplete({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        Experience Title <span className="text-red-500">*</span>
-      </label>
       <div className="relative">
         <input
           type="text"
@@ -610,25 +825,21 @@ function TitleAutocomplete({
               ? "Pick a mood first to see suggestions"
               : "Start typing — or pick a suggestion below"
           }
-          className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-            moodDisabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : ""
-          } ${
-            hasError
-              ? "border-red-500 bg-red-50"
-              : "border-gray-200 focus:border-transparent"
-          }`}
+          className={`font-outfit w-full rounded-2xl border border-white/10 bg-[#121426] px-4 py-4 text-xl font-semibold text-white outline-none transition placeholder:text-white/30 focus:border-[#B57BFF] ${
+            moodDisabled ? "cursor-not-allowed opacity-50" : ""
+          } ${hasError ? "!border-red-500 !bg-red-500/10" : ""}`}
           maxLength={100}
         />
 
         {showDropdown && !moodDisabled && (
-          <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-white/10 bg-[#131328] shadow-lg">
             {isLoading && (
-              <div className="px-4 py-3 text-sm text-gray-500">
+              <div className="px-4 py-3 text-sm text-white/50">
                 Loading suggestions…
               </div>
             )}
             {!isLoading && filtered.length === 0 && (
-              <div className="px-4 py-3 text-sm text-gray-500">
+              <div className="px-4 py-3 text-sm text-white/50">
                 No matching templates — keep typing your own title.
               </div>
             )}
@@ -643,16 +854,16 @@ function TitleAutocomplete({
                     onSelectTemplate(t.title, t.hook_line);
                     setShowDropdown(false);
                   }}
-                  className="block w-full border-b border-gray-100 px-4 py-3 text-left text-sm transition last:border-b-0 hover:bg-gray-50"
+                  className="block w-full border-b border-white/[0.06] px-4 py-3 text-left text-sm transition last:border-b-0 hover:bg-white/[0.06]"
                 >
-                  <p className="font-semibold text-gray-900">{t.title}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">{t.hook_line}</p>
+                  <p className="font-semibold text-white">{t.title}</p>
+                  <p className="mt-0.5 text-xs text-white/50">{t.hook_line}</p>
                 </button>
               ))}
           </div>
         )}
       </div>
-      <p className="text-xs text-gray-400">{value.length}/100 characters</p>
+      <p className="text-xs text-white/40">{value.length}/100 characters</p>
     </div>
   );
 }
@@ -974,7 +1185,6 @@ export default function CreateExperiencePage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitType, setSubmitType] = useState<"draft" | "publish" | null>(
     null,
@@ -1427,7 +1637,7 @@ export default function CreateExperiencePage() {
         toast.error("Add a title before saving as draft");
         return;
       }
-    } else if (!validateStep2()) {
+    } else if (!validateStep1() || !validateStep2()) {
       return;
     }
     if (!host?.id) {
@@ -1651,538 +1861,488 @@ export default function CreateExperiencePage() {
     }
   };
 
-  /* ---------------------------------------------------------------- */
-  /*  Step Navigation                                                  */
-  /* ---------------------------------------------------------------- */
-  const goToStep2 = () => {
-    if (validateStep1()) {
-      setCurrentStep(2);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const goToStep1 = () => {
-    setCurrentStep(1);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   /* ---------------------------------------------------------------- */
   /*  Render                                                           */
   /* ---------------------------------------------------------------- */
+  // Digits-only numeric field that clamps to `min` on blur.
+  const intField = (
+    str: string,
+    setStr: (v: string) => void,
+    key: "durationMinutes" | "minGroupSize" | "maxGroupSize",
+    min: number,
+  ) => ({
+    inputMode: "numeric" as const,
+    value: str,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+      const val = e.target.value;
+      if (val !== "" && !/^\d*$/.test(val)) return;
+      setStr(val);
+      updateForm(key, val === "" ? 0 : parseInt(val, 10));
+    },
+    onBlur: () => {
+      const parsed = parseInt(str, 10);
+      const next = isNaN(parsed) || parsed < min ? min : parsed;
+      setStr(next.toString());
+      updateForm(key, next);
+    },
+  });
+
+  const scheduleModes = [
+    {
+      label: "One-time",
+      hint: "Single date & time",
+      active: form.sessionType === "group" && form.scheduleType === "one_time",
+      apply: () => {
+        updateForm("scheduleType", "one_time");
+        updateForm("isRecurring", false);
+        updateForm("sessionType", "group");
+      },
+    },
+    {
+      label: "Recurring",
+      hint: "Repeats daily, weekly or monthly",
+      active: form.sessionType === "group" && form.scheduleType === "recurring",
+      apply: () => {
+        updateForm("scheduleType", "recurring");
+        updateForm("isRecurring", true);
+        updateForm("sessionType", "group");
+      },
+    },
+    {
+      label: "Custom dates",
+      hint: "Pick specific dates, e.g. Aug 15, 22, Sept 5",
+      active:
+        form.sessionType === "group" && form.scheduleType === "custom_dates",
+      apply: () => {
+        updateForm("scheduleType", "custom_dates");
+        updateForm("isRecurring", false);
+        updateForm("sessionType", "group");
+      },
+    },
+    {
+      label: "One-on-one",
+      hint: "Set your hours, we split them into 1:1 slots",
+      active: form.sessionType === "one_on_one",
+      apply: () => {
+        // One-on-one is stored as a custom-dates event whose slots
+        // we generate from the host's availability windows.
+        updateForm("sessionType", "one_on_one");
+        updateForm("scheduleType", "custom_dates");
+        updateForm("isRecurring", false);
+      },
+    },
+  ];
+
+  const draftLabel =
+    submitType === "draft" ? (
+      <>
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/60 border-t-transparent" />
+        <span>Saving...</span>
+      </>
+    ) : (
+      <span>Save as draft</span>
+    );
+
   if (hostLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
+      <div className="flex min-h-screen items-center justify-center bg-[#080914]">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#B57BFF]" />
       </div>
     );
   }
 
   return (
     <>
-      <HostNavbar />
-
-      <main className="min-h-screen bg-gray-50 pb-24">
-        <div className="site-x mx-auto max-w-4xl py-8">
-          <Breadcrumb
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Dashboard", href: "/host-dashboard" },
-              { label: "Experiences", href: "/host-dashboard/experiences" },
-              { label: "New" },
-            ]}
-            className="mb-6"
-          />
-
+      <main className="msm-dark-form min-h-screen bg-[#080914] pb-28 text-white md:pl-20 min-[80rem]:pl-[230px]">
+        <div className="mx-auto max-w-[1120px] px-5 py-8 md:px-10">
           {/* Header */}
-          <div className="mb-6 flex items-center gap-4">
+          <div className="mb-8 flex items-center gap-3">
             <button
-              onClick={() => router.push("/host-dashboard/experiences")}
-              className="rounded-lg p-2 transition hover:bg-gray-100"
+              onClick={() => router.push("/")}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white transition hover:bg-white/10"
+              aria-label="Back to home"
             >
-              <FiArrowLeft size={20} />
+              <FiArrowLeft size={18} />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Create New Experience
+              <h1 className="font-outfit text-2xl font-bold text-white">
+                Create an Experience
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-white/50">
                 Share something unique with your guests
               </p>
             </div>
           </div>
 
-          <StepIndicator currentStep={currentStep} />
-
-          {/* Step 1: The Basics */}
-          {currentStep === 1 && (
-            <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="border-b border-gray-100 pb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  The Basics
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Tell us about your experience
-                </p>
-              </div>
-
-              {/* Mood Selector — chosen first so the title typeahead can suggest matching templates */}
-              <MoodSelector
-                value={form.mood}
-                onChange={(v) => {
-                  updateForm("mood", v);
-                  // Reset prefilled title/hook so the new mood's templates surface cleanly.
-                  if (v !== form.mood) {
-                    updateForm("title", "");
-                    updateForm("hookLine", "");
-                  }
-                }}
-                hasError={showErrors && !form.mood}
-              />
-
-              {/* Title — typeahead filtered by mood-keyed templates */}
-              <TitleAutocomplete
+          <div className="grid gap-8 lg:grid-cols-[420px_minmax(0,1fr)] lg:gap-12">
+            {/* Left — cover + host */}
+            <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
+              <CoverPoster
+                preview={form.coverImagePreview}
+                title={form.title}
                 mood={form.mood}
-                value={form.title}
-                onChange={(v) => updateForm("title", v)}
-                onSelectTemplate={(title, hookLine) => {
-                  updateForm("title", title);
-                  updateForm("hookLine", hookLine);
+                onUpload={handleCoverUpload}
+                onRemove={() => {
+                  if (form.coverImagePreview)
+                    URL.revokeObjectURL(form.coverImagePreview);
+                  updateForm("coverImage", null);
+                  updateForm("coverImagePreview", null);
                 }}
-                hasError={showErrors && !form.title.trim()}
-                showDropdown={showTitleDropdown}
-                setShowDropdown={setShowTitleDropdown}
-                blurTimer={titleBlurTimer}
-                titleSuggestions={titleSuggestions}
+              />
+              <p className="px-1 text-xs text-white/40">
+                Profile image — shown on experience cards. Add more photos
+                below.
+              </p>
+
+              <div className="space-y-3">
+                <div className="border-b border-white/[0.08] pb-2">
+                  <h2 className="font-outfit text-base font-semibold text-white">
+                    Hosted by
+                  </h2>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-full text-base font-semibold text-white ${GRADIENT}`}
+                  >
+                    {(host?.first_name?.[0] ?? "H").toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">
+                      {`${host?.first_name ?? ""} ${host?.last_name ?? ""}`.trim() ||
+                        "You"}
+                    </p>
+                    {host?.city && (
+                      <p className="truncate text-xs text-white/40">
+                        {host.city}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            {/* Right — form */}
+            <div className="min-w-0 space-y-9">
+              <Segmented<"public" | "private">
+                value={form.isPrivate ? "private" : "public"}
+                onChange={(v) => updateForm("isPrivate", v === "private")}
+                options={[
+                  { value: "public", label: "Public" },
+                  { value: "private", label: "Private" },
+                ]}
               />
 
-              {/* Hook Line */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Hook Line <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.hookLine}
-                  onChange={(e) => {
-                    updateForm("hookLine", e.target.value);
-                    void hookSuggestions.generateSuggestions(
-                      e.target.value,
-                      "hookLine",
-                      {
-                        title: form.title,
-                      },
-                    );
+              {/* Basics */}
+              <div className="space-y-5">
+                <MoodSelector
+                  value={form.mood}
+                  onChange={(v) => {
+                    updateForm("mood", v);
+                    // Reset prefilled title/hook so the new mood's templates surface cleanly.
+                    if (v !== form.mood) {
+                      updateForm("title", "");
+                      updateForm("hookLine", "");
+                    }
                   }}
-                  onBlur={() => hookSuggestions.clearSuggestions()}
-                  placeholder="A short catchy phrase to attract guests"
-                  className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-                    showErrors && !form.hookLine.trim()
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-200 focus:border-transparent"
-                  }`}
-                  maxLength={150}
+                  hasError={showErrors && !form.mood}
                 />
-                <p className="text-xs text-gray-400">
-                  {form.hookLine.length}/150 characters
-                </p>
-                {hookSuggestions.suggestions.length > 0 && (
-                  <SuggestionChips
-                    suggestions={hookSuggestions.suggestions}
-                    isLoading={hookSuggestions.isLoading}
-                    onSelect={(suggestion) => {
-                      updateForm("hookLine", suggestion);
-                      hookSuggestions.clearSuggestions();
+
+                {/* Title — typeahead filtered by mood-keyed templates */}
+                <TitleAutocomplete
+                  mood={form.mood}
+                  value={form.title}
+                  onChange={(v) => updateForm("title", v)}
+                  onSelectTemplate={(title, hookLine) => {
+                    updateForm("title", title);
+                    updateForm("hookLine", hookLine);
+                  }}
+                  hasError={showErrors && !form.title.trim()}
+                  showDropdown={showTitleDropdown}
+                  setShowDropdown={setShowTitleDropdown}
+                  blurTimer={titleBlurTimer}
+                  titleSuggestions={titleSuggestions}
+                />
+
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    value={form.hookLine}
+                    onChange={(e) => {
+                      updateForm("hookLine", e.target.value);
+                      void hookSuggestions.generateSuggestions(
+                        e.target.value,
+                        "hookLine",
+                        { title: form.title },
+                      );
                     }}
-                    onDismiss={hookSuggestions.clearSuggestions}
+                    onBlur={() => hookSuggestions.clearSuggestions()}
+                    placeholder="Hook line — a short catchy phrase *"
+                    aria-label="Hook line"
+                    className={`${FIELD} ${
+                      showErrors && !form.hookLine.trim()
+                        ? "!border-red-500 !bg-red-500/10"
+                        : ""
+                    }`}
+                    maxLength={150}
                   />
-                )}
-              </div>
-
-              {/* Visuals Section */}
-              <div className="border-t border-gray-100 pt-6">
-                <h3 className="mb-4 text-base font-semibold text-gray-900">
-                  Visuals
-                </h3>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <ImageUpload
-                    label="Profile Image"
-                    helpText="This will be the main profile image shown on cards"
-                    preview={form.coverImagePreview}
-                    onUpload={handleCoverUpload}
-                    onRemove={() => {
-                      if (form.coverImagePreview)
-                        URL.revokeObjectURL(form.coverImagePreview);
-                      updateForm("coverImage", null);
-                      updateForm("coverImagePreview", null);
-                    }}
-                  />
-                  <ImageUpload
-                    label="Cover Image"
-                    helpText="Add cover and gallery photos for the experience"
-                    multiple
-                    previews={form.galleryPreviews}
-                    onUpload={handleGalleryUpload}
-                    onRemoveMultiple={removeGalleryImage}
-                  />
-                </div>
-              </div>
-
-              {/* Logistics Section */}
-              <div className="border-t border-gray-100 pt-6">
-                <h3 className="mb-4 text-base font-semibold text-gray-900">
-                  Logistics
-                </h3>
-
-                {/* Online/In-Person Toggle */}
-                <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Experience Type
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => updateForm("isOnline", false)}
-                      className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition ${
-                        !form.isOnline
-                          ? "bg-[#0094CA] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      <FiMapPin className="mr-2 inline" size={16} />
-                      In-Person
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateForm("isOnline", true)}
-                      className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition ${
-                        form.isOnline
-                          ? "bg-[#0094CA] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      🌐 Online
-                    </button>
-                  </div>
-                </div>
-
-                {/* Meeting Link (if online) */}
-                {form.isOnline && (
-                  <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Meeting Link
-                    </label>
-                    <input
-                      type="url"
-                      value={form.meetingLink}
-                      onChange={(e) =>
-                        updateForm("meetingLink", e.target.value)
-                      }
-                      placeholder="e.g., https://zoom.us/j/123456789"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                  <p className="px-1 text-xs text-white/40">
+                    {form.hookLine.length}/150 characters
+                  </p>
+                  {hookSuggestions.suggestions.length > 0 && (
+                    <SuggestionChips
+                      suggestions={hookSuggestions.suggestions}
+                      isLoading={hookSuggestions.isLoading}
+                      onSelect={(suggestion) => {
+                        updateForm("hookLine", suggestion);
+                        hookSuggestions.clearSuggestions();
+                      }}
+                      onDismiss={hookSuggestions.clearSuggestions}
                     />
-                    <p className="text-xs text-gray-500">
-                      Paste your Zoom, Google Meet, or other video conference
-                      link
-                    </p>
-                  </div>
-                )}
+                  )}
+                </div>
+              </div>
 
-                {/* Location (if in-person) */}
-                {!form.isOnline && (
-                  <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Location
-                    </label>
-                    <div className="flex gap-2">
-                      <LocationSearchInput
-                        value={form.location}
-                        onChange={(val) => updateForm("location", val)}
-                        onSelect={(addr, lat, lng) => {
-                          updateForm("location", addr);
-                          updateForm(
-                            "googleMapsUrl",
-                            `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-                          );
-                        }}
-                        placeholder="Search for a location or locality..."
+              {/* When */}
+              <Section title="When">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {scheduleModes.map((m) => (
+                    <button
+                      key={m.label}
+                      type="button"
+                      onClick={m.apply}
+                      className={`rounded-2xl border p-3.5 text-left transition ${
+                        m.active
+                          ? "border-[#B57BFF] bg-[#7038F5]/15"
+                          : "border-white/[0.06] bg-[#131328] hover:border-white/20"
+                      }`}
+                    >
+                      <div
+                        className={`text-sm font-medium ${m.active ? "text-[#D8B4FE]" : "text-white"}`}
+                      >
+                        {m.label}
+                      </div>
+                      <div className="mt-0.5 text-xs text-white/40">
+                        {m.hint}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {form.sessionType === "group" &&
+                  (form.scheduleType === "one_time" ||
+                    form.scheduleType === "recurring") && (
+                    <Rows>
+                      <Row label="Date" error={showErrors && !form.eventDate}>
+                        <input
+                          type="date"
+                          value={form.eventDate}
+                          onChange={(e) =>
+                            updateForm("eventDate", e.target.value)
+                          }
+                          min={new Date().toISOString().split("T")[0]}
+                          className={ROW_INPUT}
+                        />
+                      </Row>
+                      <Row
+                        label="Start time"
+                        error={showErrors && !form.eventTime}
+                      >
+                        <input
+                          type="time"
+                          value={form.eventTime}
+                          onChange={(e) =>
+                            updateForm("eventTime", e.target.value)
+                          }
+                          className={ROW_INPUT}
+                        />
+                      </Row>
+                      <Row label="End time (optional)">
+                        <input
+                          type="time"
+                          value={form.endTime}
+                          onChange={(e) =>
+                            updateForm("endTime", e.target.value)
+                          }
+                          className={ROW_INPUT}
+                        />
+                      </Row>
+                      {form.scheduleType === "recurring" && (
+                        <Row label="Repeats">
+                          <select
+                            value={form.recurrenceRule}
+                            onChange={(e) =>
+                              updateForm("recurrenceRule", e.target.value)
+                            }
+                            className={ROW_INPUT}
+                          >
+                            <option value="">Select frequency</option>
+                            <option value="FREQ=DAILY">Daily</option>
+                            <option value="FREQ=WEEKLY">Weekly</option>
+                            <option value="FREQ=WEEKLY;INTERVAL=2">
+                              Every 2 weeks
+                            </option>
+                            <option value="FREQ=MONTHLY">Monthly</option>
+                          </select>
+                        </Row>
+                      )}
+                    </Rows>
+                  )}
+                {form.sessionType === "group" &&
+                  (form.scheduleType === "one_time" ||
+                    form.scheduleType === "recurring") && (
+                    <p className="px-1 text-xs text-white/40">
+                      Leave the end time empty to calculate it from the
+                      duration.
+                    </p>
+                  )}
+
+                {form.sessionType === "group" &&
+                  form.scheduleType === "custom_dates" && (
+                    <div className="space-y-3">
+                      {form.customDatesList.map((slot, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            <Rows>
+                              <Row label="Date">
+                                <input
+                                  type="date"
+                                  value={slot.date}
+                                  onChange={(e) =>
+                                    updateCustomSlot(
+                                      idx,
+                                      "date",
+                                      e.target.value,
+                                    )
+                                  }
+                                  min={new Date().toISOString().split("T")[0]}
+                                  className={ROW_INPUT}
+                                />
+                              </Row>
+                              <Row label="Start time">
+                                <input
+                                  type="time"
+                                  value={slot.time}
+                                  onChange={(e) =>
+                                    updateCustomSlot(
+                                      idx,
+                                      "time",
+                                      e.target.value,
+                                    )
+                                  }
+                                  className={ROW_INPUT}
+                                />
+                              </Row>
+                            </Rows>
+                          </div>
+                          {form.customDatesList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeCustomSlot(idx)}
+                              className="p-2 text-white/40 transition hover:text-red-400"
+                              title="Remove slot"
+                              aria-label="Remove slot"
+                            >
+                              <FiX size={18} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <AddPill onClick={addCustomSlot}>Add another date</AddPill>
+                    </div>
+                  )}
+
+                {form.sessionType === "one_on_one" && (
+                  <SessionWindowsEditor
+                    windows={form.sessionWindows}
+                    onWindowsChange={(windows) =>
+                      updateForm("sessionWindows", windows)
+                    }
+                    breakMinutes={form.breakMinutes}
+                    onBreakMinutesChange={(minutes) =>
+                      updateForm("breakMinutes", minutes)
+                    }
+                    durationMinutes={form.durationMinutes}
+                    isWeekly={form.sessionIsWeekly}
+                    onIsWeeklyChange={(weekly) =>
+                      updateForm("sessionIsWeekly", weekly)
+                    }
+                    showErrors={showErrors}
+                  />
+                )}
+              </Section>
+
+              {/* Where */}
+              <Section title="Where">
+                <Segmented<"in_person" | "online">
+                  value={form.isOnline ? "online" : "in_person"}
+                  onChange={(v) => updateForm("isOnline", v === "online")}
+                  options={[
+                    {
+                      value: "in_person",
+                      label: (
+                        <>
+                          <FiMapPin size={15} /> In-person
+                        </>
+                      ),
+                    },
+                    { value: "online", label: <>🌐 Online</> },
+                  ]}
+                />
+
+                {form.isOnline ? (
+                  <Rows>
+                    <Row label="Meeting link">
+                      <input
+                        type="url"
+                        value={form.meetingLink}
+                        onChange={(e) =>
+                          updateForm("meetingLink", e.target.value)
+                        }
+                        placeholder="Zoom, Google Meet…"
+                        className={ROW_INPUT}
                       />
+                    </Row>
+                  </Rows>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <div className="min-w-0 flex-1">
+                        <LocationSearchInput
+                          value={form.location}
+                          onChange={(val) => updateForm("location", val)}
+                          onSelect={(addr, lat, lng) => {
+                            updateForm("location", addr);
+                            updateForm(
+                              "googleMapsUrl",
+                              `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                            );
+                          }}
+                          placeholder="Search for a location or locality..."
+                        />
+                      </div>
                       <button
                         type="button"
                         onClick={() => setShowMapPicker(true)}
-                        className="flex items-center gap-2 rounded-lg border border-[#0094CA] bg-white px-4 py-3 text-sm font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5"
+                        className="flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm font-semibold text-[#D8B4FE] transition hover:bg-white/10"
                         title="Pick from map"
                       >
                         <FiMap size={18} />
-                        <span className="hidden sm:inline">Pick from Map</span>
+                        <span className="hidden sm:inline">Pick on map</span>
                       </button>
                     </div>
+                    {form.googleMapsUrl && (
+                      <p className="truncate px-1 text-xs text-white/40">
+                        Pinned: {form.googleMapsUrl}
+                      </p>
+                    )}
                   </div>
                 )}
+              </Section>
 
-                {/* Google Maps URL (if in-person) */}
-                {!form.isOnline && (
-                  <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Google Maps Link
-                    </label>
-                    <input
-                      type="url"
-                      value={form.googleMapsUrl}
-                      onChange={(e) =>
-                        updateForm("googleMapsUrl", e.target.value)
-                      }
-                      placeholder="Auto-generated with exact coordinates"
-                      readOnly
-                      className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Auto-filled with exact location coordinates from Google
-                      Maps
-                    </p>
-                  </div>
-                )}
-
-                {/* Duration */}
-                <div className="mb-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Duration (minutes)
-                  </label>
-                  <div className="space-y-3">
-                    {/* Quick Select Buttons */}
-                    <div className="flex flex-wrap gap-2">
-                      {DURATION_OPTIONS.map((mins) => (
-                        <button
-                          key={mins}
-                          type="button"
-                          onClick={() => updateForm("durationMinutes", mins)}
-                          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                            form.durationMinutes === mins
-                              ? "bg-[#0094CA] text-white"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
-                        >
-                          {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                        </button>
-                      ))}
-                    </div>
-                    {/* Custom Input */}
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={durationInputStr}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || /^\d*$/.test(val)) {
-                            setDurationInputStr(val);
-                            if (val === "") {
-                              updateForm("durationMinutes", 0);
-                            } else {
-                              const parsed = parseInt(val, 10);
-                              if (!isNaN(parsed)) {
-                                updateForm("durationMinutes", parsed);
-                              }
-                            }
-                          }
-                        }}
-                        onBlur={() => {
-                          const parsed = parseInt(durationInputStr, 10);
-                          if (isNaN(parsed) || parsed < 15) {
-                            setDurationInputStr("15");
-                            updateForm("durationMinutes", 15);
-                          } else {
-                            setDurationInputStr(parsed.toString());
-                            updateForm("durationMinutes", parsed);
-                          }
-                        }}
-                        className="flex-1 rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                        placeholder="Enter custom duration"
-                      />
-                      <span className="text-sm font-medium text-gray-600">
-                        min
-                      </span>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Click quick options or enter custom duration (minimum 15
-                      min)
-                    </p>
-                  </div>
-                </div>
-
-                {/* Group Size */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Min Group Size
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={minGroupInputStr}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === "" || /^\d*$/.test(val)) {
-                          setMinGroupInputStr(val);
-                          if (val === "") {
-                            updateForm("minGroupSize", 0);
-                          } else {
-                            const parsed = parseInt(val, 10);
-                            if (!isNaN(parsed)) {
-                              updateForm("minGroupSize", parsed);
-                            }
-                          }
-                        }
-                      }}
-                      onBlur={() => {
-                        const parsed = parseInt(minGroupInputStr, 10);
-                        if (isNaN(parsed) || parsed < 1) {
-                          setMinGroupInputStr("1");
-                          updateForm("minGroupSize", 1);
-                        } else {
-                          setMinGroupInputStr(parsed.toString());
-                          updateForm("minGroupSize", parsed);
-                        }
-                      }}
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Max Group Size
-                    </label>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      value={maxGroupInputStr}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === "" || /^\d*$/.test(val)) {
-                          setMaxGroupInputStr(val);
-                          if (val === "") {
-                            updateForm("maxGroupSize", 0);
-                          } else {
-                            const parsed = parseInt(val, 10);
-                            if (!isNaN(parsed)) {
-                              updateForm("maxGroupSize", parsed);
-                            }
-                          }
-                        }
-                      }}
-                      onBlur={() => {
-                        const parsed = parseInt(maxGroupInputStr, 10);
-                        const minVal = form.minGroupSize || 1;
-                        if (isNaN(parsed) || parsed < minVal) {
-                          setMaxGroupInputStr(minVal.toString());
-                          updateForm("maxGroupSize", minVal);
-                        } else {
-                          setMaxGroupInputStr(parsed.toString());
-                          updateForm("maxGroupSize", parsed);
-                        }
-                      }}
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                  </div>
-                </div>
-                <p className="mt-2 text-xs text-gray-500">
-                  <span className="font-medium">Max group size</span> = total
-                  spots that can book this session (the event capacity).
-                </p>
-
-                {/* Languages */}
-                <div className="mt-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Languages
-                  </label>
-                  <p className="text-xs text-gray-500">
-                    Pick every language this experience is conducted in.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {LANGUAGE_OPTIONS.map((lang) => {
-                      const selected = form.languages.includes(lang);
-                      return (
-                        <button
-                          key={lang}
-                          type="button"
-                          onClick={() => toggleLanguage(lang)}
-                          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                            selected
-                              ? "bg-[#0094CA] text-white"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
-                        >
-                          {lang}
-                        </button>
-                      );
-                    })}
-                    {/* Custom languages already added */}
-                    {form.languages
-                      .filter((l) => !LANGUAGE_OPTIONS.includes(l))
-                      .map((lang) => (
-                        <button
-                          key={lang}
-                          type="button"
-                          onClick={() => toggleLanguage(lang)}
-                          className="flex items-center gap-1.5 rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-medium text-white transition"
-                        >
-                          {lang}
-                          <span className="text-white/80">✕</span>
-                        </button>
-                      ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={customLanguage}
-                      onChange={(e) => setCustomLanguage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCustomLanguage();
-                        }
-                      }}
-                      placeholder="Other language…"
-                      className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                    <button
-                      type="button"
-                      onClick={addCustomLanguage}
-                      className="rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-
-                {/* Level */}
-                <div className="mt-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Level
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {LEVEL_OPTIONS.map((lvl) => (
-                      <button
-                        key={lvl}
-                        type="button"
-                        onClick={() => updateForm("level", lvl)}
-                        className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                          form.level === lvl
-                            ? "bg-[#0094CA] text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                      >
-                        {lvl}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="mt-2 space-y-2">
-                  <div className="flex items-start justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Description <span className="text-red-500">*</span>
-                    </label>
-                  </div>
+              {/* Details */}
+              <Section title="Add details">
+                <div className="space-y-2">
                   <RichTextEditor
                     value={form.description}
                     onChange={(html) => {
@@ -2207,17 +2367,61 @@ export default function CreateExperiencePage() {
                     maxLength={2000}
                     error={showErrors && !form.description.trim()}
                   />
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-gray-400">
+                  <div className="flex items-center justify-between gap-3 px-1">
+                    <p className="text-xs text-white/40">
                       {descriptionTextLength}/2000 characters
                     </p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          setIsSummarizing(true);
+                          const res = await fetch(
+                            "/api/generate-description",
+                            {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                title: form.title,
+                                hookLine: form.hookLine,
+                                mood: form.mood,
+                                location: form.location,
+                                durationMinutes: form.durationMinutes,
+                              }),
+                            },
+                          );
+
+                          const data: unknown = await res.json();
+                          const generatedDescription =
+                            getGeneratedDescription(data);
+
+                          if (res.ok && generatedDescription) {
+                            handleDescriptionChange(generatedDescription);
+                            toast.success("Description generated");
+                          } else {
+                            console.error("Generation error", data);
+                            toast.error("Failed to generate description");
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          toast.error("Failed to generate description");
+                        } finally {
+                          setIsSummarizing(false);
+                        }
+                      }}
+                      disabled={isSummarizing}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-xs font-medium text-[#D8B4FE] transition hover:bg-white/10 disabled:opacity-60"
+                    >
+                      <LuSparkles className="h-3.5 w-3.5" />
+                      {isSummarizing ? "Writing..." : "Write with AI"}
+                    </button>
                   </div>
                   {descriptionWarning && (
                     <div
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${
                         descriptionWarning.includes("⚠️")
-                          ? "border border-red-200 bg-red-50 text-red-700"
-                          : "border border-blue-200 bg-blue-50 text-blue-700"
+                          ? "border border-red-500/30 bg-red-500/10 text-red-300"
+                          : "border border-blue-400/30 bg-blue-500/10 text-blue-300"
                       }`}
                     >
                       <FiAlertTriangle size={16} className="shrink-0" />
@@ -2236,160 +2440,172 @@ export default function CreateExperiencePage() {
                       onDismiss={descriptionSuggestions.clearSuggestions}
                     />
                   )}
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      try {
-                        setIsSummarizing(true);
-                        const res = await fetch("/api/generate-description", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            title: form.title,
-                            hookLine: form.hookLine,
-                            mood: form.mood,
-                            location: form.location,
-                            durationMinutes: form.durationMinutes,
-                          }),
-                        });
+                </div>
 
-                        const data: unknown = await res.json();
-                        const generatedDescription =
-                          getGeneratedDescription(data);
+                <Rows>
+                  <Row label="Duration (min)">
+                    <input
+                      type="text"
+                      {...intField(
+                        durationInputStr,
+                        setDurationInputStr,
+                        "durationMinutes",
+                        15,
+                      )}
+                      placeholder="Minimum 15"
+                      className={ROW_INPUT}
+                    />
+                  </Row>
+                  <Row label="Min group size">
+                    <input
+                      type="text"
+                      {...intField(
+                        minGroupInputStr,
+                        setMinGroupInputStr,
+                        "minGroupSize",
+                        1,
+                      )}
+                      className={ROW_INPUT}
+                    />
+                  </Row>
+                  <Row label="Max group size">
+                    <input
+                      type="text"
+                      {...intField(
+                        maxGroupInputStr,
+                        setMaxGroupInputStr,
+                        "maxGroupSize",
+                        form.minGroupSize || 1,
+                      )}
+                      className={ROW_INPUT}
+                    />
+                  </Row>
+                </Rows>
+                <div className="flex flex-wrap gap-2">
+                  {DURATION_OPTIONS.map((mins) => (
+                    <Chip
+                      key={mins}
+                      active={form.durationMinutes === mins}
+                      onClick={() => {
+                        updateForm("durationMinutes", mins);
+                        setDurationInputStr(mins.toString());
+                      }}
+                    >
+                      {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
+                    </Chip>
+                  ))}
+                </div>
+                <p className="px-1 text-xs text-white/40">
+                  Max group size is the total number of spots that can book
+                  this session (the event capacity).
+                </p>
 
-                        if (res.ok && generatedDescription) {
-                          handleDescriptionChange(generatedDescription);
-                          toast.success("Description generated");
-                        } else {
-                          console.error("Generation error", data);
-                          toast.error("Failed to generate description");
+                <div className="space-y-2 pt-2">
+                  <p className="text-sm text-white/50">
+                    Languages — pick every language you&apos;ll host in
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {LANGUAGE_OPTIONS.map((lang) => (
+                      <Chip
+                        key={lang}
+                        active={form.languages.includes(lang)}
+                        onClick={() => toggleLanguage(lang)}
+                      >
+                        {lang}
+                      </Chip>
+                    ))}
+                    {/* Custom languages already added */}
+                    {form.languages
+                      .filter((l) => !LANGUAGE_OPTIONS.includes(l))
+                      .map((lang) => (
+                        <Chip
+                          key={lang}
+                          active
+                          onClick={() => toggleLanguage(lang)}
+                        >
+                          {lang} <span className="text-white/80">✕</span>
+                        </Chip>
+                      ))}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={customLanguage}
+                      onChange={(e) => setCustomLanguage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addCustomLanguage();
                         }
-                      } catch (err) {
-                        console.error(err);
-                        toast.error("Failed to generate description");
-                      } finally {
-                        setIsSummarizing(false);
-                      }
-                    }}
-                    disabled={isSummarizing}
-                    className="inline-flex items-center gap-2 rounded-md bg-[#0094CA] px-3 py-2 text-sm text-white hover:bg-[#007ba8] disabled:opacity-60"
-                  >
-                    {isSummarizing ? "Summarizing..." : "Summarize"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Step 1 footer — draft save + continue */}
-              <div className="flex flex-col gap-4 border-t border-gray-100 pt-6 sm:flex-row">
-                <button
-                  onClick={() => void handleSubmit(true)}
-                  disabled={isSubmitting}
-                  className="border-gray-250 flex flex-1 items-center justify-center gap-2.5 rounded-xl border bg-white px-6 py-3.5 font-semibold text-gray-700 transition duration-300 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {submitType === "draft" ? (
-                    <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <span>Save as Draft</span>
-                  )}
-                </button>
-                <button
-                  onClick={goToStep2}
-                  disabled={isSubmitting}
-                  className="flex flex-1 items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-[#0094CA] via-[#00a6e2] to-[#00bde5] px-6 py-3.5 font-bold text-white shadow-md shadow-[#0094CA]/15 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.01] hover:shadow-lg hover:shadow-[#0094CA]/25 active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <span>Continue to Schedule & Pricing</span>
-                  <FiArrowRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Schedule & Pricing */}
-          {currentStep === 2 && (
-            <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="border-b border-gray-100 pb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Schedule & Pricing
-                </h2>
-                <p className="text-sm text-gray-500">Set when and how much</p>
-              </div>
-
-              {/* Pricing Section */}
-              <div className="space-y-4">
-                <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
-                  <span className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none font-bold">
-                    ₹
-                  </span>{" "}
-                  Pricing
-                </h3>
-
-                {/* Free/Paid Toggle */}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => updateForm("isFree", false)}
-                    className={`flex-1 rounded-lg px-4 py-3 text-sm font-medium transition ${
-                      !form.isFree
-                        ? "bg-[#0094CA] text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    Paid Experience
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateForm("isFree", true)}
-                    className={`flex-1 rounded-lg px-4 py-3 text-sm font-medium transition ${
-                      form.isFree
-                        ? "bg-[#0094CA] text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    Free Experience
-                  </button>
-                </div>
-
-                {/* Pricing mode: single price vs. multiple ticket types */}
-                {!form.isFree && (
-                  <div className="flex gap-2">
+                      }}
+                      placeholder="Other language…"
+                      className={`${FIELD} !py-2.5`}
+                    />
                     <button
                       type="button"
-                      onClick={() => updateForm("useTiers", false)}
-                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
-                        !form.useTiers
-                          ? "bg-[#0094CA] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                      onClick={addCustomLanguage}
+                      className="rounded-full border border-white/10 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
                     >
-                      Single price
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateForm("useTiers", true)}
-                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${
-                        form.useTiers
-                          ? "bg-[#0094CA] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      Multiple ticket types
+                      Add
                     </button>
                   </div>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <p className="text-sm text-white/50">Level</p>
+                  <div className="flex flex-wrap gap-2">
+                    {LEVEL_OPTIONS.map((lvl) => (
+                      <Chip
+                        key={lvl}
+                        active={form.level === lvl}
+                        onClick={() => updateForm("level", lvl)}
+                      >
+                        {lvl}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
+              </Section>
+
+              {/* Photos */}
+              <Section title="Photos" hint="Cover and gallery photos">
+                <ImageUpload
+                  label=""
+                  multiple
+                  previews={form.galleryPreviews}
+                  onUpload={handleGalleryUpload}
+                  onRemoveMultiple={removeGalleryImage}
+                />
+              </Section>
+
+              {/* Pricing */}
+              <Section title="Tickets">
+                <Segmented<"paid" | "free">
+                  value={form.isFree ? "free" : "paid"}
+                  onChange={(v) => updateForm("isFree", v === "free")}
+                  options={[
+                    { value: "paid", label: "Paid" },
+                    { value: "free", label: "Free" },
+                  ]}
+                />
+
+                {!form.isFree && (
+                  <Segmented<"single" | "tiers">
+                    value={form.useTiers ? "tiers" : "single"}
+                    onChange={(v) => updateForm("useTiers", v === "tiers")}
+                    options={[
+                      { value: "single", label: "Single price" },
+                      { value: "tiers", label: "Multiple ticket types" },
+                    ]}
+                  />
                 )}
 
-                {/* Single Price Input */}
                 {!form.isFree && !form.useTiers && (
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Price per person (₹)
-                    </label>
-                    <div className="relative">
-                      <span className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-500">
-                        ₹
-                      </span>
+                  <Rows>
+                    <Row
+                      label="Price per person (₹)"
+                      error={showErrors && form.priceCents <= 0}
+                    >
                       <input
                         type="text"
                         inputMode="decimal"
@@ -2421,64 +2637,57 @@ export default function CreateExperiencePage() {
                             updateForm("priceCents", Math.round(parsed * 100));
                           }
                         }}
-                        className={`w-full rounded-lg border py-3 pr-4 pl-8 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-                          showErrors && !form.isFree && form.priceCents <= 0
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-200 focus:border-transparent"
-                        }`}
+                        className={ROW_INPUT}
                       />
-                    </div>
-                  </div>
+                    </Row>
+                  </Rows>
                 )}
 
-                {/* Ticket Tier Editor */}
                 {!form.isFree && form.useTiers && (
                   <div className="space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Ticket types
-                    </label>
                     {form.priceTiers.map((tier, index) => (
-                      <div key={index} className="flex items-start gap-2">
-                        <input
-                          type="text"
-                          value={tier.name}
-                          onChange={(e) =>
-                            updatePriceTier(index, "name", e.target.value)
-                          }
-                          placeholder="e.g. General, VIP"
-                          className={`flex-1 rounded-lg border px-3 py-2.5 text-sm transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-                            showErrors && !tier.name.trim()
-                              ? "border-red-500 bg-red-50"
-                              : "border-gray-200 focus:border-transparent"
-                          }`}
-                        />
-                        <div className="relative w-32">
-                          <span className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500">
-                            ₹
-                          </span>
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={tier.priceStr}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                                updatePriceTier(index, "priceStr", val);
-                              }
-                            }}
-                            placeholder="Price"
-                            className={`w-full rounded-lg border py-2.5 pr-3 pl-7 text-sm transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-                              showErrors && !(Number(tier.priceStr) > 0)
-                                ? "border-red-500 bg-red-50"
-                                : "border-gray-200 focus:border-transparent"
-                            }`}
-                          />
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          <Rows>
+                            <Row
+                              label="Ticket name"
+                              error={showErrors && !tier.name.trim()}
+                            >
+                              <input
+                                type="text"
+                                value={tier.name}
+                                onChange={(e) =>
+                                  updatePriceTier(index, "name", e.target.value)
+                                }
+                                placeholder="General, VIP…"
+                                className={ROW_INPUT}
+                              />
+                            </Row>
+                            <Row
+                              label="Price (₹)"
+                              error={showErrors && !(Number(tier.priceStr) > 0)}
+                            >
+                              <input
+                                type="text"
+                                inputMode="decimal"
+                                value={tier.priceStr}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                                    updatePriceTier(index, "priceStr", val);
+                                  }
+                                }}
+                                placeholder="0"
+                                className={ROW_INPUT}
+                              />
+                            </Row>
+                          </Rows>
                         </div>
                         {form.priceTiers.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removePriceTier(index)}
-                            className="mt-1.5 text-gray-400 transition hover:text-red-500"
+                            className="p-2 text-white/40 transition hover:text-red-400"
                             aria-label="Remove ticket type"
                           >
                             <FiX className="h-5 w-5" />
@@ -2486,495 +2695,183 @@ export default function CreateExperiencePage() {
                         )}
                       </div>
                     ))}
-                    <button
-                      type="button"
-                      onClick={addPriceTier}
-                      className="text-sm font-semibold text-[#0094CA] hover:underline"
-                    >
-                      + Add ticket type
-                    </button>
-                    <p className="text-xs text-gray-500">
+                    <AddPill onClick={addPriceTier}>Add another ticket type</AddPill>
+                    <p className="px-1 text-xs text-white/40">
                       Guests pick one ticket type when booking.
                     </p>
                   </div>
                 )}
-              </div>
 
-
-              {/* Monthly Pass — one payment covers a month of sessions. */}
-              {!form.isFree && (
-                <div className="space-y-4 border-t border-gray-100 pt-6">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-base font-semibold text-gray-900">
-                        Monthly Pass
-                      </h3>
-                      <p className="mt-0.5 text-xs text-gray-500">
-                        Guests pay once and attend for 30 days. Recurring
-                        experiences only.
-                      </p>
-                    </div>
-                    <button
-                      type="button"
+                {/* Monthly Pass — one payment covers a month of sessions. */}
+                {!form.isFree && (
+                  <>
+                    <ToggleRow
+                      label="Monthly pass"
+                      hint={
+                        form.scheduleType === "one_time"
+                          ? "Pick a recurring or custom-dates schedule to offer a pass."
+                          : "Guests pay once and attend for 30 days."
+                      }
+                      checked={form.monthlyPassEnabled}
                       disabled={form.scheduleType === "one_time"}
-                      onClick={() =>
-                        updateForm("monthlyPassEnabled", !form.monthlyPassEnabled)
-                      }
-                      className={`shrink-0 rounded-xl border px-4 py-2 text-sm font-medium transition disabled:opacity-40 ${
-                        form.monthlyPassEnabled
-                          ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA]"
-                          : "border-gray-200 bg-white text-gray-700"
-                      }`}
-                    >
-                      {form.monthlyPassEnabled ? "On" : "Off"}
-                    </button>
-                  </div>
-
-                  {form.scheduleType === "one_time" && (
-                    <p className="text-xs text-gray-500">
-                      Pick a recurring or multi-date schedule below to offer a
-                      pass.
-                    </p>
-                  )}
-
-                  {form.monthlyPassEnabled && form.scheduleType !== "one_time" && (
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div>
-                        <label className="mb-1.5 block text-xs font-medium text-gray-700">
-                          Pass price (₹)
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={form.monthlyPassPriceStr}
-                          onChange={(e) =>
-                            updateForm("monthlyPassPriceStr", e.target.value)
-                          }
-                          placeholder="2500"
-                          className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1.5 block text-xs font-medium text-gray-700">
-                          Sessions included
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={form.monthlyPassSessionsStr}
-                          onChange={(e) =>
-                            updateForm("monthlyPassSessionsStr", e.target.value)
-                          }
-                          placeholder="All"
-                          className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1.5 block text-xs font-medium text-gray-700">
-                          Passes available
-                        </label>
-                        <input
-                          type="number"
-                          min={1}
-                          value={form.monthlyPassCapacityStr}
-                          onChange={(e) =>
-                            updateForm("monthlyPassCapacityStr", e.target.value)
-                          }
-                          placeholder="Unlimited"
-                          className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Availability Section */}
-              <div className="space-y-4 border-t border-gray-100 pt-6">
-                <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900">
-                  <FiCalendar /> Availability & Schedule
-                </h3>
-
-                {/* Schedule Type Selection Tabs */}
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateForm("scheduleType", "one_time");
-                      updateForm("isRecurring", false);
-                      updateForm("sessionType", "group");
-                    }}
-                    className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" &&
-                      form.scheduleType === "one_time"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">One-Time Event</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      Single specific date & time
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateForm("scheduleType", "recurring");
-                      updateForm("isRecurring", true);
-                      updateForm("sessionType", "group");
-                    }}
-                    className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" &&
-                      form.scheduleType === "recurring"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">Recurring</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      Repeats daily, weekly, or monthly
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateForm("scheduleType", "custom_dates");
-                      updateForm("isRecurring", false);
-                      updateForm("sessionType", "group");
-                    }}
-                    className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" &&
-                      form.scheduleType === "custom_dates"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">Custom Dates</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      Pick dynamic dates (e.g. Aug 15, 22, Sept 5)
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      // One-on-one is stored as a custom-dates event whose slots
-                      // we generate from the host's availability windows.
-                      updateForm("sessionType", "one_on_one");
-                      updateForm("scheduleType", "custom_dates");
-                      updateForm("isRecurring", false);
-                    }}
-                    className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "one_on_one"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">One-on-One</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      Set your hours, we split them into 1:1 slots
-                    </div>
-                  </button>
-                </div>
-
-                {/* Standard One-Time & Recurring Inputs */}
-                {form.sessionType === "group" &&
-                  (form.scheduleType === "one_time" ||
-                    form.scheduleType === "recurring") && (
-                    <>
-                      <div className="grid gap-4 sm:grid-cols-2">
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Date <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="date"
-                            value={form.eventDate}
-                            onChange={(e) =>
-                              updateForm("eventDate", e.target.value)
-                            }
-                            min={new Date().toISOString().split("T")[0]}
-                            className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-                              showErrors && !form.eventDate
-                                ? "border-red-500 bg-red-50"
-                                : "border-gray-200 focus:border-transparent"
-                            }`}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Start Time <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="time"
-                            value={form.eventTime}
-                            onChange={(e) =>
-                              updateForm("eventTime", e.target.value)
-                            }
-                            className={`w-full rounded-lg border px-4 py-3 transition outline-none focus:ring-2 focus:ring-[#0094CA] ${
-                              showErrors && !form.eventTime
-                                ? "border-red-500 bg-red-50"
-                                : "border-gray-200 focus:border-transparent"
-                            }`}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          End Time (optional)
-                        </label>
-                        <input
-                          type="time"
-                          value={form.endTime}
-                          onChange={(e) =>
-                            updateForm("endTime", e.target.value)
-                          }
-                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                        />
-                        <p className="text-xs text-gray-500">
-                          Leave empty to auto-calculate based on duration
-                        </p>
-                      </div>
-
-                      {form.scheduleType === "recurring" && (
-                        <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Recurrence Frequency{" "}
-                            <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            value={form.recurrenceRule}
-                            onChange={(e) =>
-                              updateForm("recurrenceRule", e.target.value)
-                            }
-                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                          >
-                            <option value="">Select frequency</option>
-                            <option value="FREQ=DAILY">Daily</option>
-                            <option value="FREQ=WEEKLY">Weekly</option>
-                            <option value="FREQ=WEEKLY;INTERVAL=2">
-                              Every 2 weeks
-                            </option>
-                            <option value="FREQ=MONTHLY">Monthly</option>
-                          </select>
-                        </div>
+                      onChange={(v) => updateForm("monthlyPassEnabled", v)}
+                    />
+                    {form.monthlyPassEnabled &&
+                      form.scheduleType !== "one_time" && (
+                        <Rows>
+                          <Row label="Pass price (₹)">
+                            <input
+                              type="number"
+                              min={1}
+                              value={form.monthlyPassPriceStr}
+                              onChange={(e) =>
+                                updateForm("monthlyPassPriceStr", e.target.value)
+                              }
+                              placeholder="2500"
+                              className={ROW_INPUT}
+                            />
+                          </Row>
+                          <Row label="Sessions included">
+                            <input
+                              type="number"
+                              min={1}
+                              value={form.monthlyPassSessionsStr}
+                              onChange={(e) =>
+                                updateForm(
+                                  "monthlyPassSessionsStr",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="All"
+                              className={ROW_INPUT}
+                            />
+                          </Row>
+                          <Row label="Passes available">
+                            <input
+                              type="number"
+                              min={1}
+                              value={form.monthlyPassCapacityStr}
+                              onChange={(e) =>
+                                updateForm(
+                                  "monthlyPassCapacityStr",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Unlimited"
+                              className={ROW_INPUT}
+                            />
+                          </Row>
+                        </Rows>
                       )}
-                    </>
-                  )}
-
-                {/* Dynamic Custom Selected Dates Inputs */}
-                {form.sessionType === "group" &&
-                  form.scheduleType === "custom_dates" && (
-                    <div className="space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900">
-                          Selected Specific Dates & Times
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                          Add the specific dates and times when this experience
-                          will take place.
-                        </p>
-                      </div>
-
-                      {form.customDatesList.map((slot, idx) => (
-                        <div
-                          key={idx}
-                          className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
-                        >
-                          <div className="min-w-[150px] flex-1">
-                            <label className="mb-1 block text-xs font-medium text-gray-600">
-                              Date
-                            </label>
-                            <input
-                              type="date"
-                              value={slot.date}
-                              onChange={(e) =>
-                                updateCustomSlot(idx, "date", e.target.value)
-                              }
-                              min={new Date().toISOString().split("T")[0]}
-                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
-                            />
-                          </div>
-                          <div className="w-36 min-w-[120px]">
-                            <label className="mb-1 block text-xs font-medium text-gray-600">
-                              Start Time
-                            </label>
-                            <input
-                              type="time"
-                              value={slot.time}
-                              onChange={(e) =>
-                                updateCustomSlot(idx, "time", e.target.value)
-                              }
-                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
-                            />
-                          </div>
-                          {form.customDatesList.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeCustomSlot(idx)}
-                              className="mt-5 p-2 text-gray-400 transition hover:text-red-500"
-                              title="Remove slot"
-                            >
-                              <FiX size={18} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-
-                      <button
-                        type="button"
-                        onClick={addCustomSlot}
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094CA] hover:underline"
-                      >
-                        + Add Another Date
-                      </button>
-                    </div>
-                  )}
-
-                {form.sessionType === "one_on_one" && (
-                  <SessionWindowsEditor
-                    windows={form.sessionWindows}
-                    onWindowsChange={(windows) =>
-                      updateForm("sessionWindows", windows)
-                    }
-                    breakMinutes={form.breakMinutes}
-                    onBreakMinutesChange={(minutes) =>
-                      updateForm("breakMinutes", minutes)
-                    }
-                    durationMinutes={form.durationMinutes}
-                    isWeekly={form.sessionIsWeekly}
-                    onIsWeeklyChange={(weekly) =>
-                      updateForm("sessionIsWeekly", weekly)
-                    }
-                    showErrors={showErrors}
-                  />
+                  </>
                 )}
-              </div>
+              </Section>
 
-              {/* Cancellation Policy */}
-              <div className="space-y-4 border-t border-gray-100 pt-6">
-                <h3 className="text-base font-semibold text-gray-900">
-                  Cancellation Policy
-                </h3>
+              {/* Manage */}
+              <Section title="Manage your experience">
                 <div className="space-y-2">
-                  {CANCELLATION_POLICIES.map((policy) => (
-                    <div
-                      key={policy.value}
-                      onClick={() =>
-                        updateForm("cancellationPolicy", policy.value)
-                      }
-                      className={`cursor-pointer rounded-lg border p-4 transition ${
-                        form.cancellationPolicy === policy.value
-                          ? "border-[#0094CA] bg-[#0094CA]/5"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                            form.cancellationPolicy === policy.value
-                              ? "border-[#0094CA]"
-                              : "border-gray-300"
+                  <p className="px-1 text-sm text-white/50">
+                    Cancellation policy
+                  </p>
+                  {CANCELLATION_POLICIES.map((policy) => {
+                    const selected = form.cancellationPolicy === policy.value;
+                    return (
+                      <button
+                        key={policy.value}
+                        type="button"
+                        onClick={() =>
+                          updateForm("cancellationPolicy", policy.value)
+                        }
+                        className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition ${
+                          selected
+                            ? "border-[#B57BFF] bg-[#7038F5]/15"
+                            : "border-white/[0.06] bg-[#131328] hover:border-white/20"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+                            selected ? "border-[#B57BFF]" : "border-white/30"
                           }`}
                         >
-                          {form.cancellationPolicy === policy.value && (
-                            <div className="h-2 w-2 rounded-full bg-[#0094CA]" />
+                          {selected && (
+                            <span className="h-2 w-2 rounded-full bg-[#B57BFF]" />
                           )}
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">
+                        </span>
+                        <span>
+                          <span className="block text-sm font-medium text-white">
                             {policy.label}
-                          </p>
-                          <p className="text-sm text-gray-500">
+                          </span>
+                          <span className="block text-xs text-white/50">
                             {policy.description}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
 
-              {/* Attendee Details */}
-              <AttendeeDetailsConfig
-                enabled={form.requiresAttendeeDetails}
-                fields={form.attendeeFields}
-                onToggle={(next) => updateForm("requiresAttendeeDetails", next)}
-                onFieldsChange={(next) => updateForm("attendeeFields", next)}
-              />
+                {/* Attendee Details */}
+                <AttendeeDetailsConfig
+                  enabled={form.requiresAttendeeDetails}
+                  fields={form.attendeeFields}
+                  onToggle={(next) => updateForm("requiresAttendeeDetails", next)}
+                  onFieldsChange={(next) => updateForm("attendeeFields", next)}
+                />
 
-              <PrivacyAccessSection
-                isPrivate={form.isPrivate}
-                privateAccessMode={form.privateAccessMode}
-                accessMode={form.accessMode}
-                accessPasskey={form.accessPasskey}
-                showError={showErrors}
-                canGenerateCodes={!!createdEventId}
-                onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
-              />
+                <PrivacyAccessSection
+                  isPrivate={form.isPrivate}
+                  privateAccessMode={form.privateAccessMode}
+                  accessMode={form.accessMode}
+                  accessPasskey={form.accessPasskey}
+                  showError={showErrors}
+                  canGenerateCodes={!!createdEventId}
+                  onChange={(patch) =>
+                    setForm((prev) => ({ ...prev, ...patch }))
+                  }
+                />
 
-              {/* Codes attach to a saved event, so they unlock once the
+                {/* Codes attach to a saved event, so they unlock once the
                     experience has been created (draft or published). */}
-              {createdEventId && host?.id ? (
-                <div className="space-y-6 border-t border-gray-100 pt-6">
-                  {/* Access codes only matter for a private event. */}
-                  {form.isPrivate && (
-                    <CouponsManager
-                      eventId={createdEventId}
-                      hostId={host.id}
-                      kind="access"
-                    />
-                  )}
-                  {/* Free-booking coupons only matter for a paid event. */}
-                  {!form.isFree && (
-                    <>
+                {createdEventId && host?.id ? (
+                  <div className="space-y-6">
+                    {/* Access codes only matter for a private event. */}
+                    {form.isPrivate && (
                       <CouponsManager
                         eventId={createdEventId}
                         hostId={host.id}
-                        kind="free"
+                        kind="access"
                       />
-                      <CouponsManager
-                        eventId={createdEventId}
-                        hostId={host.id}
-                        kind="discount"
-                      />
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-4 text-sm text-gray-500">
-                  Save this experience (draft or publish) to add access codes
-                  and free-booking coupons — they attach to the saved event.
-                </div>
-              )}
+                    )}
+                    {/* Free-booking coupons only matter for a paid event. */}
+                    {!form.isFree && (
+                      <>
+                        <CouponsManager
+                          eventId={createdEventId}
+                          hostId={host.id}
+                          kind="free"
+                        />
+                        <CouponsManager
+                          eventId={createdEventId}
+                          hostId={host.id}
+                          kind="discount"
+                        />
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/40">
+                    Save this experience (draft or publish) to add access codes
+                    and free-booking coupons — they attach to the saved event.
+                  </div>
+                )}
+              </Section>
 
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-4 border-t border-gray-100 pt-6 sm:flex-row">
-                <button
-                  onClick={goToStep1}
-                  className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3.5 font-semibold text-gray-700 transition duration-300 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99]"
-                >
-                  <FiArrowLeft size={16} />
-                  <span>Back</span>
-                </button>
-                <button
-                  onClick={() => void handleSubmit(true)}
-                  disabled={isSubmitting}
-                  className="border-gray-250 flex flex-1 items-center justify-center gap-2.5 rounded-xl border bg-white px-6 py-3.5 font-semibold text-gray-700 transition duration-300 hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {submitType === "draft" ? (
-                    <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <span>Save as Draft</span>
-                  )}
-                </button>
+              {/* Actions */}
+              <div className="space-y-3">
                 <button
                   onClick={() => void handleSubmit(false)}
                   disabled={isSubmitting}
-                  className="relative flex flex-[1.5] items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-gradient-to-r from-[#0094CA] via-[#00a6e2] to-[#00bde5] px-6 py-3.5 font-bold text-white shadow-lg shadow-[#0094CA]/20 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:scale-[1.01] hover:from-[#008bbd] hover:to-[#00b0d6] hover:shadow-xl hover:shadow-[#0094CA]/30 active:translate-y-0 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                  className={`flex w-full items-center justify-center gap-2.5 rounded-full px-6 py-4 font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 ${GRADIENT}`}
                 >
                   {submitType === "publish" ? (
                     <>
@@ -2983,17 +2880,21 @@ export default function CreateExperiencePage() {
                     </>
                   ) : (
                     <>
-                      <FiCheck
-                        className="text-lg transition-transform group-hover:scale-110"
-                        size={18}
-                      />
-                      <span>Publish Experience</span>
+                      <FiCheck size={18} />
+                      <span>Publish experience</span>
                     </>
                   )}
                 </button>
+                <button
+                  onClick={() => void handleSubmit(true)}
+                  disabled={isSubmitting}
+                  className="flex w-full items-center justify-center gap-2.5 rounded-full border border-white/15 px-6 py-4 font-semibold text-white transition hover:bg-white/[0.06] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {draftLabel}
+                </button>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </main>
 

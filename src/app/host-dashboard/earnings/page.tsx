@@ -1,5 +1,6 @@
 "use client";
 
+import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -141,7 +142,8 @@ function InputField({
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function HostEarningsPage() {
-  const [hostId, setHostId] = useState<string | null>(null);
+  // Reactive: the host id is stored shortly after the status call resolves.
+  const { hostId } = useStoredAuth();
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
@@ -176,10 +178,6 @@ export default function HostEarningsPage() {
       setIdToken(localStorage.getItem("msm_auth_token"));
     }
   }, [authUser]);
-
-  useEffect(() => {
-    setHostId(localStorage.getItem("msm_host_id"));
-  }, []);
 
   const {
     data: earnings,

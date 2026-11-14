@@ -688,7 +688,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
   const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${calStamp(eventDate)}/${calStamp(calEnd)}&location=${encodeURIComponent(place)}&details=${encodeURIComponent(verifyUrl)}`;
 
   return (
-    <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28 md:pl-20 min-[90rem]:pl-[230px]">
+    <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]">
       <div className="mx-auto flex w-full max-w-[860px] flex-col items-center px-6 pt-10 pb-16 text-center md:px-10 md:pt-16">
         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#22C55E] text-white">
           <FiCheck className="h-7 w-7 stroke-[2.5]" />

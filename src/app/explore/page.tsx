@@ -296,7 +296,7 @@ export default function ExplorePage() {
   const loading = tab === "experiences" ? eventsLoading : hostsLoading;
 
   return (
-    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[90rem]:pl-[230px]">
+    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]">
       <components.Navbar dark />
 
       <div className="mx-auto flex w-full max-w-[1210px] flex-col gap-7 px-6 pt-6 pb-16 font-[family-name:var(--font-inter)] md:px-10 md:pt-10">

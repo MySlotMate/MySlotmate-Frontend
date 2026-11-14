@@ -8,9 +8,9 @@ import { useListTimeAction } from "~/hooks/useListTimeAction";
 // Figma: "· Laptop 1280" frames use an 80px icon rail; "· Desktop 1440" frames
 // the full 230px rail with labels. Labels stay as sr-only text on the rail.
 const item =
-  "flex h-12 w-12 items-center justify-center rounded-full text-base font-medium text-white transition hover:bg-white/5 min-[90rem]:w-[177px] min-[90rem]:justify-start min-[90rem]:gap-3 min-[90rem]:px-[15px]";
+  "flex h-14 w-14 items-center justify-center rounded-full text-[17px] font-medium text-white transition hover:bg-white/5 min-[80rem]:w-[190px] min-[80rem]:justify-start min-[80rem]:gap-3.5 min-[80rem]:px-[18px]";
 const activeItem = `${item} bg-gradient-to-r from-[#2E1A4D] to-[#1E1335] text-[#E9D8FD] hover:bg-transparent`;
-const label = "sr-only min-[90rem]:not-sr-only";
+const label = "sr-only min-[80rem]:not-sr-only";
 const tab =
   "flex w-14 flex-col items-center gap-0.5 text-[11px] font-medium transition";
 const idleTab = `${tab} text-white/55 hover:text-white`;
@@ -29,16 +29,16 @@ export default function HomeSidebar({
 
   return (
     <>
-      <aside className="fixed top-0 bottom-0 left-0 z-[210] hidden w-20 flex-col items-center border-r border-white/[0.06] bg-[#0A0B17] pt-9 font-[family-name:var(--font-inter)] md:flex min-[90rem]:w-[230px] min-[90rem]:items-start min-[90rem]:pt-[38px] min-[90rem]:pl-[30px]">
+      <aside className="fixed top-0 bottom-0 left-0 z-[210] hidden w-20 flex-col items-center border-r border-white/[0.06] bg-[#0A0B17] pt-9 font-[family-name:var(--font-inter)] md:flex min-[80rem]:w-[230px] min-[80rem]:items-start min-[80rem]:pt-[38px] min-[80rem]:pl-[30px]">
         <Link
           href="/"
           aria-label="MySlotMate home"
-          className="font-outfit text-2xl leading-8 font-bold text-white"
+          className="font-outfit text-[28px] leading-9 font-bold text-white"
         >
-          <span className="min-[90rem]:hidden">M</span>
-          <span className="hidden min-[90rem]:inline">MySlotMate</span>
+          <span className="min-[80rem]:hidden">M</span>
+          <span className="hidden min-[80rem]:inline">MySlotMate</span>
         </Link>
-        <nav className="mt-10 flex flex-col gap-3 min-[90rem]:mt-[38px]">
+        <nav className="mt-10 flex flex-col gap-4 min-[80rem]:mt-[38px]">
           <Link
             href="/"
             title="Home"
@@ -46,7 +46,7 @@ export default function HomeSidebar({
             className={active === "home" ? activeItem : item}
           >
             <Home
-              className={`h-5 w-5 ${active === "home" ? "" : "text-white/70"}`}
+              className={`h-6 w-6 ${active === "home" ? "" : "text-white/70"}`}
             />
             <span className={label}>Home</span>
           </Link>
@@ -57,7 +57,7 @@ export default function HomeSidebar({
             className={active === "explore" ? activeItem : item}
           >
             <Compass
-              className={`h-5 w-5 ${active === "explore" ? "" : "text-white/70"}`}
+              className={`h-6 w-6 ${active === "explore" ? "" : "text-white/70"}`}
             />
             <span className={label}>Explore</span>
           </Link>
@@ -67,7 +67,7 @@ export default function HomeSidebar({
             onClick={handleListTimeClick}
             className={`${item} bg-gradient-to-r from-[#7038F5] to-[#B724EA] hover:bg-transparent hover:brightness-110`}
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-6 w-6" />
             <span className={label}>Create</span>
           </button>
           <Link
@@ -77,7 +77,7 @@ export default function HomeSidebar({
             className={active === "journey" ? activeItem : item}
           >
             <Medal
-              className={`h-5 w-5 ${active === "journey" ? "" : "text-white/70"}`}
+              className={`h-6 w-6 ${active === "journey" ? "" : "text-white/70"}`}
             />
             <span className={label}>Journey</span>
           </Link>
@@ -88,7 +88,7 @@ export default function HomeSidebar({
             className={active === "profile" ? activeItem : item}
           >
             <User
-              className={`h-5 w-5 ${active === "profile" ? "" : "text-white/70"}`}
+              className={`h-6 w-6 ${active === "profile" ? "" : "text-white/70"}`}
             />
             <span className={label}>Profile</span>
           </Link>

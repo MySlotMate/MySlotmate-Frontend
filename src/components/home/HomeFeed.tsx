@@ -2,16 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Bell,
-  Heart,
-  Lock,
-  MapPin,
-  Search,
-  SlidersVertical,
-  Star,
-  X,
-} from "lucide-react";
+import { Bell, Heart, Lock, MapPin, Star, X } from "lucide-react";
 import { toast } from "sonner";
 import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
@@ -122,7 +113,7 @@ function FeaturedCard({
     <article
       className={`flex w-full shrink-0 snap-start flex-col overflow-hidden rounded-[20px] ${CARD}`}
     >
-      <div className="relative aspect-[342/260] w-full overflow-hidden md:aspect-[19/10] lg:aspect-[830/323]">
+      <div className="relative aspect-[342/215] w-full overflow-hidden md:aspect-[19/8] lg:aspect-[830/265]">
         <Link href={href} className="block h-full">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -186,22 +177,22 @@ function FeaturedCard({
             </span>
           </div>
         )}
-        <div className="mt-3.5 flex items-center justify-between gap-3 text-sm leading-5">
-          <span className="flex min-w-0 items-center gap-1.5 text-white/60">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{placeOf(event)}</span>
-          </span>
-          <span className="shrink-0 text-[15px] font-bold text-white">
+        <span className="mt-3.5 flex min-w-0 items-center gap-1.5 text-sm leading-5 text-white/60">
+          <MapPin className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">{placeOf(event)}</span>
+        </span>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <span className="text-[15px] font-bold text-white">
             {price}
             {price !== "Free" && " / person"}
           </span>
+          <Link
+            href={href}
+            className={`flex h-10 shrink-0 items-center justify-center rounded-full px-7 text-sm font-semibold ${GRADIENT_BTN}`}
+          >
+            Book Slot
+          </Link>
         </div>
-        <Link
-          href={href}
-          className={`mt-[13px] flex h-[46px] items-center justify-center rounded-full text-sm font-semibold ${GRADIENT_BTN}`}
-        >
-          Book Slot
-        </Link>
       </div>
     </article>
   );
@@ -296,7 +287,6 @@ export default function HomeFeed({
   initialMarketingConfig?: HomepageMarketingConfig | null;
 }) {
   const [greeting, setGreeting] = useState("Hello");
-  const [query, setQuery] = useState("");
   const [mood, setMood] = useState<string | null>(null);
   const {
     closeBecomeHostModal,
@@ -340,16 +330,8 @@ export default function HomeFeed({
   }, [events]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return upcoming.filter((e) => {
-      if (mood && normalizeMood(e.mood) !== mood) return false;
-      if (!q) return true;
-      const host = hostById.get(e.host_id);
-      return [e.title, e.location, e.mood, host?.first_name, host?.last_name]
-        .filter(Boolean)
-        .some((s) => s!.toLowerCase().includes(q));
-    });
-  }, [upcoming, query, mood, hostById]);
+    return upcoming.filter((e) => !mood || normalizeMood(e.mood) === mood);
+  }, [upcoming, mood]);
 
   // Admin-pinned featured events (homepage_marketing_config) win; else soonest.
   const featured = useMemo(() => {
@@ -358,11 +340,8 @@ export default function HomeFeed({
     const pinned = filtered
       .filter((e) => ids.includes(e.id))
       .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
-    return (pinned.length > 0 && !query && !mood ? pinned : filtered).slice(
-      0,
-      limit,
-    );
-  }, [filtered, marketingConfig, query, mood]);
+    return (pinned.length > 0 && !mood ? pinned : filtered).slice(0, limit);
+  }, [filtered, marketingConfig, mood]);
 
   // Auto-advance the featured carousel every 4s; pauses on hover. To loop
   // forward instead of rewinding, a copy of the first card sits after the last
@@ -462,7 +441,7 @@ export default function HomeFeed({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const filtering = Boolean(query.trim() || mood);
+  const filtering = Boolean(mood);
   const topHosts = (hosts ?? []).slice(0, 3);
 
   return (
@@ -488,43 +467,16 @@ export default function HomeFeed({
 
         <div className="mt-7 flex flex-col gap-9 lg:grid lg:grid-cols-[minmax(0,1fr)_281px] lg:gap-[33px]">
           <div className="flex min-w-0 flex-col gap-9 max-lg:contents">
-            <div className="flex flex-col gap-3">
-              <label
-                className={`flex h-12 items-center rounded-full pr-4 pl-6 focus-within:border-[#9B30FF] ${CARD}`}
+            {mood && (
+              <button
+                type="button"
+                onClick={() => setMood(null)}
+                className="flex w-fit items-center gap-1.5 rounded-full bg-[#9B30FF]/20 px-3 py-1 text-sm font-medium text-[#D4ABFF]"
               >
-                <Search className="h-4 w-4 shrink-0 text-white/60" />
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search events, workshops or professionals"
-                  className="ml-2.5 w-full bg-transparent text-sm text-white placeholder:text-white/55 focus:outline-none"
-                />
-                <span className="mx-3 h-5 w-px bg-white/10" />
-                <button
-                  type="button"
-                  aria-label="Browse categories"
-                  onClick={() =>
-                    document
-                      .getElementById("explore-categories")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="text-[#B57BFF] hover:text-[#D4ABFF]"
-                >
-                  <SlidersVertical className="h-[18px] w-[18px]" />
-                </button>
-              </label>
-              {mood && (
-                <button
-                  type="button"
-                  onClick={() => setMood(null)}
-                  className="flex w-fit items-center gap-1.5 rounded-full bg-[#9B30FF]/20 px-3 py-1 text-sm font-medium text-[#D4ABFF]"
-                >
-                  {getMoodDisplayLabel(mood)}
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
+                {getMoodDisplayLabel(mood)}
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
 
             {filtering && filtered.length === 0 && (
               <div
@@ -534,7 +486,6 @@ export default function HomeFeed({
                 <button
                   type="button"
                   onClick={() => {
-                    setQuery("");
                     setMood(null);
                   }}
                   className="font-semibold text-[#B57BFF]"
@@ -545,7 +496,7 @@ export default function HomeFeed({
             )}
 
             {featured.length > 0 && (
-              <section className="lg:mt-1">
+              <section>
                 <SectionHeader
                   title={filtering ? "Top Matches" : "Featured Tonight"}
                   href="/experiences"

@@ -159,7 +159,7 @@ export default function BecomeHostPage() {
     return (
       <>
         <Navbar dark />
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-[#080914] px-4 text-center md:pl-20 min-[90rem]:pl-[230px]">
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-[#080914] px-4 text-center md:pl-20 min-[80rem]:pl-[230px]">
           <h1 className="text-2xl font-bold text-white">Become a Host</h1>
           <p className="max-w-md text-white/55">
             Please log in to continue your host application.
@@ -235,7 +235,7 @@ export default function BecomeHostPage() {
     return (
       <>
         <Navbar dark />
-        <main className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden bg-[#080914] pt-10 pb-16 md:pl-20 min-[90rem]:pl-[230px]">
+        <main className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden bg-[#080914] pt-10 pb-16 md:pl-20 min-[80rem]:pl-[230px]">
           {/* Ambient Background */}
           <div className="pointer-events-none absolute top-[-10%] left-[-10%] h-[600px] w-[600px] rounded-full bg-[#7038F5]/15 blur-[120px]" />
 
@@ -530,7 +530,7 @@ export default function BecomeHostPage() {
     <>
       <Navbar dark />
 
-      <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white md:pl-20 min-[90rem]:pl-[230px]">
+      <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white md:pl-20 min-[80rem]:pl-[230px]">
         <div className="mx-auto w-full max-w-[860px] px-6 py-10 md:px-10">
           {/* Co-host invitations. Accepting one needs no approved application, so
             surface them here too — otherwise the invitee has to guess the

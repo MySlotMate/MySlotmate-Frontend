@@ -1,5 +1,6 @@
 "use client";
 
+import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -22,10 +23,8 @@ import { formatIST } from "~/lib/datetime";
 export default function HostMessagesPage() {
   const qc = useQueryClient();
 
-  const [hostId, setHostId] = useState<string | null>(null);
-  useEffect(() => {
-    setHostId(localStorage.getItem("msm_host_id"));
-  }, []);
+  // Reactive: the host id is stored shortly after the status call resolves.
+  const { hostId } = useStoredAuth();
 
   const { data: events, isLoading: loadingEvents } = useEventsByHost(hostId);
   const { data: hostMessages } = useHostMessages(hostId);

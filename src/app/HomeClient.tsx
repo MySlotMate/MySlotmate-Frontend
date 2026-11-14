@@ -50,7 +50,7 @@ export default function HomeClient({
     <MoodProvider>
       <main
         ref={mainRef}
-        className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[90rem]:pl-[230px]"
+        className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]"
       >
         <components.Navbar dark />
 

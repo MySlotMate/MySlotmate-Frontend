@@ -15,6 +15,11 @@ export default function AppSidebar() {
   if (path === "/explore") return <HomeSidebar active="explore" />;
   if (path === "/activities") return <HomeSidebar active="journey" />;
   if (path === "/profile") return <HomeSidebar active="profile" />;
+  if (
+    path === "/host-dashboard/experiences" ||
+    path === "/host-dashboard/experiences/new"
+  )
+    return <HomeSidebar active="profile" />;
   if (path === "/become-host") return <HomeSidebar active="profile" />;
   if (/^\/host\/[^/]+$/.test(path)) return <HomeSidebar active="explore" />;
   if (/^\/experience\/[^/]+\/confirmation$/.test(path))

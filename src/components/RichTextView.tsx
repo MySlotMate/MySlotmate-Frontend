@@ -1,12 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import DOMPurify from "isomorphic-dompurify";
+
+const CONFIG = {
+  ALLOWED_TAGS: [
+    "p",
+    "br",
+    "strong",
+    "em",
+    "u",
+    "h1",
+    "h2",
+    "h3",
+    "ul",
+    "ol",
+    "li",
+    "a",
+    "span",
+    "img",
+    "figure",
+    "figcaption",
+  ],
+  ALLOWED_ATTR: [
+    "href",
+    "target",
+    "rel",
+    "style",
+    "class",
+    "src",
+    "alt",
+    "title",
+    "width",
+    "height",
+    "loading",
+  ],
+};
 
 /**
  * Render saved rich-text HTML safely.
  *
  * Use this anywhere user-authored description HTML needs to be displayed.
  * Sanitizes via DOMPurify so no script/iframe/event-handler injections survive.
+ *
+ * Sanitizing happens during render (isomorphic-dompurify works on the server
+ * and in the browser), so the text is in the server HTML: search engines and
+ * first paint see the content, not an empty box.
  */
 export function RichTextView({
   html,
@@ -15,52 +54,7 @@ export function RichTextView({
   html: string;
   className?: string;
 }) {
-  const [clean, setClean] = useState<string>("");
-
-  useEffect(() => {
-    let cancelled = false;
-    // Lazy-load DOMPurify so server bundles stay slim.
-    void (async () => {
-      const mod = (await import("isomorphic-dompurify")).default;
-      const sanitized = mod.sanitize(html ?? "", {
-        ALLOWED_TAGS: [
-          "p",
-          "br",
-          "strong",
-          "em",
-          "u",
-          "h1",
-          "h2",
-          "h3",
-          "ul",
-          "ol",
-          "li",
-          "a",
-          "span",
-          "img",
-          "figure",
-          "figcaption",
-        ],
-        ALLOWED_ATTR: [
-          "href",
-          "target",
-          "rel",
-          "style",
-          "class",
-          "src",
-          "alt",
-          "title",
-          "width",
-          "height",
-          "loading",
-        ],
-      });
-      if (!cancelled) setClean(sanitized);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [html]);
+  const clean = useMemo(() => DOMPurify.sanitize(html ?? "", CONFIG), [html]);
 
   return (
     <div

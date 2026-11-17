@@ -1,12 +1,12 @@
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Explore Experiences by Mood",
+  title: "Explore Experiences and 1:1 Sessions",
   description:
-    "Explore experiences by mood and interest. Discover curated activities and hosts near you, and book real-life moments that match how you feel — on MySlotMate.",
+    "Find group experiences, 1:1 sessions with mentors and coaches, and the hosts behind them — all in one place on MySlotMate.",
   alternates: { canonical: "/explore" },
   openGraph: {
-    title: "Explore Experiences by Mood | MySlotMate",
+    title: "Explore Experiences and 1:1 Sessions | MySlotMate",
     description:
       "Discover curated activities and hosts near you, and book real-life moments that match how you feel.",
     url: "/explore",

@@ -1,111 +1,133 @@
 "use client";
 
 import Link from "next/link";
-import { Compass, Home, Medal, Plus, User } from "lucide-react";
+import { Bell, Compass, Home, Medal, Plus, User } from "lucide-react";
+import LocationButton from "~/components/LocationButton";
 import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { useStoredAuth } from "~/hooks/useStoredAuth";
+import { useMyProfile } from "~/hooks/useApi";
+import { useNotifications } from "~/hooks/useNotifications";
 
-// Figma: "· Laptop 1280" frames use an 80px icon rail; "· Desktop 1440" frames
-// the full 230px rail with labels. Labels stay as sr-only text on the rail.
-const item =
-  "flex h-14 w-14 items-center justify-center rounded-full text-[17px] font-medium text-white transition hover:bg-white/5 min-[80rem]:w-[190px] min-[80rem]:justify-start min-[80rem]:gap-3.5 min-[80rem]:px-[18px]";
-const activeItem = `${item} bg-gradient-to-r from-[#2E1A4D] to-[#1E1335] text-[#E9D8FD] hover:bg-transparent`;
-const label = "sr-only min-[80rem]:not-sr-only";
+type Active = "home" | "explore" | "journey" | "profile" | "notifications";
+
+const LINKS: { key: Active; href: string; label: string }[] = [
+  { key: "home", href: "/", label: "Home" },
+  { key: "explore", href: "/explore", label: "Explore" },
+  { key: "journey", href: "/activities", label: "My journey" },
+];
+
 const tab =
   "flex w-14 flex-col items-center gap-0.5 text-[11px] font-medium transition";
 const idleTab = `${tab} text-white/55 hover:text-white`;
 
-/** Desktop-only left rail for the dark pages. */
+/**
+ * App navigation for signed-in pages: a sticky top bar on tablets and up,
+ * and the floating tab bar on phones. Mounted once in the root layout, in
+ * normal flow above the page, so pages need no offset for it.
+ * (The file keeps its old name so existing imports keep working.)
+ */
 export default function HomeSidebar({
   active = "home",
   tabBar = true,
 }: {
-  active?: "home" | "explore" | "journey" | "profile";
+  active?: Active;
   /** Detail pages hide it — their mobile layout has its own action bar. */
   tabBar?: boolean;
 }) {
   const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
     useListTimeAction();
+  const { userId } = useStoredAuth();
+  const { data: me } = useMyProfile(
+    userId && userId !== "existing" ? userId : null,
+  );
+  // Some profiles store avatar_url = "" — treat it as missing.
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  const avatar = me?.avatar_url || "/assets/home/avatar-placeholder.svg";
+  const { unreadCount } = useNotifications();
 
   return (
     <>
-      <aside className="fixed top-0 bottom-0 left-0 z-[210] hidden w-20 flex-col items-center border-r border-white/[0.06] bg-[#0A0B17] pt-9 font-[family-name:var(--font-inter)] md:flex min-[80rem]:w-[230px] min-[80rem]:items-start min-[80rem]:pt-[38px] min-[80rem]:pl-[30px]">
-        <Link
-          href="/"
-          aria-label="MySlotMate home"
-          className="flex h-9 items-center"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/brand/logo-mark.png"
-            alt="MySlotMate"
-            className="h-10 w-10 min-[80rem]:hidden"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/brand/logo-horizontal-white.png"
-            alt="MySlotMate"
-            className="hidden h-8 w-auto min-[80rem]:block"
-          />
-        </Link>
-        <nav className="mt-10 flex flex-col gap-4 min-[80rem]:mt-[38px]">
-          <Link
-            href="/"
-            title="Home"
-            aria-current={active === "home" ? "page" : undefined}
-            className={active === "home" ? activeItem : item}
-          >
-            <Home
-              className={`h-6 w-6 ${active === "home" ? "" : "text-white/70"}`}
+      <header className="sticky top-0 z-[210] hidden border-b border-white/[0.06] bg-[#080914]/80 font-[family-name:var(--font-inter)] backdrop-blur-xl md:block">
+        <div className="mx-auto flex h-[68px] w-full max-w-[1280px] items-center gap-6 px-6 lg:px-10">
+          <Link href="/" aria-label="MySlotMate home" className="shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/assets/brand/logo-horizontal-white.png"
+              alt="MySlotMate"
+              width={1048}
+              height={209}
+              className="h-7 w-auto"
             />
-            <span className={label}>Home</span>
           </Link>
-          <Link
-            href="/explore"
-            title="Explore"
-            aria-current={active === "explore" ? "page" : undefined}
-            className={active === "explore" ? activeItem : item}
-          >
-            <Compass
-              className={`h-6 w-6 ${active === "explore" ? "" : "text-white/70"}`}
-            />
-            <span className={label}>Explore</span>
-          </Link>
-          <button
-            type="button"
-            title="Create"
-            onClick={handleListTimeClick}
-            className={`${item} bg-gradient-to-r from-[#7038F5] to-[#B724EA] hover:bg-transparent hover:brightness-110`}
-          >
-            <Plus className="h-6 w-6" />
-            <span className={label}>Create</span>
-          </button>
-          <Link
-            href="/activities"
-            title="Journey"
-            aria-current={active === "journey" ? "page" : undefined}
-            className={active === "journey" ? activeItem : item}
-          >
-            <Medal
-              className={`h-6 w-6 ${active === "journey" ? "" : "text-white/70"}`}
-            />
-            <span className={label}>Journey</span>
-          </Link>
-          <Link
-            href="/profile"
-            title="Profile"
-            aria-current={active === "profile" ? "page" : undefined}
-            className={active === "profile" ? activeItem : item}
-          >
-            <User
-              className={`h-6 w-6 ${active === "profile" ? "" : "text-white/70"}`}
-            />
-            <span className={label}>Profile</span>
-          </Link>
-        </nav>
-      </aside>
 
-      {/* Figma "· Mobile 390": no top bar, a floating tab bar at the bottom. */}
+          <nav aria-label="Main" className="flex items-center gap-1">
+            {LINKS.map((l) => {
+              const on = active === l.key;
+              return (
+                <Link
+                  key={l.key}
+                  href={l.href}
+                  aria-current={on ? "page" : undefined}
+                  className={`rounded-full px-3.5 py-2 text-[15px] font-medium whitespace-nowrap transition lg:px-4 ${
+                    on
+                      ? "bg-white/[0.08] text-white"
+                      : "text-white/60 hover:text-white"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-2">
+            <LocationButton />
+            <button
+              type="button"
+              onClick={handleListTimeClick}
+              aria-label="Host an event"
+              className="flex h-10 items-center gap-1.5 rounded-full bg-gradient-to-r from-[#7B2FFF] to-[#A020F0] px-3 text-sm font-semibold whitespace-nowrap text-white transition hover:brightness-110 lg:px-4"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden lg:inline">Host an event</span>
+            </button>
+            <Link
+              href="/notifications"
+              aria-label={
+                unreadCount
+                  ? `Notifications, ${unreadCount} unread`
+                  : "Notifications"
+              }
+              aria-current={active === "notifications" ? "page" : undefined}
+              className={`relative flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-white/10 hover:text-white ${active === "notifications" ? "bg-white/[0.08] text-white" : "text-white/75"}`}
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F43F5E] px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/profile"
+              aria-label="Profile"
+              aria-current={active === "profile" ? "page" : undefined}
+              className={`rounded-full p-0.5 ring-2 transition ${active === "profile" ? "ring-[#A020F0]" : "ring-white/15 hover:ring-white/40"}`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatar}
+                alt=""
+                referrerPolicy="no-referrer"
+                className="h-8 w-8 rounded-full object-cover"
+              />
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Phones: no top bar, a floating tab bar at the bottom. */}
       <nav
         hidden={!tabBar}
         className="fixed inset-x-0 bottom-0 z-[210] border-t border-white/10 bg-[#080914]/90 px-4 pt-3 pb-[max(20px,env(safe-area-inset-bottom))] font-[family-name:var(--font-inter)] backdrop-blur-xl md:hidden"

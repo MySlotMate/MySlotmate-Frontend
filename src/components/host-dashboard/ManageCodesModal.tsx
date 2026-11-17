@@ -83,23 +83,23 @@ export default function ManageCodesModal({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      className="msm-modal fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6"
+        className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-[#121426] p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">
+            <h2 className="text-lg font-bold text-white">
               Codes &amp; passkey
             </h2>
-            <p className="text-sm text-gray-500">{eventTitle}</p>
+            <p className="text-sm text-[#A5A8C3]">{eventTitle}</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+            className="rounded-lg p-1 text-[#777B98] transition hover:bg-white/[0.06] hover:text-white/80"
             aria-label="Close"
           >
             <FiX size={20} />
@@ -107,17 +107,17 @@ export default function ManageCodesModal({
         </div>
 
         {loading ? (
-          <p className="py-8 text-center text-sm text-gray-400">Loading…</p>
+          <p className="py-8 text-center text-sm text-[#777B98]">Loading…</p>
         ) : (
           <div className="space-y-6">
             {/* Private access + shared passkey */}
-            <div className="rounded-xl border border-gray-200 p-4">
+            <div className="rounded-xl border border-white/10 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="flex items-center gap-1.5 text-sm font-semibold text-gray-800">
+                  <h3 className="flex items-center gap-1.5 text-sm font-semibold text-white">
                     <FiLock size={14} /> Private access
                   </h3>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-[#A5A8C3]">
                     Require a passkey to book. Guests still pay unless the event
                     is free.
                   </p>
@@ -133,11 +133,11 @@ export default function ManageCodesModal({
                       : void persist(passkey.trim() || genCode(), true)
                   }
                   className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 ${
-                    isPrivate ? "bg-[#0094CA]" : "bg-gray-200"
+                    isPrivate ? "bg-[#A020F0]" : "bg-white/10"
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-[#121426] shadow-sm transition-transform ${
                       isPrivate ? "translate-x-6" : "translate-x-1"
                     }`}
                   />
@@ -151,11 +151,11 @@ export default function ManageCodesModal({
                       value={passkey}
                       onChange={(e) => setPasskey(e.target.value)}
                       placeholder="Passkey"
-                      className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                      className="flex-1 rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
                     />
                     <button
                       onClick={() => setPasskey(genCode())}
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                      className="rounded-lg border border-white/15 px-3 py-2 text-sm text-[#A5A8C3] hover:bg-white/[0.04]"
                       title="Generate new"
                     >
                       <FiRefreshCw size={14} />
@@ -165,7 +165,7 @@ export default function ManageCodesModal({
                         void navigator.clipboard.writeText(passkey);
                         toast.success("Passkey copied");
                       }}
-                      className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                      className="rounded-lg border border-white/15 px-3 py-2 text-sm text-[#A5A8C3] hover:bg-white/[0.04]"
                       title="Copy"
                     >
                       <FiCopy size={14} />
@@ -174,7 +174,7 @@ export default function ManageCodesModal({
                   <button
                     onClick={() => void persist(passkey, true)}
                     disabled={saving || !passkey.trim()}
-                    className="mt-2 rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+                    className="mt-2 rounded-lg bg-[#A020F0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
                   >
                     Save passkey
                   </button>

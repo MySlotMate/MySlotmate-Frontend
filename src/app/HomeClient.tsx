@@ -29,7 +29,10 @@ export default function HomeClient({
   // can't know it: render the public website until mounted, then swap to the
   // app feed for logged-in users.
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+    delete document.documentElement.dataset.authed;
+  }, []);
   const showFeed = mounted && Boolean(userId);
 
   useLayoutEffect(() => {
@@ -56,7 +59,12 @@ export default function HomeClient({
 
   if (!showFeed) {
     return (
-      <WebsiteHome initialEvents={initialEvents} initialHosts={initialHosts} />
+      <div className="msm-visitor-only">
+        <WebsiteHome
+          initialEvents={initialEvents}
+          initialHosts={initialHosts}
+        />
+      </div>
     );
   }
 
@@ -64,7 +72,7 @@ export default function HomeClient({
     <MoodProvider>
       <main
         ref={mainRef}
-        className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]"
+        className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28"
       >
         <components.Navbar dark />
 

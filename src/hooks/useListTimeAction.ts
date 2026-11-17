@@ -8,12 +8,13 @@ import { useStoredAuth } from "./useStoredAuth";
 
 export function useListTimeAction() {
   const router = useRouter();
+  // Kept so callers that still render <BecomeHostModal> compile; the click
+  // no longer opens it.
   const [showBecomeHost, setShowBecomeHost] = useState(false);
   const { userId } = useStoredAuth();
 
   const validUserId = userId && userId !== "existing" ? userId : null;
-  const { data: hostData, isLoading: statusLoading } =
-    useApplicationStatus(validUserId);
+  const { data: hostData } = useApplicationStatus(validUserId);
   const hostStatus = hostData?.status?.application_status ?? null;
 
   useEffect(() => {
@@ -23,15 +24,9 @@ export function useListTimeAction() {
   }, [hostData?.status?.id]);
 
   const handleListTimeClick = () => {
-    // Status still loading: opening "Become a Host" now would wrongly greet an
-    // approved host. The click is a no-op for the moment it takes to resolve.
-    if (statusLoading) return;
-    if (hostStatus === "approved") {
-      router.push("/host-dashboard/experiences/new");
-      return;
-    }
-
-    setShowBecomeHost(true);
+    // Everyone goes straight to creating an event. The create page asks for
+    // sign-in only when they publish or save a draft.
+    router.push("/host-dashboard/experiences/new");
   };
 
   return {

@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
-import { HostNavbar } from "~/components/host-dashboard";
-import Breadcrumb from "~/components/Breadcrumb";
 import { useEventsByHost, useMyHost } from "~/hooks/useApi";
 import * as api from "~/lib/api";
 import type { ScanResultDTO, ScanSession } from "~/lib/api";
@@ -25,8 +23,8 @@ const QrScanner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-gray-100">
-        <LuLoader2 className="h-6 w-6 animate-spin text-gray-400" />
+      <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-white/[0.06]">
+        <LuLoader2 className="h-6 w-6 animate-spin text-[#777B98]" />
       </div>
     ),
   },
@@ -149,28 +147,21 @@ export default function HostScanPage() {
 
   return (
     <>
-      <HostNavbar />
-      <main className="site-x mx-auto min-h-screen w-full max-w-[900px] py-8 pt-24">
-        <Breadcrumb
-          items={[
-            { label: "Host Dashboard", href: "/host-dashboard" },
-            { label: "Check-in Scanner" },
-          ]}
-          className="mb-6"
-        />
-
-        <h1 className="text-3xl font-bold text-gray-900">Check-in Scanner</h1>
-        <p className="mt-1 text-sm font-medium text-[#0094CA]">
+      <main className="mx-auto w-full max-w-[900px] px-4 py-6 sm:px-6 md:py-10">
+        <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
+          Check-in Scanner
+        </h1>
+        <p className="mt-1 text-sm font-medium text-[#D8B4FE]">
           Scan guest tickets at the door
         </p>
 
         {/* Session picker — what this scanner is checking people in for. */}
-        <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="text-sm font-bold text-gray-900">
+        <section className="mt-6 rounded-2xl border border-white/10 bg-[#121426] p-5">
+          <h2 className="text-sm font-bold text-white">
             You&apos;re checking in for
           </h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-gray-600">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#A5A8C3]">
               Experience
               <select
                 value={eventId}
@@ -179,7 +170,7 @@ export default function HostScanPage() {
                   setEventId(e.target.value);
                   setResult(null);
                 }}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#0094CA]"
+                className="rounded-lg border border-white/15 bg-[#121426] px-3 py-2.5 text-sm text-white outline-none focus:border-[#A020F0]"
               >
                 <option value="">
                   {eventsLoading ? "Loading…" : "Select an experience"}
@@ -192,7 +183,7 @@ export default function HostScanPage() {
               </select>
             </label>
 
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-gray-600">
+            <label className="flex flex-col gap-1.5 text-xs font-semibold text-[#A5A8C3]">
               Date
               <select
                 value={occurrence}
@@ -201,7 +192,7 @@ export default function HostScanPage() {
                   setOccurrence(e.target.value);
                   setResult(null);
                 }}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#0094CA] disabled:bg-gray-50"
+                className="rounded-lg border border-white/15 bg-[#121426] px-3 py-2.5 text-sm text-white outline-none focus:border-[#A020F0] disabled:bg-white/[0.04]"
               >
                 <option value="">
                   {!eventId
@@ -222,7 +213,7 @@ export default function HostScanPage() {
           </div>
 
           {ready && (
-            <p className="mt-4 rounded-xl bg-[#f0faff] px-4 py-3 text-xs font-semibold text-[#0094CA]">
+            <p className="mt-4 rounded-xl bg-white/[0.04] px-4 py-3 text-xs font-semibold text-[#D8B4FE]">
               Scanning for {selectedEvent?.title} ·{" "}
               {formatIST(occurrence, "EEE, d MMM yyyy · hh:mm a")}
             </p>
@@ -237,9 +228,9 @@ export default function HostScanPage() {
               paused={busy || !!result}
             />
           ) : (
-            <div className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
-              <LuScanLine className="h-8 w-8 text-gray-300" />
-              <p className="max-w-xs text-sm font-medium text-gray-500">
+            <div className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-white/15 bg-white/[0.04] p-6 text-center">
+              <LuScanLine className="h-8 w-8 text-white/30" />
+              <p className="max-w-xs text-sm font-medium text-[#A5A8C3]">
                 Choose the experience and date above to start scanning.
               </p>
             </div>
@@ -287,26 +278,26 @@ function ScanVerdictCard({
 
   const tone = admit
     ? {
-        bg: "bg-green-50",
-        border: "border-green-200",
-        text: "text-green-800",
+        bg: "bg-green-500/10",
+        border: "border-green-500/30",
+        text: "text-green-300",
         Icon: FiCheckCircle,
-        iconColor: "text-green-500",
+        iconColor: "text-green-400",
       }
     : spent
       ? {
-          bg: "bg-amber-50",
-          border: "border-amber-200",
-          text: "text-amber-800",
+          bg: "bg-amber-500/10",
+          border: "border-amber-500/30",
+          text: "text-amber-300",
           Icon: FiAlertTriangle,
-          iconColor: "text-amber-500",
+          iconColor: "text-amber-400",
         }
       : {
-          bg: "bg-red-50",
-          border: "border-red-200",
-          text: "text-red-800",
+          bg: "bg-red-500/10",
+          border: "border-red-500/30",
+          text: "text-red-300",
           Icon: FiXCircle,
-          iconColor: "text-red-500",
+          iconColor: "text-red-400",
         };
 
   const canCheckIn = admit && result.remaining > 0;
@@ -321,15 +312,15 @@ function ScanVerdictCard({
           <p className={`text-sm font-bold ${tone.text}`}>{result.message}</p>
 
           {result.guest_name && (
-            <div className="mt-3 space-y-1 text-sm text-gray-700">
-              <p className="font-bold text-gray-900">{result.guest_name}</p>
+            <div className="mt-3 space-y-1 text-sm text-white/80">
+              <p className="font-bold text-white">{result.guest_name}</p>
               {result.event_title && (
-                <p className="text-xs font-medium text-gray-500">
+                <p className="text-xs font-medium text-[#A5A8C3]">
                   {result.event_title}
                 </p>
               )}
               {result.occurrence_date && (
-                <p className="text-xs font-medium text-gray-500">
+                <p className="text-xs font-medium text-[#A5A8C3]">
                   {formatIST(
                     result.occurrence_date,
                     "EEE, d MMM yyyy · hh:mm a",
@@ -337,7 +328,7 @@ function ScanVerdictCard({
                 </p>
               )}
               {result.quantity != null && (
-                <p className="flex items-center gap-1.5 pt-1 text-xs font-bold text-gray-700">
+                <p className="flex items-center gap-1.5 pt-1 text-xs font-bold text-white/80">
                   <FiUsers className="h-3.5 w-3.5" />
                   {result.checked_in_count} of {result.quantity} checked in
                   {result.remaining > 0 && ` · ${result.remaining} to go`}
@@ -349,7 +340,7 @@ function ScanVerdictCard({
           {/* How many of the group are actually at the door right now. */}
           {canCheckIn && (
             <div className="mt-4 flex flex-wrap items-end gap-3">
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              <label className="flex flex-col gap-1 text-xs font-semibold text-[#A5A8C3]">
                 Guests entering now
                 <input
                   type="number"
@@ -365,14 +356,14 @@ function ScanVerdictCard({
                       ),
                     )
                   }
-                  className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-900 outline-none focus:border-[#0094CA]"
+                  className="w-24 rounded-lg border border-white/15 px-3 py-2 text-sm font-bold text-white outline-none focus:border-[#A020F0]"
                 />
               </label>
               <button
                 type="button"
                 onClick={onCheckIn}
                 disabled={busy}
-                className="rounded-full bg-[#0094CA] px-6 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#007dab] disabled:opacity-50"
+                className="rounded-full bg-[#A020F0] px-6 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
               >
                 {busy ? "Checking in…" : `Check in ${count}`}
               </button>
@@ -385,7 +376,7 @@ function ScanVerdictCard({
         type="button"
         onClick={onNext}
         disabled={busy}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+        className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-[#121426] py-3 text-sm font-bold text-white/80 transition hover:bg-white/[0.04] disabled:opacity-50"
       >
         <FiRefreshCw className="h-4 w-4" />
         Scan next ticket

@@ -27,8 +27,15 @@ export async function apiFetch<T>(
 ): Promise<Envelope<T>> {
   try {
     // Always send the caller's token when there is one; an explicit header wins.
-    const headers = { ...(await currentAuthHeader()), ...(config?.headers ?? {}) };
-    const res = await api.request<Envelope<T>>({ url: path, ...config, headers });
+    const headers = {
+      ...(await currentAuthHeader()),
+      ...(config?.headers ?? {}),
+    };
+    const res = await api.request<Envelope<T>>({
+      url: path,
+      ...config,
+      headers,
+    });
     return res.data;
   } catch (err) {
     const axErr = err as AxiosError<Envelope<T>>;
@@ -55,7 +62,6 @@ export async function apiFetch<T>(
     throw error;
   }
 }
-
 
 // Only a token the server actively rejects ends the session. A missing or
 // malformed header means this client failed to attach one (e.g. Firebase not
@@ -545,6 +551,11 @@ export interface PublicHostProfileDTO {
   is_super_host: boolean;
   is_community_champ: boolean;
   is_professional: boolean;
+  /**
+   * Hosting tier, once the backend sends it. "unverified" = a free host who
+   * hasn't been approved; MySlotMate labels their events as community events.
+   */
+  host_tier?: "unverified" | "community" | "professional" | null;
   expertise_tags: string[];
   social_instagram: string | null;
   social_linkedin: string | null;
@@ -1807,10 +1818,10 @@ export function validateCoupon(eventId: string, userId: string, code: string) {
     comps_booking: boolean;
     discount_percent?: number | null;
     code: string;
-  }>(
-    "/coupons/validate",
-    { method: "POST", data: { event_id: eventId, user_id: userId, code } },
-  );
+  }>("/coupons/validate", {
+    method: "POST",
+    data: { event_id: eventId, user_id: userId, code },
+  });
 }
 
 /** Verify a coupon without a specific guest (walk-in / on-spot). The per-guest
@@ -1821,10 +1832,10 @@ export function verifyCoupon(eventId: string, code: string) {
     comps_booking: boolean;
     discount_percent?: number | null;
     code: string;
-  }>(
-    "/coupons/validate",
-    { method: "POST", data: { event_id: eventId, code } },
-  );
+  }>("/coupons/validate", {
+    method: "POST",
+    data: { event_id: eventId, code },
+  });
 }
 
 /* ------------------------------------------------------------------ */

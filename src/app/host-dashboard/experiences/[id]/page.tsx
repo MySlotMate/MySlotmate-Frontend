@@ -3,11 +3,10 @@
 
 import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CoHostManager, HostNavbar } from "~/components/host-dashboard";
+import { CoHostManager } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
 import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
 import CouponsManager from "~/components/host/CouponsManager";
-import Breadcrumb from "~/components/Breadcrumb";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
   useMyHost,
@@ -17,6 +16,10 @@ import {
   usePublishEvent,
 } from "~/hooks/useApi";
 import { useDragDrop } from "~/hooks/useDragDrop";
+import { useHostTier } from "~/hooks/useHostTier";
+import { categoriesFor } from "~/lib/categories";
+import { VerifyToEarnSheet } from "~/components/host-dashboard/VerifyToEarn";
+import { FREE_HOST_LIMITS, findOffPlatformPayment } from "~/lib/hostTier";
 import {
   FiArrowLeft,
   FiX,
@@ -100,17 +103,6 @@ interface EventFormData {
   accessPasskey: string;
   passkeyGrantsFree: boolean;
 }
-
-const MOODS = [
-  "Adventurous",
-  "Relaxing",
-  "Creative",
-  "Social",
-  "Educational",
-  "Wellness",
-  "Culinary",
-  "Cultural",
-];
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
 
@@ -196,17 +188,17 @@ function ImageUpload({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+      <label className="block text-sm font-medium text-white/80">{label}</label>
+      {helpText && <p className="text-xs text-[#A5A8C3]">{helpText}</p>}
 
       {!multiple && preview && (
-        <div className="relative inline-block w-full max-w-md">
+        <div className="relative inline-block w-full max-w-[280px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={preview}
             alt="Preview"
             loading="lazy"
-            className="aspect-[16/9] w-full rounded-lg object-cover"
+            className="aspect-[4/5] w-full rounded-lg object-cover"
           />
           <button
             type="button"
@@ -221,15 +213,23 @@ function ImageUpload({
       {multiple && previews.length > 0 && (
         <div className="space-y-4">
           <div className="group relative">
-            {/* Photos are cropped to 16:9 on upload, so this preview matches the
-                fixed 16:9 frame the live experience page renders them in. */}
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
+            {/* Photos are cropped to 4:5 on upload, matching the poster frame
+                used across the site. Older photos in other shapes are shown
+                whole over a blurred fill rather than cropped. */}
+            <div className="relative aspect-[4/5] w-full max-w-sm overflow-hidden rounded-xl bg-white/[0.06]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previews[currentImageIndex]}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
+              />
               {/* Main Image */}
               <img
                 src={previews[currentImageIndex]}
                 alt={`Cover photo preview ${currentImageIndex + 1}`}
                 loading="lazy"
-                className="block h-full w-full object-cover transition-opacity duration-300"
+                className="relative block h-full w-full object-contain transition-opacity duration-300"
               />
 
               {/* Navigation Arrows */}
@@ -244,11 +244,11 @@ function ImageUpload({
                         prev === 0 ? previews.length - 1 : prev - 1,
                       );
                     }}
-                    className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
+                    className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-[#121426]/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-[#121426]"
                     aria-label="Previous image"
                   >
                     <svg
-                      className="h-4 w-4 text-gray-800"
+                      className="h-4 w-4 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -271,11 +271,11 @@ function ImageUpload({
                         prev === previews.length - 1 ? 0 : prev + 1,
                       );
                     }}
-                    className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
+                    className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-[#121426]/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-[#121426]"
                     aria-label="Next image"
                   >
                     <svg
-                      className="h-4 w-4 text-gray-800"
+                      className="h-4 w-4 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -306,7 +306,7 @@ function ImageUpload({
                 onClick={() => setCurrentImageIndex(i)}
                 className={`relative cursor-pointer overflow-hidden rounded-lg border-2 transition ${
                   currentImageIndex === i
-                    ? "border-[#0094CA]"
+                    ? "border-[#A020F0]"
                     : "border-transparent"
                 }`}
               >
@@ -342,22 +342,22 @@ function ImageUpload({
           onClick={() => inputRef.current?.click()}
           className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition ${
             isDragging
-              ? "scale-105 border-[#0094CA] bg-[#0094CA]/5"
-              : "border-gray-300 hover:border-[#0094CA] hover:bg-gray-50"
+              ? "scale-105 border-[#A020F0] bg-[#A020F0]/10"
+              : "border-white/15 hover:border-[#A020F0] hover:bg-white/[0.04]"
           }`}
         >
           <FiUpload
-            className={`mx-auto mb-2 transition ${isDragging ? "text-[#0094CA]" : "text-gray-400"}`}
+            className={`mx-auto mb-2 transition ${isDragging ? "text-[#D8B4FE]" : "text-[#777B98]"}`}
             size={24}
           />
           <p
-            className={`text-sm transition ${isDragging ? "font-semibold text-[#0094CA]" : "text-gray-500"}`}
+            className={`text-sm transition ${isDragging ? "font-semibold text-[#D8B4FE]" : "text-[#A5A8C3]"}`}
           >
             {isDragging
               ? `Drop ${multiple ? "images" : "image"} here`
               : `Click to upload or drag ${multiple ? "images" : "image"}`}
           </p>
-          <p className="mt-1 text-xs text-gray-400">PNG, JPG up to 5MB</p>
+          <p className="mt-1 text-xs text-[#777B98]">PNG, JPG up to 5MB</p>
         </div>
       )}
 
@@ -383,7 +383,7 @@ function AttendeeRow({
   const [downloadingTicket, setDownloadingTicket] = useState(false);
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 first:border-t-0">
+    <div className="flex items-center justify-between border-t border-white/10 px-4 py-3 first:border-t-0">
       <div className="flex min-w-0 items-center gap-3">
         {attendee.user_avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -393,23 +393,23 @@ function AttendeeRow({
             className="h-9 w-9 shrink-0 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0094CA]/10 text-sm font-semibold text-[#0094CA]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#A020F0]/10 text-sm font-semibold text-[#D8B4FE]">
             {(attendee.user_name ?? "?").charAt(0).toUpperCase()}
           </div>
         )}
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-gray-900">
+          <p className="truncate text-sm font-semibold text-white">
             {attendee.user_name ?? "Unknown user"}
           </p>
           {attendee.user_email && (
-            <p className="truncate text-xs text-gray-500">
+            <p className="truncate text-xs text-[#A5A8C3]">
               {attendee.user_email}
             </p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-[#A5A8C3]">
             Qty: {attendee.quantity}
             {attendee.amount_cents !== null && (
-              <span className="ml-2 text-gray-400">
+              <span className="ml-2 text-[#777B98]">
                 ₹{(attendee.amount_cents / 100).toFixed(2)}
               </span>
             )}
@@ -420,14 +420,14 @@ function AttendeeRow({
         <span
           className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
             attendee.status === "pending"
-              ? "bg-yellow-100 text-yellow-800"
+              ? "bg-yellow-500/15 text-yellow-300"
               : attendee.status === "confirmed"
-                ? "bg-green-100 text-green-800"
+                ? "bg-green-500/15 text-green-300"
                 : attendee.status === "cancelled"
-                  ? "bg-red-100 text-red-800"
+                  ? "bg-red-500/15 text-red-300"
                   : attendee.status === "refunded"
-                    ? "bg-orange-100 text-orange-800"
-                    : "bg-gray-100 text-gray-800"
+                    ? "bg-orange-500/15 text-orange-300"
+                    : "bg-white/[0.06] text-white"
           }`}
         >
           {attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1)}
@@ -443,13 +443,13 @@ function AttendeeRow({
             );
           }}
           disabled={downloadingTicket}
-          className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA] disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121426] px-2 py-1 text-xs font-medium text-white/80 transition hover:border-[#A020F0] hover:text-[#D8B4FE] disabled:opacity-50"
           title="Download Ticket PDF"
         >
           {downloadingTicket ? (
-            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#0094CA] border-t-transparent" />
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#A020F0] border-t-transparent" />
           ) : (
-            <FiDownload className="h-3 w-3 text-gray-500" />
+            <FiDownload className="h-3 w-3 text-[#A5A8C3]" />
           )}
           Ticket
         </button>
@@ -496,7 +496,7 @@ function SessionGroup({
   // For non-recurring events with a single session, skip the collapsible chrome.
   if (!isRecurring) {
     return (
-      <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
+      <div className="divide-y divide-white/10 rounded-lg border border-white/10">
         {bookings.map((b) => (
           <AttendeeRow key={b.id} attendee={b} event={event} />
         ))}
@@ -505,40 +505,40 @@ function SessionGroup({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200">
+    <div className="overflow-hidden rounded-lg border border-white/10">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 bg-gray-50 px-4 py-3 text-left transition hover:bg-gray-100"
+        className="flex w-full items-center gap-3 bg-white/[0.04] px-4 py-3 text-left transition hover:bg-white/[0.06]"
       >
         {open ? (
-          <FiChevronDown className="h-4 w-4 text-gray-400" />
+          <FiChevronDown className="h-4 w-4 text-[#777B98]" />
         ) : (
-          <FiChevronRight className="h-4 w-4 text-gray-400" />
+          <FiChevronRight className="h-4 w-4 text-[#777B98]" />
         )}
-        <FiCalendar className="h-4 w-4 text-[#0094CA]" />
-        <span className="text-sm font-semibold text-gray-900">{dateLabel}</span>
+        <FiCalendar className="h-4 w-4 text-[#D8B4FE]" />
+        <span className="text-sm font-semibold text-white">{dateLabel}</span>
         {isPast && (
-          <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
+          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-[#A5A8C3]">
             past
           </span>
         )}
-        <span className="ml-auto flex items-center gap-3 text-xs text-gray-500">
+        <span className="ml-auto flex items-center gap-3 text-xs text-[#A5A8C3]">
           <span className="inline-flex items-center gap-1">
             <FiUsers className="h-3.5 w-3.5" />
             {totalGuests} guest{totalGuests === 1 ? "" : "s"}
           </span>
           {revenueCents > 0 && (
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-white/80">
               ₹{(revenueCents / 100).toFixed(2)}
             </span>
           )}
-          <span className="text-gray-400">
+          <span className="text-[#777B98]">
             {bookings.length} booking{bookings.length === 1 ? "" : "s"}
           </span>
         </span>
       </button>
       {open && (
-        <div className="bg-white">
+        <div className="bg-[#121426]">
           {bookings.map((b) => (
             <AttendeeRow key={b.id} attendee={b} event={event} />
           ))}
@@ -578,13 +578,13 @@ function AttendeesList({
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#0094CA]" />
+        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#A020F0]" />
       </div>
     );
   }
 
   if (!attendees || attendees.length === 0) {
-    return <p className="py-8 text-center text-gray-500">No bookings yet</p>;
+    return <p className="py-8 text-center text-[#A5A8C3]">No bookings yet</p>;
   }
 
   // Group bookings by occurrence date (date+time keyed string)
@@ -606,10 +606,10 @@ function AttendeesList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
-        <span className="text-xs text-gray-500">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+        <span className="text-xs text-[#A5A8C3]">
           Total Bookings:{" "}
-          <strong className="text-gray-900">{attendees.length}</strong>
+          <strong className="text-white">{attendees.length}</strong>
         </span>
         <button
           type="button"
@@ -621,7 +621,7 @@ function AttendeesList({
             )
           }
           disabled={exporting || attendees.length === 0}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/15 disabled:opacity-50"
           title="Download Excel Sheet of all bookings for this experience"
         >
           {exporting ? (
@@ -745,6 +745,16 @@ export default function EditEventPage({
   }, []);
 
   const { data: host, isLoading: hostLoading } = useMyHost(userId);
+  // Unverified hosts can only run free events, within the free-host limits.
+  const {
+    isVerified: verifiedHost,
+    isLoading: tierLoading,
+    applicationStatus,
+  } = useHostTier();
+  // Optimistic while loading: verified hosts never see the free-host locks
+  // flash, and the backend still enforces the rule.
+  const isVerified = tierLoading || verifiedHost;
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const { data: event, isLoading: eventLoading } = useEvent(id);
   const updateEvent = useUpdateEvent();
   const publishEvent = usePublishEvent();
@@ -838,7 +848,8 @@ export default function EditEventPage({
         requiresAttendeeDetails: event.requires_attendee_details ?? false,
         attendeeFields: event.attendee_fields ?? [],
         isPrivate: event.is_private ?? false,
-        privateAccessMode: event.private_access_mode === "rsvp" ? "rsvp" : "passkey",
+        privateAccessMode:
+          event.private_access_mode === "rsvp" ? "rsvp" : "passkey",
         // Corrected by the passkey refetch below (shared if a passkey exists,
         // otherwise unique — access via per-guest codes).
         accessMode: "shared",
@@ -994,12 +1005,28 @@ export default function EditEventPage({
       return "Set a valid group size before publishing";
     if (!form.cancellationPolicy)
       return "Pick a cancellation policy before publishing";
+    if (!isVerified) {
+      if (!form.isFree) return "Only verified hosts can sell tickets";
+      if (
+        form.sessionType !== "one_on_one" &&
+        form.maxGroupSize > FREE_HOST_LIMITS.maxGuests
+      )
+        return `Free events can have up to ${FREE_HOST_LIMITS.maxGuests} guests`;
+      const payment = findOffPlatformPayment(
+        `${form.title} ${form.hookLine} ${form.description}`,
+      );
+      if (payment) return payment;
+    }
     return null;
   };
 
   const handleUpdate = async (publishAfter = false) => {
     if (!host?.id || !event?.id) {
       toast.error("Unable to update event");
+      return;
+    }
+    if (!isVerified && !form.isFree) {
+      setVerifyOpen(true);
       return;
     }
 
@@ -1311,10 +1338,9 @@ export default function EditEventPage({
 
   if (hostLoading || eventLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <HostNavbar />
+      <div className="min-h-screen bg-[#080914]">
         <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#A020F0] border-t-transparent" />
         </div>
       </div>
     );
@@ -1322,45 +1348,33 @@ export default function EditEventPage({
 
   return (
     <>
-      <HostNavbar />
-
-      <main className="min-h-screen bg-gray-50 pb-24">
+      <main className="min-h-screen bg-[#080914] pb-24">
         <div className="site-x mx-auto max-w-4xl py-8">
-          <Breadcrumb
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Dashboard", href: "/host-dashboard" },
-              { label: "Experiences", href: "/host-dashboard/experiences" },
-              { label: "Edit" },
-            ]}
-            className="mb-6"
-          />
-
           <div className="mb-6 flex items-center gap-4">
             <button
               onClick={() => router.push("/host-dashboard/experiences")}
-              className="rounded-lg p-2 transition hover:bg-gray-100"
+              className="rounded-lg p-2 transition hover:bg-white/[0.06]"
             >
               <FiArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
                 Edit Experience
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[#A5A8C3]">
                 Update your experience details
               </p>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="mb-6 flex gap-4 border-b border-gray-200">
+          <div className="mb-6 flex gap-4 border-b border-white/10">
             <button
               onClick={() => router.push(`/host-dashboard/experiences/${id}`)}
               className={`px-1 pb-3 font-medium transition ${
                 !showBookings
-                  ? "border-b-2 border-[#0094CA] text-[#0094CA]"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "border-b-2 border-[#A020F0] text-[#D8B4FE]"
+                  : "text-[#A5A8C3] hover:text-white/80"
               }`}
             >
               Details
@@ -1371,8 +1385,8 @@ export default function EditEventPage({
               }
               className={`px-1 pb-3 font-medium transition ${
                 showBookings
-                  ? "border-b-2 border-[#0094CA] text-[#0094CA]"
-                  : "text-gray-500 hover:text-gray-700"
+                  ? "border-b-2 border-[#A020F0] text-[#D8B4FE]"
+                  : "text-[#A5A8C3] hover:text-white/80"
               }`}
             >
               Bookings
@@ -1381,26 +1395,26 @@ export default function EditEventPage({
 
           {/* Details Tab */}
           {!showBookings && (
-            <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="space-y-6 rounded-xl border border-white/10 bg-[#121426] p-6 shadow-sm">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Experience Title <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-white/80">
+                  Experience Title <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
                   value={form.title}
                   onChange={(e) => updateForm("title", e.target.value)}
                   placeholder="e.g., Morning Yoga by the Beach"
-                  className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                  className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                   maxLength={100}
                 />
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-[#777B98]">
                   {form.title.length}/100 characters
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-white/80">
                   Hook Line
                 </label>
                 <input
@@ -1408,35 +1422,40 @@ export default function EditEventPage({
                   value={form.hookLine}
                   onChange={(e) => updateForm("hookLine", e.target.value)}
                   placeholder="A short catchy phrase to attract guests"
-                  className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                  className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                   maxLength={150}
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Mood
+                <label className="block text-sm font-medium text-white/80">
+                  Category
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {MOODS.map((mood) => (
+                  {categoriesFor(
+                    form.sessionType === "one_on_one"
+                      ? "session"
+                      : "experience",
+                  ).map((c) => (
                     <button
-                      key={mood}
+                      key={c.key}
                       type="button"
-                      onClick={() => updateForm("mood", mood.toLowerCase())}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                        form.mood === mood.toLowerCase()
-                          ? "bg-[#0094CA] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      onClick={() => updateForm("mood", c.moods[0]!)}
+                      className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition ${
+                        c.moods.includes(form.mood)
+                          ? "bg-[#A020F0] text-white"
+                          : "bg-white/[0.06] text-white/80 hover:bg-white/10"
                       }`}
                     >
-                      {mood}
+                      <c.icon className="h-4 w-4" />
+                      {c.label}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-white/80">
                   Description
                 </label>
                 <RichTextEditor
@@ -1448,8 +1467,8 @@ export default function EditEventPage({
               </div>
 
               {/* Schedule & Pricing Section */}
-              <div className="border-t border-gray-100 pt-6">
-                <h3 className="mb-4 text-base font-semibold text-gray-900">
+              <div className="border-t border-white/10 pt-6">
+                <h3 className="mb-4 text-base font-semibold text-white">
                   Schedule & Pricing
                 </h3>
 
@@ -1465,12 +1484,12 @@ export default function EditEventPage({
                     className={`rounded-xl border p-3.5 text-left transition ${
                       form.sessionType === "group" &&
                       form.scheduleType === "one_time"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        ? "border-[#A020F0] bg-[#A020F0]/10 font-semibold text-[#D8B4FE]"
+                        : "border-white/10 bg-[#121426] text-white/80 hover:border-white/15"
                     }`}
                   >
                     <div className="text-sm font-medium">One-Time Event</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
+                    <div className="mt-0.5 text-xs text-[#A5A8C3]">
                       Single specific date & time
                     </div>
                   </button>
@@ -1484,12 +1503,12 @@ export default function EditEventPage({
                     className={`rounded-xl border p-3.5 text-left transition ${
                       form.sessionType === "group" &&
                       form.scheduleType === "recurring"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        ? "border-[#A020F0] bg-[#A020F0]/10 font-semibold text-[#D8B4FE]"
+                        : "border-white/10 bg-[#121426] text-white/80 hover:border-white/15"
                     }`}
                   >
                     <div className="text-sm font-medium">Recurring</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
+                    <div className="mt-0.5 text-xs text-[#A5A8C3]">
                       Repeats daily, weekly, or monthly
                     </div>
                   </button>
@@ -1503,12 +1522,12 @@ export default function EditEventPage({
                     className={`rounded-xl border p-3.5 text-left transition ${
                       form.sessionType === "group" &&
                       form.scheduleType === "custom_dates"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        ? "border-[#A020F0] bg-[#A020F0]/10 font-semibold text-[#D8B4FE]"
+                        : "border-white/10 bg-[#121426] text-white/80 hover:border-white/15"
                     }`}
                   >
                     <div className="text-sm font-medium">Custom Dates</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
+                    <div className="mt-0.5 text-xs text-[#A5A8C3]">
                       Pick dynamic dates (e.g. Aug 15, 22, Sept 5)
                     </div>
                   </button>
@@ -1521,12 +1540,12 @@ export default function EditEventPage({
                     }}
                     className={`rounded-xl border p-3.5 text-left transition ${
                       form.sessionType === "one_on_one"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+                        ? "border-[#A020F0] bg-[#A020F0]/10 font-semibold text-[#D8B4FE]"
+                        : "border-white/10 bg-[#121426] text-white/80 hover:border-white/15"
                     }`}
                   >
                     <div className="text-sm font-medium">One-on-One</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
+                    <div className="mt-0.5 text-xs text-[#A5A8C3]">
                       Set your hours, we split them into 1:1 slots
                     </div>
                   </button>
@@ -1539,8 +1558,8 @@ export default function EditEventPage({
                     <>
                       {/* Date */}
                       <div className="mb-4 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Event Date <span className="text-red-500">*</span>
+                        <label className="block text-sm font-medium text-white/80">
+                          Event Date <span className="text-red-400">*</span>
                         </label>
                         <input
                           type="date"
@@ -1548,15 +1567,15 @@ export default function EditEventPage({
                           onChange={(e) =>
                             updateForm("eventDate", e.target.value)
                           }
-                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                          className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                         />
                       </div>
 
                       {/* Time */}
                       <div className="mb-4 grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Start Time <span className="text-red-500">*</span>
+                          <label className="block text-sm font-medium text-white/80">
+                            Start Time <span className="text-red-400">*</span>
                           </label>
                           <input
                             type="time"
@@ -1564,11 +1583,11 @@ export default function EditEventPage({
                             onChange={(e) =>
                               updateForm("eventTime", e.target.value)
                             }
-                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                            className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700">
+                          <label className="block text-sm font-medium text-white/80">
                             End Time
                           </label>
                           <input
@@ -1578,23 +1597,23 @@ export default function EditEventPage({
                               updateForm("endTime", e.target.value)
                             }
                             placeholder="Optional - auto-calculated from duration if not set"
-                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                            className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                           />
                         </div>
                       </div>
 
                       {form.scheduleType === "recurring" && (
-                        <div className="mb-4 space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                          <label className="block text-sm font-medium text-gray-700">
+                        <div className="mb-4 space-y-2 rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                          <label className="block text-sm font-medium text-white/80">
                             Recurrence Frequency{" "}
-                            <span className="text-red-500">*</span>
+                            <span className="text-red-400">*</span>
                           </label>
                           <select
                             value={form.recurrenceRule}
                             onChange={(e) =>
                               updateForm("recurrenceRule", e.target.value)
                             }
-                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                            className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                           >
                             <option value="">Select frequency</option>
                             <option value="FREQ=DAILY">Daily</option>
@@ -1612,12 +1631,12 @@ export default function EditEventPage({
                 {/* Dynamic Custom Selected Dates Inputs */}
                 {form.sessionType === "group" &&
                   form.scheduleType === "custom_dates" && (
-                    <div className="mb-6 space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
+                    <div className="mb-6 space-y-4 rounded-xl border border-[#A020F0] bg-[#A020F0]/10 p-5">
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-900">
+                        <h4 className="text-sm font-semibold text-white">
                           Selected Specific Dates & Times
                         </h4>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-[#A5A8C3]">
                           Add the specific dates and times when this experience
                           will take place.
                         </p>
@@ -1626,10 +1645,10 @@ export default function EditEventPage({
                       {form.customDatesList.map((slot, idx) => (
                         <div
                           key={idx}
-                          className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+                          className="flex flex-wrap items-center gap-3 rounded-lg border border-white/10 bg-[#121426] p-3 shadow-sm"
                         >
                           <div className="min-w-[150px] flex-1">
-                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                            <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
                               Date
                             </label>
                             <input
@@ -1639,11 +1658,11 @@ export default function EditEventPage({
                                 updateCustomSlot(idx, "date", e.target.value)
                               }
                               min={new Date().toISOString().split("T")[0]}
-                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                              className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
                             />
                           </div>
                           <div className="w-36 min-w-[120px]">
-                            <label className="mb-1 block text-xs font-medium text-gray-600">
+                            <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
                               Start Time
                             </label>
                             <input
@@ -1652,14 +1671,14 @@ export default function EditEventPage({
                               onChange={(e) =>
                                 updateCustomSlot(idx, "time", e.target.value)
                               }
-                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                              className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
                             />
                           </div>
                           {form.customDatesList.length > 1 && (
                             <button
                               type="button"
                               onClick={() => removeCustomSlot(idx)}
-                              className="mt-5 p-2 text-gray-400 transition hover:text-red-500"
+                              className="mt-5 p-2 text-[#777B98] transition hover:text-red-400"
                               title="Remove slot"
                             >
                               <FiX size={18} />
@@ -1671,7 +1690,7 @@ export default function EditEventPage({
                       <button
                         type="button"
                         onClick={addCustomSlot}
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094CA] hover:underline"
+                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#D8B4FE] hover:underline"
                       >
                         + Add Another Date
                       </button>
@@ -1700,8 +1719,8 @@ export default function EditEventPage({
 
                 {/* Duration */}
                 <div className="mb-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Duration (minutes) <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-white/80">
+                    Duration (minutes) <span className="text-red-400">*</span>
                   </label>
                   <div className="space-y-3">
                     {/* Quick Select Buttons */}
@@ -1713,8 +1732,8 @@ export default function EditEventPage({
                           onClick={() => updateForm("durationMinutes", mins)}
                           className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
                             form.durationMinutes === mins
-                              ? "bg-[#0094CA] text-white"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              ? "bg-[#A020F0] text-white"
+                              : "bg-white/[0.06] text-white/80 hover:bg-white/10"
                           }`}
                         >
                           {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
@@ -1734,14 +1753,14 @@ export default function EditEventPage({
                             Math.max(15, parseInt(e.target.value) || 30),
                           )
                         }
-                        className="flex-1 rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        className="flex-1 rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                         placeholder="Enter custom duration"
                       />
-                      <span className="text-sm font-medium text-gray-600">
+                      <span className="text-sm font-medium text-[#A5A8C3]">
                         min
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[#A5A8C3]">
                       Click quick options or enter custom duration (minimum 15
                       min)
                     </p>
@@ -1754,13 +1773,32 @@ export default function EditEventPage({
                     <input
                       type="checkbox"
                       checked={form.isFree}
-                      onChange={(e) => updateForm("isFree", e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300"
+                      onChange={(e) => {
+                        if (!e.target.checked && !isVerified) {
+                          setVerifyOpen(true);
+                          return;
+                        }
+                        updateForm("isFree", e.target.checked);
+                      }}
+                      className="h-4 w-4 rounded border-white/15"
                     />
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-white/80">
                       Free Experience
                     </span>
                   </label>
+                  {!isVerified && (
+                    <p className="text-xs text-white/50">
+                      Free hosts can run free events with up to{" "}
+                      {FREE_HOST_LIMITS.maxGuests} guests.{" "}
+                      <button
+                        type="button"
+                        onClick={() => setVerifyOpen(true)}
+                        className="font-semibold text-[#D8B4FE] hover:text-white"
+                      >
+                        Get verified to sell tickets
+                      </button>
+                    </p>
+                  )}
                 </div>
 
                 {!form.isFree && (
@@ -1768,14 +1806,14 @@ export default function EditEventPage({
                     <button
                       type="button"
                       onClick={() => updateForm("useTiers", false)}
-                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${!form.useTiers ? "bg-[#0094CA] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${!form.useTiers ? "bg-[#A020F0] text-white" : "bg-white/[0.06] text-white/80 hover:bg-white/10"}`}
                     >
                       Single price
                     </button>
                     <button
                       type="button"
                       onClick={() => updateForm("useTiers", true)}
-                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${form.useTiers ? "bg-[#0094CA] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
+                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${form.useTiers ? "bg-[#A020F0] text-white" : "bg-white/[0.06] text-white/80 hover:bg-white/10"}`}
                     >
                       Multiple ticket types
                     </button>
@@ -1784,7 +1822,7 @@ export default function EditEventPage({
 
                 {!form.isFree && !form.useTiers && (
                   <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-white/80">
                       Price (₹)
                     </label>
                     <input
@@ -1798,14 +1836,14 @@ export default function EditEventPage({
                       }
                       placeholder="e.g., 500"
                       min="0"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                      className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                     />
                   </div>
                 )}
 
                 {!form.isFree && form.useTiers && (
                   <div className="mb-4 space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-white/80">
                       Ticket types
                     </label>
                     {form.priceTiers.map((tier, index) => (
@@ -1817,7 +1855,7 @@ export default function EditEventPage({
                             updatePriceTier(index, "name", e.target.value)
                           }
                           placeholder="e.g. General, VIP"
-                          className="flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                          className="flex-1 rounded-lg border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                         />
                         <input
                           type="number"
@@ -1827,13 +1865,13 @@ export default function EditEventPage({
                           }
                           placeholder="₹ Price"
                           min="0"
-                          className="w-32 rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                          className="w-32 rounded-lg border border-white/10 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                         />
                         {form.priceTiers.length > 1 && (
                           <button
                             type="button"
                             onClick={() => removePriceTier(index)}
-                            className="text-gray-400 transition hover:text-red-500"
+                            className="text-[#777B98] transition hover:text-red-400"
                             aria-label="Remove ticket type"
                           >
                             <FiX className="h-5 w-5" />
@@ -1844,23 +1882,22 @@ export default function EditEventPage({
                     <button
                       type="button"
                       onClick={addPriceTier}
-                      className="text-sm font-semibold text-[#0094CA] hover:underline"
+                      className="text-sm font-semibold text-[#D8B4FE] hover:underline"
                     >
                       + Add ticket type
                     </button>
                   </div>
                 )}
 
-
                 {/* Monthly Pass — one payment covers a month of sessions. */}
                 {!form.isFree && (
-                  <div className="space-y-4 rounded-xl border border-gray-200 p-4">
+                  <div className="space-y-4 rounded-xl border border-white/10 p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h4 className="text-sm font-semibold text-gray-900">
+                        <h4 className="text-sm font-semibold text-white">
                           Monthly Pass
                         </h4>
-                        <p className="mt-0.5 text-xs text-gray-500">
+                        <p className="mt-0.5 text-xs text-[#A5A8C3]">
                           Guests pay once and attend for 30 days. Recurring
                           experiences only.
                         </p>
@@ -1876,21 +1913,23 @@ export default function EditEventPage({
                         }
                         className={`shrink-0 rounded-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-40 ${
                           form.monthlyPassEnabled
-                            ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA]"
-                            : "border-gray-200 bg-white text-gray-700"
+                            ? "border-[#A020F0] bg-[#A020F0]/10 text-[#D8B4FE]"
+                            : "border-white/10 bg-[#121426] text-white/80"
                         }`}
                       >
                         {form.monthlyPassEnabled ? "On" : "Off"}
                       </button>
                     </div>
 
-                    {form.monthlyPassEnabled && <PassHoldersPanel eventId={id} />}
+                    {form.monthlyPassEnabled && (
+                      <PassHoldersPanel eventId={id} />
+                    )}
 
                     {form.monthlyPassEnabled &&
                       form.scheduleType !== "one_time" && (
                         <div className="grid gap-3 sm:grid-cols-3">
                           <div>
-                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                            <label className="mb-1.5 block text-xs font-medium text-white/80">
                               Pass price (₹)
                             </label>
                             <input
@@ -1904,11 +1943,11 @@ export default function EditEventPage({
                                 )
                               }
                               placeholder="2500"
-                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
+                              className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:ring-2 focus:ring-[#A020F0]"
                             />
                           </div>
                           <div>
-                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                            <label className="mb-1.5 block text-xs font-medium text-white/80">
                               Sessions included
                             </label>
                             <input
@@ -1922,11 +1961,11 @@ export default function EditEventPage({
                                 )
                               }
                               placeholder="All"
-                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
+                              className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:ring-2 focus:ring-[#A020F0]"
                             />
                           </div>
                           <div>
-                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
+                            <label className="mb-1.5 block text-xs font-medium text-white/80">
                               Passes available
                             </label>
                             <input
@@ -1940,7 +1979,7 @@ export default function EditEventPage({
                                 )
                               }
                               placeholder="Unlimited"
-                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
+                              className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:ring-2 focus:ring-[#A020F0]"
                             />
                           </div>
                         </div>
@@ -1951,7 +1990,7 @@ export default function EditEventPage({
                 {/* Group Size */}
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-white/80">
                       Min Group Size
                     </label>
                     <input
@@ -1964,11 +2003,11 @@ export default function EditEventPage({
                         )
                       }
                       min="1"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                      className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-white/80">
                       Max Group Size
                     </label>
                     <input
@@ -1981,11 +2020,11 @@ export default function EditEventPage({
                         )
                       }
                       min="1"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                      className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                     />
                   </div>
                 </div>
-                <p className="mt-2 mb-4 text-xs text-gray-500">
+                <p className="mt-2 mb-4 text-xs text-[#A5A8C3]">
                   <span className="font-medium">Max group size</span> = total
                   spots that can book this session (the event capacity).
                 </p>
@@ -1997,9 +2036,9 @@ export default function EditEventPage({
                       type="checkbox"
                       checked={form.isOnline}
                       onChange={(e) => updateForm("isOnline", e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-white/15"
                     />
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-white/80">
                       Online Experience
                     </span>
                   </label>
@@ -2007,7 +2046,7 @@ export default function EditEventPage({
 
                 {form.isOnline ? (
                   <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-white/80">
                       Meeting Link
                     </label>
                     <input
@@ -2017,25 +2056,25 @@ export default function EditEventPage({
                         updateForm("meetingLink", e.target.value)
                       }
                       placeholder="e.g., https://zoom.us/j/... or https://meet.google.com/..."
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                      className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                     />
                   </div>
                 ) : (
                   <>
                     <div className="mb-4 space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Location <span className="text-red-500">*</span>
+                      <label className="block text-sm font-medium text-white/80">
+                        Location <span className="text-red-400">*</span>
                       </label>
                       <input
                         type="text"
                         value={form.location}
                         onChange={(e) => updateForm("location", e.target.value)}
                         placeholder="e.g., Central Park, New York"
-                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                       />
                     </div>
                     <div className="mb-4 space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-white/80">
                         Google Maps URL
                       </label>
                       <input
@@ -2045,7 +2084,7 @@ export default function EditEventPage({
                           updateForm("googleMapsUrl", e.target.value)
                         }
                         placeholder="https://maps.google.com/..."
-                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                       />
                     </div>
                   </>
@@ -2053,7 +2092,7 @@ export default function EditEventPage({
 
                 {/* Cancellation Policy */}
                 <div className="mb-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white/80">
                     Cancellation Policy
                   </label>
                   <select
@@ -2061,7 +2100,7 @@ export default function EditEventPage({
                     onChange={(e) =>
                       updateForm("cancellationPolicy", e.target.value)
                     }
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                    className="w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                   >
                     <option value="flexible">
                       Flexible - Full refund up to 24 hours before
@@ -2108,7 +2147,7 @@ export default function EditEventPage({
 
                 {/* Passkey codes — per-guest access (private events) */}
                 {host?.id && event?.id && form.isPrivate && (
-                  <div className="mb-4 border-t border-gray-100 pt-6">
+                  <div className="mb-4 border-t border-white/10 pt-6">
                     <CouponsManager
                       eventId={event.id}
                       hostId={host.id}
@@ -2119,14 +2158,14 @@ export default function EditEventPage({
 
                 {/* Co-hosts — share this event's earnings with another host */}
                 {event?.id && (
-                  <div className="mb-4 border-t border-gray-100 pt-6">
+                  <div className="mb-4 border-t border-white/10 pt-6">
                     <CoHostManager eventId={event.id} />
                   </div>
                 )}
 
                 {/* Free-booking codes — comp specific guests (paid events) */}
                 {host?.id && event?.id && !form.isFree && (
-                  <div className="mb-4 border-t border-gray-100 pt-6">
+                  <div className="mb-4 border-t border-white/10 pt-6">
                     <CouponsManager
                       eventId={event.id}
                       hostId={host.id}
@@ -2137,7 +2176,7 @@ export default function EditEventPage({
 
                 {/* Percentage discount codes (paid events) */}
                 {host?.id && event?.id && !form.isFree && (
-                  <div className="mb-4 border-t border-gray-100 pt-6">
+                  <div className="mb-4 border-t border-white/10 pt-6">
                     <CouponsManager
                       eventId={event.id}
                       hostId={host.id}
@@ -2155,9 +2194,9 @@ export default function EditEventPage({
                       onChange={(e) =>
                         updateForm("isRecurring", e.target.checked)
                       }
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-white/15"
                     />
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-white/80">
                       Recurring Experience
                     </span>
                   </label>
@@ -2165,7 +2204,7 @@ export default function EditEventPage({
 
                 {form.isRecurring && (
                   <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
+                    <label className="block text-sm font-medium text-white/80">
                       Recurrence Rule
                     </label>
                     <input
@@ -2175,9 +2214,9 @@ export default function EditEventPage({
                         updateForm("recurrenceRule", e.target.value)
                       }
                       placeholder="e.g., FREQ=WEEKLY;BYDAY=MO,WE,FR"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 text-xs outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                      className="w-full rounded-lg border border-white/10 px-4 py-3 text-xs outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0]"
                     />
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[#A5A8C3]">
                       Use iCalendar format for recurrence rules
                     </p>
                   </div>
@@ -2205,14 +2244,14 @@ export default function EditEventPage({
                 />
               </div>
 
-              <div className="flex flex-wrap gap-4 border-t border-gray-100 pt-6">
+              <div className="flex flex-wrap gap-4 border-t border-white/10 pt-6">
                 <button
                   onClick={() => void handleUpdate(false)}
                   disabled={isSubmitting}
                   className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-3 font-semibold transition disabled:opacity-50 ${
                     event?.status === "draft"
-                      ? "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                      : "bg-[#0094CA] text-white hover:bg-[#007ba8]"
+                      ? "border border-white/15 bg-[#121426] text-white/80 hover:bg-white/[0.04]"
+                      : "bg-[#A020F0] text-white hover:bg-[#8A1AD0]"
                   }`}
                 >
                   <FiCheck size={18} />
@@ -2223,7 +2262,7 @@ export default function EditEventPage({
                   <button
                     onClick={() => void handleUpdate(true)}
                     disabled={isSubmitting}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#A020F0] py-3 font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
                   >
                     <FiCheck size={18} />
                     Publish Now
@@ -2232,7 +2271,7 @@ export default function EditEventPage({
 
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-red-50 px-6 py-3 font-semibold text-red-600 transition hover:bg-red-100"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-red-500/10 px-6 py-3 font-semibold text-red-300 transition hover:bg-red-500/15"
                 >
                   <FiTrash2 size={18} />
                   Delete
@@ -2243,8 +2282,8 @@ export default function EditEventPage({
 
           {/* Bookings Tab */}
           {showBookings && (
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
+            <div className="rounded-xl border border-white/10 bg-[#121426] p-6 shadow-sm">
+              <h2 className="mb-4 text-lg font-semibold text-white">
                 Event Bookings
               </h2>
               <AttendeesList
@@ -2259,22 +2298,22 @@ export default function EditEventPage({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-8">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-              <FiTrash2 className="text-red-600" size={24} />
+        <div className="msm-modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#121426] p-8">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/15">
+              <FiTrash2 className="text-red-300" size={24} />
             </div>
-            <h2 className="mb-2 text-xl font-bold text-gray-900">
+            <h2 className="mb-2 text-xl font-bold text-white">
               Delete Experience?
             </h2>
-            <p className="mb-6 text-gray-500">
+            <p className="mb-6 text-[#A5A8C3]">
               This will permanently delete your experience. All confirmed
               bookings will be refunded.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 rounded-lg bg-gray-100 py-3 font-semibold text-gray-900 transition hover:bg-gray-200"
+                className="flex-1 rounded-lg bg-white/[0.06] py-3 font-semibold text-white transition hover:bg-white/10"
               >
                 Cancel
               </button>
@@ -2290,9 +2329,14 @@ export default function EditEventPage({
         </div>
       )}
 
+      <VerifyToEarnSheet
+        open={verifyOpen}
+        onClose={() => setVerifyOpen(false)}
+        applicationStatus={applicationStatus}
+      />
       <ImageCropModal
         file={cropQueue.length > 0 ? cropQueue[0]! : null}
-        aspect={16 / 9}
+        aspect={4 / 5}
         onClose={() => setCropQueue([])}
         onConfirm={handleCropConfirm}
       />

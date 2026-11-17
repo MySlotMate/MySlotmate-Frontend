@@ -11,18 +11,33 @@ import {
 import { auth } from "~/utils/firebase";
 import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
-import { FiPhone, FiLock, FiArrowRight, FiEdit2, FiUser } from "react-icons/fi";
+import {
+  FiPhone,
+  FiLock,
+  FiArrowRight,
+  FiEdit2,
+  FiUser,
+  FiX,
+} from "react-icons/fi";
 import { clearStoredAuth, setStoredUserId } from "~/lib/auth-storage";
 import { sendLoginOTP, verifyLoginOTP, updateUserProfile } from "~/lib/api";
 
 interface GoogleLoginProps {
   open: boolean;
   onClose: () => void;
+  /** Optional context, e.g. why sign-in is being asked for here. */
+  title?: string;
+  subtitle?: string;
 }
 
 type LoginType = "google" | "phone";
 
-export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
+export default function GoogleLogin({
+  open,
+  onClose,
+  title = "Log in or sign up",
+  subtitle = "Find events near you and book your spot in a tap.",
+}: GoogleLoginProps) {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -239,121 +254,106 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
 
   if (!open) return null;
 
+  const PRIMARY =
+    "flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7B2FFF] to-[#A020F0] py-3.5 text-base font-semibold text-white shadow-[0_12px_30px_-10px_rgb(160_32_240/0.7)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-none disabled:bg-white/10 disabled:text-white/40 disabled:shadow-none";
+  const INPUT =
+    "w-full rounded-xl border border-white/10 bg-[#080914] py-3 pr-4 text-sm text-white placeholder-[#777B98] transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/25";
+  const LABEL =
+    "mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="relative max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-2xl ring-1 ring-gray-100 sm:px-8 sm:py-10">
-        {/* Close button */}
+    <div
+      className="msm-modal fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && step !== "name") onClose();
+      }}
+    >
+      <div className="relative max-h-[90vh] w-full max-w-[400px] overflow-y-auto rounded-[28px] border border-white/10 bg-[#121426] px-6 pt-8 pb-7 font-[family-name:var(--font-inter)] text-white shadow-[0_40px_120px_-20px_rgb(0_0_0/0.9)] sm:px-8">
+        {/* Violet glow behind the logo */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-[#A020F0]/30 blur-3xl"
+        />
+
         {step !== "name" && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 rounded-full p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full text-[#A5A8C3] transition hover:bg-white/10 hover:text-white"
             aria-label="Close"
           >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M15 5L5 15M5 5l10 10"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <FiX className="h-5 w-5" />
           </button>
         )}
 
-        {/* Logo */}
         {step !== "name" && (
-          <div className="mb-4 flex justify-center">
+          <div className="relative">
             <Image
-              src="/assets/home/logomyslotmate.png"
+              src="/assets/brand/logo-horizontal-white.png"
               alt="MySlotMate"
-              width={72}
-              height={72}
+              width={1048}
+              height={209}
               priority
-              className="h-18 w-18 object-contain"
+              className="mx-auto h-8 w-auto"
             />
-          </div>
-        )}
-
-        {/* Title */}
-        {step !== "name" && (
-          <>
-            <h2 className="mb-1 text-center text-xl font-bold text-gray-900">
-              Login or sign up
+            <h2 className="font-outfit mt-7 text-center text-[26px] leading-tight font-medium tracking-[-0.01em]">
+              {title}
             </h2>
-            <p className="mb-6 text-center text-sm text-gray-500">
-              Choose your preferred verification method
+            <p className="mx-auto mt-2 mb-7 max-w-[300px] text-center text-sm leading-relaxed text-[#A5A8C3]">
+              {subtitle}
             </p>
-          </>
-        )}
 
-        {/* Tab selection */}
-        {step !== "name" && (
-          <div className="mb-6 flex rounded-full bg-gray-100 p-1">
-            <button
-              type="button"
-              onClick={() => {
-                if (!loading) setLoginType("google");
-              }}
-              className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
-                loginType === "google"
-                  ? "bg-white text-[#0094CA] shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              Google Sign-in
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!loading) setLoginType("phone");
-              }}
-              className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
-                loginType === "phone"
-                  ? "bg-white text-[#0094CA] shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              Phone &amp; OTP
-            </button>
+            <div className="mb-6 flex rounded-full border border-white/10 bg-[#080914] p-1">
+              {(
+                [
+                  ["google", "Google"],
+                  ["phone", "Phone & OTP"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => {
+                    if (!loading) setLoginType(key);
+                  }}
+                  className={`flex-1 rounded-full py-2 text-[13px] font-semibold transition ${
+                    loginType === key
+                      ? "bg-[#241333] text-white ring-1 ring-[#652A91]"
+                      : "text-[#A5A8C3] hover:text-white"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Google Authentication Form */}
+        {/* Google */}
         {loginType === "google" && step !== "name" && (
-          <div className="space-y-6">
-            <button
-              onClick={handleGoogleLogin}
-              disabled={!agreed || loading}
-              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-              style={{
-                background: agreed
-                  ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                  : "#b0b0b0",
-              }}
-            >
-              <FcGoogle className="h-5 w-5 rounded-full bg-white p-0.5" />
-              {loading ? "Signing in..." : "Continue with Google"}
-            </button>
-          </div>
+          <button
+            onClick={handleGoogleLogin}
+            disabled={!agreed || loading}
+            className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-white py-3.5 text-base font-semibold text-[#080914] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40"
+          >
+            <FcGoogle className="h-5 w-5" />
+            {loading ? "Signing in..." : "Continue with Google"}
+          </button>
         )}
 
-        {/* Phone Authentication Form */}
+        {/* Phone */}
         {loginType === "phone" && (
-          <div>
+          <div className="relative">
             {step === "phone" && (
               <form onSubmit={handleSendOTP} className="space-y-4">
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold tracking-wide text-gray-500 uppercase">
-                    Phone Number
-                  </label>
+                  <label className={LABEL}>Phone number</label>
                   <div className="relative">
                     <div className="pointer-events-none absolute top-1/2 left-3.5 flex -translate-y-1/2 items-center gap-1.5">
-                      <FiPhone className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-semibold text-gray-500">
+                      <FiPhone className="h-4 w-4 text-[#777B98]" />
+                      <span className="text-sm font-semibold text-[#A5A8C3]">
                         +91
                       </span>
-                      <div className="h-4 w-[1px] bg-gray-200" />
+                      <div className="h-4 w-px bg-white/15" />
                     </div>
                     <input
                       type="tel"
@@ -364,23 +364,16 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                       }}
                       placeholder="98765 43210"
                       maxLength={10}
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-[78px] text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                      className={`${INPUT} pl-[78px]`}
                     />
                   </div>
                 </div>
-
                 <button
                   type="submit"
                   disabled={phone.length !== 10 || loading || !agreed}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-                  style={{
-                    background:
-                      agreed && phone.length === 10
-                        ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                        : "#b0b0b0",
-                  }}
+                  className={PRIMARY}
                 >
-                  {loading ? "Sending code..." : "Get Verification Code"}
+                  {loading ? "Sending code..." : "Get verification code"}
                   {!loading && <FiArrowRight className="h-4 w-4" />}
                 </button>
               </form>
@@ -388,9 +381,9 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
 
             {step === "otp" && (
               <form onSubmit={handleVerifyOTP} className="space-y-4">
-                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FiPhone className="h-4 w-4 text-gray-400" />
+                <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#080914] px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-[#A5A8C3]">
+                    <FiPhone className="h-4 w-4 text-[#777B98]" />
                     <span>+91 {phone}</span>
                   </div>
                   <button
@@ -399,18 +392,15 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                       setStep("phone");
                       setOtp("");
                     }}
-                    className="flex items-center gap-1 text-xs font-semibold text-[#0094CA] hover:underline"
+                    className="flex items-center gap-1 text-xs font-semibold text-[#D8B4FE] hover:underline"
                   >
                     <FiEdit2 className="h-3 w-3" /> Edit
                   </button>
                 </div>
-
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold tracking-wide text-gray-500 uppercase">
-                    Verification Code
-                  </label>
+                  <label className={LABEL}>Verification code</label>
                   <div className="relative">
-                    <FiLock className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <FiLock className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[#777B98]" />
                     <input
                       type="text"
                       pattern="\d{4,6}"
@@ -421,37 +411,29 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
                       }}
                       placeholder="0000 or 000000"
                       maxLength={6}
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-center text-sm font-semibold tracking-[0.5em] text-gray-900 placeholder-gray-300 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                      className={`${INPUT} pl-10 text-center font-semibold tracking-[0.5em]`}
                     />
                   </div>
                 </div>
-
-                <div className="flex items-center justify-between text-xs text-gray-500">
+                <div className="text-xs text-[#777B98]">
                   {countdown > 0 ? (
                     <span>Resend code in {countdown}s</span>
                   ) : (
                     <button
                       type="button"
                       onClick={handleSendOTP}
-                      className="font-semibold text-[#0094CA] hover:underline"
+                      className="font-semibold text-[#D8B4FE] hover:underline"
                     >
-                      Resend Verification Code
+                      Resend verification code
                     </button>
                   )}
                 </div>
-
                 <button
                   type="submit"
                   disabled={!(otp.length === 4 || otp.length === 6) || loading}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-                  style={{
-                    background:
-                      otp.length === 4 || otp.length === 6
-                        ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                        : "#b0b0b0",
-                  }}
+                  className={PRIMARY}
                 >
-                  {loading ? "Verifying..." : "Verify & Login"}
+                  {loading ? "Verifying..." : "Verify and log in"}
                 </button>
               </form>
             )}
@@ -459,45 +441,36 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
             {step === "name" && (
               <form onSubmit={handleFinishSignup} className="space-y-6">
                 <div className="text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0094CA]/10 text-[#0094CA]">
+                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#241333] text-[#D8B4FE] ring-1 ring-[#652A91]">
                     <FiUser className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900">
+                  <h3 className="font-outfit text-xl font-medium text-white">
                     Almost there!
                   </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Please enter your name to complete registration.
+                  <p className="mt-1 text-sm text-[#A5A8C3]">
+                    Tell us your name to finish signing up.
                   </p>
                 </div>
-
                 <div>
-                  <label className="mb-1.5 block text-xs font-bold tracking-wide text-gray-500 uppercase">
-                    Full Name
-                  </label>
+                  <label className={LABEL}>Full name</label>
                   <div className="relative">
-                    <FiUser className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <FiUser className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[#777B98]" />
                     <input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="John Doe"
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                      placeholder="Your name"
+                      className={`${INPUT} pl-10`}
                       required
                     />
                   </div>
                 </div>
-
                 <button
                   type="submit"
                   disabled={!name.trim() || loading}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-                  style={{
-                    background: name.trim()
-                      ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                      : "#b0b0b0",
-                  }}
+                  className={PRIMARY}
                 >
-                  {loading ? "Saving..." : "Complete Setup"}
+                  {loading ? "Saving..." : "Complete setup"}
                   {!loading && <FiArrowRight className="h-4 w-4" />}
                 </button>
               </form>
@@ -505,45 +478,42 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
           </div>
         )}
 
-        {/* Agreement checkbox (always visible below fields except on name setup) */}
         {step !== "name" && (
-          <label className="mt-5 flex cursor-pointer items-start gap-3 text-xs text-gray-600">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={() => setAgreed(!agreed)}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#0094CA] accent-[#0094CA]"
-            />
-            <span>
-              I agree to the{" "}
+          <>
+            <label className="mt-6 flex cursor-pointer items-start gap-3 text-xs leading-5 text-[#A5A8C3]">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={() => setAgreed(!agreed)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 accent-[#A020F0]"
+              />
+              <span>
+                I agree to the{" "}
+                <a
+                  href="/support/terms-conditions"
+                  className="font-semibold text-[#D8B4FE] hover:underline"
+                >
+                  User Agreement
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/support/policies"
+                  className="font-semibold text-[#D8B4FE] hover:underline"
+                >
+                  Privacy Policy
+                </a>
+              </span>
+            </label>
+            <p className="mt-6 border-t border-white/10 pt-5 text-center text-sm text-[#777B98]">
+              Having trouble logging in?{" "}
               <a
-                href="/support/terms-conditions"
-                className="font-semibold text-[#0094CA] hover:underline"
+                href="/support"
+                className="font-semibold text-white hover:underline"
               >
-                User Agreement
-              </a>{" "}
-              and{" "}
-              <a
-                href="/support/policies"
-                className="font-semibold text-[#0094CA] hover:underline"
-              >
-                Privacy Policy
+                Get help
               </a>
-            </span>
-          </label>
-        )}
-
-        {/* Help link */}
-        {step !== "name" && (
-          <p className="mt-6 text-center text-sm text-gray-500">
-            Having trouble logging in?{" "}
-            <a
-              href="/support"
-              className="font-semibold text-gray-800 hover:underline"
-            >
-              Get Help
-            </a>
-          </p>
+            </p>
+          </>
         )}
       </div>
     </div>

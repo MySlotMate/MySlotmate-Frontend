@@ -78,7 +78,7 @@ const TrendingCard = ({
     <Link
       href={`/experience/${slug ?? id}`}
       // Added w-[260px] to match the PeopleCard width for consistency
-      className="group w-[260px] shrink-0 snap-start overflow-hidden rounded-[28px] border border-[#b8dbf39c] bg-[#f8fcff] shadow-[0_16px_34px_rgba(72,128,173,0.1)] transition hover:-translate-y-1"
+      className="group w-[260px] shrink-0 snap-start overflow-hidden rounded-[28px] border border-white/10 bg-[#080914] shadow-[0_16px_34px_rgba(72,128,173,0.1)] transition hover:-translate-y-1"
     >
       {/* Changed fixed h/w to aspect-square w-full */}
       <div className="relative aspect-square w-full overflow-hidden">
@@ -89,7 +89,7 @@ const TrendingCard = ({
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <span className="absolute top-3 left-3 z-10 rounded-full bg-[#f5fbff]/90 px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase shadow-sm backdrop-blur-sm">
+        <span className="absolute top-3 left-3 z-10 rounded-full bg-white/[0.04] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#D8B4FE] uppercase shadow-sm backdrop-blur-sm">
           {mood}
         </span>
 
@@ -97,13 +97,13 @@ const TrendingCard = ({
         <button
           onClick={handleSave}
           disabled={saveExperience.isPending || unsaveExperience.isPending}
-          className="absolute top-3 right-3 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-blue-50 hover:shadow-lg disabled:opacity-50"
+          className="absolute top-3 right-3 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-[#121426] shadow-md transition hover:bg-[#241333] hover:shadow-lg disabled:opacity-50"
           aria-label={isSaved ? "Remove from saved" : "Save experience"}
         >
           <Heart
             className="h-6 w-6 transition"
-            fill={isSaved ? "#0094CA" : "none"}
-            stroke="#0094CA"
+            fill={isSaved ? "#A020F0" : "none"}
+            stroke="#A020F0"
             strokeWidth={2}
           />
         </button>
@@ -112,17 +112,17 @@ const TrendingCard = ({
       {/* Adjusted padding and spacing for better balance in a square layout */}
       <div className="flex flex-col justify-between space-y-2 px-5 pt-5 pb-6">
         <div>
-          <h3 className="line-clamp-2 min-h-[48px] text-[20px] leading-[1.2] font-bold tracking-[-0.03em] text-[#16304c]">
+          <h3 className="line-clamp-2 min-h-[48px] text-[20px] leading-[1.2] font-bold tracking-[-0.03em] text-white">
             {title}
           </h3>
-          <p className="mt-1 text-xs font-medium text-[#6f8daa]">
+          <p className="mt-1 text-xs font-medium text-[#A5A8C3]">
             Curated local session
           </p>
         </div>
 
-        <div className="mt-2 flex items-center justify-between border-t border-[#aeddf847] pt-3 text-[11px] font-bold text-[#5e88ab]">
+        <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-3 text-[11px] font-bold text-[#A5A8C3]">
           <span>{duration}</span>
-          <span className="text-[#0e8ae0]">{pricing} / slot</span>
+          <span className="text-[#D8B4FE]">{pricing} / slot</span>
         </div>
       </div>
     </Link>
@@ -191,18 +191,18 @@ const Trending = () => {
   };
 
   return (
-    <section className="site-x w-full border-y border-[#aeddf847] bg-[linear-gradient(180deg,#edf8ff,#f7fcff)]">
+    <section className="site-x w-full border-y border-white/10 bg-[#121426]">
       <div className="mx-auto w-full max-w-[1120px] py-14">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#121426]/90 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase">
               <span className="inline-block h-2 w-2 rounded-full bg-current" />
               Trending
             </span>
-            <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
+            <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-white sm:text-6xl">
               Trending Now
             </h2>
-            <p className="mt-1.5 text-sm text-[#6f8daa] sm:text-base">
+            <p className="mt-1.5 text-sm text-[#A5A8C3] sm:text-base">
               Curated activities near your location.
             </p>
           </div>
@@ -211,7 +211,7 @@ const Trending = () => {
             <button
               type="button"
               onClick={() => scrollCards("left")}
-              className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+              className="grid h-14 w-14 place-items-center border border-[#652A91]/60 bg-white/[0.04] text-[#D8B4FE] transition hover:bg-[#121426]"
               aria-label="Scroll trending left"
             >
               <ChevronLeft className="h-5 w-5" />
@@ -219,7 +219,7 @@ const Trending = () => {
             <button
               type="button"
               onClick={() => scrollCards("right")}
-              className="grid h-14 w-14 place-items-center border border-[#bdddf4] bg-[#f7fcff] text-[#2f7eb5] transition hover:bg-white"
+              className="grid h-14 w-14 place-items-center border border-[#652A91]/60 bg-white/[0.04] text-[#D8B4FE] transition hover:bg-[#121426]"
               aria-label="Scroll trending right"
             >
               <ChevronRight className="h-5 w-5" />
@@ -233,10 +233,10 @@ const Trending = () => {
         >
           {isLoading ? (
             <div className="flex w-full items-center justify-center py-12">
-              <LuLoader2 className="h-8 w-8 animate-spin text-[#0094CA]" />
+              <LuLoader2 className="h-8 w-8 animate-spin text-[#D8B4FE]" />
             </div>
           ) : filteredEvents.length === 0 ? (
-            <div className="flex w-full items-center justify-center rounded-3xl border border-dashed border-sky-200 bg-white/80 py-12 text-sm text-[#6f8daa]">
+            <div className="flex w-full items-center justify-center rounded-3xl border border-dashed border-[#652A91]/60 bg-[#121426]/80 py-12 text-sm text-[#A5A8C3]">
               No activities found in your area.
             </div>
           ) : (
@@ -258,7 +258,7 @@ const Trending = () => {
         <div className="mt-5 md:hidden">
           <Link
             href="/experiences"
-            className="text-sm font-extrabold text-[#0e8ae0] hover:text-[#0b6eb1]"
+            className="text-sm font-extrabold text-[#D8B4FE] hover:text-[#0b6eb1]"
           >
             View All
           </Link>

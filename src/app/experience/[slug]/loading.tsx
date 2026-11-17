@@ -13,7 +13,7 @@
  */
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#080914] md:pl-20 min-[80rem]:pl-[230px]">
+    <div className="min-h-screen bg-[#080914]">
       <div className="mx-auto max-w-[1216px] animate-pulse md:px-10 md:pt-10">
         <div className="mb-5 hidden h-4 w-20 rounded bg-white/10 md:block" />
         <div className="h-[260px] w-full bg-white/[0.06] md:h-[300px] md:rounded-[20px] lg:h-[380px]" />

@@ -58,12 +58,12 @@ function Step({
 }) {
   return (
     <li className="flex gap-4">
-      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[#e6f6fd] text-sm font-bold text-[#0094CA]">
+      <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-white/[0.04] text-sm font-bold text-[#D8B4FE]">
         {number}
       </span>
       <div className="pt-1">
-        <h3 className="font-semibold text-gray-900">{title}</h3>
-        <div className="mt-1 text-gray-700">{children}</div>
+        <h3 className="font-semibold text-white">{title}</h3>
+        <div className="mt-1 text-white/80">{children}</div>
       </div>
     </li>
   );
@@ -77,30 +77,30 @@ export default function DeleteAccountPage() {
       />
 
       <header className="mb-10">
-        <h1 className="text-3xl font-black text-gray-900 sm:text-4xl">
+        <h1 className="text-3xl font-black text-white sm:text-4xl">
           Delete your account
         </h1>
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 text-[#A5A8C3]">
           You can ask us to delete your MySlotMate account and the personal
           information attached to it. Here is how to do it, and exactly what
           happens afterwards.
         </p>
       </header>
 
-      <section className="rounded-2xl border border-gray-200 bg-white p-6">
-        <h2 className="text-xl font-bold text-gray-900">How to request it</h2>
+      <section className="rounded-2xl border border-white/10 bg-[#121426] p-6">
+        <h2 className="text-xl font-bold text-white">How to request it</h2>
         <ol className="mt-5 space-y-5">
           <Step number={1} title="Email us from your registered address">
             Write to{" "}
             <a
-              className="font-semibold text-[#0094CA] hover:underline"
+              className="font-semibold text-[#D8B4FE] hover:underline"
               href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20MySlotMate%20account`}
             >
               {CONTACT_EMAIL}
             </a>{" "}
-            with the subject &quot;Delete my MySlotMate account&quot;. Sending it
-            from the email address on the account is how we confirm the request
-            is really yours.
+            with the subject &quot;Delete my MySlotMate account&quot;. Sending
+            it from the email address on the account is how we confirm the
+            request is really yours.
           </Step>
           <Step number={2} title="Tell us the phone number on the account">
             If you signed in by phone rather than Google, include that number so
@@ -114,12 +114,12 @@ export default function DeleteAccountPage() {
       </section>
 
       <section className="mt-8 grid gap-6 sm:grid-cols-2">
-        <div className="rounded-2xl border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-bold text-gray-900">What is deleted</h2>
-          <ul className="mt-3 space-y-2 text-sm text-gray-700">
+        <div className="rounded-2xl border border-white/10 bg-[#121426] p-6">
+          <h2 className="text-lg font-bold text-white">What is deleted</h2>
+          <ul className="mt-3 space-y-2 text-sm text-white/80">
             {deleted.map((item) => (
               <li key={item} className="flex gap-2">
-                <span aria-hidden="true" className="text-[#0094CA]">
+                <span aria-hidden="true" className="text-[#D8B4FE]">
                   &#10003;
                 </span>
                 <span>{item}</span>
@@ -128,26 +128,26 @@ export default function DeleteAccountPage() {
           </ul>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-6">
-          <h2 className="text-lg font-bold text-gray-900">What we keep</h2>
-          <ul className="mt-3 space-y-3 text-sm text-gray-700">
+        <div className="rounded-2xl border border-white/10 bg-[#121426] p-6">
+          <h2 className="text-lg font-bold text-white">What we keep</h2>
+          <ul className="mt-3 space-y-3 text-sm text-white/80">
             {retained.map((item) => (
               <li key={item.what}>
-                <span className="font-semibold text-gray-900">{item.what}</span>
-                <p className="mt-0.5 text-gray-600">{item.why}</p>
+                <span className="font-semibold text-white">{item.what}</span>
+                <p className="mt-0.5 text-[#A5A8C3]">{item.why}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6">
-        <h2 className="text-lg font-bold text-gray-900">
+      <section className="mt-8 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
+        <h2 className="text-lg font-bold text-white">
           Before you delete, please note
         </h2>
-        <ul className="mt-3 space-y-2 text-gray-700">
+        <ul className="mt-3 space-y-2 text-white/80">
           <li className="flex gap-2">
-            <span aria-hidden="true" className="text-amber-500">
+            <span aria-hidden="true" className="text-amber-400">
               &bull;
             </span>
             <span>
@@ -156,7 +156,7 @@ export default function DeleteAccountPage() {
             </span>
           </li>
           <li className="flex gap-2">
-            <span aria-hidden="true" className="text-amber-500">
+            <span aria-hidden="true" className="text-amber-400">
               &bull;
             </span>
             <span>
@@ -165,22 +165,22 @@ export default function DeleteAccountPage() {
             </span>
           </li>
           <li className="flex gap-2">
-            <span aria-hidden="true" className="text-amber-500">
+            <span aria-hidden="true" className="text-amber-400">
               &bull;
             </span>
             <span>
               If you host, cancel or hand over any upcoming experiences before
-              requesting deletion, so guests who have already booked are not left
-              stranded.
+              requesting deletion, so guests who have already booked are not
+              left stranded.
             </span>
           </li>
         </ul>
       </section>
 
-      <p className="mt-8 text-sm text-gray-500">
+      <p className="mt-8 text-sm text-[#A5A8C3]">
         For what we collect and why, see the{" "}
         <Link
-          className="font-semibold text-[#0094CA] hover:underline"
+          className="font-semibold text-[#D8B4FE] hover:underline"
           href="/privacy"
         >
           Privacy Policy

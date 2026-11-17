@@ -14,7 +14,7 @@ interface BreadcrumbProps {
 export default function Breadcrumb({ items, className }: BreadcrumbProps) {
   return (
     <nav
-      className={`flex flex-wrap items-center gap-2 text-sm text-gray-400 ${className ?? ""}`}
+      className={`flex flex-wrap items-center gap-2 text-sm text-[#777B98] ${className ?? ""}`}
     >
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
@@ -27,19 +27,19 @@ export default function Breadcrumb({ items, className }: BreadcrumbProps) {
             {item.href && !isLast ? (
               <Link
                 href={item.href}
-                className="transition hover:text-[#0094CA]"
+                className="transition hover:text-[#D8B4FE]"
               >
                 {item.label}
               </Link>
             ) : (
               <span
-                className={isLast ? "font-medium text-gray-700" : undefined}
+                className={isLast ? "font-medium text-white/80" : undefined}
               >
                 {item.label}
               </span>
             )}
             {!isLast && (
-              <FiChevronRight className="h-3.5 w-3.5 text-gray-300" />
+              <FiChevronRight className="h-3.5 w-3.5 text-white/30" />
             )}
           </div>
         );

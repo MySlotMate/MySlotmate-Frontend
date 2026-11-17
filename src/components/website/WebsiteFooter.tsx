@@ -7,7 +7,8 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: "Explore",
     links: [
-      { href: "/experiences", label: "All experiences" },
+      { href: "/experiences", label: "All events" },
+      { href: "/about", label: "About MySlotMate" },
       { href: "/hosts", label: "Hosts" },
       { href: "/blogs", label: "Stories" },
     ],
@@ -15,7 +16,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
     title: "Host",
     links: [
-      { href: "/become-host", label: "Become a host" },
+      { href: "/host-with-us", label: "Host with us" },
       { href: "/host-dashboard", label: "Host dashboard" },
     ],
   },
@@ -43,50 +44,38 @@ const SOCIALS = [
   { href: "https://x.com/myslotmate?s=20", label: "X", Icon: FaXTwitter },
 ];
 
-/** Violet footer with the big faded wordmark (Offlyn-style). */
+/** Violet footer: closing line, links and socials. */
 export default function WebsiteFooter() {
   return (
     <footer className="relative isolate w-full overflow-hidden bg-gradient-to-br from-[#7B2FFF] via-[#8420DC] to-[#6414AA] pb-[env(safe-area-inset-bottom)] text-white">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        aria-hidden
-        alt=""
-        src="/assets/brand/logo-horizontal-white.png"
-        className="pointer-events-none absolute bottom-[-3%] left-1/2 -z-10 w-[min(92%,1200px)] -translate-x-1/2 opacity-10 select-none"
-      />
-
-      <div className="mx-auto max-w-[1280px] px-5 pt-16 pb-10 md:px-10 md:pt-20">
-        <div className="flex flex-col justify-between gap-8 md:flex-row md:items-center">
-          <p className="font-outfit text-[clamp(32px,4.4vw,48px)] leading-[1.1] font-bold">
-            Step outside.
-            <br />
-            <span className="text-white/60">
-              Someone’s time is waiting for you.
-            </span>
+      <div className="mx-auto max-w-[1280px] px-5 pt-20 pb-10 md:px-10 md:pt-28">
+        <div className="flex flex-col justify-between gap-10 md:flex-row md:items-center">
+          <p className="font-outfit text-[clamp(32px,4vw,52px)] leading-[1.1] font-normal tracking-[-0.02em]">
+            See you out there.
           </p>
           <Link
-            href="/become-host"
-            className="font-outfit flex h-12 w-fit items-center gap-1.5 rounded-xl bg-white px-5 text-[15px] font-semibold text-[#7B2FFF] transition hover:bg-white/90"
+            href="/host-with-us"
+            className="font-outfit flex h-14 w-fit shrink-0 items-center gap-2 rounded-2xl bg-white px-7 text-[17px] font-semibold text-[#7B2FFF] transition hover:bg-white/90"
           >
-            Host with MySlotMate <ArrowUpRight className="h-4 w-4" />
+            Host with MySlotMate <ArrowUpRight className="h-5 w-5" />
           </Link>
         </div>
 
-        <div className="mt-12 grid gap-10 border-t border-white/20 pt-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
-          <div className="flex flex-col gap-3">
+        <div className="mt-16 grid gap-12 border-t border-white/20 pt-14 sm:grid-cols-2 lg:grid-cols-[1.5fr_repeat(3,1fr)]">
+          <div className="flex flex-col gap-5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/logo-horizontal-white.png"
               alt="MySlotMate"
               width={1048}
               height={209}
-              className="h-8 w-fit"
+              className="h-10 w-fit"
             />
-            <p className="max-w-[300px] text-sm leading-relaxed text-white/80">
-              Discover more. Connect deeper. Experience life. Meet the people
-              behind experiences near you.
+            <p className="max-w-[340px] text-base leading-relaxed text-white/80">
+              Events, workshops and meetups across Northeast India, hosted by
+              people who love what they do.
             </p>
-            <div className="mt-1 flex gap-2">
+            <div className="mt-1 flex gap-3">
               {SOCIALS.map(({ href, label, Icon }) => (
                 <a
                   key={label}
@@ -94,23 +83,23 @@ export default function WebsiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25"
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-5 w-5" />
                 </a>
               ))}
             </div>
           </div>
           {COLUMNS.map((col) => (
-            <div key={col.title} className="flex flex-col gap-3">
-              <span className="text-[13px] font-semibold text-white/70">
+            <div key={col.title} className="flex flex-col gap-4">
+              <span className="text-sm font-semibold tracking-[0.08em] text-white/65 uppercase">
                 {col.title}
               </span>
               {col.links.map((l) => (
                 <Link
                   key={l.href}
                   href={l.href}
-                  className="text-[15px] font-medium transition hover:text-white/75"
+                  className="text-[17px] font-medium transition hover:text-white/75"
                 >
                   {l.label}
                 </Link>
@@ -119,7 +108,7 @@ export default function WebsiteFooter() {
           ))}
         </div>
 
-        <p className="mt-16 text-[13px] text-white/70 md:mt-24">
+        <p className="mt-16 border-t border-white/20 pt-8 text-sm text-white/70">
           © {new Date().getFullYear()} MySlotMate
         </p>
       </div>

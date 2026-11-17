@@ -255,12 +255,9 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 z-[200] h-[4.5rem] w-full backdrop-blur-2xl ${dark ? "hidden" : "bg-[#ffffff3e] shadow-sm"} ${mobileOpen ? "hidden lg:block" : ""}`}
+        className={`fixed top-0 left-0 z-[200] h-[4.5rem] w-full backdrop-blur-2xl ${dark ? "hidden" : "border-b border-white/[0.06] bg-[#080914]/85"} ${mobileOpen ? "hidden lg:block" : ""}`}
       >
-        <div
-          className={`h-[3px] w-full ${dark ? "bg-transparent" : "bg-[#0094CA]"}`}
-        />
-        <div className="site-x mx-auto flex h-16 w-full max-w-[77rem] items-center">
+        <div className="site-x mx-auto flex h-[4.5rem] w-full max-w-[77rem] items-center">
           {/* Logo — the dark (home) variant shows it in the desktop sidebar instead */}
           <Link href="/" className={`flex-shrink-0 ${dark ? "lg:hidden" : ""}`}>
             {dark ? (
@@ -270,65 +267,61 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src="/assets/home/logo.png"
-                alt="Myslotmate"
-                loading="lazy"
-                className="h-10 w-auto"
+                src="/assets/brand/logo-horizontal-white.png"
+                alt="MySlotMate"
+                width={1048}
+                height={209}
+                className="h-8 w-auto"
               />
             )}
           </Link>
 
           {/* Desktop center nav (matches reference nav styles) */}
           <div
-            className={`hidden flex-1 items-center justify-center gap-[22px] text-[0.92rem] font-bold text-[#6f8daa] ${dark ? "" : "lg:flex"}`}
+            className={`hidden flex-1 items-center justify-center gap-8 text-[15px] font-medium text-[#A5A8C3] ${dark ? "" : "lg:flex"}`}
           >
-            <Link href="/#hosts" className="transition hover:text-[#0e8ae0]">
-              Hosts
-            </Link>
-            <Link
-              href="/#how-it-works"
-              className="transition hover:text-[#0e8ae0]"
-            >
-              How it works
-            </Link>
-
-            <Link
-              href="/#community"
-              className="transition hover:text-[#0e8ae0]"
-            >
-              Community
-            </Link>
-            <Link href="/blogs" className="transition hover:text-[#0e8ae0]">
-              Blog
-            </Link>
+            {[
+              ["/#discover", "Discover"],
+              ["/about", "About"],
+              ["/host-with-us", "Host with us"],
+              ["/blogs", "Stories"],
+            ].map(([href, label]) => (
+              <Link
+                key={href}
+                href={href!}
+                className="transition hover:text-white"
+              >
+                {label}
+              </Link>
+            ))}
           </div>
 
           {/* Desktop right side */}
           <div className="ml-auto hidden items-center gap-5 lg:flex">
             <Link
               href="/explore"
-              className={`${dark ? "hidden" : ""} rounded-[8px] bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-[20px] py-[13px] font-bold text-[#ffffff] shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5`}
+              className={`${dark ? "hidden" : ""} font-outfit flex h-10 items-center rounded-full bg-[#F8F7FF] px-5 text-[15px] font-semibold text-[#080914] transition hover:bg-white`}
             >
               Explore
             </Link>
             <button
               onClick={() => setLocationOpen(true)}
               suppressHydrationWarning
-              className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition ${dark ? "hover:bg-white/5" : "hover:bg-gray-50"}`}
+              className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition ${dark ? "hover:bg-white/5" : "hover:bg-white/[0.04]"}`}
             >
               <IoLocationSharp
-                className={`h-5 w-5 ${dark ? "text-[#B57BFF]" : "text-[#0094CA]"}`}
+                className={`h-5 w-5 ${dark ? "text-[#B57BFF]" : "text-[#D8B4FE]"}`}
               />
               <div className="text-left leading-tight">
                 {mounted ? (
                   <>
                     <p
-                      className={`font-semibold ${dark ? "text-white" : "text-gray-900"}`}
+                      className={`font-semibold ${dark ? "text-white" : "text-white"}`}
                     >
                       {location?.city ?? "Select City"}
                     </p>
                     <p
-                      className={`text-xs ${dark ? "text-white/50" : "text-gray-500"}`}
+                      className={`text-xs ${dark ? "text-white/50" : "text-[#A5A8C3]"}`}
                     >
                       {location?.state ?? "Tap to detect"}
                     </p>
@@ -336,12 +329,12 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                 ) : (
                   <>
                     <p
-                      className={`font-semibold ${dark ? "text-white" : "text-gray-900"}`}
+                      className={`font-semibold ${dark ? "text-white" : "text-white"}`}
                     >
                       Select City
                     </p>
                     <p
-                      className={`text-xs ${dark ? "text-white/50" : "text-gray-500"}`}
+                      className={`text-xs ${dark ? "text-white/50" : "text-[#A5A8C3]"}`}
                     >
                       Tap to detect
                     </p>
@@ -365,11 +358,11 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
                   suppressHydrationWarning
-                  className={`flex cursor-pointer items-center gap-2 rounded-full border-2 p-0.5 transition hover:shadow-md ${dark ? "border-[#9B30FF]" : "border-[#0094CA]"}`}
+                  className={`flex cursor-pointer items-center gap-2 rounded-full border-2 p-0.5 transition hover:shadow-md ${dark ? "border-[#9B30FF]" : "border-[#A020F0]"}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
+                    src={user.photoURL ?? "/assets/home/avatar-placeholder.svg"}
                     alt={user.displayName ?? "Profile"}
                     loading="lazy"
                     className="h-8 w-8 rounded-full object-cover"
@@ -381,10 +374,10 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                   onClick={() => setShowLogin(true)}
                   aria-label="Login"
                   suppressHydrationWarning
-                  className={`flex cursor-pointer items-center justify-center rounded-full border-2 p-0.5 transition hover:shadow-md ${dark ? "border-[#9B30FF]" : "border-[#0094CA]"}`}
+                  className={`flex cursor-pointer items-center justify-center rounded-full border-2 p-0.5 transition hover:shadow-md ${dark ? "border-[#9B30FF]" : "border-[#A020F0]"}`}
                 >
                   <svg
-                    className={`h-8 w-8 ${dark ? "text-[#B57BFF]" : "text-[#0094CA]"}`}
+                    className={`h-8 w-8 ${dark ? "text-[#B57BFF]" : "text-[#D8B4FE]"}`}
                     viewBox="0 0 24 24"
                     fill="currentColor"
                   >
@@ -397,7 +390,7 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                 ? createPortal(
                     <>
                       <div
-                        className="fixed inset-0 z-[1000] bg-black/30"
+                        className="msm-modal fixed inset-0 z-[1000] bg-black/30"
                         onClick={() => setProfileOpen(false)}
                       />
                       <div
@@ -429,7 +422,7 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                           <img
                             src={
                               user.photoURL ??
-                              "/assets/home/avatar-placeholder.png"
+                              "/assets/home/avatar-placeholder.svg"
                             }
                             alt=""
                             loading="lazy"
@@ -709,16 +702,16 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
           <button
             onClick={() => setLocationOpen(true)}
             suppressHydrationWarning
-            className={`mr-1 ml-auto flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition lg:hidden ${dark ? "hover:bg-white/5" : "hover:bg-gray-50"}`}
+            className={`mr-1 ml-auto flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition lg:hidden ${dark ? "hover:bg-white/5" : "hover:bg-white/[0.04]"}`}
           >
             <IoLocationSharp
-              className={`h-4 w-4 ${dark ? "text-[#B57BFF]" : "text-[#0094CA]"}`}
+              className={`h-4 w-4 ${dark ? "text-[#B57BFF]" : "text-[#D8B4FE]"}`}
             />
             <div className="hidden text-left text-xs leading-tight sm:block">
               {mounted ? (
                 <>
                   <p
-                    className={`font-semibold ${dark ? "text-white" : "text-gray-900"}`}
+                    className={`font-semibold ${dark ? "text-white" : "text-white"}`}
                   >
                     {location?.city ?? "City"}
                   </p>
@@ -726,7 +719,7 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
               ) : (
                 <>
                   <p
-                    className={`font-semibold ${dark ? "text-white" : "text-gray-900"}`}
+                    className={`font-semibold ${dark ? "text-white" : "text-white"}`}
                   >
                     City
                   </p>
@@ -738,7 +731,7 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
           {/* Hamburger — mobile */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className={`rounded-lg p-2 transition lg:hidden ${dark ? "text-white hover:bg-white/10" : "text-gray-700 hover:bg-gray-100"}`}
+            className={`rounded-lg p-2 transition lg:hidden ${dark ? "text-white hover:bg-white/10" : "text-white/80 hover:bg-white/[0.06]"}`}
             aria-label="Toggle menu"
           >
             {mobileOpen ? (
@@ -753,28 +746,29 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
       {/* Mobile drawer backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-[150] bg-black/20 backdrop-blur-sm lg:hidden"
+          className="msm-modal fixed inset-0 z-[150] bg-black/20 backdrop-blur-sm lg:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile drawer (sliding sidebar) */}
       {mobileOpen && (
-        <div className="fixed top-0 right-0 z-[160] flex h-full w-full max-w-xs flex-col bg-white shadow-2xl lg:hidden">
+        <div className="fixed top-0 right-0 z-[160] flex h-full w-full max-w-xs flex-col bg-[#121426] shadow-2xl lg:hidden">
           {/* Header inside mobile drawer */}
-          <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
             <Link href="/" onClick={() => setMobileOpen(false)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assets/home/logo.png"
-                alt="Myslotmate"
-                loading="lazy"
-                className="h-8 w-auto"
+                src="/assets/brand/logo-horizontal-white.png"
+                alt="MySlotMate"
+                width={1048}
+                height={209}
+                className="h-7 w-auto"
               />
             </Link>
             <button
               onClick={() => setMobileOpen(false)}
-              className="rounded-lg p-2 text-gray-700 transition hover:bg-gray-100"
+              className="rounded-lg p-2 text-white/80 transition hover:bg-white/[0.06]"
               aria-label="Close menu"
             >
               <FiX className="h-6 w-6" />
@@ -787,14 +781,14 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
               <Link
                 href="/#hosts"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#D8B4FE]"
               >
                 Hosts
               </Link>
               <Link
                 href="/#how-it-works"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#D8B4FE]"
               >
                 How it works
               </Link>
@@ -802,14 +796,14 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
               <Link
                 href="/#community"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#D8B4FE]"
               >
                 Community
               </Link>
               <Link
                 href="/blogs"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg border border-[#d6ebf7] bg-[#f7fcff] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#0e8ae0]"
+                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-center text-sm font-bold text-[#5d87a8] transition hover:text-[#D8B4FE]"
               >
                 Blog
               </Link>
@@ -820,17 +814,17 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                 <div className="mb-4 flex w-full items-center gap-3 rounded-lg py-2">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
+                    src={user.photoURL ?? "/assets/home/avatar-placeholder.svg"}
                     alt=""
                     loading="lazy"
                     className="h-10 w-10 rounded-full object-cover"
                     referrerPolicy="no-referrer"
                   />
                   <div className="overflow-hidden text-left">
-                    <p className="truncate text-sm font-semibold text-gray-900">
+                    <p className="truncate text-sm font-semibold text-white">
                       {user.displayName}
                     </p>
-                    <p className="truncate text-xs text-gray-500">
+                    <p className="truncate text-xs text-[#A5A8C3]">
                       {user.email}
                     </p>
                   </div>
@@ -838,12 +832,12 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
 
                 {/* Become a Host — mobile - Non-hosts */}
                 {showBecomeHostButton && (
-                  <div className="mb-3 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
+                  <div className="mb-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
                     <div>
-                      <p className="text-sm font-bold text-gray-900">
+                      <p className="text-sm font-bold text-white">
                         Become a Host
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[#A5A8C3]">
                         Start hosting experiences
                       </p>
                     </div>
@@ -852,7 +846,7 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                         setShowBecomeHost(true);
                         setMobileOpen(false);
                       }}
-                      className="rounded-xl bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#007dab]"
+                      className="rounded-xl bg-[#A020F0] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#8A1AD0]"
                     >
                       Get Started
                     </button>
@@ -860,19 +854,17 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                 )}
 
                 {hasCoHostInvites && hostStatus !== "approved" && (
-                  <div className="mb-3 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
+                  <div className="mb-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
                     <div>
-                      <p className="text-sm font-bold text-gray-900">
-                        Co-hosting
-                      </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm font-bold text-white">Co-hosting</p>
+                      <p className="text-xs text-[#A5A8C3]">
                         Experiences shared with you
                       </p>
                     </div>
                     <Link
                       href="/host-dashboard/co-hosting"
                       onClick={() => setMobileOpen(false)}
-                      className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+                      className="rounded-xl bg-[#A020F0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
                     >
                       Open
                     </Link>
@@ -881,19 +873,19 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
 
                 {/* Host Dashboard card — mobile: approved hosts and co-hosts */}
                 {canOpenHostDashboard && (
-                  <div className="mb-3 flex items-center justify-between rounded-xl border border-[#cceeff] bg-[#f0faff] px-4 py-3">
+                  <div className="mb-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
                     <div>
-                      <p className="text-sm font-bold text-gray-900">
+                      <p className="text-sm font-bold text-white">
                         Host Dashboard
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[#A5A8C3]">
                         Manage your experiences
                       </p>
                     </div>
                     <Link
                       href="/host-dashboard"
                       onClick={() => setMobileOpen(false)}
-                      className="rounded-xl bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+                      className="rounded-xl bg-[#A020F0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
                     >
                       Go Now
                     </Link>
@@ -906,25 +898,25 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                       <Link
                         href="/host-dashboard"
                         onClick={() => setMobileOpen(false)}
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
                       >
                         <span className="flex items-center gap-3">
-                          <LuHome className="h-5 w-5 text-gray-600" />
+                          <LuHome className="h-5 w-5 text-[#A5A8C3]" />
                           Host dashboard
                         </span>
-                        <FiChevronRight className="h-4 w-4 text-gray-400" />
+                        <FiChevronRight className="h-4 w-4 text-[#777B98]" />
                       </Link>
                       {hostStatus === "approved" && (
                         <Link
                           href="/host-dashboard/profile"
                           onClick={() => setMobileOpen(false)}
-                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
                         >
                           <span className="flex items-center gap-3">
-                            <LuUser className="h-5 w-5 text-gray-600" />
+                            <LuUser className="h-5 w-5 text-[#A5A8C3]" />
                             Host profile
                           </span>
-                          <FiChevronRight className="h-4 w-4 text-gray-400" />
+                          <FiChevronRight className="h-4 w-4 text-[#777B98]" />
                         </Link>
                       )}
                     </>
@@ -932,42 +924,42 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                   <Link
                     href="/activities"
                     onClick={() => setMobileOpen(false)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
                   >
                     <span className="flex items-center gap-3">
-                      <LuCalendarDays className="h-5 w-5 text-gray-600" />
+                      <LuCalendarDays className="h-5 w-5 text-[#A5A8C3]" />
                       View all bookings
                     </span>
-                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    <FiChevronRight className="h-4 w-4 text-[#777B98]" />
                   </Link>
                   <Link
                     href="/saved-experiences"
                     onClick={() => setMobileOpen(false)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
                   >
                     <span className="flex items-center gap-3">
-                      <LuHeart className="h-5 w-5 text-gray-600" />
+                      <LuHeart className="h-5 w-5 text-[#A5A8C3]" />
                       Saved experiences
                     </span>
-                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    <FiChevronRight className="h-4 w-4 text-[#777B98]" />
                   </Link>
                 </div>
 
                 {isAdminUser && (
                   <div className="mb-3">
-                    <p className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                    <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                       Admin
                     </p>
                     <Link
                       href="/admin"
                       onClick={() => setMobileOpen(false)}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
                     >
                       <span className="flex items-center gap-3">
-                        <LuShield className="h-5 w-5 text-gray-600" />
+                        <LuShield className="h-5 w-5 text-[#A5A8C3]" />
                         Pending applications
                       </span>
-                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                      <FiChevronRight className="h-4 w-4 text-[#777B98]" />
                     </Link>
                   </div>
                 )}
@@ -975,57 +967,57 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                 <hr className="my-3" />
 
                 <div className="mb-3">
-                  <p className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                  <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                     Support
                   </p>
                   <Link
                     href="/support"
                     onClick={() => setMobileOpen(false)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
                   >
                     <span className="flex items-center gap-3">
-                      <LuMessageSquare className="h-5 w-5 text-gray-600" />
+                      <LuMessageSquare className="h-5 w-5 text-[#A5A8C3]" />
                       Support &amp; Safety
                     </span>
-                    <FiChevronRight className="h-4 w-4 text-gray-400" />
+                    <FiChevronRight className="h-4 w-4 text-[#777B98]" />
                   </Link>
                 </div>
 
                 <div className="mb-3">
-                  <p className="mb-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                  <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                     More
                   </p>
                   <div className="space-y-1.5">
                     <Link
                       href="/support/terms-conditions"
                       onClick={() => setMobileOpen(false)}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
                     >
                       <span className="flex items-center gap-3">
-                        <LuShield className="h-5 w-5 text-gray-600" />
+                        <LuShield className="h-5 w-5 text-[#A5A8C3]" />
                         Terms &amp; Conditions
                       </span>
-                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                      <FiChevronRight className="h-4 w-4 text-[#777B98]" />
                     </Link>
                     <Link
                       href="/support/policies"
                       onClick={() => setMobileOpen(false)}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-gray-50"
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
                     >
                       <span className="flex items-center gap-3">
-                        <LuFileText className="h-5 w-5 text-gray-600" />
+                        <LuFileText className="h-5 w-5 text-[#A5A8C3]" />
                         Privacy Policy
                       </span>
-                      <FiChevronRight className="h-4 w-4 text-gray-400" />
+                      <FiChevronRight className="h-4 w-4 text-[#777B98]" />
                     </Link>
                   </div>
                 </div>
 
                 <button
                   onClick={handleLogout}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-gray-700 transition hover:bg-red-50"
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-red-500/10"
                 >
-                  <LuLogOut className="h-5 w-5 text-gray-600" />
+                  <LuLogOut className="h-5 w-5 text-[#A5A8C3]" />
                   Logout
                 </button>
               </>
@@ -1035,7 +1027,7 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                   setShowLogin(true);
                   setMobileOpen(false);
                 }}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#0094CA] transition hover:bg-[#e6f8ff]"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-[#D8B4FE] transition hover:bg-[#241333]"
               >
                 <svg
                   className="h-5 w-5"

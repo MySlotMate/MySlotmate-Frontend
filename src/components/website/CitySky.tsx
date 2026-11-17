@@ -78,7 +78,12 @@ const SHOOTING = [
   { l: 95, t: 18, delay: 9, cycle: 16 },
 ];
 
-export default function CitySky() {
+export default function CitySky({
+  skylineClass = "h-[46%]",
+}: {
+  /** Height of the skyline band, as a Tailwind class. */
+  skylineClass?: string;
+}) {
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
       {/* Sky: deep navy at the top, violet dusk at the horizon. */}
@@ -118,7 +123,7 @@ export default function CitySky() {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="xMidYMax slice"
-        className="absolute inset-x-0 bottom-0 h-[46%] w-full opacity-55"
+        className={`absolute inset-x-0 bottom-0 w-full opacity-55 ${skylineClass}`}
       >
         <defs>
           <linearGradient id="msm-far" x1="0" y1="0" x2="0" y2="1">

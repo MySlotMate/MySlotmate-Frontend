@@ -74,34 +74,34 @@ export default function AadharVerificationModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
-      <div className="relative max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white px-6 py-7 shadow-xl sm:px-8 sm:py-8">
+    <div className="msm-modal fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+      <div className="relative max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-[#121426] px-6 py-7 shadow-xl sm:px-8 sm:py-8">
         {/* Close */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 transition hover:text-gray-600"
+          className="absolute top-4 right-4 text-[#777B98] transition hover:text-[#A5A8C3]"
         >
           <FiX className="h-5 w-5" />
         </button>
 
         {/* Icon */}
         <div className="mb-5 flex justify-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e6f8ff]">
-            <FiShield className="h-7 w-7 text-[#0094CA]" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#241333]">
+            <FiShield className="h-7 w-7 text-[#D8B4FE]" />
           </div>
         </div>
 
         {step === 1 ? (
           <>
-            <h2 className="text-center text-xl font-bold text-gray-900">
+            <h2 className="text-center text-xl font-bold text-white">
               Verify Aadhaar
             </h2>
-            <p className="mt-1 text-center text-sm text-gray-500">
+            <p className="mt-1 text-center text-sm text-[#A5A8C3]">
               Enter your 12-digit Aadhaar number to receive an OTP.
             </p>
 
             <div className="mt-6">
-              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                 Aadhaar Number
               </label>
               <input
@@ -111,12 +111,12 @@ export default function AadharVerificationModal({
                 }
                 placeholder="1234 5678 9012"
                 maxLength={14}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm tracking-widest text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                className="w-full rounded-lg border border-white/15 px-4 py-3 text-sm tracking-widest text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
               />
             </div>
 
             {error && (
-              <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+              <p className="mt-3 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-300">
                 {error}
               </p>
             )}
@@ -125,10 +125,10 @@ export default function AadharVerificationModal({
               onClick={handleInitiate}
               disabled={initMutation.isPending}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-base font-semibold text-white transition disabled:opacity-50"
-              style={{ background: "#0094CA" }}
+              style={{ background: "#A020F0" }}
             >
               {initMutation.isPending ? (
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#121426] border-t-transparent" />
               ) : (
                 <>
                   Send OTP <FiArrowRight className="h-4 w-4" />
@@ -138,15 +138,15 @@ export default function AadharVerificationModal({
           </>
         ) : (
           <>
-            <h2 className="text-center text-xl font-bold text-gray-900">
+            <h2 className="text-center text-xl font-bold text-white">
               Enter OTP
             </h2>
-            <p className="mt-1 text-center text-sm text-gray-500">
+            <p className="mt-1 text-center text-sm text-[#A5A8C3]">
               We sent a one-time password to your Aadhaar-linked mobile.
             </p>
 
             <div className="mt-6">
-              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                 OTP
               </label>
               <input
@@ -154,12 +154,12 @@ export default function AadharVerificationModal({
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
                 placeholder="Enter OTP"
                 maxLength={6}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-center text-lg tracking-[0.5em] text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                className="w-full rounded-lg border border-white/15 px-4 py-3 text-center text-lg tracking-[0.5em] text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
               />
             </div>
 
             {error && (
-              <p className="mt-3 rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+              <p className="mt-3 rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-300">
                 {error}
               </p>
             )}
@@ -168,10 +168,10 @@ export default function AadharVerificationModal({
               onClick={handleComplete}
               disabled={completeMutation.isPending}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl py-3 text-base font-semibold text-white transition disabled:opacity-50"
-              style={{ background: "#0094CA" }}
+              style={{ background: "#A020F0" }}
             >
               {completeMutation.isPending ? (
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#121426] border-t-transparent" />
               ) : (
                 <>
                   Verify <FiArrowRight className="h-4 w-4" />
@@ -185,7 +185,7 @@ export default function AadharVerificationModal({
                 setOtp("");
                 setError("");
               }}
-              className="mt-3 w-full text-center text-sm text-[#0094CA] hover:underline"
+              className="mt-3 w-full text-center text-sm text-[#D8B4FE] hover:underline"
             >
               ← Change Aadhaar number
             </button>

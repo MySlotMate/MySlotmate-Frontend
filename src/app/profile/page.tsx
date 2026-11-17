@@ -90,7 +90,7 @@ export default function ProfilePage() {
       : "Explorer";
 
   return (
-    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]">
+    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28">
       <components.Navbar dark />
 
       <div className="mx-auto w-full max-w-[1210px] px-6 pt-6 pb-16 font-[family-name:var(--font-inter)] md:px-10 md:pt-10">
@@ -275,7 +275,7 @@ export default function ProfilePage() {
                         href={`/experience/${event!.slug}`}
                         className={`group overflow-hidden ${CARD}`}
                       >
-                        <div className="h-[118px] overflow-hidden">
+                        <div className="aspect-[4/5] overflow-hidden">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={event!.cover_image_url ?? FALLBACK_COVER}
@@ -337,7 +337,7 @@ export default function ProfilePage() {
                         <img
                           src={e.cover_image_url ?? FALLBACK_COVER}
                           alt=""
-                          className="h-14 w-14 shrink-0 rounded-xl object-cover"
+                          className="aspect-[4/5] w-12 shrink-0 rounded-xl object-cover"
                         />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold">

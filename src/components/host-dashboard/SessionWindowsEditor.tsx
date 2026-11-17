@@ -129,18 +129,16 @@ export default function SessionWindowsEditor({
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <div className="space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
+    <div className="space-y-4 rounded-xl border border-[#A020F0] bg-[#A020F0]/10 p-5">
       <div>
-        <h4 className="text-sm font-semibold text-gray-900">
-          Your availability
-        </h4>
-        <p className="text-xs text-gray-500">
+        <h4 className="text-sm font-semibold text-white">Your availability</h4>
+        <p className="text-xs text-[#A5A8C3]">
           Add the stretches of time you&apos;re free. We&apos;ll split each one
           into{" "}
           {durationMinutes > 0 ? `${durationMinutes}-minute` : "individual"}{" "}
           sessions that guests book one at a time.
         </p>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-[#A5A8C3]">
           Each session seats one guest, so the group size you set in Basics
           doesn&apos;t apply here.
         </p>
@@ -152,12 +150,12 @@ export default function SessionWindowsEditor({
           onClick={() => switchMode(true)}
           className={`flex-1 rounded-lg border p-3 text-left transition ${
             isWeekly
-              ? "border-[#0094CA] bg-white font-semibold text-[#0094CA]"
-              : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+              ? "border-[#A020F0] bg-[#121426] font-semibold text-[#D8B4FE]"
+              : "border-white/10 bg-[#121426] text-white/80 hover:border-white/15"
           }`}
         >
           <div className="text-sm font-medium">Weekly hours</div>
-          <div className="mt-0.5 text-xs text-gray-500">
+          <div className="mt-0.5 text-xs text-[#A5A8C3]">
             Same hours every week, repeating indefinitely
           </div>
         </button>
@@ -166,19 +164,19 @@ export default function SessionWindowsEditor({
           onClick={() => switchMode(false)}
           className={`flex-1 rounded-lg border p-3 text-left transition ${
             !isWeekly
-              ? "border-[#0094CA] bg-white font-semibold text-[#0094CA]"
-              : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
+              ? "border-[#A020F0] bg-[#121426] font-semibold text-[#D8B4FE]"
+              : "border-white/10 bg-[#121426] text-white/80 hover:border-white/15"
           }`}
         >
           <div className="text-sm font-medium">Specific dates</div>
-          <div className="mt-0.5 text-xs text-gray-500">
+          <div className="mt-0.5 text-xs text-[#A5A8C3]">
             A fixed set of days, one by one
           </div>
         </button>
       </div>
 
       <div className="space-y-2">
-        <label className="block text-xs font-medium text-gray-600">
+        <label className="block text-xs font-medium text-[#A5A8C3]">
           Break between sessions
         </label>
         <div className="flex items-center gap-2">
@@ -195,11 +193,11 @@ export default function SessionWindowsEditor({
               );
             }}
             onBlur={() => setBreakInputStr(String(breakMinutes))}
-            className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+            className="w-28 rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
           />
-          <span className="text-sm text-gray-600">minutes</span>
+          <span className="text-sm text-[#A5A8C3]">minutes</span>
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-[#A5A8C3]">
           Buffer to catch your breath between back-to-back guests. 0 means no
           gap.
         </p>
@@ -209,10 +207,10 @@ export default function SessionWindowsEditor({
         {windows.map((w, idx) => (
           <div
             key={idx}
-            className="flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+            className="flex flex-wrap items-end gap-3 rounded-lg border border-white/10 bg-[#121426] p-3 shadow-sm"
           >
             <div className="min-w-[150px] flex-1">
-              <label className="mb-1 block text-xs font-medium text-gray-600">
+              <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
                 {isWeekly ? "Day" : "Date"}
               </label>
               {isWeekly ? (
@@ -233,7 +231,7 @@ export default function SessionWindowsEditor({
                       ),
                     )
                   }
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                  className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
                 >
                   <option value="">Pick a day</option>
                   {WEEKDAY_LABELS.map((label, day) => (
@@ -248,37 +246,37 @@ export default function SessionWindowsEditor({
                   value={w.date}
                   min={today}
                   onChange={(e) => updateWindow(idx, "date", e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                  className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
                 />
               )}
             </div>
             <div className="w-32 min-w-[110px]">
-              <label className="mb-1 block text-xs font-medium text-gray-600">
+              <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
                 From
               </label>
               <input
                 type="time"
                 value={w.start}
                 onChange={(e) => updateWindow(idx, "start", e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
               />
             </div>
             <div className="w-32 min-w-[110px]">
-              <label className="mb-1 block text-xs font-medium text-gray-600">
+              <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
                 To
               </label>
               <input
                 type="time"
                 value={w.end}
                 onChange={(e) => updateWindow(idx, "end", e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+                className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
               />
             </div>
             {windows.length > 1 && (
               <button
                 type="button"
                 onClick={() => removeWindow(idx)}
-                className="p-2 text-gray-400 transition hover:text-red-500"
+                className="p-2 text-[#777B98] transition hover:text-red-400"
                 title="Remove window"
               >
                 <FiX size={18} />
@@ -291,13 +289,13 @@ export default function SessionWindowsEditor({
       <button
         type="button"
         onClick={addWindow}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094CA] hover:underline"
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#D8B4FE] hover:underline"
       >
         + Add another {isWeekly ? "weekly window" : "time window"}
       </button>
 
       {visibleErrors.length > 0 && (
-        <ul className="space-y-1 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700">
+        <ul className="space-y-1 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
           {visibleErrors.map((err) => (
             <li key={err}>{err}</li>
           ))}
@@ -305,17 +303,17 @@ export default function SessionWindowsEditor({
       )}
 
       {isWeekly && weekly.perWeek > 0 && (
-        <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="space-y-3 rounded-lg border border-white/10 bg-[#121426] p-4">
           <div className="flex items-center gap-1.5">
-            <FiClock className="h-4 w-4 text-[#0094CA]" />
-            <h5 className="text-sm font-semibold text-gray-900">
+            <FiClock className="h-4 w-4 text-[#D8B4FE]" />
+            <h5 className="text-sm font-semibold text-white">
               {weekly.perWeek} session{weekly.perWeek === 1 ? "" : "s"} a week,
               every week
             </h5>
           </div>
           {weekly.days.map((day) => (
             <div key={day.weekday} className="space-y-1.5">
-              <p className="text-xs font-medium text-gray-600">
+              <p className="text-xs font-medium text-[#A5A8C3]">
                 {WEEKDAY_LABELS[day.weekday]}s · {day.slots.length} session
                 {day.slots.length === 1 ? "" : "s"}
               </p>
@@ -323,7 +321,7 @@ export default function SessionWindowsEditor({
                 {day.slots.map((slot) => (
                   <span
                     key={slot.time}
-                    className="rounded-md border border-[#0094CA]/25 bg-[#0094CA]/5 px-2 py-1 text-xs font-medium text-[#16304c]"
+                    className="rounded-md border border-[#A020F0] bg-[#A020F0]/10 px-2 py-1 text-xs font-medium text-white"
                   >
                     {slot.time}–{slot.endTime}
                   </span>
@@ -331,7 +329,7 @@ export default function SessionWindowsEditor({
               </div>
             </div>
           ))}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-[#A5A8C3]">
             {weekly.perWeek * SESSION_HORIZON_WEEKS > MAX_GENERATED_SESSIONS
               ? `That's a dense schedule — guests will see the next ${MAX_GENERATED_SESSIONS} sessions rather than the full ${SESSION_HORIZON_WEEKS} weeks.`
               : `Guests can book up to ${SESSION_HORIZON_WEEKS} weeks ahead.`}{" "}
@@ -342,17 +340,17 @@ export default function SessionWindowsEditor({
       )}
 
       {!isWeekly && dated.slots.length > 0 && (
-        <div className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="space-y-3 rounded-lg border border-white/10 bg-[#121426] p-4">
           <div className="flex items-center gap-1.5">
-            <FiClock className="h-4 w-4 text-[#0094CA]" />
-            <h5 className="text-sm font-semibold text-gray-900">
+            <FiClock className="h-4 w-4 text-[#D8B4FE]" />
+            <h5 className="text-sm font-semibold text-white">
               {dated.slots.length} session{dated.slots.length === 1 ? "" : "s"}{" "}
               will be created
             </h5>
           </div>
           {grouped.map(([date, daySlots]) => (
             <div key={date} className="space-y-1.5">
-              <p className="text-xs font-medium text-gray-600">
+              <p className="text-xs font-medium text-[#A5A8C3]">
                 {formatDayLabel(date)} · {daySlots.length} session
                 {daySlots.length === 1 ? "" : "s"}
               </p>
@@ -360,7 +358,7 @@ export default function SessionWindowsEditor({
                 {daySlots.map((slot) => (
                   <span
                     key={`${slot.date}-${slot.time}`}
-                    className="rounded-md border border-[#0094CA]/25 bg-[#0094CA]/5 px-2 py-1 text-xs font-medium text-[#16304c]"
+                    className="rounded-md border border-[#A020F0] bg-[#A020F0]/10 px-2 py-1 text-xs font-medium text-white"
                   >
                     {slot.time}–{slot.endTime}
                   </span>

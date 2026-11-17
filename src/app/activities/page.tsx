@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { useQueries } from "@tanstack/react-query";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import {
+  queryKeys,
   useBookingsByUser,
   useListHosts,
   useListPublicEvents,
@@ -12,6 +14,7 @@ import {
   useSavedExperiences,
   useUserProfile,
 } from "~/hooks/useApi";
+import * as api from "~/lib/api";
 import {
   type BookingDTO,
   type EventDTO,
@@ -20,7 +23,8 @@ import {
 import { downloadTicketPdf } from "~/lib/ticket";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { formatIST } from "~/lib/datetime";
-import { getMoodDisplayLabel, normalizeMood } from "~/lib/moods";
+import { categoryOf } from "~/lib/categories";
+import { computeBadges, type BadgeState, type Moment } from "~/lib/badges";
 import * as components from "~/components";
 import {
   InboxSidebar,
@@ -29,24 +33,24 @@ import {
 } from "~/components/activities";
 import {
   FiAlertCircle,
-  FiBookOpen,
   FiCalendar,
+  FiHeart,
+  FiLock,
   FiMapPin,
   FiMessageCircle,
   FiStar,
   FiX,
   FiXCircle,
 } from "react-icons/fi";
-import { LuQrCode } from "react-icons/lu";
+import { LuQrCode, LuSparkles } from "react-icons/lu";
 import { toast } from "sonner";
 
-// Sizes follow the Figma "journey-upcoming / -completed / -saved" frames.
 const CARD = "rounded-2xl border border-white/[0.06] bg-[#131328]";
 const GRADIENT_BTN =
   "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white transition hover:brightness-110";
 const FALLBACK_COVER = "/assets/home/hiking.webp";
 
-type Tab = "upcoming" | "completed" | "saved";
+type Tab = "upcoming" | "memories" | "saved";
 
 interface BookingWithEvent {
   booking: BookingDTO;
@@ -93,7 +97,7 @@ function UpcomingCard({
     <article className={`flex flex-col overflow-hidden ${CARD}`}>
       <Link
         href={`/experience/${event.slug}`}
-        className="h-[200px] overflow-hidden"
+        className="aspect-[4/5] overflow-hidden"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -228,6 +232,474 @@ function Empty({
   );
 }
 
+/* ------------------------------------------------------------------ */
+/* Story hero                                                          */
+/* ------------------------------------------------------------------ */
+
+function JourneyHero({
+  firstName,
+  memberSince,
+  firstMoment,
+  next,
+  stats,
+}: {
+  firstName?: string;
+  memberSince?: string;
+  firstMoment?: Moment;
+  next?: BookingWithEvent;
+  stats: [number, string][];
+}) {
+  const days = memberSince
+    ? Math.max(
+        1,
+        Math.round((Date.now() - new Date(memberSince).getTime()) / 864e5),
+      )
+    : null;
+
+  return (
+    <section className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-[#3B1772] via-[#1D1140] to-[#100E1C]">
+      <div className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-[#A020F0]/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-28 left-10 h-64 w-64 rounded-full bg-[#F59E0B]/10 blur-3xl" />
+
+      <div className="relative grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_260px] md:p-9">
+        <div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-[#E9D5FF] uppercase">
+            <LuSparkles className="h-3.5 w-3.5" /> My journey
+          </span>
+          <h1 className="font-outfit mt-3 text-[28px] leading-tight font-bold md:text-[36px]">
+            {firstName ? `${firstName}'s story` : "Your story"} on{" "}
+            <span className="text-[#D8B4FE]">MySlotMate</span>
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-white/70 md:text-[15px]">
+            {memberSince ? (
+              <>
+                It began in {formatIST(memberSince, "MMMM yyyy")}
+                {days ? ` — ${days} day${days === 1 ? "" : "s"} ago` : ""}.{" "}
+              </>
+            ) : null}
+            {firstMoment ? (
+              <>
+                Your first chapter was{" "}
+                <Link
+                  href={`/experience/${firstMoment.event.slug}`}
+                  className="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white"
+                >
+                  {firstMoment.event.title}
+                </Link>{" "}
+                on {formatIST(firstMoment.at, "MMM d, yyyy")}.
+              </>
+            ) : (
+              "Your first chapter is waiting. Book something that sounds like you."
+            )}
+          </p>
+
+          <div className="mt-5 grid max-w-xl grid-cols-4 gap-2">
+            {stats.map(([value, label]) => (
+              <div
+                key={label}
+                className="rounded-2xl bg-white/[0.06] px-2 py-3 text-center backdrop-blur"
+              >
+                <p className="font-outfit text-xl font-bold md:text-2xl">
+                  {value}
+                </p>
+                <p className="mt-0.5 text-[10px] leading-tight text-white/55 md:text-[11px]">
+                  {label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Next chapter */}
+        <div className="flex flex-col justify-center">
+          {next ? (
+            <Link
+              href={`/experience/${next.event.slug}`}
+              className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 p-3 transition hover:border-white/25 md:flex-col md:items-stretch"
+            >
+              <div className="aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-xl md:w-full">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={next.event.cover_image_url ?? FALLBACK_COVER}
+                  alt=""
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold tracking-wider text-[#D8B4FE] uppercase">
+                  Next chapter
+                </p>
+                <p className="font-outfit mt-1 line-clamp-2 text-[15px] leading-5 font-semibold">
+                  {next.event.title}
+                </p>
+                <p className="mt-1 text-xs text-white/60">
+                  {formatIST(
+                    next.booking.occurrence_date,
+                    "EEE, MMM d · h:mm a",
+                  )}
+                </p>
+              </div>
+            </Link>
+          ) : (
+            <Link
+              href="/explore"
+              className="flex items-center gap-4 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 transition hover:border-white/30 md:flex-col md:text-center"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/assets/badges/first-step.webp"
+                alt=""
+                className="h-20 w-20 md:h-32 md:w-32"
+              />
+              <div>
+                <p className="font-outfit text-[15px] font-semibold">
+                  Write the next chapter
+                </p>
+                <p className="mt-1 text-xs text-white/55">
+                  Find something to do this week →
+                </p>
+              </div>
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Milestone badges                                                    */
+/* ------------------------------------------------------------------ */
+
+function BadgeArt({
+  state,
+  className = "",
+}: {
+  state: BadgeState;
+  className?: string;
+}) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={state.def.art}
+      alt=""
+      loading="lazy"
+      className={`${className} ${
+        state.earned ? "" : "opacity-40 grayscale"
+      } transition duration-300`}
+    />
+  );
+}
+
+function BadgeShelf({
+  states,
+  onOpen,
+}: {
+  states: BadgeState[];
+  onOpen: (s: BadgeState) => void;
+}) {
+  const earned = states.filter((s) => s.earned).length;
+  // Earned first (most recent first), then the closest-to-done locked ones.
+  const ordered = [...states].sort((a, b) => {
+    if (a.earned !== b.earned) return a.earned ? -1 : 1;
+    if (a.earned && b.earned)
+      return (b.earnedAt?.at.getTime() ?? 0) - (a.earnedAt?.at.getTime() ?? 0);
+    return b.current / b.def.target - a.current / a.def.target;
+  });
+
+  return (
+    <section className="mt-10">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 className="font-outfit text-xl font-bold md:text-[22px]">
+            Milestones
+          </h2>
+          <p className="mt-0.5 text-sm text-white/55">
+            Little badges for the moments that make your story.
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full bg-[#A020F0]/15 px-3 py-1 text-xs font-semibold text-[#D8B4FE]">
+          {earned} / {states.length} collected
+        </span>
+      </div>
+
+      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-[#F59E0B] via-[#F97362] to-[#B724EA] transition-all"
+          style={{ width: `${(earned / states.length) * 100}%` }}
+        />
+      </div>
+
+      <div className="-mx-6 mt-5 flex snap-x gap-3 overflow-x-auto px-6 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-6 md:overflow-visible md:px-0 lg:grid-cols-8">
+        {ordered.map((s) => (
+          <button
+            key={s.def.key}
+            type="button"
+            onClick={() => onOpen(s)}
+            className={`group flex w-[118px] shrink-0 snap-start flex-col items-center rounded-2xl p-3 text-center transition md:w-auto ${
+              s.earned
+                ? "bg-[#131328] hover:bg-[#1A1A35]"
+                : "bg-[#0E0F1F] hover:bg-[#131328]"
+            }`}
+          >
+            <div className="relative">
+              <BadgeArt
+                state={s}
+                className="h-[84px] w-[84px] group-hover:scale-105"
+              />
+              {!s.earned && (
+                <span className="absolute right-0 bottom-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#1B1C33] text-white/60 ring-2 ring-[#0E0F1F]">
+                  <FiLock className="h-3 w-3" />
+                </span>
+              )}
+            </div>
+            <p
+              className={`mt-2 text-[12px] leading-4 font-semibold ${
+                s.earned ? "text-white" : "text-white/50"
+              }`}
+            >
+              {s.def.name}
+            </p>
+            {s.earned ? (
+              <p className="mt-0.5 text-[10px] text-[#D8B4FE]">
+                {s.earnedAt ? formatIST(s.earnedAt.at, "MMM d, yyyy") : ""}
+              </p>
+            ) : s.def.target > 1 ? (
+              <div className="mt-1.5 w-full">
+                <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.08]">
+                  <div
+                    className="h-full rounded-full bg-white/40"
+                    style={{ width: `${(s.current / s.def.target) * 100}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-[10px] text-white/40">
+                  {s.current} of {s.def.target}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-0.5 text-[10px] text-white/35">Locked</p>
+            )}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BadgeSheet({
+  state,
+  onClose,
+}: {
+  state: BadgeState;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const { def, earned, earnedAt, current } = state;
+  return (
+    <div
+      className="animate-in fade-in msm-modal fixed inset-0 z-[260] flex items-end justify-center bg-black/60 backdrop-blur-sm duration-200 sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={def.name}
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-sm overflow-hidden rounded-t-3xl border border-white/10 bg-[#121426] px-6 pt-8 pb-7 text-center text-white sm:rounded-3xl"
+      >
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-[#F59E0B]/15 blur-3xl" />
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={onClose}
+          className="absolute top-4 right-4 text-white/50 transition hover:text-white"
+        >
+          <FiX size={20} />
+        </button>
+        <BadgeArt state={state} className="relative mx-auto h-44 w-44" />
+        <p className="mt-3 text-[11px] font-bold tracking-wider uppercase">
+          {earned ? (
+            <span className="text-[#FCD34D]">Milestone unlocked</span>
+          ) : (
+            <span className="text-white/40">Not yet</span>
+          )}
+        </p>
+        <h3 className="font-outfit mt-1 text-2xl font-bold">{def.name}</h3>
+        <p className="mx-auto mt-2 max-w-[280px] text-sm leading-6 text-white/65">
+          {earned && earnedAt ? def.earnedLine(earnedAt) : def.how}
+        </p>
+        {earned && earnedAt ? (
+          <p className="mt-3 text-xs text-white/45">
+            Earned {formatIST(earnedAt.at, "MMMM d, yyyy")}
+          </p>
+        ) : (
+          <>
+            {def.target > 1 && (
+              <p className="mt-3 text-xs text-white/45">
+                {current} of {def.target} so far
+              </p>
+            )}
+            <Link
+              href="/explore"
+              className={`mt-5 inline-flex rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
+            >
+              Find an experience
+            </Link>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Memories timeline                                                   */
+/* ------------------------------------------------------------------ */
+
+function MemoryTimeline({
+  moments,
+  badgesByBooking,
+  onReview,
+  onBadge,
+}: {
+  moments: Moment[];
+  badgesByBooking: Map<string, BadgeState[]>;
+  onReview: (eventId: string) => void;
+  onBadge: (s: BadgeState) => void;
+}) {
+  // Newest first, grouped by month.
+  const groups = useMemo(() => {
+    const out: { month: string; items: Moment[] }[] = [];
+    for (const m of [...moments].sort(
+      (a, b) => b.at.getTime() - a.at.getTime(),
+    )) {
+      const month = formatIST(m.at, "MMMM yyyy");
+      const last = out[out.length - 1];
+      if (last?.month === month) last.items.push(m);
+      else out.push({ month, items: [m] });
+    }
+    return out;
+  }, [moments]);
+  const firstId = moments.length
+    ? [...moments].sort((a, b) => a.at.getTime() - b.at.getTime())[0]!.booking
+        .id
+    : null;
+
+  return (
+    <div className="relative">
+      {groups.map((g) => (
+        <div key={g.month} className="relative pb-6">
+          <div className="sticky top-16 z-10 mb-3 -ml-1 flex items-center gap-3 bg-[#080914]/90 py-1 backdrop-blur">
+            <span className="h-3 w-3 rounded-full border-2 border-[#D8B4FE] bg-[#080914]" />
+            <h3 className="font-outfit text-[15px] font-semibold text-white/80">
+              {g.month}
+            </h3>
+          </div>
+          <div className="ml-[5px] flex flex-col gap-4 border-l border-dashed border-white/15 pl-5 md:pl-7">
+            {g.items.map((m) => {
+              const unlocked = badgesByBooking.get(m.booking.id) ?? [];
+              const isFirst = m.booking.id === firstId;
+              return (
+                <article
+                  key={m.booking.id}
+                  className={`flex gap-4 overflow-hidden p-3 ${CARD}`}
+                >
+                  <Link
+                    href={`/experience/${m.event.slug}`}
+                    className="aspect-[4/5] w-24 shrink-0 overflow-hidden rounded-xl md:w-28"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={m.event.cover_image_url ?? FALLBACK_COVER}
+                      alt={m.event.title}
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  </Link>
+                  <div className="flex min-w-0 flex-1 flex-col py-0.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {isFirst && (
+                        <span className="rounded-md bg-[#F59E0B]/15 px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#FCD34D] uppercase">
+                          Where it all began
+                        </span>
+                      )}
+                      <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/60">
+                        {categoryOf(m.event).label}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/experience/${m.event.slug}`}
+                      className="font-outfit mt-1.5 line-clamp-2 text-[15px] leading-5 font-semibold hover:text-[#D8B4FE]"
+                    >
+                      {m.event.title}
+                    </Link>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-white/55">
+                      <FiCalendar className="h-3 w-3 shrink-0" />
+                      {formatIST(m.at, "EEE, MMM d · h:mm a")}
+                    </p>
+                    <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-white/55">
+                      <FiMapPin className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{placeOf(m.event)}</span>
+                    </p>
+
+                    {unlocked.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {unlocked.map((s) => (
+                          <button
+                            key={s.def.key}
+                            type="button"
+                            onClick={() => onBadge(s)}
+                            className="flex items-center gap-1.5 rounded-full bg-[#F59E0B]/10 py-0.5 pr-2.5 pl-0.5 text-[11px] font-semibold text-[#FCD34D] transition hover:bg-[#F59E0B]/20"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={s.def.art} alt="" className="h-6 w-6" />
+                            {s.def.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-auto flex items-center gap-4 pt-2 text-xs">
+                      {m.event.avg_rating ? (
+                        <span className="flex items-center gap-1 text-white/55">
+                          <FiStar className="h-3 w-3 fill-amber-400 text-amber-400" />
+                          <span className="font-semibold text-amber-400">
+                            {m.event.avg_rating.toFixed(1)}
+                          </span>
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => onReview(m.event.id)}
+                        className="font-semibold text-[#D8B4FE] hover:text-white"
+                      >
+                        Share how it went
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div className="ml-[5px] flex items-center gap-3 pl-0">
+        <span className="-ml-[5px] h-3 w-3 rounded-full bg-[#D8B4FE]" />
+        <p className="text-xs text-white/45">You joined MySlotMate</p>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
+
 export default function ActivitiesPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -235,6 +707,7 @@ export default function ActivitiesPage() {
   // id is stored, so "logged out" has to mean neither exists.
   const [firebaseUser, firebaseLoading] = useAuthState(auth);
   const [tab, setTab] = useState<Tab>("upcoming");
+  const [openBadge, setOpenBadge] = useState<BadgeState | null>(null);
   const [activeInboxEventId, setActiveInboxEventId] = useState<string | null>(
     null,
   );
@@ -256,7 +729,6 @@ export default function ActivitiesPage() {
     null,
   );
 
-  // Fetch user profile for ticket PDF generation
   const { data: bookingUser } = useUserProfile(userId);
 
   const handleDownloadTicket = async (booking: BookingDTO, event: EventDTO) => {
@@ -277,24 +749,55 @@ export default function ActivitiesPage() {
     setIsHydrated(true);
   }, [storedUserId]);
 
-  // Fetch user's bookings
   const { data: bookings, isLoading: bookingsLoading } =
     useBookingsByUser(userId);
-
-  // Fetch all public events to get event details
   const { data: allEvents } = useListPublicEvents();
   const { data: hosts } = useListHosts();
   const { data: saved } = useSavedExperiences(userId);
 
   const cancelBooking = useCancelBooking();
 
-  // Merge bookings with event details
-  const bookingsWithEvents: BookingWithEvent[] = (bookings ?? [])
-    .map((booking) => {
-      const event = allEvents?.find((e: EventDTO) => e.id === booking.event_id);
-      return { booking, event: event! };
-    })
-    .filter(({ event }) => event); // Only show if event exists
+  // Past events drop out of the public list, so fetch the ones we're missing
+  // one by one — otherwise old memories would vanish from the journey.
+  const missingIds = useMemo(() => {
+    if (!allEvents) return [];
+    const known = new Set(allEvents.map((e) => e.id));
+    const ids = new Set<string>();
+    for (const b of bookings ?? [])
+      if (!known.has(b.event_id)) ids.add(b.event_id);
+    for (const s of saved ?? [])
+      if (!known.has(s.event_id)) ids.add(s.event_id);
+    return [...ids];
+  }, [allEvents, bookings, saved]);
+
+  const extra = useQueries({
+    queries: missingIds.map((id) => ({
+      queryKey: queryKeys.event(id),
+      queryFn: () => api.getEvent(id),
+      staleTime: 10 * 60 * 1000,
+      retry: false,
+      select: (res: api.Envelope<EventDTO>) => res.data,
+    })),
+  });
+  const extraKey = extra.map((q) => q.data?.id ?? "").join(",");
+
+  const eventById = useMemo(() => {
+    const m = new Map<string, EventDTO>();
+    for (const e of allEvents ?? []) m.set(e.id, e);
+    for (const q of extra) if (q.data) m.set(q.data.id, q.data);
+    return m;
+    // `extra` is a new array every render; key on what it resolved to.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allEvents, extraKey]);
+
+  const bookingsWithEvents: BookingWithEvent[] = useMemo(
+    () =>
+      (bookings ?? []).flatMap((booking) => {
+        const event = eventById.get(booking.event_id);
+        return event ? [{ booking, event }] : [];
+      }),
+    [bookings, eventById],
+  );
 
   const hostById = useMemo(
     () => new Map((hosts ?? []).map((h) => [h.id, h])),
@@ -315,49 +818,60 @@ export default function ActivitiesPage() {
         new Date(a.booking.occurrence_date).getTime() -
         new Date(b.booking.occurrence_date).getTime(),
     );
-  const completed = bookingsWithEvents
-    .filter(
-      ({ booking }) => booking.status === "confirmed" && !isFuture(booking),
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.booking.occurrence_date).getTime() -
-        new Date(a.booking.occurrence_date).getTime(),
-    );
   const cancelled = bookingsWithEvents.filter(
     ({ booking }) =>
       booking.status === "cancelled" || booking.status === "refunded",
   );
 
-  // Passport stats, all derived from the completed bookings.
+  const moments: Moment[] = useMemo(
+    () =>
+      bookingsWithEvents
+        .filter(
+          ({ booking }) =>
+            booking.status === "confirmed" &&
+            new Date(booking.occurrence_date).getTime() <= Date.now(),
+        )
+        .map(({ booking, event }) => ({
+          booking,
+          event,
+          at: new Date(booking.occurrence_date),
+        })),
+    [bookingsWithEvents],
+  );
+
+  const badgeStates = useMemo(() => computeBadges(moments), [moments]);
+  const badgesByBooking = useMemo(() => {
+    const m = new Map<string, BadgeState[]>();
+    for (const s of badgeStates) {
+      if (!s.earned || !s.earnedAt) continue;
+      const id = s.earnedAt.booking.id;
+      m.set(id, [...(m.get(id) ?? []), s]);
+    }
+    return m;
+  }, [badgeStates]);
+
+  const firstMoment = useMemo(
+    () =>
+      moments.length
+        ? moments.reduce((a, b) => (a.at <= b.at ? a : b))
+        : undefined,
+    [moments],
+  );
+
+  // Story stats, all from what actually happened.
   const cities = new Set(
-    completed
+    moments
       .filter(({ event }) => !event.is_online && event.location)
       .map(({ event }) => event.location!.split(",").pop()!.trim()),
   ).size;
-  const hostsMet = new Set(completed.map(({ event }) => event.host_id)).size;
-  const hours =
-    Math.round(
-      completed.reduce(
-        (sum, { event }) => sum + (event.duration_minutes ?? 0),
-        0,
-      ) / 6,
-    ) / 10;
-  const moodCounts = [
-    ...completed
-      .reduce((m, { event }) => {
-        const mood = normalizeMood(event.mood);
-        if (mood) m.set(mood, (m.get(mood) ?? 0) + 1);
-        return m;
-      }, new Map<string, number>())
-      .entries(),
-  ].sort((a, b) => b[1] - a[1]);
+  const hostsMet = new Set(moments.map(({ event }) => event.host_id)).size;
+  const hours = Math.round(
+    moments.reduce((sum, { event }) => sum + (event.duration_minutes ?? 0), 0) /
+      60,
+  );
 
   const savedEvents = (saved ?? [])
-    .map((s) => ({
-      saved: s,
-      event: allEvents?.find((e) => e.id === s.event_id),
-    }))
+    .map((s) => ({ saved: s, event: eventById.get(s.event_id) }))
     .filter((s): s is { saved: (typeof s)["saved"]; event: EventDTO } =>
       Boolean(s.event),
     );
@@ -378,7 +892,7 @@ export default function ActivitiesPage() {
           : "Booking cancelled. Refund added to your wallet.",
       );
       setActiveCancelBookingId(null);
-      setRefundDestination("wallet"); // reset for next use
+      setRefundDestination("wallet");
     } catch (err) {
       console.error("Cancellation error:", err);
       toast.error("Failed to cancel booking. Please try again.");
@@ -388,311 +902,247 @@ export default function ActivitiesPage() {
   };
 
   const loading = bookingsLoading && isHydrated;
+  const signedIn = isHydrated && Boolean(userId);
+  const firstName = bookingUser?.name?.trim().split(/\s+/)[0];
+
+  const tabs: { key: Tab; label: string; count: number }[] = [
+    { key: "upcoming", label: "Upcoming", count: upcoming.length },
+    { key: "memories", label: "Memories", count: moments.length },
+    { key: "saved", label: "Saved", count: savedEvents.length },
+  ];
 
   return (
-    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]">
+    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28">
       <components.Navbar dark />
 
       <div className="mx-auto w-full max-w-[1210px] px-6 pt-6 pb-16 font-[family-name:var(--font-inter)] md:px-10 md:pt-10">
-        <h1 className="font-outfit text-[28px] leading-9 font-bold">Journey</h1>
-        <p className="mt-0.5 text-sm text-white/60">
-          Your experiences, memories and upcoming plans.
-        </p>
-
-        <div
-          role="tablist"
-          aria-label="Journey"
-          className="mt-5 grid h-10 w-full max-w-[430px] grid-cols-3 rounded-xl border border-white/[0.06] bg-[#131328] p-1"
-        >
-          {(["upcoming", "completed", "saved"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              onClick={() => setTab(t)}
-              className={`rounded-lg text-[13px] font-semibold capitalize transition ${
-                tab === t
-                  ? "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white"
-                  : "text-white/70 hover:text-white"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-6">
-          {isHydrated && !userId && (firebaseLoading || firebaseUser) ? (
-            firebaseLoading ? (
-              <div className="flex justify-center py-20">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#B57BFF] border-t-transparent" />
-              </div>
-            ) : (
-              <Empty
-                title="We couldn't load your account"
-                text="You're signed in, but your account details didn't load. Try reloading, or log out and back in."
-                cta={false}
-              >
-                <button
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
-                >
-                  Reload
-                </button>
-              </Empty>
-            )
-          ) : isHydrated && !userId ? (
+        {isHydrated && !userId && (firebaseLoading || firebaseUser) ? (
+          firebaseLoading ? (
+            <div className="flex justify-center py-20">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#B57BFF] border-t-transparent" />
+            </div>
+          ) : (
             <Empty
-              title="Log in to see your journey"
-              text="Your bookings, memories and saved experiences show up here once you're signed in."
+              title="We couldn't load your account"
+              text="You're signed in, but your account details didn't load. Try reloading, or log out and back in."
               cta={false}
             >
               <button
                 type="button"
-                // Navbar listens for this and opens the login modal.
-                onClick={() =>
-                  window.dispatchEvent(new Event("msm:open-profile"))
-                }
+                onClick={() => window.location.reload()}
                 className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
               >
-                Log in
+                Reload
               </button>
             </Empty>
-          ) : loading ? (
-            <div className="flex justify-center py-20">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#B57BFF] border-t-transparent" />
-            </div>
-          ) : tab === "upcoming" ? (
-            <>
-              <MyPassesSection
-                events={allEvents ?? []}
-                bookings={bookings ?? []}
-                onDownloadTicket={(booking, event) =>
-                  void handleDownloadTicket(booking, event)
-                }
-                downloadingTicketId={downloadingTicketId}
-              />
-              {upcoming.length > 0 ? (
-                <div className="grid gap-5 md:grid-cols-2">
-                  {upcoming.map(({ booking, event }) => (
-                    <UpcomingCard
-                      key={booking.id}
-                      booking={booking}
-                      event={event}
-                      host={hostById.get(event.host_id)}
-                      downloading={downloadingTicketId === booking.id}
-                      onTicket={() => void handleDownloadTicket(booking, event)}
-                      onInbox={() => setActiveInboxEventId(event.id)}
-                      onCancel={() => setActiveCancelBookingId(booking.id)}
-                    />
-                  ))}
-                </div>
-              ) : isHydrated ? (
-                <Empty
-                  title="Nothing planned yet"
-                  text="Book an experience and it will show up here with your ticket."
-                />
-              ) : null}
-            </>
-          ) : tab === "completed" ? (
-            <div className="grid gap-8 lg:grid-cols-[300px_minmax(0,1fr)]">
-              <aside className="flex flex-col gap-6">
-                <div className="rounded-2xl border border-[#9B30FF]/50 bg-[#131328] p-4">
-                  <div className="flex items-center gap-2">
-                    <FiBookOpen className="h-4 w-4 text-[#D8B4FE]" />
-                    <h2 className="font-outfit text-[15px] font-semibold">
-                      Experience Passport
-                    </h2>
-                    <span className="rounded bg-[#9B30FF]/20 px-1.5 py-0.5 text-[9px] font-bold tracking-wider text-[#D8B4FE] uppercase">
-                      Explorer
-                    </span>
-                  </div>
-                  <div className="mt-4 grid grid-cols-2 gap-2.5">
-                    {[
-                      [completed.length, "Experiences"],
-                      [cities, "Cities Explored"],
-                      [hours, "Hours Spent"],
-                      [hostsMet, "Hosts Met"],
-                    ].map(([value, label]) => (
-                      <div
-                        key={label}
-                        className="rounded-xl bg-[#1B1C33] px-3 py-2.5"
-                      >
-                        <p className="font-outfit text-lg font-bold">{value}</p>
-                        <p className="text-[11px] text-white/55">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-                  {bookingUser?.created_at && (
-                    <p className="mt-3 text-center text-[11px] text-white/45">
-                      Member since{" "}
-                      {formatIST(bookingUser.created_at, "MMMM yyyy")}
-                    </p>
-                  )}
-                </div>
+          )
+        ) : isHydrated && !userId ? (
+          <Empty
+            title="Log in to see your journey"
+            text="Your plans, memories, milestones and saved experiences show up here once you're signed in."
+            cta={false}
+          >
+            <button
+              type="button"
+              // Navbar listens for this and opens the login modal.
+              onClick={() =>
+                window.dispatchEvent(new Event("msm:open-profile"))
+              }
+              className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
+            >
+              Log in
+            </button>
+          </Empty>
+        ) : loading || !signedIn ? (
+          <div className="flex justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#B57BFF] border-t-transparent" />
+          </div>
+        ) : (
+          <>
+            <JourneyHero
+              firstName={firstName}
+              memberSince={bookingUser?.created_at}
+              firstMoment={firstMoment}
+              next={upcoming[0]}
+              stats={[
+                [moments.length, "Experiences"],
+                [hostsMet, "Hosts met"],
+                [hours, "Hours"],
+                [cities, "Cities"],
+              ]}
+            />
 
-                {moodCounts.length > 0 && (
-                  <div>
-                    <h2 className="font-outfit mb-3 text-[15px] font-semibold">
-                      Your Categories
-                    </h2>
-                    <div className="flex flex-wrap gap-2">
-                      {moodCounts.map(([mood, count]) => (
-                        <span
-                          key={mood}
-                          className={`px-3 py-2 text-xs text-white/75 ${CARD}`}
-                        >
-                          {getMoodDisplayLabel(mood)}{" "}
-                          <span className="text-white/45">({count})</span>
-                        </span>
+            <BadgeShelf states={badgeStates} onOpen={setOpenBadge} />
+
+            <div
+              role="tablist"
+              aria-label="Journey"
+              className="mt-10 flex gap-1 border-b border-white/[0.08]"
+            >
+              {tabs.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`-mb-px flex items-center gap-2 border-b-2 px-3 pb-3 text-sm font-semibold transition md:px-4 ${
+                    tab === t.key
+                      ? "border-[#B724EA] text-white"
+                      : "border-transparent text-white/55 hover:text-white"
+                  }`}
+                >
+                  {t.label}
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+                      tab === t.key
+                        ? "bg-[#A020F0]/25 text-[#E9D5FF]"
+                        : "bg-white/[0.06] text-white/50"
+                    }`}
+                  >
+                    {t.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6">
+              {tab === "upcoming" ? (
+                <>
+                  <MyPassesSection
+                    events={allEvents ?? []}
+                    bookings={bookings ?? []}
+                    onDownloadTicket={(booking, event) =>
+                      void handleDownloadTicket(booking, event)
+                    }
+                    downloadingTicketId={downloadingTicketId}
+                  />
+                  {upcoming.length > 0 ? (
+                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                      {upcoming.map(({ booking, event }) => (
+                        <UpcomingCard
+                          key={booking.id}
+                          booking={booking}
+                          event={event}
+                          host={hostById.get(event.host_id)}
+                          downloading={downloadingTicketId === booking.id}
+                          onTicket={() =>
+                            void handleDownloadTicket(booking, event)
+                          }
+                          onInbox={() => setActiveInboxEventId(event.id)}
+                          onCancel={() => setActiveCancelBookingId(booking.id)}
+                        />
                       ))}
                     </div>
-                  </div>
-                )}
-              </aside>
+                  ) : (
+                    <Empty
+                      title="Nothing planned yet"
+                      text="Your next chapter starts with a booking. It'll show up here with your ticket."
+                    />
+                  )}
+                </>
+              ) : tab === "memories" ? (
+                <div className="max-w-3xl">
+                  {moments.length > 0 ? (
+                    <MemoryTimeline
+                      moments={moments}
+                      badgesByBooking={badgesByBooking}
+                      onReview={setActiveReviewEventId}
+                      onBadge={setOpenBadge}
+                    />
+                  ) : (
+                    <Empty
+                      title="No memories yet"
+                      text="Every experience you go to becomes a page in your story. The first one even earns a badge."
+                    />
+                  )}
 
-              <div>
-                <h2 className="font-outfit mb-3 text-[15px] font-semibold">
-                  Your Memories
-                </h2>
-                {completed.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                    {completed.map(({ booking, event }) => (
-                      <div
-                        key={booking.id}
-                        className={`flex flex-col overflow-hidden ${CARD}`}
+                  {cancelled.length > 0 && (
+                    <details className="mt-8">
+                      <summary className="cursor-pointer text-sm font-semibold text-white/55 hover:text-white">
+                        Cancelled plans ({cancelled.length})
+                      </summary>
+                      <div className="mt-3 flex flex-col gap-2">
+                        {cancelled.map(({ booking, event }) => (
+                          <Link
+                            key={booking.id}
+                            href={`/experience/${event.slug}`}
+                            className={`flex items-center justify-between gap-3 px-4 py-3 text-sm ${CARD}`}
+                          >
+                            <span className="truncate text-white/75">
+                              {event.title}
+                            </span>
+                            <span className="flex shrink-0 items-center gap-3 text-xs text-white/45">
+                              {formatIST(booking.occurrence_date, "MMM d")}
+                              <StatusPill status={booking.status} />
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </div>
+              ) : savedEvents.length > 0 ? (
+                <>
+                  <p className="mb-4 text-sm text-white/55">
+                    Chapters you&apos;re saving for later.
+                  </p>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                    {savedEvents.map(({ saved: s, event }) => (
+                      <Link
+                        key={s.id}
+                        href={`/experience/${event.slug}`}
+                        className={`group flex flex-col overflow-hidden ${CARD}`}
                       >
-                        <Link
-                          href={`/experience/${event.slug}`}
-                          className="h-[140px] overflow-hidden"
-                        >
+                        <div className="relative aspect-[4/5] overflow-hidden">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={event.cover_image_url ?? FALLBACK_COVER}
                             alt={event.title}
                             loading="lazy"
-                            className="h-full w-full object-cover"
+                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                           />
-                        </Link>
-                        <div className="flex flex-1 flex-col p-3">
-                          <p className="line-clamp-2 text-[13px] leading-5 font-semibold">
+                          <span className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 backdrop-blur">
+                            <FiHeart className="h-3.5 w-3.5 fill-[#F472B6] text-[#F472B6]" />
+                          </span>
+                        </div>
+                        <div className="p-3">
+                          <p className="truncate text-[13px] font-semibold">
                             {event.title}
                           </p>
-                          <p className="mt-1 flex items-center gap-1 text-xs text-white/55">
-                            {event.avg_rating ? (
-                              <>
-                                <FiStar className="h-3 w-3 fill-amber-400 text-amber-400" />
-                                <span className="font-semibold text-amber-400">
-                                  {event.avg_rating.toFixed(1)}
-                                </span>
-                                <span>·</span>
-                              </>
-                            ) : null}
-                            {formatIST(booking.occurrence_date, "MMM d")}
+                          <p className="mt-0.5 text-[11px] text-white/50">
+                            {categoryOf(event).label} · Saved{" "}
+                            {formatIST(s.saved_at, "MMM d")}
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => setActiveReviewEventId(event.id)}
-                            className="mt-auto pt-2 text-left text-xs font-semibold text-[#D8B4FE] hover:text-white"
-                          >
-                            Add review
-                          </button>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
-                ) : (
-                  <Empty
-                    title="No memories yet"
-                    text="Experiences you've attended will collect here."
-                  />
-                )}
-
-                {cancelled.length > 0 && (
-                  <div className="mt-8">
-                    <h2 className="font-outfit mb-3 text-[15px] font-semibold text-white/70">
-                      Cancelled
-                    </h2>
-                    <div className="flex flex-col gap-2">
-                      {cancelled.map(({ booking, event }) => (
-                        <Link
-                          key={booking.id}
-                          href={`/experience/${event.slug}`}
-                          className={`flex items-center justify-between gap-3 px-4 py-3 text-sm ${CARD}`}
-                        >
-                          <span className="truncate text-white/75">
-                            {event.title}
-                          </span>
-                          <span className="flex shrink-0 items-center gap-3 text-xs text-white/45">
-                            {formatIST(booking.occurrence_date, "MMM d")}
-                            <StatusPill status={booking.status} />
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                </>
+              ) : (
+                <Empty
+                  title="Nothing saved yet"
+                  text="Tap the heart on any experience to keep it here for later."
+                />
+              )}
             </div>
-          ) : savedEvents.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {savedEvents.map(({ saved: s, event }) => (
-                <Link
-                  key={s.id}
-                  href={`/experience/${event.slug}`}
-                  className={`group flex flex-col overflow-hidden ${CARD}`}
-                >
-                  <div className="h-[150px] overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={event.cover_image_url ?? FALLBACK_COVER}
-                      alt={event.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                  <div className="p-3">
-                    <p className="truncate text-[13px] font-semibold">
-                      {event.title}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-white/50">
-                      {event.mood
-                        ? `${getMoodDisplayLabel(event.mood)} · `
-                        : ""}
-                      Saved {formatIST(s.saved_at, "MMM d")}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <Empty
-              title="Nothing saved yet"
-              text="Tap the heart on any experience to keep it here for later."
-            />
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       <components.Home.Footer dark />
 
-      {/* Inbox Sidebar */}
+      {openBadge && (
+        <BadgeSheet state={openBadge} onClose={() => setOpenBadge(null)} />
+      )}
+
       {activeInboxEventId && userId && (
         <InboxSidebar
           eventId={activeInboxEventId}
-          hostId={
-            bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)
-              ?.event.host_id ?? ""
-          }
-          eventTitle={
-            bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)
-              ?.event.title ?? "Event"
-          }
+          hostId={eventById.get(activeInboxEventId)?.host_id ?? ""}
+          eventTitle={eventById.get(activeInboxEventId)?.title ?? "Event"}
           participantCount={
-            bookingsWithEvents.find((b) => b.event.id === activeInboxEventId)
-              ?.event.total_bookings ?? 0
+            eventById.get(activeInboxEventId)?.total_bookings ?? 0
           }
           userId={userId}
           isOpen={!!activeInboxEventId}
@@ -700,30 +1150,20 @@ export default function ActivitiesPage() {
         />
       )}
 
-      {/* Review Modal */}
       {activeReviewEventId && userId && (
         <ReviewModal
           eventId={activeReviewEventId}
-          hostId={
-            bookingsWithEvents.find((b) => b.event.id === activeReviewEventId)
-              ?.event.host_id ?? ""
-          }
-          eventTitle={
-            bookingsWithEvents.find((b) => b.event.id === activeReviewEventId)
-              ?.event.title ?? "Event"
-          }
+          hostId={eventById.get(activeReviewEventId)?.host_id ?? ""}
+          eventTitle={eventById.get(activeReviewEventId)?.title ?? "Event"}
           userId={userId}
           isOpen={!!activeReviewEventId}
           onClose={() => setActiveReviewEventId(null)}
-          onSuccess={() => {
-            // Optional: show success message or refresh reviews
-          }}
+          onSuccess={() => undefined}
         />
       )}
 
-      {/* Cancellation Modal */}
       {activeCancelBookingId && (
-        <div className="animate-in fade-in fixed inset-0 z-[260] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm duration-300">
+        <div className="animate-in fade-in msm-modal fixed inset-0 z-[260] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm duration-300">
           <div className="animate-in zoom-in-95 w-full max-w-sm rounded-2xl border border-white/10 bg-[#131328] p-6 text-white shadow-2xl duration-300">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/15">

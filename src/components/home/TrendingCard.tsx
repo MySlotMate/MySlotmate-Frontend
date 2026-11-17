@@ -15,7 +15,7 @@ const TrendingCard = ({ title, imageUrl, pricing }: TrendingCardProps) => {
         className="h-[90%] w-full rounded-2xl object-cover"
       />
       <h2 className="text-sm font-medium text-[#000000]">{title}</h2>
-      <p className="text-xs text-[#0094CA]">{pricing}</p>
+      <p className="text-xs text-[#D8B4FE]">{pricing}</p>
     </div>
   );
 };

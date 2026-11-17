@@ -9,17 +9,22 @@ import { GRADIENT } from "./shared";
 
 /** Every photo from the community section: real MySlotMate events. */
 const MOMENTS = [
+  ["/Event Photos/sip-and-paint/sip-and-paint.webp", "Sip & Paint"],
   ["/Event Photos/plate-to-fame/IMG-20260621-WA0023.webp", "Plate to Fame"],
-  ["/Event Photos/Chrochet event/IMG_1134.webp", "Crochet Event"],
+  ["/Event Photos/open-mic/openmic.webp", "Open Mic"],
+  ["/Event Photos/Chrochet event/IMG_1134.webp", "Crochet Circle"],
   ["/Event Photos/plate-to-fame/IMG-20260621-WA0051.webp", "Plate to Fame"],
-  ["/Event Photos/Chrochet event/IMG_1141.webp", "Crochet Event"],
+  ["/Event Photos/open-mic/openmic4.webp", "Open Mic"],
+  ["/Event Photos/Chrochet event/IMG_1141.webp", "Crochet Circle"],
   ["/Event Photos/plate-to-fame/IMG-20260621-WA0069.webp", "Plate to Fame"],
-  ["/Event Photos/Chrochet event/IMG_1142.webp", "Crochet Event"],
+  ["/Event Photos/open-mic/openmic2.webp", "Open Mic"],
+  ["/Event Photos/Chrochet event/IMG_1142.webp", "Crochet Circle"],
   [
     "/Event Photos/plate-to-fame/WhatsApp Image 2026-06-22 at 9.02.51 AM.webp",
     "Plate to Fame",
   ],
-  ["/Event Photos/Chrochet event/IMG_1155.webp", "Crochet Event"],
+  ["/Event Photos/open-mic/openmic3.webp", "Open Mic"],
+  ["/Event Photos/Chrochet event/IMG_1155.webp", "Crochet Circle"],
 ] as const;
 
 /**
@@ -85,10 +90,10 @@ export default function Hero() {
       <CitySky />
 
       <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center px-5 pt-8 text-center md:px-10 md:pt-12">
-        <h1 className="font-outfit msm-rise max-w-[11ch] text-[clamp(46px,6.4vw,92px)] leading-[1] font-extrabold tracking-[-0.035em] text-balance text-white md:max-w-[17ch]">
+        <h1 className="font-outfit msm-rise max-w-[11ch] text-[clamp(46px,6.4vw,92px)] leading-[1] font-light tracking-[-0.035em] text-balance text-white md:max-w-[17ch]">
           Life happens when you{" "}
           <span
-            className={`${GRADIENT} bg-clip-text pr-[0.04em] text-transparent`}
+            className={`${GRADIENT} bg-clip-text pr-[0.04em] font-medium text-transparent`}
           >
             show&nbsp;up.
           </span>
@@ -109,7 +114,7 @@ export default function Hero() {
             onClick={handleListTimeClick}
             className="flex items-center gap-1.5 text-[15px] font-medium text-[#A5A8C3] transition hover:text-white"
           >
-            or share something you love <ArrowRight className="h-4 w-4" />
+            or host your own, free <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       </div>

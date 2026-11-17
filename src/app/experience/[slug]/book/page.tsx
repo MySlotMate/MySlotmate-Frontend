@@ -22,15 +22,14 @@ import AttendeeDetailsForm, {
   type AttendeeValues,
 } from "~/components/booking/AttendeeDetailsForm";
 import {
-  FiArrowLeft,
+  FiChevronDown,
   FiCalendar,
   FiClock,
   FiLock,
   FiMapPin,
   FiShield,
-  FiUsers,
 } from "react-icons/fi";
-import { LuLoader2, LuTicket, LuWallet } from "react-icons/lu";
+import { LuLoader2, LuWallet } from "react-icons/lu";
 import { formatIST } from "~/lib/datetime";
 import { unlockEvent, validateCoupon } from "~/lib/api";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -41,6 +40,10 @@ import {
   useWithdrawJoinRequest,
 } from "~/hooks/useApi";
 import JoinRequestModal from "~/components/experience/JoinRequestModal";
+import BookingShell, {
+  StickyAction,
+  WHITE_PILL,
+} from "~/components/experience/BookingShell";
 import { toast } from "sonner";
 
 export const runtime = "edge";
@@ -104,26 +107,6 @@ const GRADIENT_BTN =
 const INPUT =
   "min-w-0 flex-1 rounded-xl border border-white/10 bg-[#121426] px-4 py-2.5 text-sm text-white outline-none placeholder:text-white/40 focus:border-[#9B30FF]";
 
-function SummaryRow({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex min-h-11 items-center justify-between gap-3 rounded-xl bg-[#131328] px-4 py-2.5 text-sm">
-      <span className="flex shrink-0 items-center gap-2 text-white/55">
-        <Icon className="h-4 w-4" />
-        {label}
-      </span>
-      <span className="text-right font-semibold text-white">{value}</span>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------ */
 /*  Booking Form Content                                               */
 /* ------------------------------------------------------------------ */
@@ -135,6 +118,7 @@ function BookingContent({ eventId }: { eventId: string }) {
   const [userEmail, setUserEmail] = useState<string | undefined>();
   const [userPhone, setUserPhone] = useState<string | undefined>();
   const [note, setNote] = useState("");
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -621,7 +605,7 @@ function BookingContent({ eventId }: { eventId: string }) {
           contact: userPhone,
         },
         theme: {
-          color: "#0094CA",
+          color: "#A020F0",
         },
         modal: {
           ondismiss: () => {
@@ -780,7 +764,7 @@ function BookingContent({ eventId }: { eventId: string }) {
     ) : hasInsufficientBalance ? (
       `Pay ₹${(shortfall / 100).toFixed(0)} & Confirm (₹${(walletBalance / 100).toFixed(0)} from wallet)`
     ) : (
-      `Confirm & Pay ${formatRupees(totalPriceCents)}`
+      `Pay now · ${formatRupees(totalPriceCents)}`
     );
 
   const payButton = (
@@ -788,18 +772,18 @@ function BookingContent({ eventId }: { eventId: string }) {
       type="button"
       onClick={handleConfirmBooking}
       disabled={payDisabled}
-      className={`flex min-h-12 w-full items-center justify-center gap-2 rounded-full px-4 py-3 text-sm font-semibold ${GRADIENT_BTN}`}
+      className={WHITE_PILL}
     >
       {payLabel}
     </button>
   );
 
-  const totals = (
-    <div className="flex flex-col gap-2 text-sm">
+  const breakdown = (
+    <div className="flex flex-col gap-2 px-5 pb-4 text-sm">
       {grossPriceCents > 0 && (
         <div className="flex justify-between text-white/60">
           <span>
-            Subtotal
+            Tickets
             {guests > 1 &&
               ` (${guests} × ${formatRupees(Math.round(pricePerPerson * 100))})`}
           </span>
@@ -812,33 +796,20 @@ function BookingContent({ eventId }: { eventId: string }) {
           <span>−{formatRupees(discountCents)}</span>
         </div>
       )}
+      {isComped && (
+        <div className="flex justify-between text-emerald-300">
+          <span>Free booking code</span>
+          <span>−{formatRupees(grossPriceCents)}</span>
+        </div>
+      )}
       {platformFeeCents > 0 && (
         <div className="flex justify-between text-white/60">
           <span>
-            Service Fee{feeIsPercentage ? ` (${feePercentage}%)` : ""}
+            Service fee{feeIsPercentage ? ` (${feePercentage}%)` : ""}
           </span>
           <span className="text-white">{formatRupees(platformFeeCents)}</span>
         </div>
       )}
-      <div className="mt-1 flex items-baseline justify-between">
-        <span className="font-outfit text-base font-semibold text-white">
-          Total
-        </span>
-        {isComped ? (
-          <span className="flex items-baseline gap-2">
-            <span className="text-sm text-white/45 line-through">
-              {formatRupees(grossPriceCents)}
-            </span>
-            <span className="font-outfit text-lg font-bold text-emerald-300">
-              FREE
-            </span>
-          </span>
-        ) : (
-          <span className="font-outfit text-lg font-bold text-[#D8B4FE]">
-            {totalPriceCents === 0 ? "Free" : formatRupees(totalPriceCents)}
-          </span>
-        )}
-      </div>
     </div>
   );
 
@@ -846,11 +817,8 @@ function BookingContent({ eventId }: { eventId: string }) {
   // (Razorpay) first — so the "payment method" is the wallet.
   const paymentMethod =
     !event.is_free && totalPriceCents > 0 ? (
-      <div className="mt-5 border-t border-white/10 pt-5">
-        <h3 className="font-outfit text-[15px] font-semibold text-white">
-          Payment Method
-        </h3>
-        <div className="mt-3 flex h-11 items-center justify-between gap-3 rounded-xl bg-[#121426] px-4 text-sm">
+      <div className="mt-4">
+        <div className="flex h-12 items-center justify-between gap-3 rounded-2xl border border-white/10 px-4 text-sm">
           <span className="flex items-center gap-2 text-white/80">
             <LuWallet className="h-4 w-4 text-white/55" />
             Wallet ·{" "}
@@ -863,383 +831,389 @@ function BookingContent({ eventId }: { eventId: string }) {
           <span
             className={`text-xs font-semibold ${hasInsufficientBalance ? "text-[#D8B4FE]" : "text-emerald-300"}`}
           >
-            {hasInsufficientBalance ? "Low balance" : "Covers total"}
+            {hasInsufficientBalance ? "Rest by card/UPI" : "Covers total"}
           </span>
         </div>
         {hasInsufficientBalance && (
           <p className="mt-2 text-xs leading-5 text-white/55">
             The remaining ₹{(shortfall / 100).toFixed(0)} is paid by card/UPI
-            when you confirm, then your booking is completed.
+            when you pay, then your booking is completed.
           </p>
         )}
       </div>
     ) : null;
 
   const hostName = host ? `${host.first_name} ${host.last_name}`.trim() : null;
+  const DIV = "my-8 border-t border-white/10";
+  const detailRow = (label: string, value: string | undefined) =>
+    value ? (
+      <div className="flex items-baseline justify-between gap-4 text-[15px]">
+        <span className="shrink-0 text-white/55">{label}</span>
+        <span className="min-w-0 truncate text-right font-medium text-white">
+          {value}
+        </span>
+      </div>
+    ) : null;
+  const ticketsHref = `/experience/${event.slug || eventId}/tickets${date ? `?date=${encodeURIComponent(date)}` : ""}`;
 
   return (
-    <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-lg:pb-28 md:pl-20 min-[80rem]:pl-[230px]">
-      <div className="mx-auto w-full max-w-[1160px] px-6 pt-6 pb-12 md:px-10 md:pt-10">
-        <header className="flex items-center gap-3">
-          <button
-            type="button"
-            aria-label="Go back"
-            onClick={() =>
-              window.history.length > 1 ? router.back() : router.push("/")
-            }
-            className="flex h-9 w-9 items-center justify-center rounded-full text-white transition hover:bg-white/10"
-          >
-            <FiArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="font-outfit text-[22px] leading-7 font-bold">
-            Booking Summary
-          </h1>
-        </header>
-
-        <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="flex min-w-0 flex-col gap-3">
-            {/* Experience */}
-            <div className={`flex items-center gap-3 p-3 ${CARD}`}>
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white/5">
-                {event.cover_image_url && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={event.cover_image_url}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="font-outfit line-clamp-2 text-[15px] leading-5 font-semibold text-white">
-                  {event.title}
+    <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white">
+      <BookingShell
+        poster={event.cover_image_url ?? event.gallery_urls?.[0]}
+        title={event.title}
+        onBack={() =>
+          window.history.length > 1 ? router.back() : router.push("/")
+        }
+        step={2}
+        ticketsHref={ticketsHref}
+      >
+        {/* Event */}
+        <div className="flex gap-4 rounded-[24px] border border-white/10 bg-[#121426]/60 p-4">
+          {(event.cover_image_url ?? event.gallery_urls?.[0]) && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={event.cover_image_url ?? event.gallery_urls?.[0] ?? ""}
+              alt=""
+              className="hidden aspect-[4/5] w-20 shrink-0 rounded-xl object-cover sm:block"
+            />
+          )}
+          <div className="flex min-w-0 flex-col justify-between gap-3">
+            <div>
+              <p className="font-outfit line-clamp-2 text-lg leading-snug font-semibold text-white">
+                {event.title}
+              </p>
+              {hostName && (
+                <p className="mt-1 truncate text-sm text-white/60">
+                  by {hostName}
                 </p>
-                {hostName && (
-                  <p className="mt-0.5 truncate text-[13px] text-white/60">
-                    Hosted by {hostName}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-white/70">
+              <span className="flex items-center gap-1.5">
+                <FiClock className="h-4 w-4 text-white/45" />
+                {hasStart
+                  ? `${formatIST(startDate, "h:mm a")}${endDate ? ` – ${formatIST(endDate, "h:mm a")}` : ""}`
+                  : "TBD"}
+              </span>
+              <span className="flex items-center gap-1.5">
+                <FiCalendar className="h-4 w-4 text-white/45" />
+                {hasStart ? formatIST(startDate, "EEE, d MMM yyyy") : "TBD"}
+              </span>
+              <span className="flex min-w-0 items-center gap-1.5">
+                <FiMapPin className="h-4 w-4 shrink-0 text-white/45" />
+                <span className="truncate">
+                  {event.is_online ? "Online" : (event.location ?? "TBA")}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
 
-            <SummaryRow
-              icon={FiCalendar}
-              label="Date"
-              value={
-                hasStart ? formatIST(startDate, "EEEE, MMM d, yyyy") : "TBD"
-              }
-            />
-            <SummaryRow
-              icon={FiClock}
-              label="Time"
-              value={
-                hasStart
-                  ? `${formatIST(startDate, "h:mm a")}${endDate ? ` - ${formatIST(endDate, "h:mm a")}` : ""}`
-                  : "TBD"
-              }
-            />
-            <SummaryRow
-              icon={FiMapPin}
-              label="Location"
-              value={event.is_online ? "Online" : (event.location ?? "TBA")}
-            />
-            <SummaryRow
-              icon={FiUsers}
-              label="Guests"
-              value={`${guests} ${guests === 1 ? "Person" : "People"}`}
-            />
-            {selectedTier && (
-              <SummaryRow
-                icon={LuTicket}
-                label="Ticket"
-                value={selectedTier.name}
-              />
-            )}
+        <div className={DIV} />
 
-            {/* Say so rather than silently omitting the form — a guest who
+        {/* Your details */}
+        <section>
+          <h2 className="font-outfit mb-4 text-lg font-semibold text-white">
+            Your details
+          </h2>
+          <div className="flex flex-col gap-3">
+            {detailRow("Name", userProfile?.name ?? userName)}
+            {detailRow("Contact", userProfile?.phn_number ?? userPhone)}
+            {detailRow("Email", userEmail)}
+          </div>
+          {/* Say so rather than silently omitting the form — a guest who
                 filled these in to request the session should see that they
                 carried over. */}
-            {attendeeCollectedAtRequest && (
-              <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
-                We&apos;ve used the details you sent with your request — nothing
-                more to fill in.
+          {attendeeCollectedAtRequest && (
+            <div className="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+              We&apos;ve used the details you sent with your request — nothing
+              more to fill in.
+            </div>
+          )}
+
+          {/* Attendee details — required by the event, and not already
+                gathered with the guest's join request. */}
+          {requiresAttendee &&
+            attendeeFields.length > 0 &&
+            !attendeeCollectedAtRequest && (
+              <div className="mt-5">
+                <AttendeeDetailsForm
+                  dark
+                  fields={attendeeFields}
+                  values={attendeeValues}
+                  onChange={setAttendeeValue}
+                  showErrors={showAttendeeErrors}
+                />
               </div>
             )}
 
-            {/* Attendee details — required by the event, and not already
-                gathered with the guest's join request. */}
-            {requiresAttendee &&
-              attendeeFields.length > 0 &&
-              !attendeeCollectedAtRequest && (
-                <div className="mt-3">
-                  <AttendeeDetailsForm
-                    dark
-                    fields={attendeeFields}
-                    values={attendeeValues}
-                    onChange={setAttendeeValue}
-                    showErrors={showAttendeeErrors}
-                  />
+          {/* Private-event gate — a join request for RSVP events, else a passkey */}
+          {isRsvpGated ? (
+            <div className="mt-5">
+              {joinApproved ? (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-200">
+                  <FiLock size={16} /> Approved
+                  {date ? ` for ${formatIST(date, "eee d MMM, h:mm a")}` : ""} —
+                  you can book
+                </div>
+              ) : myJoinRequest?.status === "pending" ? (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+                  <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-amber-200">
+                    <FiLock size={16} /> Request sent
+                  </div>
+                  <p className="text-sm text-amber-100/80">
+                    The host is reviewing your request
+                    {date ? ` for ${formatIST(date, "eee d MMM, h:mm a")}` : ""}
+                    . We&apos;ll email you as soon as they decide.
+                  </p>
+                  {/* A live request blocks sending another one, so the guest
+                        needs a way to take it back and start over. */}
+                  <button
+                    type="button"
+                    disabled={withdrawJoinRequest.isPending}
+                    onClick={() =>
+                      withdrawJoinRequest.mutate(
+                        {
+                          requestId: myJoinRequest.id,
+                          eventId,
+                          occurrenceDate: date || undefined,
+                        },
+                        {
+                          onSuccess: () => toast.success("Request withdrawn"),
+                          onError: (err: Error) =>
+                            toast.error(
+                              err.message || "Could not withdraw the request",
+                            ),
+                        },
+                      )
+                    }
+                    className="mt-3 text-sm font-semibold text-amber-200 underline underline-offset-2 transition hover:text-amber-100 disabled:opacity-50"
+                  >
+                    {withdrawJoinRequest.isPending
+                      ? "Withdrawing…"
+                      : "Withdraw my request"}
+                  </button>
+                </div>
+              ) : myJoinRequest?.status === "rejected" ? (
+                <div className={`p-4 ${CARD}`}>
+                  <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-white">
+                    <FiLock size={16} /> Request declined
+                  </div>
+                  <p className="text-sm text-white/60">
+                    The host wasn&apos;t able to accept your request for this
+                    experience.
+                  </p>
+                  {myJoinRequest.review_note && (
+                    <p className="mt-2 text-sm text-white/70 italic">
+                      &ldquo;{myJoinRequest.review_note}&rdquo;
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className={`p-4 ${CARD}`}>
+                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+                    <FiLock size={16} /> Private experience
+                  </div>
+                  <p className="mb-3 text-sm text-white/60">
+                    This experience is by request. Send the host your details
+                    and they&apos;ll get back to you.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowJoinModal(true)}
+                    className={`rounded-full px-5 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
+                  >
+                    Request to join
+                  </button>
                 </div>
               )}
-
-            {/* Private-event gate — a join request for RSVP events, else a passkey */}
-            {isRsvpGated ? (
-              <div className="mt-3">
-                {joinApproved ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-200">
-                    <FiLock size={16} /> Approved
-                    {date
-                      ? ` for ${formatIST(date, "eee d MMM, h:mm a")}`
-                      : ""}{" "}
-                    — you can book
+            </div>
+          ) : Boolean(event.is_private) || Boolean(event.access_passkey) ? (
+            <div className="mt-5">
+              {passkeyValid ? (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-200">
+                  <FiLock size={16} /> Unlocked
+                  {couponComps && " — this booking is free"}
+                  {couponDiscountPct && ` — ${couponDiscountPct}% off`}
+                </div>
+              ) : (
+                <div className={`p-4 ${CARD}`}>
+                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
+                    <FiLock size={16} /> Private experience
                   </div>
-                ) : myJoinRequest?.status === "pending" ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
-                    <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-amber-200">
-                      <FiLock size={16} /> Request sent
-                    </div>
-                    <p className="text-sm text-amber-100/80">
-                      The host is reviewing your request
-                      {date
-                        ? ` for ${formatIST(date, "eee d MMM, h:mm a")}`
-                        : ""}
-                      . We&apos;ll email you as soon as they decide.
-                    </p>
-                    {/* A live request blocks sending another one, so the guest
-                        needs a way to take it back and start over. */}
+                  <p className="mb-3 text-sm text-white/60">
+                    Enter the passkey your host shared to book.
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={passkey}
+                      onChange={(e) => {
+                        setPasskey(e.target.value);
+                        setPasskeyError(false);
+                        setUnlockMessage(null);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") void handleUnlock();
+                      }}
+                      placeholder="Passkey"
+                      className={`${INPUT} ${passkeyError ? "!border-red-400" : ""}`}
+                    />
                     <button
                       type="button"
-                      disabled={withdrawJoinRequest.isPending}
-                      onClick={() =>
-                        withdrawJoinRequest.mutate(
-                          {
-                            requestId: myJoinRequest.id,
-                            eventId,
-                            occurrenceDate: date || undefined,
-                          },
-                          {
-                            onSuccess: () => toast.success("Request withdrawn"),
-                            onError: (err: Error) =>
-                              toast.error(
-                                err.message || "Could not withdraw the request",
-                              ),
-                          },
-                        )
-                      }
-                      className="mt-3 text-sm font-semibold text-amber-200 underline underline-offset-2 transition hover:text-amber-100 disabled:opacity-50"
+                      onClick={() => void handleUnlock()}
+                      disabled={unlocking || !passkey.trim()}
+                      className={`rounded-xl px-5 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
                     >
-                      {withdrawJoinRequest.isPending
-                        ? "Withdrawing…"
-                        : "Withdraw my request"}
+                      {unlocking ? "…" : "Unlock"}
                     </button>
                   </div>
-                ) : myJoinRequest?.status === "rejected" ? (
-                  <div className={`p-4 ${CARD}`}>
-                    <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-white">
-                      <FiLock size={16} /> Request declined
-                    </div>
-                    <p className="text-sm text-white/60">
-                      The host wasn&apos;t able to accept your request for this
-                      experience.
+                  {passkeyError && (
+                    <p className="mt-2 text-sm text-red-400">
+                      {unlockMessage ?? "That passkey isn't right — try again."}
                     </p>
-                    {myJoinRequest.review_note && (
-                      <p className="mt-2 text-sm text-white/70 italic">
-                        &ldquo;{myJoinRequest.review_note}&rdquo;
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className={`p-4 ${CARD}`}>
-                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
-                      <FiLock size={16} /> Private experience
-                    </div>
-                    <p className="mb-3 text-sm text-white/60">
-                      This experience is by request. Send the host your details
-                      and they&apos;ll get back to you.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowJoinModal(true)}
-                      className={`rounded-full px-5 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
-                    >
-                      Request to join
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : Boolean(event.is_private) || Boolean(event.access_passkey) ? (
-              <div className="mt-3">
-                {passkeyValid ? (
-                  <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-200">
-                    <FiLock size={16} /> Unlocked
-                    {couponComps && " — this booking is free"}
-                    {couponDiscountPct && ` — ${couponDiscountPct}% off`}
-                  </div>
-                ) : (
-                  <div className={`p-4 ${CARD}`}>
-                    <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-white">
-                      <FiLock size={16} /> Private experience
-                    </div>
-                    <p className="mb-3 text-sm text-white/60">
-                      Enter the passkey your host shared to book.
-                    </p>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={passkey}
-                        onChange={(e) => {
-                          setPasskey(e.target.value);
-                          setPasskeyError(false);
-                          setUnlockMessage(null);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") void handleUnlock();
-                        }}
-                        placeholder="Passkey"
-                        className={`${INPUT} ${passkeyError ? "!border-red-400" : ""}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => void handleUnlock()}
-                        disabled={unlocking || !passkey.trim()}
-                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
-                      >
-                        {unlocking ? "…" : "Unlock"}
-                      </button>
-                    </div>
-                    {passkeyError && (
-                      <p className="mt-2 text-sm text-red-400">
-                        {unlockMessage ??
-                          "That passkey isn't right — try again."}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : null}
-
-            {/* Coupon field — passkey and coupon are independent. The coupon is
-                always available on a paid booking; for a private event it
-                appears once the passkey has unlocked it (needsUnlock is false). */}
-            {!needsUnlock &&
-              !event.is_free &&
-              grossPriceCents > 0 &&
-              !isComped && (
-                <div className="mt-3">
-                  {appliedCoupon ? (
-                    <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-                      <span className="text-sm font-medium text-emerald-200">
-                        ✓ {appliedCoupon} applied
-                        {couponComps
-                          ? " — this booking is free"
-                          : couponDiscountPct
-                            ? ` — ${couponDiscountPct}% off`
-                            : " — access unlocked, you’ll still pay"}
-                      </span>
-                      {/* A code that unlocked the event is sent as the passkey
-                          and applied by the server anyway, so it can't be
-                          removed. */}
-                      {appliedCoupon.toLowerCase() !==
-                        passkey.trim().toLowerCase() && (
-                        <button
-                          type="button"
-                          onClick={removeCoupon}
-                          className="text-sm font-medium text-white/60 hover:text-white"
-                        >
-                          Remove
-                        </button>
-                      )}
-                    </div>
-                  ) : (
-                    <div>
-                      <label
-                        htmlFor="coupon"
-                        className="mb-2 block text-sm font-medium text-white/80"
-                      >
-                        Have a coupon?
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          id="coupon"
-                          type="text"
-                          value={couponInput}
-                          onChange={(e) => {
-                            setCouponInput(e.target.value.toUpperCase());
-                            setCouponError(null);
-                          }}
-                          placeholder="Coupon code"
-                          className={`${INPUT} uppercase`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void handleApplyCoupon()}
-                          disabled={couponChecking || !couponInput.trim()}
-                          className="rounded-xl border border-[#9B30FF] px-5 py-2.5 text-sm font-semibold text-[#E3CCFF] transition hover:bg-[#9B30FF]/15 disabled:opacity-50"
-                        >
-                          {couponChecking ? "…" : "Apply"}
-                        </button>
-                      </div>
-                      {couponError && (
-                        <p className="mt-2 text-sm text-red-400">
-                          {couponError}
-                        </p>
-                      )}
-                    </div>
                   )}
                 </div>
               )}
-
-            {/* Note for host */}
-            <div className="mt-3">
-              <label
-                htmlFor="host-note"
-                className="mb-2 block text-sm font-medium text-white/80"
-              >
-                Add a note for the host
-              </label>
-              <textarea
-                id="host-note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="Introduce yourself or share any special requests..."
-                rows={3}
-                className={`${INPUT} w-full resize-none`}
-              />
             </div>
+          ) : null}
+        </section>
 
-            {/* Tablet + mobile: totals and payment sit in the page flow */}
-            <div className="mt-5 border-t border-white/10 pt-5 lg:hidden">
-              {totals}
-              {paymentMethod}
-              <p className="mt-4 text-xs leading-5 text-white/50">
-                {cancellationCopy}
-              </p>
-            </div>
-          </div>
+        <div className={DIV} />
 
-          {/* Desktop: price card */}
-          <aside className="hidden lg:block">
-            <div className={`sticky top-10 p-5 ${CARD}`}>
-              {totals}
-              {paymentMethod}
-              <p className="mt-5 text-xs leading-5 text-white/50">
-                {cancellationCopy}
-              </p>
-              <div className="mt-5">{payButton}</div>
-              <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-white/45">
-                <FiShield className="h-3.5 w-3.5 shrink-0" />
-                Chat with {host?.first_name ?? "the host"} unlocks once
-                confirmed.
-              </p>
-            </div>
-          </aside>
+        {/* Order */}
+        <div className="flex items-baseline justify-between gap-4">
+          <p className="font-outfit text-lg font-semibold text-white">
+            {selectedTier?.name ?? "Ticket"} × {guests}
+          </p>
+          <p className="font-outfit text-lg font-semibold text-white">
+            {grossPriceCents > 0 ? formatRupees(grossPriceCents) : "Free"}
+          </p>
         </div>
-      </div>
 
-      {/* Tablet + mobile: pay button pinned to the bottom */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0E0F1F]/95 px-6 pt-3 pb-[max(16px,env(safe-area-inset-bottom))] backdrop-blur-xl md:left-20 lg:hidden">
-        <div className="mx-auto max-w-[608px]">{payButton}</div>
-      </div>
+        {/* Coupon field — passkey and coupon are independent. The coupon is
+                always available on a paid booking; for a private event it
+                appears once the passkey has unlocked it (needsUnlock is false). */}
+        {!needsUnlock && !event.is_free && grossPriceCents > 0 && !isComped && (
+          <div className="mt-5">
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+                <span className="text-sm font-medium text-emerald-200">
+                  ✓ {appliedCoupon} applied
+                  {couponComps
+                    ? " — this booking is free"
+                    : couponDiscountPct
+                      ? ` — ${couponDiscountPct}% off`
+                      : " — access unlocked, you’ll still pay"}
+                </span>
+                {/* A code that unlocked the event is sent as the passkey
+                          and applied by the server anyway, so it can't be
+                          removed. */}
+                {appliedCoupon.toLowerCase() !==
+                  passkey.trim().toLowerCase() && (
+                  <button
+                    type="button"
+                    onClick={removeCoupon}
+                    className="text-sm font-medium text-white/60 hover:text-white"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div>
+                <label
+                  htmlFor="coupon"
+                  className="mb-2 block text-sm font-medium text-white/80"
+                >
+                  Have a coupon?
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    id="coupon"
+                    type="text"
+                    value={couponInput}
+                    onChange={(e) => {
+                      setCouponInput(e.target.value.toUpperCase());
+                      setCouponError(null);
+                    }}
+                    placeholder="Coupon code"
+                    className={`${INPUT} uppercase`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => void handleApplyCoupon()}
+                    disabled={couponChecking || !couponInput.trim()}
+                    className="rounded-xl border border-[#9B30FF] px-5 py-2.5 text-sm font-semibold text-[#E3CCFF] transition hover:bg-[#9B30FF]/15 disabled:opacity-50"
+                  >
+                    {couponChecking ? "…" : "Apply"}
+                  </button>
+                </div>
+                {couponError && (
+                  <p className="mt-2 text-sm text-red-400">{couponError}</p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* To pay */}
+        <div className="mt-5 overflow-hidden rounded-2xl bg-white/[0.07]">
+          <button
+            type="button"
+            onClick={() => setShowBreakdown((v) => !v)}
+            aria-expanded={showBreakdown}
+            className="flex h-16 w-full items-center justify-between gap-3 px-5 text-left"
+          >
+            <span className="font-outfit text-lg font-semibold text-white">
+              To pay
+            </span>
+            <span className="flex items-center gap-2">
+              {isComped && (
+                <span className="text-sm text-white/45 line-through">
+                  {formatRupees(grossPriceCents)}
+                </span>
+              )}
+              <span
+                className={`font-outfit text-xl font-bold ${isComped ? "text-emerald-300" : "text-white"}`}
+              >
+                {totalPriceCents === 0 ? "Free" : formatRupees(totalPriceCents)}
+              </span>
+              <FiChevronDown
+                className={`h-5 w-5 text-white/60 transition ${showBreakdown ? "rotate-180" : ""}`}
+              />
+            </span>
+          </button>
+          {showBreakdown && breakdown}
+        </div>
+        {paymentMethod}
+
+        {/* Note for host */}
+        <div className="mt-8">
+          <label
+            htmlFor="host-note"
+            className="mb-2 block text-sm font-medium text-white/80"
+          >
+            Note for the host <span className="text-white/40">(optional)</span>
+          </label>
+          <textarea
+            id="host-note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Introduce yourself or share any special requests..."
+            rows={3}
+            className={`${INPUT} w-full resize-none`}
+          />
+        </div>
+
+        <p className="mt-6 flex items-start gap-2 text-[13px] leading-5 text-white/50">
+          <FiShield className="mt-0.5 h-4 w-4 shrink-0" />
+          {cancellationCopy} Chat with {host?.first_name ?? "the host"} unlocks
+          once confirmed.
+        </p>
+
+        <StickyAction>{payButton}</StickyAction>
+      </BookingShell>
 
       <JoinRequestModal
         open={showJoinModal}

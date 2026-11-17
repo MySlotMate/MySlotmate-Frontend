@@ -32,11 +32,11 @@ export default function Preloader() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-[#f0f9ff] via-white to-[#f8fcff]">
+    <div className="msm-modal fixed inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-[#241333] via-[#121426] to-[#080914]">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-[#0094CA]/5 to-transparent blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-gradient-to-tr from-[#e6f8ff]/40 to-transparent blur-3xl" />
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-gradient-to-br from-[#A020F0]/5 to-transparent blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-gradient-to-tr from-[#241333]/40 to-transparent blur-3xl" />
       </div>
 
       {/* Main content */}
@@ -45,13 +45,13 @@ export default function Preloader() {
         <div className="relative h-32 w-32 md:h-40 md:w-40">
           {/* Outer rotating ring (slower) */}
           <div
-            className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#0094CA] border-r-[#0094CA]/40 opacity-70"
+            className="absolute inset-0 rounded-full border-2 border-transparent border-t-[#A020F0] border-r-[#A020F0]/40 opacity-70"
             style={{ animation: "spin 6s linear infinite" }}
           />
 
           {/* Middle pulsing ring (larger + visible) */}
           <div
-            className="absolute inset-2 rounded-full border border-[#0094CA]/20 opacity-80"
+            className="absolute inset-2 rounded-full border border-[#A020F0] opacity-80"
             style={{ animation: "ringPulse 2.4s ease-in-out infinite" }}
           />
 
@@ -59,8 +59,8 @@ export default function Preloader() {
           <div className="absolute inset-0 flex items-center justify-center">
             {/* Round logo with gentle float/scale/rotate animation */}
             <img
-              src="/assets/navbar/roundlogo.png"
-              alt="M logo"
+              src="/assets/brand/app-icon.png"
+              alt="MySlotMate"
               loading="lazy"
               className="h-24 w-24 transform-gpu rounded-full object-contain drop-shadow-lg md:h-32 md:w-32"
               style={{ animation: "logoFloat 2.6s ease-in-out infinite" }}

@@ -44,7 +44,7 @@ export default function SlotCard({
           </span>
         )}
       </div>
-      <div className="flex flex-col gap-2 px-4 pt-3.5 pb-4">
+      <div className="flex flex-1 flex-col gap-2 px-4 pt-3.5 pb-4">
         {host && (
           <p className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-white/60">
             {host.avatar_url ? (
@@ -66,19 +66,21 @@ export default function SlotCard({
             )}
           </p>
         )}
-        <h3 className="font-outfit line-clamp-2 text-[17px] leading-tight font-semibold text-white">
+        {/* Always two lines tall (1.25 line height x 2), so one-line titles
+            don't leave the meta row higher than on neighbouring cards. */}
+        <h3 className="font-outfit line-clamp-2 min-h-[2.5em] text-[17px] leading-tight font-semibold text-white">
           {event.title}
         </h3>
-        <div className="mt-0.5 flex items-center gap-3 text-xs text-[#777B98] tabular-nums">
-          <span className="flex items-center gap-1">
+        <div className="mt-auto flex items-center gap-3 pt-0.5 text-xs text-[#777B98] tabular-nums">
+          <span className="flex items-center gap-1 whitespace-nowrap">
             <Clock className="h-3.5 w-3.5" />
             {formatIST(when, "h:mm a")}
           </span>
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 whitespace-nowrap">
             <CalendarDays className="h-3.5 w-3.5" />
             {formatIST(when, "EEE, d MMM")}
           </span>
-          <span className="font-outfit ml-auto text-[15px] font-bold text-[#D8B4FE]">
+          <span className="font-outfit ml-auto text-[15px] font-bold whitespace-nowrap text-[#D8B4FE]">
             {price}
           </span>
         </div>

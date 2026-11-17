@@ -147,13 +147,13 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
               maxWidth: "480px",
               margin: "18px 0 14px",
             }}
-            className="text-[#16304c]"
+            className="text-white"
           >
             Book People&apos;s{" "}
-            <span className="block text-[#0e8ae0]">Time.</span>
+            <span className="block text-[#D8B4FE]">Time.</span>
           </h1>
 
-          <p className="font-manrope max-w-[490px] text-[1rem] leading-[1.65] text-[#6f8daa]">
+          <p className="font-manrope max-w-[490px] text-[1rem] leading-[1.65] text-[#A5A8C3]">
             From coffee chats to travel experiences —book people for real-life
             moments, anytime.
           </p>
@@ -162,14 +162,14 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
             <button
               onClick={handleBookTime}
               suppressHydrationWarning
-              className="flex-1 rounded-lg bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-4 py-3 text-[13px] font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5 sm:min-w-[180px] sm:flex-none sm:px-6 sm:text-sm"
+              className="flex-1 rounded-lg bg-[linear-gradient(135deg,#7B2FFF,#A020F0)] px-4 py-3 text-[13px] font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)] transition hover:-translate-y-0.5 sm:min-w-[180px] sm:flex-none sm:px-6 sm:text-sm"
             >
               Explore Experiences
             </button>
             <button
               onClick={handleListTime}
               suppressHydrationWarning
-              className="flex-1 rounded-lg border border-[#78bce759] bg-white/90 px-4 py-3 text-[13px] font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5 sm:min-w-[180px] sm:flex-none sm:px-6 sm:text-sm"
+              className="flex-1 rounded-lg border border-[#78bce759] bg-[#121426]/90 px-4 py-3 text-[13px] font-extrabold text-[#336f9b] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition hover:-translate-y-0.5 sm:min-w-[180px] sm:flex-none sm:px-6 sm:text-sm"
             >
               {hostStatus === "approved"
                 ? "Create Experience"
@@ -186,7 +186,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
               ].map((img, idx) => (
                 <div
                   key={img}
-                  className="h-11 w-11 overflow-hidden rounded-full border-[3px] border-[#f7fbff] shadow-[0_10px_22px_rgba(84,140,191,0.08)]"
+                  className="h-11 w-11 overflow-hidden rounded-full border-[3px] border-white/10 shadow-[0_10px_22px_rgba(84,140,191,0.08)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -197,7 +197,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
                   />
                 </div>
               ))}
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-[#f7fbff] bg-[#f1f3f6] text-[0.75rem] font-bold text-[#2b2d33] shadow-[0_10px_22px_rgba(84,140,191,0.08)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-white/10 bg-white/[0.04] text-[0.75rem] font-bold text-[#2b2d33] shadow-[0_10px_22px_rgba(84,140,191,0.08)]">
                 +10k
               </div>
             </div>
@@ -208,7 +208,7 @@ const Hero: React.FC<HeroProps> = ({ filterBarRef }) => {
         </div>
 
         <div className="relative min-h-[420px] overflow-visible rounded-[38px] md:min-h-[520px]">
-          <div className="absolute top-[30px] right-[8px] bottom-[16px] left-[56px] rounded-[38px] border border-[#aeddf899] bg-[linear-gradient(180deg,#e8f6ff,#f8fcff)] shadow-[0_24px_60px_rgba(58,119,172,0.12)]" />
+          <div className="absolute top-[30px] right-[8px] bottom-[16px] left-[56px] rounded-[38px] border border-white/10 bg-[linear-gradient(180deg,#241333,#080914)] shadow-[0_24px_60px_rgba(58,119,172,0.12)]" />
 
           <div
             className={`absolute inset-x-1 top-12 bottom-8 z-10 overflow-visible md:inset-x-6 md:top-4 md:bottom-10 ${isPageLoaded ? "hero-stack-ready" : ""}`}

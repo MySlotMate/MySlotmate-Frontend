@@ -22,17 +22,18 @@ export default function AppSidebar() {
   if (path === "/explore") return <HomeSidebar active="explore" />;
   if (path === "/activities") return <HomeSidebar active="journey" />;
   if (path === "/profile") return <HomeSidebar active="profile" />;
-  if (
-    path === "/host-dashboard/experiences" ||
-    path === "/host-dashboard/experiences/new"
-  )
-    return <HomeSidebar active="profile" />;
+  if (path === "/notifications") return <HomeSidebar active="notifications" />;
   if (path === "/become-host") return <HomeSidebar active="profile" />;
   if (/^\/host\/[^/]+$/.test(path)) return <HomeSidebar active="explore" />;
   if (/^\/experience\/[^/]+\/confirmation$/.test(path))
     return <HomeSidebar active="explore" />;
-  // Detail + booking pages have their own bottom action bar on mobile.
-  if (/^\/experience\/[^/]+(\/book)?$/.test(path))
+  // Event pages are public: visitors get the website header instead.
+  if (/^\/experience\/[^/]+(\/tickets)?$/.test(path))
+    return mounted && userId ? (
+      <HomeSidebar active="explore" tabBar={false} />
+    ) : null;
+  // Booking has its own bottom action bar on mobile.
+  if (/^\/experience\/[^/]+\/book$/.test(path))
     return <HomeSidebar active="explore" tabBar={false} />;
   return null;
 }

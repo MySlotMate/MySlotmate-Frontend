@@ -25,7 +25,7 @@ export default function HostApplicationSubmittedModal({
   const todayStr = `Today ${timeStr}`;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4">
+    <div className="msm-modal fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4">
       <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[20px] border border-white/10 bg-[#131328] px-6 py-8 text-white shadow-2xl sm:px-8 sm:py-10">
         {/* Close */}
         <button
@@ -38,13 +38,12 @@ export default function HostApplicationSubmittedModal({
 
         {/* Logo */}
         <div className="mb-5 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#9B30FF] bg-white">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#9B30FF] bg-[#241333]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/assets/home/logomyslotmate.png"
-              alt="Myslotmate"
-              loading="lazy"
-              className="h-10 w-10 object-contain"
+              src="/assets/brand/logo-mark.png"
+              alt="MySlotMate"
+              className="h-9 w-9 object-contain"
             />
           </div>
         </div>

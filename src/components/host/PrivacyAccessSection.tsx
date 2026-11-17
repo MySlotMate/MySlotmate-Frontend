@@ -48,13 +48,13 @@ export default function PrivacyAccessSection({
   onChange,
 }: Props) {
   return (
-    <div className="space-y-4 border-t border-gray-100 pt-6">
+    <div className="space-y-4 border-t border-white/10 pt-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">
+          <h3 className="text-base font-semibold text-white">
             Private experience
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#A5A8C3]">
             Still shown in discovery with a lock — guests need a passkey to
             book. (Guests pay the normal price unless the event is free.)
           </p>
@@ -65,11 +65,11 @@ export default function PrivacyAccessSection({
           aria-checked={isPrivate}
           onClick={() => onChange({ isPrivate: !isPrivate })}
           className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-            isPrivate ? "bg-[#0094CA]" : "bg-gray-200"
+            isPrivate ? "bg-[#A020F0]" : "bg-white/10"
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-[#121426] shadow-sm transition-transform ${
               isPrivate ? "translate-x-6" : "translate-x-1"
             }`}
           />
@@ -77,7 +77,7 @@ export default function PrivacyAccessSection({
       </div>
 
       {isPrivate && (
-        <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+        <div className="space-y-4 rounded-xl border border-white/10 bg-white/[0.04] p-4">
           {/* Which gate: a code the guest types, or a request the host approves */}
           <div className="grid gap-2 sm:grid-cols-2">
             {[
@@ -98,14 +98,14 @@ export default function PrivacyAccessSection({
                 onClick={() => onChange({ privateAccessMode: opt.key })}
                 className={`rounded-lg border p-3 text-left transition ${
                   privateAccessMode === opt.key
-                    ? "border-[#0094CA] bg-[#0094CA]/5 ring-1 ring-[#0094CA]"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    ? "border-[#A020F0] bg-[#A020F0]/10 ring-1 ring-[#A020F0]"
+                    : "border-white/10 bg-[#121426] hover:border-white/15"
                 }`}
               >
-                <span className="block text-sm font-medium text-gray-800">
+                <span className="block text-sm font-medium text-white">
                   {opt.title}
                 </span>
-                <span className="mt-0.5 block text-xs text-gray-500">
+                <span className="mt-0.5 block text-xs text-[#A5A8C3]">
                   {opt.desc}
                 </span>
               </button>
@@ -113,107 +113,111 @@ export default function PrivacyAccessSection({
           </div>
 
           {privateAccessMode === "rsvp" ? (
-            <div className="space-y-2 rounded-lg border border-gray-200 bg-white p-3">
-              <p className="text-sm text-gray-600">
-                Guests see a <strong>Request to join</strong> button instead of a
-                passkey prompt. They fill in the details you asked for in the
+            <div className="space-y-2 rounded-lg border border-white/10 bg-[#121426] p-3">
+              <p className="text-sm text-[#A5A8C3]">
+                Guests see a <strong>Request to join</strong> button instead of
+                a passkey prompt. They fill in the details you asked for in the
                 Attendee details step, plus an optional note, and their request
                 lands in your dashboard for approval.
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-[#A5A8C3]">
                 Approving unlocks booking — the guest still books and pays as
                 normal. Their spot isn&apos;t held until they do.
               </p>
-              <p className="text-xs font-medium text-amber-700">
+              <p className="text-xs font-medium text-amber-300">
                 Requires attendee details: turn them on and pick at least one
                 field, or there&apos;s nothing for you to judge a request on.
               </p>
             </div>
           ) : (
-          <>
-          {/* Access mode: one shared passkey vs a unique passkey per guest */}
-          <div className="grid gap-2 sm:grid-cols-2">
-            {[
-              {
-                key: "shared" as const,
-                title: "Same passkey for everyone",
-                desc: "One passkey you share with all invited guests.",
-              },
-              {
-                key: "unique" as const,
-                title: "A unique passkey per guest",
-                desc: "Generate single-use access codes, one per guest.",
-              },
-            ].map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => onChange({ accessMode: opt.key })}
-                className={`rounded-lg border p-3 text-left transition ${
-                  accessMode === opt.key
-                    ? "border-[#0094CA] bg-[#0094CA]/5 ring-1 ring-[#0094CA]"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-              >
-                <span className="block text-sm font-medium text-gray-800">
-                  {opt.title}
-                </span>
-                <span className="mt-0.5 block text-xs text-gray-500">
-                  {opt.desc}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {accessMode === "shared" ? (
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                Passkey
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={accessPasskey}
-                  onChange={(e) => onChange({ accessPasskey: e.target.value })}
-                  placeholder="e.g. SUMMER24"
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
-                />
-                <button
-                  type="button"
-                  onClick={() =>
-                    onChange({
-                      accessPasskey: Math.random()
-                        .toString(36)
-                        .slice(2, 8)
-                        .toUpperCase(),
-                    })
-                  }
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Generate
-                </button>
+            <>
+              {/* Access mode: one shared passkey vs a unique passkey per guest */}
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  {
+                    key: "shared" as const,
+                    title: "Same passkey for everyone",
+                    desc: "One passkey you share with all invited guests.",
+                  },
+                  {
+                    key: "unique" as const,
+                    title: "A unique passkey per guest",
+                    desc: "Generate single-use access codes, one per guest.",
+                  },
+                ].map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => onChange({ accessMode: opt.key })}
+                    className={`rounded-lg border p-3 text-left transition ${
+                      accessMode === opt.key
+                        ? "border-[#A020F0] bg-[#A020F0]/10 ring-1 ring-[#A020F0]"
+                        : "border-white/10 bg-[#121426] hover:border-white/15"
+                    }`}
+                  >
+                    <span className="block text-sm font-medium text-white">
+                      {opt.title}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-[#A5A8C3]">
+                      {opt.desc}
+                    </span>
+                  </button>
+                ))}
               </div>
-              {showError && !accessPasskey.trim() && (
-                <p className="mt-1 text-xs text-red-500">
-                  A private experience needs a passkey.
+
+              {accessMode === "shared" ? (
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-white/80">
+                    Passkey
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={accessPasskey}
+                      onChange={(e) =>
+                        onChange({ accessPasskey: e.target.value })
+                      }
+                      placeholder="e.g. SUMMER24"
+                      className="flex-1 rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onChange({
+                          accessPasskey: Math.random()
+                            .toString(36)
+                            .slice(2, 8)
+                            .toUpperCase(),
+                        })
+                      }
+                      className="rounded-lg border border-white/15 bg-[#121426] px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/[0.04]"
+                    >
+                      Generate
+                    </button>
+                  </div>
+                  {showError && !accessPasskey.trim() && (
+                    <p className="mt-1 text-xs text-red-400">
+                      A private experience needs a passkey.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-[#A5A8C3]">
+                  Each guest gets their own single-use access code that unlocks
+                  booking.{" "}
+                  {canGenerateCodes ? (
+                    <span>
+                      Generate them in the Passkey codes section below.
+                    </span>
+                  ) : (
+                    <span className="text-[#777B98]">
+                      Save the experience first, then generate them in the
+                      Passkey codes section.
+                    </span>
+                  )}
                 </p>
               )}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-600">
-              Each guest gets their own single-use access code that unlocks
-              booking.{" "}
-              {canGenerateCodes ? (
-                <span>Generate them in the Passkey codes section below.</span>
-              ) : (
-                <span className="text-gray-400">
-                  Save the experience first, then generate them in the Passkey
-                  codes section.
-                </span>
-              )}
-            </p>
-          )}
-          </>
+            </>
           )}
         </div>
       )}

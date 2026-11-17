@@ -66,6 +66,8 @@ const DAYS = [
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
+const DRAFT_KEY = "msm_host_application_form";
+
 export default function BecomeHostPage() {
   const router = useRouter();
   const [user, loadingAuth] = useAuthState(auth);
@@ -98,6 +100,8 @@ export default function BecomeHostPage() {
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
+  // Visitors fill the form first; sign-in opens only when they submit.
+  const [showLogin, setShowLogin] = useState(false);
 
   const [form, setForm] = useState<HostFormData>({
     fullName: user?.displayName ?? "",
@@ -112,6 +116,43 @@ export default function BecomeHostPage() {
     groupSize: 5,
     isProfessional: false,
   });
+
+  // Keep a guest's answers across the sign-in (and signup) round trip.
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        setForm((prev) => ({
+          ...prev,
+          ...(JSON.parse(saved) as Partial<HostFormData>),
+        }));
+      }
+    } catch {
+      /* storage blocked or bad JSON: start blank */
+    }
+  }, []);
+  useEffect(() => {
+    if (!mounted) return;
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify(form));
+    } catch {
+      /* storage blocked: the form still works, it just won't be restored */
+    }
+  }, [form, mounted]);
+
+  /** Signed in with a profile? If not, open sign-in and stop here. */
+  const requireAccount = () => {
+    if (validUserId) return true;
+    if (user) {
+      // Google account but no MySlotMate profile yet: finish signup first.
+      toast.info("Finish creating your profile, then come back to submit.");
+      router.push("/signup");
+      return false;
+    }
+    toast.info("Sign in to send your application. Your answers are saved.");
+    setShowLogin(true);
+    return false;
+  };
 
   // Pre-populate form from DB profile when it loads
   useEffect(() => {
@@ -150,36 +191,6 @@ export default function BecomeHostPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#080914]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#B57BFF] border-t-transparent" />
       </div>
-    );
-  }
-
-  const isAuthenticated = !!user || !!validUserId;
-
-  if (!isAuthenticated) {
-    return (
-      <>
-        <Navbar dark />
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 bg-[#080914] px-4 text-center md:pl-20 min-[80rem]:pl-[230px]">
-          <h1 className="text-2xl font-bold text-white">Become a Host</h1>
-          <p className="max-w-md text-white/55">
-            Please log in to continue your host application.
-          </p>
-        </div>
-        <GoogleLogin
-          open
-          onClose={() => {
-            // Re-check auth after the modal closes: if they logged in, reveal
-            // the form; otherwise send them back home.
-            const id = localStorage.getItem("msm_user_id");
-            if (id && id !== "existing") {
-              setStoredUserId(id);
-            } else {
-              router.push("/");
-            }
-          }}
-        />
-        <Home.Footer dark />
-      </>
     );
   }
 
@@ -235,7 +246,7 @@ export default function BecomeHostPage() {
     return (
       <>
         <Navbar dark />
-        <main className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden bg-[#080914] pt-10 pb-16 md:pl-20 min-[80rem]:pl-[230px]">
+        <main className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden bg-[#080914] pt-10 pb-16">
           {/* Ambient Background */}
           <div className="pointer-events-none absolute top-[-10%] left-[-10%] h-[600px] w-[600px] rounded-full bg-[#7038F5]/15 blur-[120px]" />
 
@@ -405,11 +416,7 @@ export default function BecomeHostPage() {
   /* ---- submit handlers ---- */
 
   const handleSaveDraft = async () => {
-    if (!isAuthenticated) return;
-    if (!validUserId) {
-      toast.error("Please complete your profile (signup) first.");
-      return;
-    }
+    if (!requireAccount() || !validUserId) return;
     try {
       const nameParts = form.fullName.trim().split(" ");
       await draftMutation.mutateAsync({
@@ -466,16 +473,13 @@ export default function BecomeHostPage() {
       toast.warning("Please provide at least one social media link.");
       return;
     }
-    if (!validUserId) {
-      toast.error("Please complete your profile (signup) first.");
-      return;
-    }
     if (!form.description.trim()) {
       toast.warning(
         "Please provide a short description about yourself or your plans.",
       );
       return;
     }
+    if (!requireAccount() || !validUserId) return;
 
     try {
       await sendOtpMutation.mutateAsync(validUserId);
@@ -512,6 +516,11 @@ export default function BecomeHostPage() {
       });
 
       setStoredHostId(res.data.id);
+      try {
+        sessionStorage.removeItem(DRAFT_KEY);
+      } catch {
+        /* nothing saved to clear */
+      }
       setShowOtpModal(false);
       setShowSubmittedModal(true);
     } catch (err) {
@@ -530,14 +539,16 @@ export default function BecomeHostPage() {
     <>
       <Navbar dark />
 
-      <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white md:pl-20 min-[80rem]:pl-[230px]">
+      <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white">
         <div className="mx-auto w-full max-w-[860px] px-6 py-10 md:px-10">
           {/* Co-host invitations. Accepting one needs no approved application, so
             surface them here too — otherwise the invitee has to guess the
             /host-dashboard/co-hosting URL. Renders nothing when there are none. */}
-          <div className="mb-6">
-            <SharedEventsCard />
-          </div>
+          {validUserId && (
+            <div className="mb-6">
+              <SharedEventsCard />
+            </div>
+          )}
 
           {/* Header row */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -548,6 +559,11 @@ export default function BecomeHostPage() {
               <p className="mt-1 text-sm font-medium text-[#D8B4FE]">
                 Complete your profile to start hosting
               </p>
+              {!validUserId && (
+                <p className="mt-2 text-sm text-white/55">
+                  Fill it in now. You’ll sign in when you submit.
+                </p>
+              )}
             </div>
 
             {/* Progress bar */}
@@ -894,6 +910,16 @@ export default function BecomeHostPage() {
       </main>
 
       {/* Modals */}
+      <GoogleLogin
+        open={showLogin}
+        onClose={() => {
+          setShowLogin(false);
+          // Signed in? Pick up the new id so Submit can carry on.
+          const id = localStorage.getItem("msm_user_id");
+          if (id && id !== "existing") setStoredUserId(id);
+        }}
+      />
+
       <HostApplicationSubmittedModal
         open={showSubmittedModal}
         onClose={() => setShowSubmittedModal(false)}

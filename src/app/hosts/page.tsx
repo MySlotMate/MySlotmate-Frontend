@@ -44,9 +44,9 @@ const HostCard = ({
   return (
     <Link
       href={`/host/${slug ?? id}`}
-      className="group overflow-hidden rounded-[22px] border border-[#aeddf89e] bg-white shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
+      className="group overflow-hidden rounded-[22px] border border-white/10 bg-[#121426] shadow-[0_14px_32px_rgba(77,140,190,0.08)] transition hover:-translate-y-1"
     >
-      <div className="relative aspect-square w-full overflow-hidden bg-[#f8fbff]">
+      <div className="relative aspect-square w-full overflow-hidden bg-white/[0.04]">
         {imageUrl && !imageUrl.includes("people1.") ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -56,7 +56,7 @@ const HostCard = ({
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="relative flex h-full w-full items-center justify-center bg-[#E9EDF0]">
+          <div className="relative flex h-full w-full items-center justify-center bg-white/[0.04]">
             {/* WhatsApp Style Silhouette */}
             <div className="relative flex h-full w-full items-center justify-center opacity-40">
               <svg
@@ -72,15 +72,15 @@ const HostCard = ({
             <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent to-black/5" />
           </div>
         )}
-        <span className="absolute top-3 right-3 z-10 rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase shadow-sm">
+        <span className="absolute top-3 right-3 z-10 rounded-full bg-white/[0.04] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#D8B4FE] uppercase shadow-sm">
           {rating === "0" ? "New" : rating}
         </span>
         {isVerified ? (
           <span className="absolute right-3 bottom-3 z-10">
             <div className="relative">
-              <div className="absolute inset-0 scale-150 animate-ping rounded-full bg-white opacity-20" />
+              <div className="absolute inset-0 scale-150 animate-ping rounded-full bg-[#121426] opacity-20" />
               {/* White background to fill the transparent tick, inset slightly to avoid outer border */}
-              <div className="absolute inset-[2px] rounded-full bg-white" />
+              <div className="absolute inset-[2px] rounded-full bg-[#121426]" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/assets/home/verified.svg"
@@ -94,15 +94,15 @@ const HostCard = ({
       </div>
 
       <div className="p-4">
-        <h3 className="line-clamp-1 text-[15px] font-bold text-[#16304c]">
+        <h3 className="line-clamp-1 text-[15px] font-bold text-white">
           {name}
         </h3>
-        <p className="mt-1 text-xs text-[#6f8daa]">
-          <strong className="font-extrabold text-[#16304c]">
+        <p className="mt-1 text-xs text-[#A5A8C3]">
+          <strong className="font-extrabold text-white">
             {headline ?? "Local Host"}
           </strong>
         </p>
-        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#6f8daa]">
+        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#A5A8C3]">
           {description ?? "Hosting thoughtful sessions around the city."}
         </p>
         {moods.length > 0 ? (
@@ -110,7 +110,7 @@ const HostCard = ({
             {moods.map((mood) => (
               <span
                 key={mood}
-                className="rounded-full bg-[#f5fbff] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase"
+                className="rounded-full bg-white/[0.04] px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#D8B4FE] uppercase"
               >
                 {getMoodDisplayLabel(mood)}
               </span>
@@ -175,7 +175,7 @@ export default function HostsPage() {
   }, [hosts, location, filterByLocation, userId, moodFilter, hostMoodMap]);
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fafeff,#f2faff)] text-[#16304c]">
+    <main className="min-h-screen bg-[#080914] text-white">
       <components.Navbar />
 
       <div className="site-x mx-auto w-full max-w-[77rem] py-8 pt-24">
@@ -192,10 +192,10 @@ export default function HostsPage() {
             {location && (
               <button
                 onClick={() => setFilterByLocation(!filterByLocation)}
-                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
+                className={`rounded-full border border-[#652A91]/60 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
                   filterByLocation
-                    ? "bg-[#dff3ff] text-[#0e8ae0]"
-                    : "bg-white/90 text-[#5a88ac] hover:bg-white"
+                    ? "bg-white/[0.04] text-[#D8B4FE]"
+                    : "bg-[#121426]/90 text-[#5a88ac] hover:bg-[#121426]"
                 }`}
               >
                 {filterByLocation ? location.city : "Show All Locations"}
@@ -210,10 +210,10 @@ export default function HostsPage() {
                   key={mood}
                   type="button"
                   onClick={() => setMoodFilter(mood)}
-                  className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
+                  className={`rounded-full border border-[#652A91]/60 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
                     moodFilter === mood
-                      ? "bg-[#dff3ff] text-[#0e8ae0]"
-                      : "bg-white/90 text-[#5a88ac] hover:bg-white"
+                      ? "bg-white/[0.04] text-[#D8B4FE]"
+                      : "bg-[#121426]/90 text-[#5a88ac] hover:bg-[#121426]"
                   }`}
                 >
                   {getMoodDisplayLabel(mood)}
@@ -225,15 +225,15 @@ export default function HostsPage() {
 
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <LuLoader2 className="h-10 w-10 animate-spin text-[#0094CA]" />
+            <LuLoader2 className="h-10 w-10 animate-spin text-[#D8B4FE]" />
           </div>
         ) : filteredHosts.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <p className="text-lg text-gray-500">No hosts found</p>
+            <p className="text-lg text-[#A5A8C3]">No hosts found</p>
             {filterByLocation && location && (
               <button
                 onClick={() => setFilterByLocation(false)}
-                className="mt-4 text-[#0094CA] hover:underline"
+                className="mt-4 text-[#D8B4FE] hover:underline"
               >
                 View hosts from all locations
               </button>

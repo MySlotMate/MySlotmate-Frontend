@@ -6,6 +6,9 @@ import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
 const config = {
+  // jsdom (used by isomorphic-dompurify to sanitize rich text on the server)
+  // reads its own files at runtime and breaks when bundled, so Node loads it.
+  serverExternalPackages: ["isomorphic-dompurify", "jsdom"],
   images: {
     domains: [
       "myslotmate.s3.us-east-2.amazonaws.com",

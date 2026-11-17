@@ -124,7 +124,7 @@ export default function HostProfileClient({
 
   if (hostLoading || !host) {
     return (
-      <main className="flex min-h-screen flex-col items-center bg-[#080914] text-white md:pl-20 min-[80rem]:pl-[230px]">
+      <main className="flex min-h-screen flex-col items-center bg-[#080914] text-white">
         <Navbar dark />
         <div className="flex items-center justify-center py-32">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-[#B57BFF] border-t-transparent" />
@@ -151,7 +151,7 @@ export default function HostProfileClient({
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]">
+    <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28">
       <Navbar dark />
 
       <div className="mx-auto w-full max-w-[1210px] px-6 pt-6 pb-16 md:px-10 md:pt-10">
@@ -276,7 +276,7 @@ export default function HostProfileClient({
                       src={url}
                       alt=""
                       loading="lazy"
-                      className="h-[130px] w-full rounded-2xl border border-white/[0.06] object-cover"
+                      className="aspect-[4/5] w-full rounded-2xl border border-white/[0.06] object-cover"
                     />
                   ))}
                 </div>
@@ -299,7 +299,7 @@ export default function HostProfileClient({
                       <img
                         src={e.cover_image_url ?? FALLBACK}
                         alt=""
-                        className="h-20 w-24 shrink-0 rounded-xl object-cover"
+                        className="aspect-[4/5] w-16 shrink-0 rounded-xl object-cover"
                       />
                       <div className="min-w-0 flex-1">
                         {e.mood && (
@@ -395,7 +395,7 @@ export default function HostProfileClient({
                         src={e.cover_image_url ?? FALLBACK}
                         alt=""
                         loading="lazy"
-                        className="h-[100px] w-full object-cover"
+                        className="aspect-[4/5] w-full object-cover"
                       />
                       <p className="truncate p-2.5 text-xs font-semibold">
                         {e.title}

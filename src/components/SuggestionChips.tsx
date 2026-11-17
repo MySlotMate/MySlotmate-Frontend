@@ -21,8 +21,8 @@ export function SuggestionChips({
   return (
     <div className="flex flex-wrap items-center gap-2">
       {isLoading && (
-        <div className="flex animate-pulse items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs text-blue-600">
-          <div className="h-3 w-3 animate-spin rounded-full bg-blue-400" />
+        <div className="flex animate-pulse items-center gap-2 rounded-full border border-[#652A91]/60 bg-[#241333] px-3 py-1.5 text-xs text-[#D8B4FE]">
+          <div className="h-3 w-3 animate-spin rounded-full bg-[#A020F0]" />
           Getting suggestions...
         </div>
       )}
@@ -31,7 +31,7 @@ export function SuggestionChips({
           key={suggestion.id}
           type="button"
           onClick={() => onSelect(suggestion.text)}
-          className="group inline-flex items-center gap-1.5 rounded-full border border-[#0094CA]/30 bg-linear-to-r from-[#0094CA]/10 to-[#0094CA]/5 px-3 py-1.5 text-xs font-medium text-[#0094CA] transition hover:border-[#0094CA]/60 hover:bg-linear-to-r hover:from-[#0094CA]/20 hover:to-[#0094CA]/10"
+          className="group inline-flex items-center gap-1.5 rounded-full border border-[#A020F0] bg-linear-to-r from-[#A020F0]/10 to-[#A020F0]/5 px-3 py-1.5 text-xs font-medium text-[#D8B4FE] transition hover:border-[#A020F0] hover:bg-linear-to-r hover:from-[#A020F0]/20 hover:to-[#A020F0]/10"
         >
           <FiZap size={12} className="shrink-0" />
           <span className="max-w-xs truncate">{suggestion.text}</span>
@@ -46,7 +46,7 @@ export function SuggestionChips({
         <button
           type="button"
           onClick={onDismiss}
-          className="rounded-full p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+          className="rounded-full p-1 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#A5A8C3]"
           title="Dismiss suggestions"
         >
           <FiX size={14} />

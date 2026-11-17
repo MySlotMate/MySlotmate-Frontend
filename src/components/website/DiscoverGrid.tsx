@@ -1,21 +1,32 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ChevronDown, Search } from "lucide-react";
-import { getMoodDisplayLabel, normalizeMood } from "~/lib/moods";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
+import GoogleLogin from "~/components/GoogleLogin";
 import SlotCard from "./SlotCard";
-import { isOneOnOne } from "./shared";
 
-const PAGE = 12;
-type Kind = "all" | "group" | "one_on_one";
-const KINDS: { key: Kind; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "group", label: "Group experiences" },
-  { key: "one_on_one", label: "1:1 sessions" },
-];
+const TOP = 4;
 
-/** The product, straight after the hero: search, filters and the slot grid. */
+/**
+ * Rank events for the homepage highlight: best rated first, then the most
+ * booked, then whatever is happening soonest.
+ */
+function topEvents(events: EventDTO[]): EventDTO[] {
+  const when = (e: EventDTO) =>
+    new Date(e.next_available_date ?? e.time).getTime() || Infinity;
+  return [...events]
+    .sort(
+      (a, b) =>
+        (b.avg_rating ?? 0) - (a.avg_rating ?? 0) ||
+        (b.total_bookings ?? 0) - (a.total_bookings ?? 0) ||
+        when(a) - when(b),
+    )
+    .slice(0, TOP);
+}
+
+/** Homepage "Top events": a short showcase, the full list sits behind sign-in. */
 export default function DiscoverGrid({
   events,
   hostById,
@@ -23,144 +34,68 @@ export default function DiscoverGrid({
   events: EventDTO[];
   hostById: Map<string, PublicHostProfileDTO>;
 }) {
-  const [query, setQuery] = useState("");
-  const [kind, setKind] = useState<Kind>("all");
-  const [mood, setMood] = useState<string | null>(null);
-  const [shown, setShown] = useState(PAGE);
+  const router = useRouter();
+  const [showLogin, setShowLogin] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    setSignedIn(Boolean(localStorage.getItem("msm_user_id")));
+  }, []);
 
-  const moods = useMemo(() => {
-    const count = new Map<string, number>();
-    for (const e of events) {
-      if (!e.mood) continue;
-      const k = normalizeMood(e.mood);
-      count.set(k, (count.get(k) ?? 0) + 1);
-    }
-    return [...count.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(([k]) => k);
-  }, [events]);
+  const top = useMemo(() => topEvents(events), [events]);
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return events.filter((e) => {
-      if (kind === "one_on_one" && !isOneOnOne(e)) return false;
-      if (kind === "group" && isOneOnOne(e)) return false;
-      if (mood && normalizeMood(e.mood) !== mood) return false;
-      if (!q) return true;
-      const host = hostById.get(e.host_id);
-      return [e.title, e.location, host?.first_name, host?.last_name]
-        .filter(Boolean)
-        .some((s) => s!.toLowerCase().includes(q));
-    });
-  }, [events, hostById, kind, mood, query]);
+  const seeMore = () => {
+    if (signedIn) router.push("/explore");
+    else setShowLogin(true);
+  };
 
-  const reset = () => setShown(PAGE);
+  if (top.length === 0) return null;
 
   return (
     <section id="discover" className="w-full scroll-mt-4">
-      <div className="sticky top-0 z-30 border-b border-white/[0.05] bg-[#080914]/90 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1280px] flex-col gap-4 px-5 py-5 md:px-10">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <label className="flex h-12 w-full max-w-[420px] items-center gap-2.5 rounded-full border border-white/10 bg-[#121426] px-4 focus-within:border-[#A020F0]">
-              <Search className="h-[18px] w-[18px] shrink-0 text-[#A5A8C3]" />
-              <span className="sr-only">Search slots</span>
-              <input
-                id="website-search"
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  reset();
-                }}
-                placeholder="Search slots, hosts or places"
-                className="h-full w-full bg-transparent text-[15px] text-white outline-none placeholder:text-[#777B98]"
-              />
-            </label>
-            <p className="font-outfit text-lg text-[#A5A8C3]">
-              Happening{" "}
-              <span className="font-semibold text-white">near you</span>
+      <div className="mx-auto max-w-[1280px] px-5 pt-16 pb-16 md:px-10 md:pt-24 md:pb-24">
+        <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <p className="mb-3 text-sm font-semibold tracking-[0.14em] text-[#D8B4FE] uppercase">
+              Top events
             </p>
+            <h2 className="font-outfit max-w-[560px] text-[clamp(30px,4vw,48px)] leading-[1.08] font-medium tracking-[-0.02em] text-white">
+              The ones people can&apos;t stop{" "}
+              <span className="bg-gradient-to-r from-[#D8B4FE] to-[#A020F0] bg-clip-text text-transparent">
+                booking.
+              </span>
+            </h2>
           </div>
+          <button
+            type="button"
+            onClick={seeMore}
+            className="group flex h-12 w-fit shrink-0 items-center gap-2 rounded-full border border-white/15 px-6 text-[15px] font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.06]"
+          >
+            See all events
+            <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+          </button>
+        </div>
 
-          <div className="hide-scrollbar flex items-center gap-3 overflow-x-auto">
-            <div className="flex shrink-0 rounded-full border border-white/10 bg-[#121426] p-1">
-              {KINDS.map((k) => (
-                <button
-                  key={k.key}
-                  type="button"
-                  aria-pressed={kind === k.key}
-                  onClick={() => {
-                    setKind(k.key);
-                    reset();
-                  }}
-                  className={`h-8 rounded-full px-4 text-[13px] font-semibold whitespace-nowrap transition ${kind === k.key ? "bg-[#A020F0] text-white" : "text-[#A5A8C3] hover:text-white"}`}
-                >
-                  {k.label}
-                </button>
-              ))}
-            </div>
-            {moods.length > 0 && (
-              <span className="h-6 w-px shrink-0 bg-white/10" />
-            )}
-            {moods.map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={mood === m}
-                onClick={() => {
-                  setMood((cur) => (cur === m ? null : m));
-                  reset();
-                }}
-                className={`h-9 shrink-0 rounded-full border px-4 text-[13px] font-medium whitespace-nowrap transition ${mood === m ? "border-[#A020F0] bg-[#241333] text-[#D8B4FE]" : "border-white/10 text-[#A5A8C3] hover:text-white"}`}
-              >
-                {getMoodDisplayLabel(m)}
-              </button>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 lg:grid-cols-4">
+          {top.map((e, i) => (
+            <SlotCard
+              key={e.id}
+              event={e}
+              host={hostById.get(e.host_id)}
+              index={i}
+            />
+          ))}
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1280px] px-5 pt-8 pb-10 md:px-10">
-        {filtered.length === 0 ? (
-          <div className="rounded-[20px] border border-white/[0.06] bg-[#121426] p-10 text-center text-[#A5A8C3]">
-            Nothing matches that yet.{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setQuery("");
-                setKind("all");
-                setMood(null);
-              }}
-              className="font-semibold text-[#D8B4FE]"
-            >
-              Clear filters
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {filtered.slice(0, shown).map((e, i) => (
-              <SlotCard
-                key={e.id}
-                event={e}
-                host={hostById.get(e.host_id)}
-                index={i}
-              />
-            ))}
-          </div>
-        )}
-
-        {filtered.length > shown && (
-          <div className="mt-8 flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShown((s) => s + PAGE)}
-              className="flex h-10 items-center gap-1.5 rounded-full border border-white/10 px-5 text-sm font-semibold text-[#A5A8C3] transition hover:text-white"
-            >
-              Load more slots <ChevronDown className="h-4 w-4" />
-            </button>
-          </div>
-        )}
-      </div>
+      <GoogleLogin
+        open={showLogin}
+        onClose={() => {
+          setShowLogin(false);
+          if (localStorage.getItem("msm_user_id")) router.push("/explore");
+        }}
+        title="See every event near you"
+        subtitle="Sign in to browse all events, save the ones you like and book in a tap."
+      />
     </section>
   );
 }

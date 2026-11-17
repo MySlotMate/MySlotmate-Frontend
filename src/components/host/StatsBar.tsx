@@ -13,7 +13,7 @@ const statsConfig = [
   {
     key: "total_events_hosted" as const,
     label: "Experiences Hosted",
-    icon: <HiOutlineCalendar className="h-6 w-6 text-[#0094CA]" />,
+    icon: <HiOutlineCalendar className="h-6 w-6 text-[#D8B4FE]" />,
   },
   {
     key: "total_people_met" as const,
@@ -39,12 +39,12 @@ export default function StatsBar({
   };
 
   return (
-    <div className="grid grid-cols-3 divide-x divide-gray-200 rounded-2xl border border-gray-100 bg-white py-8 shadow-sm">
+    <div className="grid grid-cols-3 divide-x divide-white/10 rounded-2xl border border-white/10 bg-[#121426] py-8 shadow-sm">
       {statsConfig.map((s) => (
         <div key={s.key} className="flex flex-col items-center gap-2">
           {s.icon}
-          <p className="text-xs text-gray-500">{s.label}</p>
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-xs text-[#A5A8C3]">{s.label}</p>
+          <p className="text-2xl font-bold text-white">
             {s.key === "total_people_met"
               ? `${values[s.key]}+`
               : s.key === "avg_rating" && values[s.key] === 0

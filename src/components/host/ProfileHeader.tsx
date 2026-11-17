@@ -41,25 +41,25 @@ export default function ProfileHeader({
   ].filter(Boolean) as { key: string; url: string; icon: React.ReactNode }[];
 
   return (
-    <div className="flex flex-col gap-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-6 rounded-2xl border border-white/10 bg-[#121426] p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       {/* Left: Avatar + Info */}
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
         {/* Avatar */}
         <div className="relative h-24 w-24 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={host.avatar_url ?? "/assets/home/avatar-placeholder.png"}
+            src={host.avatar_url ?? "/assets/home/avatar-placeholder.svg"}
             alt={fullName}
             loading="lazy"
-            className="h-24 w-24 rounded-full border-4 border-white object-cover shadow-md"
+            className="h-24 w-24 rounded-full border-4 border-[#121426] object-cover shadow-md"
           />
           {host.is_identity_verified && (
-            <MdVerified className="absolute right-0 bottom-0 h-6 w-6 text-[#0094CA]" />
+            <MdVerified className="absolute right-0 bottom-0 h-6 w-6 text-[#D8B4FE]" />
           )}
           {host.avatar_from_instagram && (
             <span
               title="Photo from Instagram"
-              className="absolute top-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-white text-[#E1306C] shadow ring-1 ring-black/5"
+              className="absolute top-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-[#121426] text-[#E1306C] shadow ring-1 ring-black/5"
             >
               <FaInstagram className="h-3.5 w-3.5" />
             </span>
@@ -68,16 +68,16 @@ export default function ProfileHeader({
 
         {/* Name, tagline, location */}
         <div className="text-center sm:text-left">
-          <h1 className="text-2xl font-bold text-gray-900">{fullName}</h1>
+          <h1 className="text-2xl font-bold text-white">{fullName}</h1>
           {host.tagline && (
-            <p className="mt-1 text-sm text-gray-600">
-              <span className="mr-1 text-[#0094CA]">✦</span>
+            <p className="mt-1 text-sm text-[#A5A8C3]">
+              <span className="mr-1 text-[#D8B4FE]">✦</span>
               {host.tagline}
             </p>
           )}
           {host.city && (
-            <p className="mt-1 flex items-center justify-center gap-1 text-sm text-gray-500 sm:justify-start">
-              <IoLocationSharp className="h-4 w-4 text-gray-400" />
+            <p className="mt-1 flex items-center justify-center gap-1 text-sm text-[#A5A8C3] sm:justify-start">
+              <IoLocationSharp className="h-4 w-4 text-[#777B98]" />
               {host.city}
             </p>
           )}
@@ -90,7 +90,7 @@ export default function ProfileHeader({
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full p-1.5 text-gray-600 transition hover:bg-gray-100 hover:text-[#0094CA]"
+                  className="rounded-full p-1.5 text-[#A5A8C3] transition hover:bg-white/[0.06] hover:text-[#D8B4FE]"
                 >
                   {link.icon}
                 </a>
@@ -104,7 +104,7 @@ export default function ProfileHeader({
       <div className="flex flex-col items-center gap-3 sm:items-end">
         <button
           onClick={onViewExperiences}
-          className="flex items-center gap-2 rounded-full bg-[#0094CA] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007aa8]"
+          className="flex items-center gap-2 rounded-full bg-[#A020F0] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007aa8]"
         >
           View Live Experiences
           <HiArrowRight className="h-4 w-4" />

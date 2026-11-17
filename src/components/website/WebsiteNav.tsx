@@ -8,9 +8,9 @@ import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 
 const LINKS = [
-  { href: "#discover", label: "Discover" },
-  { href: "/hosts", label: "Hosts" },
-  { href: "/become-host", label: "Host with us" },
+  { href: "/#discover", label: "Discover" },
+  { href: "/about", label: "About" },
+  { href: "/host-with-us", label: "Host with us" },
   { href: "/blogs", label: "Stories" },
 ];
 
@@ -53,7 +53,7 @@ export default function WebsiteNav() {
             onClick={handleListTimeClick}
             className="font-outfit hidden h-10 items-center rounded-full bg-[#F8F7FF] px-5 text-[15px] font-semibold text-[#080914] transition hover:bg-white sm:flex"
           >
-            Create a slot
+            Host an event
           </button>
           <button
             type="button"
@@ -97,7 +97,7 @@ export default function WebsiteNav() {
               }}
               className="font-outfit mt-1 h-11 rounded-full bg-[#F8F7FF] text-[15px] font-semibold text-[#080914]"
             >
-              Create a slot
+              Host an event
             </button>
           </div>
         )}

@@ -204,7 +204,7 @@ export default function MonthlyPassCard({
             setPaying(false);
           })();
         },
-        theme: { color: "#0094CA" },
+        theme: { color: "#A020F0" },
         modal: {
           ondismiss: () => {
             if (!paid) setPaying(false);
@@ -273,13 +273,13 @@ export default function MonthlyPassCard({
     Date.now() - new Date(pass.created_at).getTime() <= 48 * 60 * 60 * 1000;
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-[#cfe8fa] bg-gradient-to-br from-white via-[#f4faff] to-[#e9f5ff] p-5 shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
+    <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#121426] via-[#080914] to-[#080914] p-5 shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
       <div className="mb-3 flex items-start gap-2.5">
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[#cfe8fa] bg-white shadow-[0_8px_20px_rgba(31,167,255,0.18)]">
-          <LuTicket className="h-4 w-4 -rotate-12 text-[#0094CA]" />
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#121426] shadow-[0_8px_20px_rgba(31,167,255,0.18)]">
+          <LuTicket className="h-4 w-4 -rotate-12 text-[#D8B4FE]" />
         </div>
         <div className="flex-1">
-          <h3 className="font-outfit text-lg leading-none font-extrabold tracking-tight text-[#16304c]">
+          <h3 className="font-outfit text-lg leading-none font-extrabold tracking-tight text-white">
             Monthly Pass
           </h3>
           <p className="mt-1 text-[11px] text-[#5f7e9a]">
@@ -290,8 +290,8 @@ export default function MonthlyPassCard({
 
       {pass ? (
         <>
-          <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-[#16304c]">
-            <FiCheck className="h-4 w-4 text-green-600" />
+          <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-white">
+            <FiCheck className="h-4 w-4 text-green-300" />
             Active until {formatIST(pass.valid_until, "d MMM")}
           </p>
           <p className="mb-4 text-sm text-[#5f7e9a]">
@@ -303,7 +303,7 @@ export default function MonthlyPassCard({
 
           <Link
             href="/activities"
-            className="block w-full rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-center text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.4)]"
+            className="block w-full rounded-2xl bg-gradient-to-r from-[#A020F0] to-[#A020F0] py-2.5 text-center text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.4)]"
           >
             View my tickets
           </Link>
@@ -321,7 +321,7 @@ export default function MonthlyPassCard({
         </>
       ) : (
         <>
-          <p className="font-outfit mb-1 text-2xl leading-none font-extrabold text-[#16304c]">
+          <p className="font-outfit mb-1 text-2xl leading-none font-extrabold text-white">
             {rupees(priceCents)}
           </p>
           <p className="mb-4 text-sm text-[#5f7e9a]">
@@ -329,13 +329,13 @@ export default function MonthlyPassCard({
             {savingPct && savingPct > 0 ? ` · save ${savingPct}%` : ""}
           </p>
           {passesLeft !== null && passesLeft <= 5 && (
-            <p className="mb-3 text-xs font-medium text-orange-600">
+            <p className="mb-3 text-xs font-medium text-orange-300">
               Only {passesLeft} {passesLeft === 1 ? "pass" : "passes"} left
             </p>
           )}
 
           {confirming ? (
-            <div className="rounded-2xl border border-[#cfe8fa] bg-white p-3">
+            <div className="rounded-2xl border border-white/10 bg-[#121426] p-3">
               <p className="mb-3 text-sm text-[#5f7e9a]">
                 {walletBalance >= priceCents
                   ? `${rupees(priceCents)} comes out of your wallet now.`
@@ -348,7 +348,7 @@ export default function MonthlyPassCard({
                   type="button"
                   disabled={buy.isPending || paying}
                   onClick={() => void handleConfirm()}
-                  className="flex-1 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex-1 rounded-2xl bg-gradient-to-r from-[#A020F0] to-[#A020F0] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {paying
                     ? "Paying…"
@@ -361,7 +361,7 @@ export default function MonthlyPassCard({
                 <button
                   type="button"
                   onClick={() => setConfirming(false)}
-                  className="rounded-2xl border border-[#cfe8fa] bg-white px-4 py-2.5 text-sm font-medium text-[#16304c]"
+                  className="rounded-2xl border border-white/10 bg-[#121426] px-4 py-2.5 text-sm font-medium text-white"
                 >
                   Back
                 </button>
@@ -378,7 +378,7 @@ export default function MonthlyPassCard({
                 }
                 setConfirming(true);
               }}
-              className="w-full rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.4)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+              className="w-full rounded-2xl bg-gradient-to-r from-[#A020F0] to-[#A020F0] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition hover:shadow-[0_20px_40px_rgba(31,167,255,0.4)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
             >
               {passesLeft === 0
                 ? "Passes sold out"

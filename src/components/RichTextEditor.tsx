@@ -248,8 +248,8 @@ export interface RichTextEditorProps {
  */
 const TEXT_COLORS = [
   { label: "Default", value: "" },
-  { label: "Slate", value: "#16304c" },
-  { label: "Blue", value: "#0e8ae0" },
+  { label: "Slate", value: "#FFFFFF" },
+  { label: "Blue", value: "#A020F0" },
   { label: "Emerald", value: "#059669" },
   { label: "Amber", value: "#d97706" },
   { label: "Red", value: "#dc2626" },
@@ -290,7 +290,7 @@ export function RichTextEditor({
         HTMLAttributes: {
           target: "_blank",
           rel: "noopener noreferrer nofollow",
-          class: "text-[#0e8ae0] underline",
+          class: "text-[#D8B4FE] underline",
         },
       }),
       TextStyle,
@@ -379,19 +379,19 @@ export function RichTextEditor({
   if (!editor) {
     return (
       <div
-        className={`min-h-[180px] rounded-lg border border-gray-200 bg-gray-50 ${className}`}
+        className={`min-h-[180px] rounded-lg border border-white/10 bg-white/[0.04] ${className}`}
       />
     );
   }
 
   return (
     <div
-      className={`overflow-hidden rounded-lg border transition focus-within:ring-2 focus-within:ring-[#0094CA] ${
-        error ? "border-red-500 bg-red-50" : "border-gray-200 bg-white"
+      className={`overflow-hidden rounded-lg border transition focus-within:ring-2 focus-within:ring-[#A020F0] ${
+        error ? "border-red-500 bg-red-500/10" : "border-white/10 bg-[#121426]"
       } ${disabled ? "opacity-60" : ""} ${className}`}
     >
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-gray-100 bg-gray-50 px-2 py-1.5">
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-white/10 bg-white/[0.04] px-2 py-1.5">
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeadingStyle(1).run()}
           active={editor.isActive("headingStyle", { level: 1 })}
@@ -473,7 +473,7 @@ export function RichTextEditor({
             <FiLink className="h-4 w-4" />
           </ToolbarButton>
           {showLinkInput && (
-            <div className="absolute top-9 left-0 z-20 flex w-72 items-center gap-1 rounded-lg border border-gray-200 bg-white p-2 shadow-lg">
+            <div className="absolute top-9 left-0 z-20 flex w-72 items-center gap-1 rounded-lg border border-white/10 bg-[#121426] p-2 shadow-lg">
               <input
                 type="text"
                 autoFocus
@@ -481,12 +481,12 @@ export function RichTextEditor({
                 onChange={(e) => setLinkUrl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && applyLink()}
                 placeholder="https://example.com"
-                className="flex-1 rounded-md border border-gray-200 px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-[#0094CA]"
+                className="flex-1 rounded-md border border-white/10 px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-[#A020F0]"
               />
               <button
                 type="button"
                 onClick={applyLink}
-                className="rounded-md bg-[#0094CA] px-2 py-1 text-xs font-semibold text-white hover:bg-[#007ba8]"
+                className="rounded-md bg-[#A020F0] px-2 py-1 text-xs font-semibold text-white hover:bg-[#8A1AD0]"
               >
                 Apply
               </button>
@@ -496,7 +496,7 @@ export function RichTextEditor({
                   setShowLinkInput(false);
                   setLinkUrl("");
                 }}
-                className="rounded-md p-1 text-gray-400 hover:bg-gray-100"
+                className="rounded-md p-1 text-[#777B98] hover:bg-white/[0.06]"
               >
                 <FiX className="h-3 w-3" />
               </button>
@@ -534,28 +534,28 @@ export function RichTextEditor({
             label="Text color"
           >
             <span
-              className="h-4 w-4 rounded-sm border border-gray-300"
+              className="h-4 w-4 rounded-sm border border-white/15"
               style={{
                 backgroundColor:
                   (editor.getAttributes("textStyle").color as string) ??
-                  "#16304c",
+                  "#FFFFFF",
               }}
             />
           </ToolbarButton>
           {showColorPicker && (
-            <div className="absolute top-9 left-0 z-20 flex flex-nowrap items-center gap-1 rounded-lg border border-gray-200 bg-white p-1.5 shadow-lg">
+            <div className="absolute top-9 left-0 z-20 flex flex-nowrap items-center gap-1 rounded-lg border border-white/10 bg-[#121426] p-1.5 shadow-lg">
               {TEXT_COLORS.map((c) => (
                 <button
                   key={c.label}
                   type="button"
                   onClick={() => setColor(c.value)}
                   title={c.label}
-                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-gray-200 transition hover:scale-125"
+                  className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white/10 transition hover:scale-125"
                   style={{
                     backgroundColor: c.value || "transparent",
                   }}
                 >
-                  {!c.value && <FiX className="h-2.5 w-2.5 text-gray-400" />}
+                  {!c.value && <FiX className="h-2.5 w-2.5 text-[#777B98]" />}
                 </button>
               ))}
             </div>
@@ -589,8 +589,8 @@ function ToolbarButton({
       aria-pressed={active}
       className={`flex h-7 w-7 items-center justify-center rounded-md transition ${
         active
-          ? "bg-[#0094CA]/10 text-[#0094CA]"
-          : "text-gray-600 hover:bg-gray-200 hover:text-gray-900"
+          ? "bg-[#A020F0]/10 text-[#D8B4FE]"
+          : "text-[#A5A8C3] hover:bg-white/10 hover:text-white"
       }`}
     >
       {children}
@@ -599,5 +599,5 @@ function ToolbarButton({
 }
 
 function Divider() {
-  return <span className="mx-1 h-5 w-px bg-gray-200" />;
+  return <span className="mx-1 h-5 w-px bg-white/10" />;
 }

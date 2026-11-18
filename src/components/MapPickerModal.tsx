@@ -17,10 +17,10 @@ interface NominatimResult {
 const MapPickerInner = dynamic(() => import("./MapPickerInner"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full w-full items-center justify-center bg-gray-50">
+    <div className="flex h-full w-full items-center justify-center bg-white/[0.04]">
       <div className="flex flex-col items-center gap-3">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
-        <p className="text-sm text-gray-400">Loading interactive map...</p>
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#A020F0]" />
+        <p className="text-sm text-[#777B98]">Loading interactive map...</p>
       </div>
     </div>
   ),
@@ -100,21 +100,21 @@ export default function MapPickerModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <div className="flex h-full max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+    <div className="msm-modal fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+      <div className="flex h-full max-h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-[#121426] shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 p-4">
+        <div className="flex items-center justify-between border-b border-white/10 p-4">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">
+            <h2 className="text-xl font-bold text-white">
               Pick Location on Map
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-[#A5A8C3]">
               Search for a place or click on the map
             </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-full p-2 text-[#777B98] hover:bg-white/[0.06] hover:text-[#A5A8C3]"
           >
             <FiX size={20} />
           </button>
@@ -124,7 +124,7 @@ export default function MapPickerModal({
         <div className="relative p-4">
           <div className="relative flex gap-2">
             <div className="relative flex-1">
-              <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
+              <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-[#777B98]" />
               <input
                 type="text"
                 value={searchQuery}
@@ -136,11 +136,11 @@ export default function MapPickerModal({
                   if (suggestions.length > 0) setShowSuggestions(true);
                 }}
                 placeholder="Type to search for related places..."
-                className="w-full rounded-lg border border-gray-200 py-2.5 pr-10 pl-10 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]/20"
+                className="w-full rounded-lg border border-white/10 py-2.5 pr-10 pl-10 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]/20"
               />
               {loading && (
                 <div className="absolute top-1/2 right-3 -translate-y-1/2">
-                  <FiLoader className="animate-spin text-[#0094CA]" size={16} />
+                  <FiLoader className="animate-spin text-[#D8B4FE]" size={16} />
                 </div>
               )}
             </div>
@@ -148,20 +148,23 @@ export default function MapPickerModal({
 
           {/* Suggestions Dropdown */}
           {showSuggestions && suggestions.length > 0 && (
-            <div className="absolute right-4 left-4 z-[1001] mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-2xl">
+            <div className="absolute right-4 left-4 z-[1001] mt-1 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#121426] shadow-2xl">
               {suggestions.map((item, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleSelectSuggestion(item)}
-                  className="flex w-full items-start gap-3 border-b border-gray-50 p-3 text-left transition last:border-0 hover:bg-gray-50"
+                  className="flex w-full items-start gap-3 border-b border-white/10 p-3 text-left transition last:border-0 hover:bg-white/[0.04]"
                 >
-                  <FiMapPin className="mt-1 shrink-0 text-gray-400" size={16} />
+                  <FiMapPin
+                    className="mt-1 shrink-0 text-[#777B98]"
+                    size={16}
+                  />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-white">
                       {item.display_name}
                     </p>
                     {item.type && (
-                      <p className="text-xs text-[#0094CA] capitalize">
+                      <p className="text-xs text-[#D8B4FE] capitalize">
                         {item.type.replace(/_/g, " ")}
                       </p>
                     )}
@@ -173,7 +176,7 @@ export default function MapPickerModal({
         </div>
 
         {/* Map Container */}
-        <div className="relative flex-1 bg-gray-100">
+        <div className="relative flex-1 bg-white/[0.06]">
           <MapPickerInner
             initialPos={initialCenter}
             selectedPos={selectedPos}
@@ -198,16 +201,16 @@ export default function MapPickerModal({
 
           {/* Address Overlay */}
           <div className="absolute right-4 bottom-4 left-4 z-[1000]">
-            <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-lg">
+            <div className="rounded-xl border border-white/10 bg-[#121426] p-4 shadow-lg">
               <div className="flex items-start gap-3">
-                <div className="mt-1 rounded-full bg-[#0094CA]/10 p-2 text-[#0094CA]">
+                <div className="mt-1 rounded-full bg-[#A020F0]/10 p-2 text-[#D8B4FE]">
                   <FiMapPin size={18} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-semibold tracking-wider text-gray-400 uppercase">
+                  <p className="text-xs font-semibold tracking-wider text-[#777B98] uppercase">
                     Selected Location
                   </p>
-                  <p className="line-clamp-2 text-sm font-medium text-gray-800">
+                  <p className="line-clamp-2 text-sm font-medium text-white">
                     {address || "Click on map to select..."}
                   </p>
                 </div>
@@ -217,17 +220,17 @@ export default function MapPickerModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 p-4">
+        <div className="flex items-center justify-end gap-3 border-t border-white/10 p-4">
           <button
             onClick={onClose}
-            className="rounded-lg border border-gray-200 px-6 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+            className="rounded-lg border border-white/10 px-6 py-2.5 text-sm font-semibold text-[#A5A8C3] transition hover:bg-white/[0.04]"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={!address}
-            className="flex items-center gap-2 rounded-lg bg-[#0094CA] px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+            className="flex items-center gap-2 rounded-lg bg-[#A020F0] px-8 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
           >
             <FiCheck />
             Confirm Location

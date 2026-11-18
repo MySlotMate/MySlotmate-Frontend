@@ -9,12 +9,18 @@ import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
 import CouponsManager from "~/components/host/CouponsManager";
 import {
   useMyHost,
+  useEventsByHost,
   useCreateEvent,
   useUploadFiles,
   usePublishEvent,
   useExperienceTemplates,
 } from "~/hooks/useApi";
 import { useContentModeration } from "~/hooks/useContentModeration";
+import { useHostTier } from "~/hooks/useHostTier";
+import { VerifyToEarnSheet } from "~/components/host-dashboard/VerifyToEarn";
+import { FREE_HOST_LIMITS, findOffPlatformPayment } from "~/lib/hostTier";
+import { Lock } from "lucide-react";
+import { categoriesFor, type EventKind } from "~/lib/categories";
 import { useSuggestions } from "~/hooks/useSuggestions";
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { SuggestionChips } from "~/components/SuggestionChips";
@@ -46,6 +52,8 @@ import {
   LuBadgeCheck,
   LuSparkles,
   LuTicket,
+  LuGlobe,
+  LuLock,
 } from "react-icons/lu";
 import { format } from "date-fns";
 import { istInputToUTCISO } from "~/lib/datetime";
@@ -58,7 +66,7 @@ import {
 } from "~/lib/sessionSlots";
 import type { SessionType } from "~/lib/api";
 import { toast } from "sonner";
-import { MapPickerModal, LocationSearchInput } from "~/components";
+import { GoogleLogin, MapPickerModal, LocationSearchInput } from "~/components";
 import { ImageCropModal } from "~/components/ImageCropModal";
 
 /* ------------------------------------------------------------------ */
@@ -154,18 +162,6 @@ function getGeneratedDescription(value: unknown): string | null {
   const { description } = value;
   return typeof description === "string" ? description : null;
 }
-
-const MOODS = [
-  "Adventurous",
-  "Social",
-  "Wellness",
-  "Creative",
-  "Culinary",
-  "Cultural",
-  "Fashion",
-  "Fitness",
-  "Family",
-];
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
 
@@ -383,12 +379,15 @@ function CoverPoster({
   preview,
   title,
   mood,
+  isPrivate,
   onUpload,
   onRemove,
 }: {
   preview: string | null;
   title: string;
   mood: string;
+  /** Drives the Public / Private badge on the poster. */
+  isPrivate: boolean;
   onUpload: (files: File[]) => void;
   onRemove: () => void;
 }) {
@@ -405,7 +404,7 @@ function CoverPoster({
   };
 
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-[#2b1470] via-[#5a1fc4] to-[#B724EA]">
+    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-[#2b1470] via-[#5a1fc4] to-[#B724EA]">
       {preview ? (
         <Image
           src={preview}
@@ -434,6 +433,24 @@ function CoverPoster({
         onChange={pick}
         className="hidden"
       />
+      {/* Who can find this event: updates live with the Public/Private switch */}
+      <span
+        key={isPrivate ? "private" : "public"}
+        role="img"
+        aria-label={isPrivate ? "Private event" : "Public event"}
+        title={isPrivate ? "Private event" : "Public event"}
+        className={`absolute top-4 left-4 flex h-10 w-10 animate-[hero-stack-fade_0.3s_ease-out] items-center justify-center rounded-full backdrop-blur-md ${
+          isPrivate
+            ? "bg-[#080914]/80 text-white ring-1 ring-[#D8B4FE]/40"
+            : "bg-white/90 text-[#080914]"
+        }`}
+      >
+        {isPrivate ? (
+          <LuLock className="h-[18px] w-[18px] text-[#D8B4FE]" />
+        ) : (
+          <LuGlobe className="h-[18px] w-[18px] text-[#7B2FFF]" />
+        )}
+      </span>
       {preview && (
         <button
           type="button"
@@ -455,7 +472,6 @@ function CoverPoster({
     </div>
   );
 }
-
 
 /* ------------------------------------------------------------------ */
 /*  Image Upload Component                                             */
@@ -540,19 +556,21 @@ function ImageUpload({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-white/80">{label}</label>
+        <label className="block text-sm font-medium text-white/80">
+          {label}
+        </label>
       )}
       {helpText && <p className="text-xs text-white/50">{helpText}</p>}
 
       {!multiple && preview && (
-        <div className="relative inline-block w-full max-w-md">
+        <div className="relative inline-block w-full max-w-xs">
           <Image
             src={preview}
             alt="Preview"
             width={640}
-            height={360}
+            height={800}
             loading="lazy"
-            className="aspect-[16/9] w-full rounded-lg object-cover"
+            className="aspect-[4/5] w-full rounded-lg object-cover"
           />
           <button
             type="button"
@@ -567,9 +585,9 @@ function ImageUpload({
       {multiple && previews.length > 0 && (
         <div className="space-y-4">
           <div className="group relative">
-            {/* Photos are cropped to 16:9 on upload, so this preview matches the
-                fixed 16:9 frame the live experience page renders them in. */}
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-white/[0.06]">
+            {/* Photos are cropped to 4:5 on upload, the same frame as the event
+                cards on the website. */}
+            <div className="relative aspect-[4/5] w-full max-w-[380px] overflow-hidden rounded-xl bg-white/[0.06]">
               {/* Main Image */}
               <img
                 src={previews[currentImageIndex]}
@@ -727,31 +745,38 @@ function MoodSelector({
   value,
   onChange,
   hasError,
+  kind,
 }: {
   value: string;
   onChange: (v: string) => void;
   hasError?: boolean;
+  /** Group experiences and 1:1 sessions have separate category lists. */
+  kind: EventKind;
 }) {
+  const options = categoriesFor(kind);
   return (
     <div className="space-y-2">
       <p className="text-sm text-white/50">
-        What vibe best describes your experience?
+        {kind === "session"
+          ? "What is your 1:1 session about?"
+          : "What kind of experience is it?"}
       </p>
       <div
         className={`flex flex-wrap gap-2 rounded-xl p-1 transition ${hasError ? "bg-red-500/10 ring-1 ring-red-500" : ""}`}
       >
-        {MOODS.map((mood) => (
+        {options.map((c) => (
           <button
-            key={mood}
+            key={c.key}
             type="button"
-            onClick={() => onChange(mood.toLowerCase())}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-              value === mood.toLowerCase()
+            onClick={() => onChange(c.moods[0]!)}
+            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition ${
+              c.moods.includes(value)
                 ? "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white"
                 : "bg-white/[0.06] text-white/80 hover:bg-white/10"
             }`}
           >
-            {mood}
+            <c.icon className="h-4 w-4" />
+            {c.label}
           </button>
         ))}
       </div>
@@ -825,7 +850,7 @@ function TitleAutocomplete({
               ? "Pick a mood first to see suggestions"
               : "Start typing — or pick a suggestion below"
           }
-          className={`font-outfit w-full rounded-2xl border border-white/10 bg-[#121426] px-4 py-4 text-xl font-semibold text-white outline-none transition placeholder:text-white/30 focus:border-[#B57BFF] ${
+          className={`font-outfit w-full rounded-2xl border border-white/10 bg-[#121426] px-4 py-4 text-xl font-semibold text-white transition outline-none placeholder:text-white/30 focus:border-[#B57BFF] ${
             moodDisabled ? "cursor-not-allowed opacity-50" : ""
           } ${hasError ? "!border-red-500 !bg-red-500/10" : ""}`}
           maxLength={100}
@@ -917,20 +942,20 @@ function PreviewCard({ form }: { form: FormData }) {
 
   return (
     <div className="sticky top-20 mx-auto h-max w-full max-w-[420px] pl-4 select-none lg:ml-auto">
-      <div className="relative overflow-hidden rounded-3xl border border-[#cfe8fa] bg-gradient-to-br from-white via-[#f4faff] to-[#e9f5ff] p-5 shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-white via-[#080914] to-[#080914] p-5 shadow-[0_24px_60px_rgba(58,119,172,0.12)]">
         {/* Header */}
         <div className="mb-3 flex items-start gap-2.5">
-          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[#cfe8fa] bg-white shadow-[0_8px_20px_rgba(31,167,255,0.18)]">
-            <LuTicket className="h-4 w-4 -rotate-12 text-[#0094CA]" />
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-[#121426] shadow-[0_8px_20px_rgba(160,32,240,0.25)]">
+            <LuTicket className="h-4 w-4 -rotate-12 text-[#D8B4FE]" />
           </div>
           <div className="flex-1">
-            <h2 className="font-outfit text-xl leading-none font-extrabold tracking-tight text-[#16304c]">
+            <h2 className="font-outfit text-xl leading-none font-extrabold tracking-tight text-white">
               {form.isFree ? (
                 "FREE EXPERIENCE"
               ) : (
                 <>
                   ₹{((form.priceCents ?? 0) / 100).toFixed(0)}
-                  <span className="text-sm font-medium text-[#6f8daa]">
+                  <span className="text-sm font-medium text-[#A5A8C3]">
                     /person
                   </span>
                 </>
@@ -939,8 +964,8 @@ function PreviewCard({ form }: { form: FormData }) {
             <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#5f7e9a]">
               Hosted by verified host
               <LuBadgeCheck
-                className="h-3.5 w-3.5 text-[#0094CA]"
-                fill="#0094CA"
+                className="h-3.5 w-3.5 text-[#D8B4FE]"
+                fill="#A020F0"
                 stroke="#ffffff"
               />
             </div>
@@ -948,32 +973,32 @@ function PreviewCard({ form }: { form: FormData }) {
         </div>
 
         {/* Stats Row */}
-        <div className="mb-3 flex items-center justify-start gap-4 border-b border-[#dbeaf5] pb-3 text-xs">
+        <div className="mb-3 flex items-center justify-start gap-4 border-b border-white/10 pb-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#0094CA] uppercase">NEW</span>
+            <span className="font-bold text-[#D8B4FE] uppercase">NEW</span>
           </div>
-          <div className="h-4 w-px bg-[#dbeaf5]" />
+          <div className="h-4 w-px bg-white/[0.04]" />
           <div className="flex items-center gap-2">
-            <FiUsers className="h-4 w-4 text-[#0094CA]" />
-            <span className="font-bold text-[#16304c]">0</span>
-            <span className="text-[#6f8daa]">people joined</span>
+            <FiUsers className="h-4 w-4 text-[#D8B4FE]" />
+            <span className="font-bold text-white">0</span>
+            <span className="text-[#A5A8C3]">people joined</span>
           </div>
         </div>
 
         {/* Choose Your Session */}
         <div className="mb-3">
           <div className="flex items-center gap-1.5">
-            <FiCalendar className="h-4 w-4 text-[#0094CA]" />
-            <h3 className="text-sm font-bold text-[#16304c]">
+            <FiCalendar className="h-4 w-4 text-[#D8B4FE]" />
+            <h3 className="text-sm font-bold text-white">
               Choose your session
             </h3>
           </div>
-          <p className="mb-4 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
+          <p className="mb-4 ml-[22px] text-[11px] leading-tight text-[#A5A8C3]">
             Pick a time
           </p>
 
           {form.eventDate ? (
-            <div className="flex w-full items-center gap-2.5 rounded-2xl border-2 border-transparent bg-gradient-to-br from-[#1fa7ff] to-[#0094CA] px-3.5 py-2.5 text-left text-white shadow-[0_14px_30px_rgba(31,167,255,0.35)]">
+            <div className="flex w-full items-center gap-2.5 rounded-2xl border-2 border-transparent bg-gradient-to-br from-[#A020F0] to-[#A020F0] px-3.5 py-2.5 text-left text-white shadow-[0_14px_30px_rgba(31,167,255,0.35)]">
               <FiClock className="h-4 w-4 flex-shrink-0 text-white/90" />
               <div className="flex flex-1 items-baseline gap-2">
                 <span className="text-sm font-bold">
@@ -985,12 +1010,12 @@ function PreviewCard({ form }: { form: FormData }) {
                     : "Time TBD"}
                 </span>
               </div>
-              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-white">
-                <FiCheck className="h-3 w-3 stroke-[3] text-[#0094CA]" />
+              <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#121426]">
+                <FiCheck className="h-3 w-3 stroke-[3] text-[#D8B4FE]" />
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-[#dbeaf5] bg-white px-4 py-3 text-sm text-[#6f8daa] italic">
+            <div className="rounded-2xl border border-white/10 bg-[#121426] px-4 py-3 text-sm text-[#A5A8C3] italic">
               No upcoming sessions
             </div>
           )}
@@ -999,16 +1024,16 @@ function PreviewCard({ form }: { form: FormData }) {
         {/* Guests */}
         <div className="mb-3">
           <div className="flex items-center gap-1.5">
-            <FiUser className="h-4 w-4 text-[#0094CA]" />
-            <h3 className="text-sm font-bold text-[#16304c]">Guests</h3>
+            <FiUser className="h-4 w-4 text-[#D8B4FE]" />
+            <h3 className="text-sm font-bold text-white">Guests</h3>
           </div>
-          <p className="mb-2 ml-[22px] text-[11px] leading-tight text-[#6f8daa]">
+          <p className="mb-2 ml-[22px] text-[11px] leading-tight text-[#A5A8C3]">
             How many are joining?
           </p>
           <div className="relative">
-            <div className="flex w-full items-center justify-between rounded-2xl border border-[#dbeaf5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-[#16304c] outline-none">
+            <div className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-[#121426] px-3.5 py-2.5 pr-10 text-sm font-medium text-white outline-none">
               <span>1 Guest</span>
-              <FiChevronDown className="h-4 w-4 text-[#6f8daa]" />
+              <FiChevronDown className="h-4 w-4 text-[#A5A8C3]" />
             </div>
           </div>
         </div>
@@ -1017,33 +1042,33 @@ function PreviewCard({ form }: { form: FormData }) {
         <button
           type="button"
           disabled
-          className="group flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-semibold text-white opacity-50 shadow-[0_16px_32px_rgba(31,167,255,0.32)]"
+          className="group flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#A020F0] to-[#A020F0] py-2.5 text-sm font-semibold text-white opacity-50 shadow-[0_16px_32px_rgba(31,167,255,0.32)]"
         >
           <span>Reserve My Spot</span>
           <FiArrowRight className="h-4 w-4" />
         </button>
 
         {/* Trust Badges */}
-        <div className="mt-3 grid grid-cols-3 gap-1 border-t border-[#dbeaf5] pt-3">
+        <div className="mt-3 grid grid-cols-3 gap-1 border-t border-white/10 pt-3">
           <div className="flex flex-col items-center gap-1 px-1 text-center">
-            <FiShield className="h-4 w-4 text-[#0094CA]" />
-            <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
+            <FiShield className="h-4 w-4 text-[#D8B4FE]" />
+            <span className="text-[10px] leading-tight font-semibold text-white">
               {cancellationBadge.label}
               <br />
               {cancellationBadge.sub}
             </span>
           </div>
-          <div className="flex flex-col items-center gap-1 border-x border-[#dbeaf5] px-1 text-center">
+          <div className="flex flex-col items-center gap-1 border-x border-white/10 px-1 text-center">
             <FiStar className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
+            <span className="text-[10px] leading-tight font-semibold text-white">
               Verified
               <br />
               host
             </span>
           </div>
           <div className="flex flex-col items-center gap-1 px-1 text-center">
-            <FiMessageCircle className="h-4 w-4 text-[#0094CA]" />
-            <span className="text-[10px] leading-tight font-semibold text-[#16304c]">
+            <FiMessageCircle className="h-4 w-4 text-[#D8B4FE]" />
+            <span className="text-[10px] leading-tight font-semibold text-white">
               Instant
               <br />
               confirmation
@@ -1068,13 +1093,13 @@ function PreviewCard({ form }: { form: FormData }) {
 
         {/* Rare find banner */}
         {form.maxGroupSize <= 3 && (
-          <div className="mt-4 flex items-start gap-2 rounded-2xl border border-red-100 bg-red-50 p-3">
+          <div className="mt-4 flex items-start gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 p-3">
             <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-red-500">
               <LuSparkles className="text-white" size={12} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-red-600">Rare find</p>
-              <p className="text-xs text-red-500">
+              <p className="text-sm font-semibold text-red-300">Rare find</p>
+              <p className="text-xs text-red-400">
                 Only {form.maxGroupSize} spot{form.maxGroupSize > 1 ? "s" : ""}{" "}
                 left!
               </p>
@@ -1107,22 +1132,22 @@ function SuccessModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="animate-in fade-in zoom-in w-full max-w-md rounded-2xl bg-white p-8 text-center duration-200">
+    <div className="msm-modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="animate-in fade-in zoom-in w-full max-w-md rounded-2xl bg-[#121426] p-8 text-center duration-200">
         <div
           className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${
-            isDraft ? "bg-gray-100" : "bg-green-100"
+            isDraft ? "bg-white/[0.06]" : "bg-green-500/15"
           }`}
         >
           <FiCheck
-            className={isDraft ? "text-gray-500" : "text-green-600"}
+            className={isDraft ? "text-[#A5A8C3]" : "text-green-300"}
             size={32}
           />
         </div>
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">
+        <h2 className="mb-2 text-2xl font-bold text-white">
           {isDraft ? "Draft Saved" : "Your Experience is Live! 🎉"}
         </h2>
-        <p className="mb-6 text-gray-500">
+        <p className="mb-6 text-[#A5A8C3]">
           {isDraft
             ? "Your draft is safe. Pick it up from the Drafts tab in My Experiences whenever you're ready to finish it."
             : "Congratulations! Your experience has been published and is now visible to guests."}
@@ -1130,7 +1155,7 @@ function SuccessModal({
         <div className="flex flex-col gap-3">
           <button
             onClick={onClose}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#0094CA] py-3 font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#A020F0] py-3 font-semibold text-[#D8B4FE] transition hover:bg-[#A020F0]/10"
           >
             Add access &amp; coupon codes
           </button>
@@ -1142,14 +1167,14 @@ function SuccessModal({
                   void navigator.clipboard.writeText(url);
                   toast.success("Link copied to clipboard!");
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/[0.06] py-3 font-medium transition hover:bg-white/10"
               >
                 <FiShare2 size={18} />
                 Share Experience
               </button>
               <button
                 onClick={() => router.push(`/experience/${experienceSlug}`)}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/[0.06] py-3 font-medium transition hover:bg-white/10"
               >
                 <FiExternalLink size={18} />
                 View Live Page
@@ -1161,14 +1186,14 @@ function SuccessModal({
               onClick={() =>
                 router.push(`/host-dashboard/experiences/${experienceId}`)
               }
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-gray-100 py-3 font-medium transition hover:bg-gray-200"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-white/[0.06] py-3 font-medium transition hover:bg-white/10"
             >
               Continue Editing
             </button>
           )}
           <button
             onClick={() => router.push("/host-dashboard/experiences")}
-            className="w-full rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8]"
+            className="w-full rounded-lg bg-[#A020F0] py-3 font-semibold text-white transition hover:bg-[#8A1AD0]"
           >
             Go to Dashboard
           </button>
@@ -1184,7 +1209,6 @@ function SuccessModal({
 export default function CreateExperiencePage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitType, setSubmitType] = useState<"draft" | "publish" | null>(
     null,
@@ -1340,10 +1364,37 @@ export default function CreateExperiencePage() {
 
   useEffect(() => {
     setUserId(localStorage.getItem("msm_user_id"));
-    setIsHydrated(true);
   }, []);
 
   const { data: host, isLoading: hostLoading } = useMyHost(userId);
+  // Unverified hosts can only run free events, within the free-host limits.
+  const {
+    isVerified,
+    applicationStatus,
+    isLoading: tierLoading,
+  } = useHostTier();
+  // Free-host UI (locks, notes) only once the tier is known.
+  const showFreeHostUi = !tierLoading && !isVerified;
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  // Experiences and 1:1 sessions use different category lists: drop a
+  // category that doesn't exist in the newly chosen list.
+  useEffect(() => {
+    const list = categoriesFor(
+      form.sessionType === "one_on_one" ? "session" : "experience",
+    );
+    if (form.mood && !list.some((c) => c.moods.includes(form.mood))) {
+      setForm((prev) => ({ ...prev, mood: "" }));
+    }
+  }, [form.sessionType, form.mood]);
+  const { data: hostEvents } = useEventsByHost(host?.id ?? null);
+  const activeEventCount = (hostEvents ?? []).filter(
+    (e) => e.status === "live" || e.status === "paused",
+  ).length;
+  useEffect(() => {
+    if (!tierLoading && !isVerified) {
+      setForm((prev) => (prev.isFree ? prev : { ...prev, isFree: true }));
+    }
+  }, [tierLoading, isVerified]);
   const createEvent = useCreateEvent();
   const uploadFiles = useUploadFiles();
   const publishEvent = usePublishEvent();
@@ -1355,11 +1406,8 @@ export default function CreateExperiencePage() {
   const [descriptionTextLength, setDescriptionTextLength] = useState(0);
   const [isSummarizing, setIsSummarizing] = useState(false);
 
-  useEffect(() => {
-    if (isHydrated && !userId && !hostLoading) {
-      router.push("/");
-    }
-  }, [userId, hostLoading, router, isHydrated]);
+  // Visitors can build an event without an account; sign-in opens on publish.
+  const [showLogin, setShowLogin] = useState(false);
 
   const updateForm = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -1640,8 +1688,44 @@ export default function CreateExperiencePage() {
     } else if (!validateStep1() || !validateStep2()) {
       return;
     }
+    if (!userId || userId === "existing") {
+      toast.info("Sign in to publish. Everything you’ve added stays here.");
+      setShowLogin(true);
+      return;
+    }
+    if (!isVerified) {
+      if (!form.isFree) {
+        updateForm("isFree", true);
+        setVerifyOpen(true);
+        return;
+      }
+      if (
+        form.sessionType !== "one_on_one" &&
+        form.maxGroupSize > FREE_HOST_LIMITS.maxGuests
+      ) {
+        toast.error(
+          `Free events can have up to ${FREE_HOST_LIMITS.maxGuests} guests. Get verified to host more.`,
+        );
+        return;
+      }
+      if (!asDraft && activeEventCount >= FREE_HOST_LIMITS.maxActiveEvents) {
+        toast.error(
+          `Free hosts can have ${FREE_HOST_LIMITS.maxActiveEvents} live events at a time. Save this as a draft, or get verified to host more.`,
+        );
+        return;
+      }
+      const payment = findOffPlatformPayment(
+        `${form.title} ${form.hookLine} ${form.description}`,
+      );
+      if (payment) {
+        toast.error(payment);
+        return;
+      }
+    }
     if (!host?.id) {
-      toast.error("Host credentials not found");
+      toast.error(
+        "Your account isn’t set up as a host yet, so this can’t be published.",
+      );
       return;
     }
     setSubmitType(asDraft ? "draft" : "publish");
@@ -1861,7 +1945,6 @@ export default function CreateExperiencePage() {
     }
   };
 
-
   /* ---------------------------------------------------------------- */
   /*  Render                                                           */
   /* ---------------------------------------------------------------- */
@@ -1954,7 +2037,7 @@ export default function CreateExperiencePage() {
 
   return (
     <>
-      <main className="msm-dark-form min-h-screen bg-[#080914] pb-28 text-white md:pl-20 min-[80rem]:pl-[230px]">
+      <main className="msm-dark-form min-h-screen bg-[#080914] pb-28 text-white">
         <div className="mx-auto max-w-[1120px] px-5 py-8 md:px-10">
           {/* Header */}
           <div className="mb-8 flex items-center gap-3">
@@ -1982,6 +2065,7 @@ export default function CreateExperiencePage() {
                 preview={form.coverImagePreview}
                 title={form.title}
                 mood={form.mood}
+                isPrivate={form.isPrivate}
                 onUpload={handleCoverUpload}
                 onRemove={() => {
                   if (form.coverImagePreview)
@@ -2036,6 +2120,9 @@ export default function CreateExperiencePage() {
               {/* Basics */}
               <div className="space-y-5">
                 <MoodSelector
+                  kind={
+                    form.sessionType === "one_on_one" ? "session" : "experience"
+                  }
                   value={form.mood}
                   onChange={(v) => {
                     updateForm("mood", v);
@@ -2248,7 +2335,9 @@ export default function CreateExperiencePage() {
                           )}
                         </div>
                       ))}
-                      <AddPill onClick={addCustomSlot}>Add another date</AddPill>
+                      <AddPill onClick={addCustomSlot}>
+                        Add another date
+                      </AddPill>
                     </div>
                   )}
 
@@ -2376,20 +2465,17 @@ export default function CreateExperiencePage() {
                       onClick={async () => {
                         try {
                           setIsSummarizing(true);
-                          const res = await fetch(
-                            "/api/generate-description",
-                            {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                title: form.title,
-                                hookLine: form.hookLine,
-                                mood: form.mood,
-                                location: form.location,
-                                durationMinutes: form.durationMinutes,
-                              }),
-                            },
-                          );
+                          const res = await fetch("/api/generate-description", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              title: form.title,
+                              hookLine: form.hookLine,
+                              mood: form.mood,
+                              location: form.location,
+                              durationMinutes: form.durationMinutes,
+                            }),
+                          });
 
                           const data: unknown = await res.json();
                           const generatedDescription =
@@ -2496,8 +2582,8 @@ export default function CreateExperiencePage() {
                   ))}
                 </div>
                 <p className="px-1 text-xs text-white/40">
-                  Max group size is the total number of spots that can book
-                  this session (the event capacity).
+                  Max group size is the total number of spots that can book this
+                  session (the event capacity).
                 </p>
 
                 <div className="space-y-2 pt-2">
@@ -2582,12 +2668,47 @@ export default function CreateExperiencePage() {
               <Section title="Tickets">
                 <Segmented<"paid" | "free">
                   value={form.isFree ? "free" : "paid"}
-                  onChange={(v) => updateForm("isFree", v === "free")}
+                  onChange={(v) => {
+                    if (v === "paid" && showFreeHostUi) {
+                      setVerifyOpen(true);
+                      return;
+                    }
+                    updateForm("isFree", v === "free");
+                  }}
                   options={[
-                    { value: "paid", label: "Paid" },
+                    {
+                      value: "paid",
+                      label: !showFreeHostUi ? (
+                        "Paid"
+                      ) : (
+                        <>
+                          <Lock className="h-3.5 w-3.5" /> Paid
+                        </>
+                      ),
+                    },
                     { value: "free", label: "Free" },
                   ]}
                 />
+                {showFreeHostUi && (
+                  <div className="rounded-2xl border border-[#652A91]/50 bg-[#241333]/60 px-4 py-3 text-[13px] leading-5 text-white/70">
+                    <p>
+                      You&apos;re hosting as a{" "}
+                      <span className="font-semibold text-white">
+                        free host
+                      </span>
+                      : free events only, up to {FREE_HOST_LIMITS.maxGuests}{" "}
+                      guests. Guests will see it as a community event, and
+                      MySlotMate doesn&apos;t verify free hosts.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setVerifyOpen(true)}
+                      className="mt-1.5 font-semibold text-[#D8B4FE] transition hover:text-white"
+                    >
+                      Get verified to sell tickets →
+                    </button>
+                  </div>
+                )}
 
                 {!form.isFree && (
                   <Segmented<"single" | "tiers">
@@ -2695,7 +2816,9 @@ export default function CreateExperiencePage() {
                         )}
                       </div>
                     ))}
-                    <AddPill onClick={addPriceTier}>Add another ticket type</AddPill>
+                    <AddPill onClick={addPriceTier}>
+                      Add another ticket type
+                    </AddPill>
                     <p className="px-1 text-xs text-white/40">
                       Guests pick one ticket type when booking.
                     </p>
@@ -2725,7 +2848,10 @@ export default function CreateExperiencePage() {
                               min={1}
                               value={form.monthlyPassPriceStr}
                               onChange={(e) =>
-                                updateForm("monthlyPassPriceStr", e.target.value)
+                                updateForm(
+                                  "monthlyPassPriceStr",
+                                  e.target.value,
+                                )
                               }
                               placeholder="2500"
                               className={ROW_INPUT}
@@ -2814,7 +2940,9 @@ export default function CreateExperiencePage() {
                 <AttendeeDetailsConfig
                   enabled={form.requiresAttendeeDetails}
                   fields={form.attendeeFields}
-                  onToggle={(next) => updateForm("requiresAttendeeDetails", next)}
+                  onToggle={(next) =>
+                    updateForm("requiresAttendeeDetails", next)
+                  }
                   onFieldsChange={(next) => updateForm("attendeeFields", next)}
                 />
 
@@ -2919,9 +3047,22 @@ export default function CreateExperiencePage() {
         }}
       />
 
+      <VerifyToEarnSheet
+        open={verifyOpen}
+        onClose={() => setVerifyOpen(false)}
+        applicationStatus={applicationStatus}
+      />
+      <GoogleLogin
+        open={showLogin}
+        onClose={() => {
+          setShowLogin(false);
+          // Signed in? Load their host profile so Publish can carry on.
+          setUserId(localStorage.getItem("msm_user_id"));
+        }}
+      />
       <ImageCropModal
         file={cropQueue.length > 0 ? cropQueue[0]! : null}
-        aspect={16 / 9}
+        aspect={4 / 5}
         onClose={() => setCropQueue([])}
         onConfirm={handleCropConfirm}
       />

@@ -7,7 +7,7 @@
  */
 export default function Loading() {
   return (
-    <div className="min-h-screen animate-pulse bg-[#080914] md:pl-20 min-[80rem]:pl-[230px]">
+    <div className="min-h-screen animate-pulse bg-[#080914]">
       <div className="mx-auto max-w-[1210px] px-6 pt-6 md:px-10 md:pt-10">
         <div className="h-9 w-40 rounded-lg bg-white/10" />
         <div className="mt-2 h-4 w-56 rounded bg-white/5" />

@@ -1,8 +1,10 @@
 "use client";
 import * as components from "../components";
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { MoodProvider } from "~/context/MoodContext";
+import { useStoredAuth } from "~/hooks/useStoredAuth";
+import WebsiteHome from "~/components/website/WebsiteHome";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import type { HomepageMarketingConfig } from "~/components/home/ShowcaseSections";
 
@@ -22,10 +24,19 @@ export default function HomeClient({
   initialMarketingConfig: HomepageMarketingConfig | null;
 }) {
   const mainRef = useRef<HTMLElement>(null);
-
-  // hostId and mounted were unused because of commented out code
+  const { userId } = useStoredAuth();
+  // Auth lives in localStorage, so the server (and the first client render)
+  // can't know it: render the public website until mounted, then swap to the
+  // app feed for logged-in users.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    delete document.documentElement.dataset.authed;
+  }, []);
+  const showFeed = mounted && Boolean(userId);
 
   useLayoutEffect(() => {
+    if (!showFeed) return;
     const ctx = gsap.context(() => {
       const fadeElements = gsap.utils.toArray<HTMLElement>(".scroll-fade");
 
@@ -44,13 +55,24 @@ export default function HomeClient({
     }, mainRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [showFeed]);
+
+  if (!showFeed) {
+    return (
+      <div className="msm-visitor-only">
+        <WebsiteHome
+          initialEvents={initialEvents}
+          initialHosts={initialHosts}
+        />
+      </div>
+    );
+  }
 
   return (
     <MoodProvider>
       <main
         ref={mainRef}
-        className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28 md:pl-20 min-[80rem]:pl-[230px]"
+        className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28"
       >
         <components.Navbar dark />
 

@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQueries } from "@tanstack/react-query";
-import { HostNavbar } from "~/components/host-dashboard";
-import Breadcrumb from "~/components/Breadcrumb";
 import { useEventsByHost, useMyHost } from "~/hooks/useApi";
 import * as api from "~/lib/api";
 import { IST_TIMEZONE } from "~/lib/datetime";
@@ -99,51 +97,40 @@ export default function HostBookingsPage() {
   }, [events, attendeesQueries]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <HostNavbar />
-
-      <main className="site-x mx-auto max-w-7xl py-8">
-        <Breadcrumb
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Dashboard", href: "/host-dashboard" },
-            { label: "Bookings" },
-          ]}
-          className="mb-6"
-        />
-
+    <div className="min-h-screen bg-[#080914]">
+      <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 md:py-10 lg:px-10">
         <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
               All Bookings
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-[#A5A8C3]">
               Bookings across every experience you host. Past events appear
               under History.
             </p>
           </div>
           <div className="flex gap-6 text-sm">
             <div>
-              <p className="text-xs text-gray-500">Total bookings</p>
-              <p className="text-xl font-bold text-gray-900">{totalBookings}</p>
+              <p className="text-xs text-[#A5A8C3]">Total bookings</p>
+              <p className="text-xl font-bold text-white">{totalBookings}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Total guests</p>
-              <p className="text-xl font-bold text-gray-900">{totalGuests}</p>
+              <p className="text-xs text-[#A5A8C3]">Total guests</p>
+              <p className="text-xl font-bold text-white">{totalGuests}</p>
             </div>
           </div>
         </div>
 
         {isLoading ? (
           <div className="flex min-h-[40vh] items-center justify-center">
-            <LuLoader2 className="h-8 w-8 animate-spin text-[#0094CA]" />
+            <LuLoader2 className="h-8 w-8 animate-spin text-[#D8B4FE]" />
           </div>
         ) : (events?.length ?? 0) === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center text-sm text-gray-500">
+          <div className="rounded-2xl border border-dashed border-white/10 bg-[#121426] p-10 text-center text-sm text-[#A5A8C3]">
             You haven&apos;t created any experiences yet.{" "}
             <Link
               href="/host-dashboard/experiences/new"
-              className="font-semibold text-[#0094CA] hover:underline"
+              className="font-semibold text-[#D8B4FE] hover:underline"
             >
               Create one
             </Link>
@@ -192,9 +179,9 @@ function Section({
 }) {
   return (
     <section>
-      <h2 className="mb-3 text-lg font-bold text-gray-900">{title}</h2>
+      <h2 className="mb-3 text-lg font-bold text-white">{title}</h2>
       {groups.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-400">
+        <p className="rounded-xl border border-dashed border-white/10 bg-[#121426] p-6 text-center text-sm text-[#777B98]">
           {empty}
         </p>
       ) : (
@@ -233,28 +220,28 @@ function EventBookingsGroup({
   const revenue = active.reduce((s, b) => s + (b.amount_cents ?? 0), 0);
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-xl border border-white/10 bg-[#121426]">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-start gap-3 bg-gray-50 px-4 py-3 text-left transition hover:bg-gray-100"
+        className="flex w-full items-start gap-3 bg-white/[0.04] px-4 py-3 text-left transition hover:bg-white/[0.06]"
       >
         {open ? (
-          <FiChevronDown className="mt-1 h-4 w-4 shrink-0 text-gray-400" />
+          <FiChevronDown className="mt-1 h-4 w-4 shrink-0 text-[#777B98]" />
         ) : (
-          <FiChevronRight className="mt-1 h-4 w-4 shrink-0 text-gray-400" />
+          <FiChevronRight className="mt-1 h-4 w-4 shrink-0 text-[#777B98]" />
         )}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-sm font-semibold text-gray-900">
+            <h3 className="truncate text-sm font-semibold text-white">
               {event.title}
             </h3>
             {isPast && (
-              <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
+              <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-[#A5A8C3]">
                 past
               </span>
             )}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[#A5A8C3]">
             <span className="flex items-center gap-1">
               <FiCalendar className="h-3 w-3" />
               {new Date(event.time).toLocaleDateString("en-US", {
@@ -281,13 +268,13 @@ function EventBookingsGroup({
             )}
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2 text-xs text-gray-500 sm:gap-4">
+        <div className="flex shrink-0 items-center gap-2 text-xs text-[#A5A8C3] sm:gap-4">
           <span className="flex items-center gap-1">
             <FiUsers className="h-3.5 w-3.5" />
             {guests} / {event.capacity}
           </span>
           {revenue > 0 && (
-            <span className="font-semibold text-gray-700">
+            <span className="font-semibold text-white/80">
               ₹{(revenue / 100).toFixed(2)}
             </span>
           )}
@@ -298,7 +285,7 @@ function EventBookingsGroup({
               void exportBookingsToExcel(event.title, bookings, setExporting);
             }}
             disabled={exporting || bookings.length === 0}
-            className="inline-flex items-center gap-1 rounded-md border border-emerald-600 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-md border border-emerald-600 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-semibold text-emerald-300 transition hover:bg-emerald-500/15 disabled:opacity-50"
             title="Download Excel sheet of bookings for this event"
           >
             {exporting ? (
@@ -311,7 +298,7 @@ function EventBookingsGroup({
           <Link
             href={`/host-dashboard/experiences/${event.id}?tab=bookings`}
             onClick={(e) => e.stopPropagation()}
-            className="rounded-md bg-[#0094CA] px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-[#007ba8]"
+            className="rounded-md bg-[#A020F0] px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-[#8A1AD0]"
           >
             View
           </Link>
@@ -319,9 +306,9 @@ function EventBookingsGroup({
       </button>
 
       {open && (
-        <div className="divide-y divide-gray-100 bg-white">
+        <div className="divide-y divide-white/10 bg-[#121426]">
           {bookings.length === 0 ? (
-            <p className="px-4 py-4 text-center text-xs text-gray-400">
+            <p className="px-4 py-4 text-center text-xs text-[#777B98]">
               No bookings yet.
             </p>
           ) : (
@@ -351,7 +338,7 @@ function AttendeeDetails({ profile }: { profile: AttendeeProfileDTO }) {
 
   if (rows.length === 0) {
     return (
-      <p className="px-4 pb-3 text-xs text-gray-400">
+      <p className="px-4 pb-3 text-xs text-[#777B98]">
         No attendee details submitted.
       </p>
     );
@@ -361,18 +348,18 @@ function AttendeeDetails({ profile }: { profile: AttendeeProfileDTO }) {
     <div className="grid gap-x-6 gap-y-2 px-4 pb-3 sm:grid-cols-2">
       {rows.map((row) => (
         <div key={row.key} className="flex items-start justify-between gap-3">
-          <span className="text-xs text-gray-500">{row.label}</span>
+          <span className="text-xs text-[#A5A8C3]">{row.label}</span>
           {row.key === "govt_id_url" ? (
             <a
               href={row.value}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-semibold text-[#0094CA] hover:underline"
+              className="text-xs font-semibold text-[#D8B4FE] hover:underline"
             >
               View ID
             </a>
           ) : (
-            <span className="text-right text-xs font-medium text-gray-800">
+            <span className="text-right text-xs font-medium text-white">
               {row.value}
             </span>
           )}
@@ -444,16 +431,14 @@ function BookingRow({
               className="h-8 w-8 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0094CA]/10 text-xs font-bold text-[#0094CA]">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#A020F0]/10 text-xs font-bold text-[#D8B4FE]">
               {name.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-gray-900">
-              {name}
-            </p>
+            <p className="truncate text-sm font-semibold text-white">{name}</p>
             {booking.user_email && (
-              <p className="truncate text-xs text-gray-500">
+              <p className="truncate text-xs text-[#A5A8C3]">
                 {booking.user_email}
               </p>
             )}
@@ -461,7 +446,7 @@ function BookingRow({
               <button
                 type="button"
                 onClick={() => setShowDetails((s) => !s)}
-                className="mt-0.5 text-[11px] font-semibold text-[#0094CA] hover:underline"
+                className="mt-0.5 text-[11px] font-semibold text-[#D8B4FE] hover:underline"
               >
                 {showDetails ? "Hide details" : "View details"}
               </button>
@@ -469,21 +454,21 @@ function BookingRow({
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs sm:gap-3">
-          <span className="text-gray-500">Qty {booking.quantity}</span>
+          <span className="text-[#A5A8C3]">Qty {booking.quantity}</span>
           {booking.amount_cents !== null && (
-            <span className="text-gray-700">
+            <span className="text-white/80">
               ₹{(booking.amount_cents / 100).toFixed(2)}
             </span>
           )}
           <span
             className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
               booking.status === "pending"
-                ? "bg-yellow-100 text-yellow-800"
+                ? "bg-yellow-500/15 text-yellow-300"
                 : booking.status === "confirmed"
-                  ? "bg-green-100 text-green-800"
+                  ? "bg-green-500/15 text-green-300"
                   : booking.status === "cancelled"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-orange-100 text-orange-800"
+                    ? "bg-red-500/15 text-red-300"
+                    : "bg-orange-500/15 text-orange-300"
             }`}
           >
             {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
@@ -492,7 +477,7 @@ function BookingRow({
             type="button"
             onClick={() => void handleSendWhatsapp()}
             disabled={sendingWhatsapp || !guestPhone}
-            className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:border-emerald-500 hover:text-emerald-600 disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121426] px-2 py-1 text-[11px] font-medium text-white/80 transition hover:border-emerald-500 hover:text-emerald-300 disabled:opacity-50"
             title={
               guestPhone
                 ? `Send ticket on WhatsApp to ${guestPhone}`
@@ -500,10 +485,10 @@ function BookingRow({
             }
           >
             {sendingWhatsapp ? (
-              <LuLoader2 className="h-3 w-3 animate-spin text-emerald-600" />
+              <LuLoader2 className="h-3 w-3 animate-spin text-emerald-300" />
             ) : (
               <FaWhatsapp
-                className={`h-3 w-3 ${whatsappSent ? "text-emerald-600" : "text-gray-500"}`}
+                className={`h-3 w-3 ${whatsappSent ? "text-emerald-300" : "text-[#A5A8C3]"}`}
               />
             )}
             {whatsappSent ? "Sent" : "WhatsApp"}
@@ -519,20 +504,20 @@ function BookingRow({
               );
             }}
             disabled={downloadingTicket}
-            className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] font-medium text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA] disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121426] px-2 py-1 text-[11px] font-medium text-white/80 transition hover:border-[#A020F0] hover:text-[#D8B4FE] disabled:opacity-50"
             title="Download Ticket PDF"
           >
             {downloadingTicket ? (
-              <LuLoader2 className="h-3 w-3 animate-spin text-[#0094CA]" />
+              <LuLoader2 className="h-3 w-3 animate-spin text-[#D8B4FE]" />
             ) : (
-              <FiDownload className="h-3 w-3 text-gray-500" />
+              <FiDownload className="h-3 w-3 text-[#A5A8C3]" />
             )}
             Ticket
           </button>
         </div>
       </div>
       {hasDetails && showDetails && booking.attendee_profile && (
-        <div className="border-t border-gray-100 bg-gray-50/60 pt-3">
+        <div className="border-t border-white/10 bg-white/[0.03] pt-3">
           <AttendeeDetails profile={booking.attendee_profile} />
         </div>
       )}

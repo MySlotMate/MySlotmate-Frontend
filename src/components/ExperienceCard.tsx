@@ -299,7 +299,7 @@ export const ExperienceCard = ({
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-[24px] border border-[#eef3f8] bg-white shadow-[0_10px_30px_rgba(72,128,173,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(72,128,173,0.12)] ${className}`}
+      className={`group relative flex flex-col overflow-hidden rounded-[24px] border border-white/10 bg-[#121426] shadow-[0_10px_30px_rgba(72,128,173,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(72,128,173,0.12)] ${className}`}
     >
       {/* Image Container - with white framing padding */}
       <div className="p-2.5 pb-0">
@@ -310,7 +310,7 @@ export const ExperienceCard = ({
             carries the alt text. */}
         <Link
           href={href}
-          className="relative block aspect-[16/9] w-full overflow-hidden rounded-[20px] bg-slate-100"
+          className="relative block aspect-[4/5] w-full overflow-hidden rounded-[20px] bg-white/[0.06]"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -330,7 +330,7 @@ export const ExperienceCard = ({
 
           {/* Top-left Badges */}
           <div className="absolute top-3 left-3 z-10 flex flex-col items-start gap-1.5">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-bold tracking-wider text-[#16304c] uppercase shadow-sm">
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#121426]/95 px-3 py-1.5 text-[10px] font-bold tracking-wider text-white uppercase shadow-sm">
               <badge.icon
                 className="h-3 w-3 fill-[#f59e0b] text-[#f59e0b]"
                 strokeWidth={2.5}
@@ -338,7 +338,7 @@ export const ExperienceCard = ({
               {badge.label}
             </span>
             {isPrivate && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#16304c]/90 px-3 py-1.5 text-[10px] font-bold tracking-wider text-white uppercase shadow-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.04] px-3 py-1.5 text-[10px] font-bold tracking-wider text-white uppercase shadow-sm">
                 <Lock className="h-3 w-3" strokeWidth={2.5} />
                 Private
               </span>
@@ -353,13 +353,13 @@ export const ExperienceCard = ({
                 handleSave(e);
               }}
               disabled={saveExperience.isPending || unsaveExperience.isPending}
-              className="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-[#16304c] shadow-sm transition hover:scale-110 hover:bg-white active:scale-90 disabled:opacity-50"
+              className="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-[#121426]/95 text-white shadow-sm transition hover:scale-110 hover:bg-[#121426] active:scale-90 disabled:opacity-50"
               aria-label={isSaved ? "Remove from saved" : "Save experience"}
             >
               <Heart
                 className="h-[17px] w-[17px] transition-colors"
                 fill={isSaved ? "#ef3838ff" : "none"}
-                stroke={isSaved ? "#f02f2fff" : "#16304c"}
+                stroke={isSaved ? "#f02f2fff" : "#FFFFFF"}
                 strokeWidth={2.5}
               />
             </button>
@@ -371,7 +371,7 @@ export const ExperienceCard = ({
       <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
         {/* Title */}
         <Link href={href} className="block">
-          <h3 className="line-clamp-1 text-[15px] leading-tight font-bold tracking-tight text-[#16304c] transition-colors group-hover:bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] group-hover:bg-clip-text group-hover:text-transparent">
+          <h3 className="line-clamp-1 text-[15px] leading-tight font-bold tracking-tight text-white transition-colors group-hover:bg-[linear-gradient(135deg,#7B2FFF,#A020F0)] group-hover:bg-clip-text group-hover:text-transparent">
             {title}
           </h3>
         </Link>
@@ -391,12 +391,12 @@ export const ExperienceCard = ({
               y2="24"
               gradientUnits="userSpaceOnUse"
             >
-              <stop stopColor="#1fa7ff" offset="0%" />
-              <stop stopColor="#63ceff" offset="100%" />
+              <stop stopColor="#7B2FFF" offset="0%" />
+              <stop stopColor="#A020F0" offset="100%" />
             </linearGradient>
           </defs>
         </svg>
-        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#f0f4f8] pt-3">
+        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-white/10 pt-3">
           <div className="flex items-start gap-3">
             <Calendar
               className="mt-0.5 h-4.5 w-4.5 shrink-0"
@@ -405,9 +405,7 @@ export const ExperienceCard = ({
             />
             {date ? (
               <div className="min-w-0">
-                <p className="text-[12px] font-bold text-[#16304c]">
-                  {date.top}
-                </p>
+                <p className="text-[12px] font-bold text-white">{date.top}</p>
                 <p className="text-[11px] font-medium text-[#5c84a5]">
                   {date.bottom}
                 </p>
@@ -419,7 +417,7 @@ export const ExperienceCard = ({
             )}
           </div>
 
-          <div className="flex items-start gap-2 border-l border-[#f0f4f8] pl-3">
+          <div className="flex items-start gap-2 border-l border-white/10 pl-3">
             <MapPin
               className="mt-0.5 h-4.5 w-4.5 shrink-0"
               style={{ stroke: `url(#icon-gradient-${id ?? "default"})` }}
@@ -427,7 +425,7 @@ export const ExperienceCard = ({
             />
             {location ? (
               <div className="min-w-0">
-                <p className="line-clamp-2 text-[12px] leading-snug font-bold text-[#16304c]">
+                <p className="line-clamp-2 text-[12px] leading-snug font-bold text-white">
                   {location}
                 </p>
               </div>
@@ -442,9 +440,9 @@ export const ExperienceCard = ({
 
       {/* Pricing + Book Action — light pill row */}
       <div className="mt-auto px-4 pt-2 pb-3">
-        <div className="flex items-center justify-between rounded-2xl bg-[#fcfdff] px-4 py-3 ring-1 ring-[#e6eef7]">
+        <div className="flex items-center justify-between rounded-2xl bg-white/[0.04] px-4 py-3 ring-1 ring-[#e6eef7]">
           <div className="flex items-baseline gap-1">
-            <span className="text-[15px] font-bold text-[#16304c]">
+            <span className="text-[15px] font-bold text-white">
               {priceAmount}
             </span>
             <span className="text-[10px] font-medium text-[#5c84a5]">
@@ -454,7 +452,7 @@ export const ExperienceCard = ({
 
           <Link
             href={href}
-            className="inline-flex items-center gap-1 rounded-md bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-[#004bb1] active:scale-95"
+            className="inline-flex items-center gap-1 rounded-md bg-[linear-gradient(135deg,#7B2FFF,#A020F0)] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-[#004bb1] active:scale-95"
           >
             Book Now
             <ArrowRight className="h-3 w-3" strokeWidth={2.5} />

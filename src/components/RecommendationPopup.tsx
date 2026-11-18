@@ -59,7 +59,7 @@ export function RecommendationPopup({
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[300] flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`msm-modal fixed inset-0 z-[300] flex items-center justify-center p-4 transition-opacity duration-300 ${
         isAnimating ? "bg-black/40" : "pointer-events-none bg-black/0"
       }`}
       onClick={handleClose}
@@ -74,14 +74,24 @@ export function RecommendationPopup({
         {/* Header with close button */}
         <div className="relative">
           {/* Event Image */}
-          <div className="h-48 w-full overflow-hidden bg-[#1B1C33]">
+          {/* 4:5 poster centred over a blurred fill of itself */}
+          <div className="relative flex h-60 w-full items-center justify-center overflow-hidden bg-[#1B1C33] py-4">
             {event.cover_image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={event.cover_image_url}
-                alt={event.title}
-                className="h-full w-full object-cover"
-              />
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={event.cover_image_url}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-xl"
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={event.cover_image_url}
+                  alt={event.title}
+                  className="relative aspect-[4/5] h-full rounded-xl object-cover shadow-lg"
+                />
+              </>
             ) : (
               <div className="flex h-full w-full items-center justify-center text-white/40">
                 No image

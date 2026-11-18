@@ -1,12 +1,13 @@
 "use client";
 
+import { useHostTier } from "~/hooks/useHostTier";
+import { StartEarning } from "~/components/host-dashboard/VerifyToEarn";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
-import { HostNavbar, SharedEventsCard } from "~/components/host-dashboard";
-import Breadcrumb from "~/components/Breadcrumb";
+import { SharedEventsCard } from "~/components/host-dashboard";
 import {
   useEarnings,
   useEventsByHost,
@@ -106,13 +107,13 @@ function Modal({
   children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+    <div className="msm-modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-[#121426] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+          <h2 className="text-base font-semibold text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-lg p-1.5 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#A5A8C3]"
           >
             <FiX className="h-5 w-5" />
           </button>
@@ -129,19 +130,19 @@ function InputField({
 }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-medium text-gray-600">
+      <label className="mb-1.5 block text-xs font-medium text-[#A5A8C3]">
         {label}
       </label>
       <input
         {...props}
-        className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+        className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white placeholder-[#777B98] transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
       />
     </div>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function HostEarningsPage() {
+function EarningsContent() {
   // Reactive: the host id is stored shortly after the status call resolves.
   const { hostId } = useStoredAuth();
 
@@ -434,10 +435,9 @@ export default function HostEarningsPage() {
 
   if (!hostId) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <HostNavbar />
-        <main className="site-x mx-auto max-w-6xl py-8">
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+      <div className="min-h-screen bg-[#080914]">
+        <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 md:py-10 lg:px-10">
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
             No host profile found. Please apply as a host first.
           </div>
         </main>
@@ -446,25 +446,14 @@ export default function HostEarningsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <HostNavbar />
-
-      <main className="site-x mx-auto max-w-6xl py-8">
-        <Breadcrumb
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Dashboard", href: "/host-dashboard" },
-            { label: "Earnings" },
-          ]}
-          className="mb-6"
-        />
-
+    <div className="min-h-screen bg-[#080914]">
+      <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 md:py-10 lg:px-10">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
             Earnings & Payouts
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-[#A5A8C3]">
             Manage your revenue, track pending payments, and configure your
             payout methods securely.
           </p>
@@ -472,24 +461,24 @@ export default function HostEarningsPage() {
 
         {/* Global feedback banners */}
         {actionSuccess && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-300">
             <FiCheck className="h-4 w-4 shrink-0" />
             {actionSuccess}
             <button
               onClick={() => setActionSuccess(null)}
-              className="ml-auto text-green-500 hover:text-green-700"
+              className="ml-auto text-green-400 hover:text-green-300"
             >
               <FiX className="h-4 w-4" />
             </button>
           </div>
         )}
         {actionError && !showAddModal && !showPayoutModal && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             <FiAlertCircle className="h-4 w-4 shrink-0" />
             {actionError}
             <button
               onClick={() => setActionError(null)}
-              className="ml-auto text-red-400 hover:text-red-600"
+              className="ml-auto text-red-400 hover:text-red-300"
             >
               <FiX className="h-4 w-4" />
             </button>
@@ -498,7 +487,7 @@ export default function HostEarningsPage() {
 
         {isLoading && (
           <div className="flex min-h-[40vh] items-center justify-center">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#A020F0] border-t-transparent" />
           </div>
         )}
 
@@ -513,48 +502,48 @@ export default function HostEarningsPage() {
             */}
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {/* Lifetime revenue */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
+                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                   <span className="text-base">₹</span>
                   Lifetime Revenue
                 </div>
-                <p className="mt-3 text-3xl font-bold text-gray-900">
+                <p className="mt-3 text-3xl font-bold text-white">
                   {fmtCurrency(totalEarnings)}
                 </p>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-[#A5A8C3]">
                   All-time net earnings, after refunds.
                 </p>
               </div>
 
               {/* Available balance — still owed (Pending + Redeemable) */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
+                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                   <LuWallet className="h-4 w-4" />
                   Available Balance
                 </div>
-                <p className="mt-3 text-3xl font-bold text-gray-900">
+                <p className="mt-3 text-3xl font-bold text-white">
                   {fmtCurrency(currentBalance)}
                 </p>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-[#A5A8C3]">
                   Total still owed to you — pending + redeemable.
                 </p>
                 {inFlightPayouts > 0 && (
-                  <p className="mt-1 text-[11px] text-gray-400">
+                  <p className="mt-1 text-[11px] text-[#777B98]">
                     Paid out / in flight: {fmtCurrency(inFlightPayouts)}
                   </p>
                 )}
               </div>
 
               {/* Redeemable balance — event has happened, can withdraw NOW */}
-              <div className="relative rounded-xl border-2 border-[#0094CA] bg-white p-5">
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#0094CA] uppercase">
+              <div className="relative rounded-xl border-2 border-[#A020F0] bg-[#121426] p-5">
+                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#D8B4FE] uppercase">
                   <LuWallet className="h-4 w-4" />
                   Redeemable Balance
                 </div>
-                <p className="mt-3 text-3xl font-bold text-gray-900">
+                <p className="mt-3 text-3xl font-bold text-white">
                   {fmtCurrency(availableBalance)}
                 </p>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-[#A5A8C3]">
                   Event has happened — ready to withdraw.
                 </p>
                 <button
@@ -563,26 +552,26 @@ export default function HostEarningsPage() {
                     setShowPayoutModal(true);
                   }}
                   disabled={availableBalance <= 0}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#A020F0] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Request Payout <span>→</span>
                 </button>
               </div>
 
               {/* Pending — event hasn't happened yet */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+              <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
+                <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                   <FiClock className="h-4 w-4" />
                   Pending
                 </div>
-                <p className="mt-3 text-3xl font-bold text-gray-400">
+                <p className="mt-3 text-3xl font-bold text-[#777B98]">
                   {fmtCurrency(pendingClearance)}
                 </p>
-                <p className="mt-2 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-[#A5A8C3]">
                   Locked until the booked event has happened.
                 </p>
                 {earnings?.estimated_clearance_at && pendingClearance > 0 && (
-                  <p className="mt-1 text-[11px] text-gray-400">
+                  <p className="mt-1 text-[11px] text-[#777B98]">
                     Next clearance ≈{" "}
                     {format(new Date(earnings.estimated_clearance_at), "MMM d")}
                   </p>
@@ -594,21 +583,19 @@ export default function HostEarningsPage() {
                 "Where does this ₹X come from?" — every ticket purchase on
                 this host's events, with buyer name, event title, occurrence,
                 amount the customer paid, and the host's net share.            */}
-            <div className="mb-6 rounded-xl border border-gray-200 bg-white">
+            <div className="mb-6 rounded-xl border border-white/10 bg-[#121426]">
               {/* Header */}
-              <div className="border-b border-gray-100 px-5 py-4">
+              <div className="border-b border-white/10 px-5 py-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold text-gray-900">
-                      Sales
-                    </h3>
-                    <p className="mt-0.5 text-xs text-gray-500">
+                    <h3 className="text-sm font-semibold text-white">Sales</h3>
+                    <p className="mt-0.5 text-xs text-[#A5A8C3]">
                       Bookings on your events — where each rupee of your
                       earnings came from.
                     </p>
                   </div>
                   {sales && sales.length > 0 && (
-                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-600">
+                    <span className="rounded-full bg-white/[0.06] px-2.5 py-1 text-[11px] font-semibold text-[#A5A8C3]">
                       {sales.length} {sales.length === 1 ? "sale" : "sales"}
                     </span>
                   )}
@@ -618,38 +605,38 @@ export default function HostEarningsPage() {
                     comes from. Only Confirmed (and Pending) sales count;
                     Refunded sales are listed for transparency but credit ₹0. */}
                 {sales && sales.length > 0 && (
-                  <div className="mt-4 grid grid-cols-1 gap-2 rounded-lg bg-gray-50 p-3 text-xs sm:grid-cols-3">
+                  <div className="mt-4 grid grid-cols-1 gap-2 rounded-lg bg-white/[0.04] p-3 text-xs sm:grid-cols-3">
                     <div className="flex items-center justify-between sm:flex-col sm:items-start">
-                      <span className="font-medium text-gray-500">
+                      <span className="font-medium text-[#A5A8C3]">
                         Confirmed
                       </span>
-                      <span className="font-semibold text-green-700">
+                      <span className="font-semibold text-green-300">
                         +{fmtCurrency(salesTotals.confirmedCents)}{" "}
-                        <span className="font-normal text-gray-400">
+                        <span className="font-normal text-[#777B98]">
                           ({salesTotals.confirmedCount})
                         </span>
                       </span>
                     </div>
                     {salesTotals.pendingCount > 0 && (
                       <div className="flex items-center justify-between sm:flex-col sm:items-start">
-                        <span className="font-medium text-gray-500">
+                        <span className="font-medium text-[#A5A8C3]">
                           Pending
                         </span>
-                        <span className="font-semibold text-amber-700">
+                        <span className="font-semibold text-amber-300">
                           +{fmtCurrency(salesTotals.pendingCents)}{" "}
-                          <span className="font-normal text-gray-400">
+                          <span className="font-normal text-[#777B98]">
                             ({salesTotals.pendingCount})
                           </span>
                         </span>
                       </div>
                     )}
                     <div className="flex items-center justify-between sm:flex-col sm:items-start">
-                      <span className="font-medium text-gray-500">
+                      <span className="font-medium text-[#A5A8C3]">
                         Refunded
                       </span>
-                      <span className="font-semibold text-gray-400">
+                      <span className="font-semibold text-[#777B98]">
                         ₹0{" "}
-                        <span className="font-normal text-gray-400">
+                        <span className="font-normal text-[#777B98]">
                           ({salesTotals.refundedCount} reversed,{" "}
                           {fmtCurrency(salesTotals.refundedCents)})
                         </span>
@@ -679,21 +666,21 @@ export default function HostEarningsPage() {
                           onClick={() => setSalesFilter(key)}
                           className={`rounded-full px-3 py-1 font-medium transition ${
                             salesFilter === key
-                              ? "bg-[#0094CA] text-white"
-                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                              ? "bg-[#A020F0] text-white"
+                              : "bg-white/[0.06] text-[#A5A8C3] hover:bg-white/10"
                           }`}
                         >
                           {label} ({count})
                         </button>
                       ))}
-                      <div className="ml-auto flex items-center gap-1 rounded-full bg-gray-100 p-0.5">
+                      <div className="ml-auto flex items-center gap-1 rounded-full bg-white/[0.06] p-0.5">
                         <button
                           type="button"
                           onClick={() => setDateRange("90d")}
                           className={`rounded-full px-2.5 py-0.5 transition ${
                             dateRange === "90d"
-                              ? "bg-white font-semibold text-gray-900 shadow-sm"
-                              : "text-gray-500"
+                              ? "bg-[#121426] font-semibold text-white shadow-sm"
+                              : "text-[#A5A8C3]"
                           }`}
                         >
                           Last 90 days
@@ -703,8 +690,8 @@ export default function HostEarningsPage() {
                           onClick={() => setDateRange("all")}
                           className={`rounded-full px-2.5 py-0.5 transition ${
                             dateRange === "all"
-                              ? "bg-white font-semibold text-gray-900 shadow-sm"
-                              : "text-gray-500"
+                              ? "bg-[#121426] font-semibold text-white shadow-sm"
+                              : "text-[#A5A8C3]"
                           }`}
                         >
                           All time
@@ -715,19 +702,19 @@ export default function HostEarningsPage() {
                     {/* Search box + event filter */}
                     <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-[1fr_220px]">
                       <div className="relative">
-                        <FiSearch className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+                        <FiSearch className="absolute top-1/2 left-3 h-3.5 w-3.5 -translate-y-1/2 text-[#777B98]" />
                         <input
                           type="search"
                           value={salesSearch}
                           onChange={(e) => setSalesSearch(e.target.value)}
                           placeholder="Search by buyer name or email…"
-                          className="w-full rounded-lg border border-gray-200 bg-white py-2 pr-3 pl-8 text-xs text-gray-900 placeholder:text-gray-400 focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA] focus:outline-none"
+                          className="w-full rounded-lg border border-white/10 bg-[#121426] py-2 pr-3 pl-8 text-xs text-white placeholder:text-[#777B98] focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0] focus:outline-none"
                         />
                       </div>
                       <select
                         value={eventFilter}
                         onChange={(e) => setEventFilter(e.target.value)}
-                        className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-900 focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA] focus:outline-none"
+                        className="rounded-lg border border-white/10 bg-[#121426] px-3 py-2 text-xs text-white focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0] focus:outline-none"
                       >
                         <option value="all">All events</option>
                         {(hostEvents ?? []).map((ev) => (
@@ -742,35 +729,35 @@ export default function HostEarningsPage() {
               </div>
 
               {loadingSales ? (
-                <div className="px-5 py-8 text-center text-sm text-gray-400">
+                <div className="px-5 py-8 text-center text-sm text-[#777B98]">
                   Loading sales…
                 </div>
               ) : !sales || sales.length === 0 ? (
                 <div className="px-5 py-10 text-center">
-                  <p className="text-sm font-medium text-gray-700">
+                  <p className="text-sm font-medium text-white/80">
                     No sales yet
                   </p>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-[#A5A8C3]">
                     Once people book your experiences, every ticket purchase
                     will show up here.
                   </p>
                 </div>
               ) : visibleSales.length === 0 ? (
-                <div className="px-5 py-8 text-center text-sm text-gray-400">
+                <div className="px-5 py-8 text-center text-sm text-[#777B98]">
                   No sales match this filter.
                 </div>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-white/10">
                   {visibleSales.map((s: HostSaleDTO) => {
                     const isConfirmed = s.Status === "confirmed";
                     const isPending = s.Status === "pending";
                     const isRefunded =
                       s.Status === "cancelled" || s.Status === "refunded";
                     const statusTone = isConfirmed
-                      ? "bg-green-50 text-green-700"
+                      ? "bg-green-500/10 text-green-300"
                       : isRefunded
-                        ? "bg-rose-50 text-rose-700"
-                        : "bg-amber-50 text-amber-700";
+                        ? "bg-rose-500/10 text-rose-300"
+                        : "bg-amber-500/10 text-amber-300";
                     const statusLabel =
                       s.Status.charAt(0).toUpperCase() + s.Status.slice(1);
 
@@ -785,7 +772,7 @@ export default function HostEarningsPage() {
                     return (
                       <li
                         key={s.BookingID}
-                        className={`grid grid-cols-12 gap-3 px-5 py-4 transition hover:bg-gray-50 ${
+                        className={`grid grid-cols-12 gap-3 px-5 py-4 transition hover:bg-white/[0.04] ${
                           isRefunded ? "opacity-70" : ""
                         }`}
                       >
@@ -799,15 +786,15 @@ export default function HostEarningsPage() {
                               className="h-9 w-9 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e6f8ff] text-xs font-semibold text-[#0094CA]">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#241333] text-xs font-semibold text-[#D8B4FE]">
                               {initials}
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-gray-900">
+                            <p className="truncate text-sm font-medium text-white">
                               {s.BuyerName || "—"}
                             </p>
-                            <p className="truncate text-[11px] text-gray-500">
+                            <p className="truncate text-[11px] text-[#A5A8C3]">
                               {s.BuyerEmail}
                             </p>
                           </div>
@@ -815,10 +802,10 @@ export default function HostEarningsPage() {
 
                         {/* Event + occurrence */}
                         <div className="col-span-12 min-w-0 sm:col-span-4">
-                          <p className="truncate text-sm font-medium text-gray-900">
+                          <p className="truncate text-sm font-medium text-white">
                             {s.EventTitle}
                           </p>
-                          <p className="truncate text-[11px] text-gray-500">
+                          <p className="truncate text-[11px] text-[#A5A8C3]">
                             {format(
                               new Date(s.OccurrenceDate),
                               "d MMM yyyy, p",
@@ -831,22 +818,22 @@ export default function HostEarningsPage() {
 
                         {/* Amount + your share — the loud bit. */}
                         <div className="col-span-6 text-right sm:col-span-2">
-                          <p className="text-sm font-semibold text-gray-900">
+                          <p className="text-sm font-semibold text-white">
                             Paid {fmtCurrency(s.AmountCents)}
                           </p>
                           {isRefunded ? (
-                            <p className="text-[11px] font-semibold text-rose-600">
+                            <p className="text-[11px] font-semibold text-rose-300">
                               ₹0 to you
-                              <span className="ml-1 font-normal text-gray-400">
+                              <span className="ml-1 font-normal text-[#777B98]">
                                 · refunded
                               </span>
                             </p>
                           ) : isPending ? (
-                            <p className="text-[11px] font-semibold text-amber-700">
+                            <p className="text-[11px] font-semibold text-amber-300">
                               +{fmtCurrency(s.NetEarningCents ?? 0)} pending
                             </p>
                           ) : (
-                            <p className="text-[11px] font-semibold text-green-700">
+                            <p className="text-[11px] font-semibold text-green-300">
                               +{fmtCurrency(s.NetEarningCents ?? 0)} to you
                             </p>
                           )}
@@ -870,12 +857,12 @@ export default function HostEarningsPage() {
                   user has filtered/searched, the button still loads more
                   *raw* rows from the backend, which are then re-filtered. */}
               {sales.length > 0 && salesQuery.hasNextPage && (
-                <div className="border-t border-gray-100 px-5 py-3 text-center">
+                <div className="border-t border-white/10 px-5 py-3 text-center">
                   <button
                     type="button"
                     onClick={() => void salesQuery.fetchNextPage()}
                     disabled={salesQuery.isFetchingNextPage}
-                    className="rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-lg border border-white/10 px-4 py-2 text-xs font-medium text-white/80 transition hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {salesQuery.isFetchingNextPage
                       ? "Loading…"
@@ -888,7 +875,7 @@ export default function HostEarningsPage() {
                 </div>
               )}
               {sales.length > 0 && !salesQuery.hasNextPage && (
-                <div className="border-t border-gray-100 px-5 py-3 text-center text-[11px] text-gray-400">
+                <div className="border-t border-white/10 px-5 py-3 text-center text-[11px] text-[#777B98]">
                   All {sales.length} sales loaded
                   {visibleSales.length !== sales.length &&
                     ` · ${visibleSales.length} matching the filters`}
@@ -904,20 +891,20 @@ export default function HostEarningsPage() {
             {/* ── Fee Breakdown + Payout Methods ── */}
             <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
               {/* Platform Fee Breakdown */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <h3 className="text-sm font-semibold text-gray-900">
+              <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
+                <h3 className="text-sm font-semibold text-white">
                   Platform Fee Breakdown
                 </h3>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[#A5A8C3]">
                   Transparency on how your earnings are calculated.
                 </p>
-                <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-gray-100">
+                <div className="mt-4 flex h-3 w-full overflow-hidden rounded-full bg-white/[0.06]">
                   <div
                     className="h-full rounded-l-full bg-[#1e3a5f]"
                     style={{ width: `${hostPercent}%` }}
                   />
                   <div
-                    className="h-full bg-[#0094CA]"
+                    className="h-full bg-[#A020F0]"
                     style={{ width: `${platformFeePercent}%` }}
                   />
                 </div>
@@ -927,28 +914,30 @@ export default function HostEarningsPage() {
                     {hostPercent}%)
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-[#0094CA]" />{" "}
+                    <span className="h-2 w-2 rounded-full bg-[#A020F0]" />{" "}
                     Platform Fee ({platformFeePercent}%)
                   </span>
                 </div>
-                <div className="mt-5 space-y-3 border-t border-gray-100 pt-4">
+                <div className="mt-5 space-y-3 border-t border-white/10 pt-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Average Booking Value</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-[#A5A8C3]">
+                      Average Booking Value
+                    </span>
+                    <span className="font-semibold text-white">
                       {fmtCurrency(avgBookingValue)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Service Fee</span>
-                    <span className="font-semibold text-gray-900">
+                    <span className="text-[#A5A8C3]">Service Fee</span>
+                    <span className="font-semibold text-white">
                       -{fmtCurrency(serviceFee)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-white">
                       Your Net Earning
                     </span>
-                    <span className="font-bold text-[#0094CA]">
+                    <span className="font-bold text-[#D8B4FE]">
                       {fmtCurrency(netEarning)}
                     </span>
                   </div>
@@ -956,14 +945,14 @@ export default function HostEarningsPage() {
               </div>
 
               {/* Payout Methods */}
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
+              <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">
+                  <h3 className="text-sm font-semibold text-white">
                     Payout Methods
                   </h3>
                   <Link
                     href="/host-dashboard/settings/payouts"
-                    className="text-xs font-semibold text-[#0094CA] hover:underline"
+                    className="text-xs font-semibold text-[#D8B4FE] hover:underline"
                   >
                     Manage
                   </Link>
@@ -976,27 +965,27 @@ export default function HostEarningsPage() {
                         key={method.id}
                         className={`flex items-center gap-3 rounded-lg border p-3 transition ${
                           method.is_primary
-                            ? "border-[#0094CA] bg-[#e6f8ff]"
-                            : "border-gray-200"
+                            ? "border-[#A020F0] bg-[#241333]"
+                            : "border-white/10"
                         }`}
                       >
                         {/* Icon */}
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.06]">
                           {method.type === "bank" ? (
-                            <LuBuilding2 className="h-5 w-5 text-gray-600" />
+                            <LuBuilding2 className="h-5 w-5 text-[#A5A8C3]" />
                           ) : (
-                            <FiCreditCard className="h-5 w-5 text-gray-600" />
+                            <FiCreditCard className="h-5 w-5 text-[#A5A8C3]" />
                           )}
                         </div>
 
                         {/* Info */}
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-900">
+                          <p className="text-sm font-medium text-white">
                             {method.type === "bank"
                               ? (method.bank_name ?? "Bank Account")
                               : "UPI Transfer"}
                           </p>
-                          <p className="truncate text-xs text-gray-500">
+                          <p className="truncate text-xs text-[#A5A8C3]">
                             {method.type === "bank"
                               ? `${method.account_type ?? "Savings"} •••• ${method.last_four_digits ?? "****"}`
                               : (method.upi_id ?? "upiid@bank")}
@@ -1010,13 +999,13 @@ export default function HostEarningsPage() {
                               onClick={() => handleSetPrimary(method.id)}
                               disabled={actionLoading}
                               title="Set as primary"
-                              className="rounded-lg border border-[#0094CA]/30 px-2 py-1 text-xs font-semibold text-[#0094CA] transition hover:bg-[#e6f8ff] disabled:opacity-50"
+                              className="rounded-lg border border-[#A020F0] px-2 py-1 text-xs font-semibold text-[#D8B4FE] transition hover:bg-[#241333] disabled:opacity-50"
                             >
                               Set primary
                             </button>
                           )}
                           {method.is_primary && (
-                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0094CA]">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#A020F0]">
                               <FiCheck className="h-3.5 w-3.5 text-white" />
                             </span>
                           )}
@@ -1027,7 +1016,7 @@ export default function HostEarningsPage() {
                             }}
                             disabled={actionLoading}
                             title="Delete method"
-                            className="rounded-lg p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                            className="rounded-lg p-1.5 text-[#777B98] transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                           >
                             <FiTrash2 className="h-4 w-4" />
                           </button>
@@ -1035,15 +1024,15 @@ export default function HostEarningsPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                        <LuBuilding2 className="h-5 w-5 text-gray-400" />
+                    <div className="flex items-center gap-3 rounded-lg border border-white/10 p-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06]">
+                        <LuBuilding2 className="h-5 w-5 text-[#777B98]" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-400">
+                        <p className="text-sm font-medium text-[#777B98]">
                           No payout method
                         </p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-xs text-[#777B98]">
                           Add a bank account or UPI ID
                         </p>
                       </div>
@@ -1055,38 +1044,38 @@ export default function HostEarningsPage() {
                       clearFeedback();
                       setShowAddModal(true);
                     }}
-                    className="w-full rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:border-[#0094CA] hover:text-[#0094CA]"
+                    className="w-full rounded-lg border border-dashed border-white/15 px-4 py-3 text-sm font-medium text-[#A5A8C3] transition hover:border-[#A020F0] hover:text-[#D8B4FE]"
                   >
                     + Add new method
                   </button>
                 </div>
 
-                <p className="mt-4 flex items-center gap-1 text-xs text-gray-400">
+                <p className="mt-4 flex items-center gap-1 text-xs text-[#777B98]">
                   <span>🔒</span> Your financial data is encrypted and secure.
                 </p>
               </div>
             </div>
 
             {/* ── Payout History ── */}
-            <div className="rounded-xl border border-gray-200 bg-white">
-              <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                <h3 className="text-sm font-semibold text-gray-900">
+            <div className="rounded-xl border border-white/10 bg-[#121426]">
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                <h3 className="text-sm font-semibold text-white">
                   Payout History
                 </h3>
-                <button className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-700">
+                <button className="flex items-center gap-2 text-xs text-[#A5A8C3] hover:text-white/80">
                   <FiFilter className="h-4 w-4" /> Filter
                 </button>
               </div>
 
               {payoutsOnly.length === 0 ? (
-                <div className="p-8 text-center text-sm text-gray-500">
+                <div className="p-8 text-center text-sm text-[#A5A8C3]">
                   No payouts yet.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-gray-100 text-left text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                      <tr className="border-b border-white/10 text-left text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                         <th className="px-5 py-3">Date</th>
                         <th className="px-5 py-3">Reference ID</th>
                         <th className="px-5 py-3">Method</th>
@@ -1094,29 +1083,29 @@ export default function HostEarningsPage() {
                         <th className="px-5 py-3 text-right">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
+                    <tbody className="divide-y divide-white/10">
                       {payoutsOnly.map((p) => {
                         const statusColor =
                           p.status === "completed"
-                            ? "text-green-600"
+                            ? "text-green-300"
                             : p.status === "failed"
-                              ? "text-red-600"
-                              : "text-amber-600";
+                              ? "text-red-300"
+                              : "text-amber-300";
                         return (
-                          <tr key={p.id} className="hover:bg-gray-50">
-                            <td className="px-5 py-4 text-sm text-gray-900">
+                          <tr key={p.id} className="hover:bg-white/[0.04]">
+                            <td className="px-5 py-4 text-sm text-white">
                               {format(new Date(p.created_at), "MMM d, yyyy")}
                             </td>
-                            <td className="px-5 py-4 text-sm text-gray-500">
+                            <td className="px-5 py-4 text-sm text-[#A5A8C3]">
                               {p.display_reference ??
                                 `#TXN-${p.id.slice(0, 5).toUpperCase()}`}
                             </td>
-                            <td className="px-5 py-4 text-sm text-gray-500">
+                            <td className="px-5 py-4 text-sm text-[#A5A8C3]">
                               {p.payout_method_id
                                 ? "Bank •••• ****"
                                 : "Default"}
                             </td>
-                            <td className="px-5 py-4 text-right text-sm font-semibold text-gray-900">
+                            <td className="px-5 py-4 text-right text-sm font-semibold text-white">
                               {fmtCurrency(p.amount_cents)}
                             </td>
                             <td className="px-5 py-4 text-right">
@@ -1152,19 +1141,19 @@ export default function HostEarningsPage() {
           }}
         >
           <div className="space-y-4">
-            <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600">
+            <div className="rounded-lg bg-white/[0.04] px-4 py-3 text-sm text-[#A5A8C3]">
               Available balance:{" "}
-              <span className="font-bold text-gray-900">
+              <span className="font-bold text-white">
                 {fmtCurrency(availableBalance)}
               </span>
             </div>
 
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-gray-600">
+              <label className="mb-1.5 block text-xs font-medium text-[#A5A8C3]">
                 Amount (₹)
               </label>
               <div className="relative">
-                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm font-medium text-gray-400">
+                <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm font-medium text-[#777B98]">
                   ₹
                 </span>
                 <input
@@ -1172,13 +1161,13 @@ export default function HostEarningsPage() {
                   placeholder="0.00"
                   value={payoutAmountCents}
                   onChange={(e) => setPayoutAmountCents(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 py-2.5 pr-3 pl-7 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                  className="w-full rounded-lg border border-white/10 py-2.5 pr-3 pl-7 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
                 />
               </div>
             </div>
 
             {actionError && (
-              <p className="flex items-center gap-1.5 text-xs text-red-600">
+              <p className="flex items-center gap-1.5 text-xs text-red-300">
                 <FiAlertCircle className="h-3.5 w-3.5" /> {actionError}
               </p>
             )}
@@ -1189,14 +1178,14 @@ export default function HostEarningsPage() {
                   setShowPayoutModal(false);
                   clearFeedback();
                 }}
-                className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+                className="flex-1 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-[#A5A8C3] transition hover:bg-white/[0.04]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleRequestPayout}
                 disabled={actionLoading}
-                className="flex-1 rounded-lg bg-[#0094CA] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-60"
+                className="flex-1 rounded-lg bg-[#A020F0] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-60"
               >
                 {actionLoading ? "Processing…" : "Confirm Payout"}
               </button>
@@ -1219,15 +1208,15 @@ export default function HostEarningsPage() {
           <div className="space-y-4">
             {/* Type toggle — hidden when only one method type is enabled */}
             {ENABLED_PAYOUT_METHOD_TYPES.length > 1 && (
-              <div className="flex rounded-lg border border-gray-200 p-1">
+              <div className="flex rounded-lg border border-white/10 p-1">
                 {ENABLED_PAYOUT_METHOD_TYPES.map((t) => (
                   <button
                     key={t}
                     onClick={() => setAddForm((f) => ({ ...f, type: t }))}
                     className={`flex-1 rounded-md py-2 text-sm font-medium transition ${
                       addForm.type === t
-                        ? "bg-[#0094CA] text-white shadow-sm"
-                        : "text-gray-500 hover:text-gray-700"
+                        ? "bg-[#A020F0] text-white shadow-sm"
+                        : "text-[#A5A8C3] hover:text-white/80"
                     }`}
                   >
                     {t === "bank" ? "🏦 Bank Account" : "📱 UPI"}
@@ -1257,7 +1246,7 @@ export default function HostEarningsPage() {
                   }
                 />
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-gray-600">
+                  <label className="mb-1.5 block text-xs font-medium text-[#A5A8C3]">
                     Account Type
                   </label>
                   <select
@@ -1268,7 +1257,7 @@ export default function HostEarningsPage() {
                         account_type: e.target.value,
                       }))
                     }
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                    className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
                   >
                     <option value="savings">Savings</option>
                     <option value="checking">Current / Checking</option>
@@ -1309,7 +1298,7 @@ export default function HostEarningsPage() {
             )}
 
             {actionError && (
-              <p className="flex items-center gap-1.5 text-xs text-red-600">
+              <p className="flex items-center gap-1.5 text-xs text-red-300">
                 <FiAlertCircle className="h-3.5 w-3.5" /> {actionError}
               </p>
             )}
@@ -1320,14 +1309,14 @@ export default function HostEarningsPage() {
                   setShowAddModal(false);
                   clearFeedback();
                 }}
-                className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+                className="flex-1 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-[#A5A8C3] transition hover:bg-white/[0.04]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddMethod}
                 disabled={actionLoading}
-                className="flex-1 rounded-lg bg-[#0094CA] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:opacity-60"
+                className="flex-1 rounded-lg bg-[#A020F0] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-60"
               >
                 {actionLoading ? "Saving…" : "Add Method"}
               </button>
@@ -1345,19 +1334,19 @@ export default function HostEarningsPage() {
           onClose={() => setShowDeleteConfirm(null)}
         >
           <div className="space-y-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[#A5A8C3]">
               Are you sure you want to remove this payout method? This action
               cannot be undone.
             </p>
             {actionError && (
-              <p className="flex items-center gap-1.5 text-xs text-red-600">
+              <p className="flex items-center gap-1.5 text-xs text-red-300">
                 <FiAlertCircle className="h-3.5 w-3.5" /> {actionError}
               </p>
             )}
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-50"
+                className="flex-1 rounded-lg border border-white/10 px-4 py-2.5 text-sm font-medium text-[#A5A8C3] transition hover:bg-white/[0.04]"
               >
                 Cancel
               </button>
@@ -1374,4 +1363,17 @@ export default function HostEarningsPage() {
       )}
     </div>
   );
+}
+
+/** Earnings are for verified hosts; free hosts see how to start earning. */
+export default function HostEarningsPage() {
+  const { isVerified, isLoading, applicationStatus } = useHostTier();
+  if (isLoading) return <div className="min-h-screen bg-[#080914]" />;
+  if (!isVerified)
+    return (
+      <main className="min-h-screen bg-[#080914] px-4 py-6 sm:px-6 md:py-10">
+        <StartEarning applicationStatus={applicationStatus} />
+      </main>
+    );
+  return <EarningsContent />;
 }

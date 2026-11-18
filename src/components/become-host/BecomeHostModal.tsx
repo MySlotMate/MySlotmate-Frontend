@@ -32,7 +32,7 @@ export default function BecomeHostModal({
   // wrappers, and a transformed ancestor makes `fixed` scroll with the page.
   return createPortal(
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4"
+      className="msm-modal fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <div

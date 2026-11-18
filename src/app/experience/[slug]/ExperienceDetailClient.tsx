@@ -6,7 +6,7 @@ import Link from "next/link";
 import Navbar from "~/components/Navbar";
 import { RichTextView } from "~/components/RichTextView";
 import ExperienceSkeleton from "./loading";
-import Footer from "~/components/home/Footer";
+import WebsiteNav from "~/components/website/WebsiteNav";
 import {
   useEvent,
   usePublicHostProfile,
@@ -18,56 +18,36 @@ import {
   useEventAvailability,
 } from "~/hooks/useApi";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
-import MonthlyPassCard from "~/components/experience/MonthlyPassCard";
 import {
   FiArrowLeft,
   FiCalendar,
-  FiChevronDown,
   FiClock,
   FiGrid,
   FiHeart,
   FiMapPin,
-  FiMinus,
-  FiPlus,
+  FiNavigation,
   FiShare,
   FiStar,
   FiUsers,
+  FiVideo,
   FiX,
 } from "react-icons/fi";
-import { LuBadgeCheck, LuLock } from "react-icons/lu";
+import { LuBadgeCheck, LuLock, LuShieldAlert } from "react-icons/lu";
+import { isUnverifiedHost } from "~/lib/hostTier";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { formatIST, sameInstant } from "~/lib/datetime";
+import { formatIST } from "~/lib/datetime";
 import { getMoodDisplayLabel } from "~/lib/moods";
-import SessionSlotPicker from "~/components/experience/SessionSlotPicker";
-import type {
-  EventDTO,
-  OccurrenceAvailability,
-  PriceTierDTO,
-  PublicHostProfileDTO,
-} from "~/lib/api";
-import GoogleLogin from "~/components/GoogleLogin";
+import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 
 export const runtime = "edge";
 
 // Sizes follow the Figma "Experience detail" frames (Desktop 1440 → Mobile 390).
 const CARD = "rounded-[20px] border border-white/[0.06] bg-[#131328]";
-const GRADIENT_BTN =
-  "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:brightness-100";
-const DIVIDER = "border-t border-[#9B30FF]/25";
-const SELECT =
-  "w-full appearance-none rounded-xl border border-white/10 bg-[#121426] px-3.5 py-2.5 pr-10 text-sm font-medium text-white outline-none focus:border-[#9B30FF]";
+const DIVIDER = "border-t border-white/[0.08]";
+const SECTION_H = "font-outfit mb-4 text-lg font-medium text-white";
 
 const rupees = (cents: number) => `₹${(cents / 100).toFixed(0)}`;
-
-const formatDuration = (mins: number) => {
-  if (mins < 60) return `${mins} mins`;
-  const hours = Math.floor(mins / 60);
-  const rest = mins % 60;
-  return rest > 0
-    ? `${hours}h ${rest}m`
-    : `${hours} Hour${hours > 1 ? "s" : ""}`;
-};
 
 /* ------------------------------------------------------------------ */
 /*  Hero gallery                                                       */
@@ -95,7 +75,7 @@ function Hero({
     "flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition hover:bg-black/60";
 
   return (
-    <div className="group relative h-[260px] w-full overflow-hidden bg-[#131328] md:h-[300px] md:rounded-[20px] lg:h-[380px]">
+    <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#131328] shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)] ring-1 ring-white/10">
       {src ? (
         <>
           {/* Uploaded flyers vary in ratio, so a blurred copy fills the frame
@@ -185,418 +165,41 @@ function Hero({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Details rows (date, time, place, spots)                            */
+/*  Floating "Book tickets" pill; tickets are picked on the next page  */
 /* ------------------------------------------------------------------ */
-function DetailRows({
-  date,
-  durationMinutes,
-  place,
-  spotsLeft,
-  capacity,
+function BookingPill({
+  label,
+  status,
+  href,
 }: {
-  date: string | null;
-  durationMinutes: number | null;
-  place: string;
-  spotsLeft: number;
-  capacity: number;
+  label: string;
+  /** Set when booking isn't possible ("Fully booked", "Event has passed"). */
+  status: string | null;
+  href: string;
 }) {
-  const end =
-    date && durationMinutes
-      ? new Date(new Date(date).getTime() + durationMinutes * 60_000)
-      : null;
-  const row = "flex items-start gap-2.5 text-[13px] leading-5 text-white/70";
-  const icon = "mt-0.5 h-4 w-4 shrink-0 text-white/50";
-
+  const pill =
+    "font-outfit flex h-14 w-full items-center justify-center rounded-full text-[17px] font-semibold shadow-[0_20px_60px_-10px_rgb(0_0_0/0.8)] md:h-[58px] md:text-lg";
   return (
-    <ul className="flex flex-col gap-2.5">
-      {date && (
-        <li className={row}>
-          <FiCalendar className={icon} />
-          {formatIST(date, "EEEE, MMM d, yyyy")}
-        </li>
-      )}
-      {date && (
-        <li className={row}>
-          <FiClock className={icon} />
-          {formatIST(date, "h:mm a")}
-          {end && ` - ${formatIST(end, "h:mm a")}`}
-          {durationMinutes ? ` (${formatDuration(durationMinutes)})` : ""}
-        </li>
-      )}
-      <li className={row}>
-        <FiMapPin className={icon} />
-        {place}
-      </li>
-      {capacity > 1 && (
-        <li className={row}>
-          <FiUsers className={icon} />
-          {spotsLeft > 0
-            ? `${spotsLeft} spot${spotsLeft === 1 ? "" : "s"} left of ${capacity} total`
-            : "Fully booked"}
-        </li>
-      )}
-    </ul>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Booking widget                                                     */
-/* ------------------------------------------------------------------ */
-function BookingWidget({
-  price,
-  isFree,
-  priceTiers,
-  eventDate,
-  capacity,
-  totalBookings,
-  durationMinutes,
-  place,
-  availability,
-  isRecurring,
-  isOneOnOne,
-  cancellationPolicy,
-  onBook,
-  passSlot,
-}: {
-  price: number | null;
-  isFree: boolean;
-  priceTiers: PriceTierDTO[];
-  eventDate: string;
-  capacity: number;
-  totalBookings: number;
-  durationMinutes: number | null;
-  place: string;
-  availability?: OccurrenceAvailability[];
-  isRecurring: boolean;
-  /** One-on-one events get the day/time picker instead of the flat slot row. */
-  isOneOnOne: boolean;
-  cancellationPolicy: string | null;
-  onBook: (date: string, guests: number, tierId?: string) => void;
-  /** Monthly pass card — under the desktop card, at the top of the drawer. */
-  passSlot?: React.ReactNode;
-}) {
-  const [selectedDate, setSelectedDate] = useState(eventDate);
-  const [guests, setGuests] = useState(1);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  // Ticket tiers: when present, the guest must pick one and its price drives the
-  // total. Falls back to the single `price` when the event has no tiers.
-  const hasTiers = priceTiers.length > 0;
-  const [selectedTierId, setSelectedTierId] = useState(priceTiers[0]?.id ?? "");
-  const selectedTier = priceTiers.find((t) => t.id === selectedTierId);
-  const effectivePrice = hasTiers
-    ? (selectedTier?.price_cents ?? 0)
-    : (price ?? 0);
-  // For tiered events the headline price is a "From ₹<cheapest>" — a single
-  // "/person" figure would misrepresent a multi-tier event.
-  const minTierCents = hasTiers
-    ? Math.min(...priceTiers.map((t) => t.price_cents))
-    : 0;
-
-  // Find the selected occurrence availability. The event's own `time` and the
-  // availability dates are serialised independently, so match on the instant —
-  // string equality misses slots that are in fact the same moment.
-  const currentOccurrence = availability?.find((a) =>
-    sameInstant(a.date, selectedDate),
-  );
-  const spotsLeft = currentOccurrence
-    ? currentOccurrence.remaining
-    : capacity - totalBookings;
-
-  const maxGuests = Math.max(0, Math.min(spotsLeft, 10));
-  const guestOptions = Array.from({ length: maxGuests }, (_, i) => i + 1);
-
-  const eventHasPassed = selectedDate
-    ? new Date(selectedDate) < new Date()
-    : false;
-
-  // `selectedDate` starts as the event's own time, which for a multi-slot event
-  // is just the first slot and may not be bookable (or may be spelled
-  // differently to the availability rows). Snap it onto a real, open occurrence
-  // as soon as we have one — otherwise spotsLeft falls back to a whole-event
-  // count and the guest can end up with no bookable quantity at all.
-  useEffect(() => {
-    if (!availability || availability.length === 0) return;
-    if (availability.some((a) => sameInstant(a.date, selectedDate))) return;
-    const firstOpen = availability.find((a) => !a.is_fully_booked);
-    setSelectedDate((firstOpen ?? availability[0]!).date);
-  }, [availability, selectedDate]);
-
-  useEffect(() => {
-    if (guestOptions.length === 0) return;
-    if (!guestOptions.includes(guests)) {
-      setGuests(guestOptions[0] ?? 1);
-    }
-  }, [guestOptions, guests]);
-
-  const sessionDates =
-    availability && availability.length > 0
-      ? availability
-      : selectedDate
-        ? [
-            {
-              date: selectedDate,
-              remaining: spotsLeft,
-              is_fully_booked: spotsLeft <= 0,
-            } as OccurrenceAvailability,
-          ]
-        : [];
-  const showSessions =
-    isRecurring || (availability ? availability.length > 1 : false);
-
-  const cancellationCopy =
-    cancellationPolicy === "flexible"
-      ? "Free cancellation up to 24 hours before the experience."
-      : cancellationPolicy === "moderate"
-        ? "Free cancellation up to 5 days before the experience."
-        : cancellationPolicy === "strict"
-          ? "50% refund up to 1 week before the experience."
-          : cancellationPolicy === "no_refund"
-            ? "This experience is non-refundable once booked."
-            : "Standard cancellation policy applies.";
-
-  const book = () => {
-    setDrawerOpen(false);
-    onBook(selectedDate, guests, hasTiers ? selectedTierId : undefined);
-  };
-  const bookDisabled = !selectedDate || spotsLeft <= 0;
-  const bookLabel = spotsLeft <= 0 ? "Fully Booked" : "Book Now";
-
-  const priceBlock = (
-    <div>
-      <p className="text-[10px] font-medium tracking-wider text-white/50 uppercase">
-        Total price
-      </p>
-      <p className="font-outfit mt-0.5 text-2xl leading-7 font-bold text-white">
-        {isFree ? (
-          "Free"
-        ) : hasTiers && !selectedTier ? (
-          <>
-            <span className="text-xs font-medium text-white/60">From </span>
-            {rupees(minTierCents)}
-          </>
+    <div
+      className={`pointer-events-none fixed inset-x-0 bottom-0 z-40 px-5 pb-[max(20px,env(safe-area-inset-bottom))]`}
+    >
+      <div className="pointer-events-auto mx-auto w-full max-w-[720px]">
+        {status ? (
+          <p
+            className={`${pill} border border-white/10 bg-[#1B1D33]/95 text-white/60 backdrop-blur-xl`}
+          >
+            {status}
+          </p>
         ) : (
-          <>
-            {rupees(effectivePrice * guests)}
-            <span className="ml-1 text-xs font-normal text-white/60">
-              {guests > 1 ? `for ${guests}` : "/ person"}
-            </span>
-          </>
+          <Link
+            href={href}
+            className={`${pill} bg-white text-[#080914] transition hover:bg-white/90 active:scale-[0.99]`}
+          >
+            {label}
+          </Link>
         )}
-      </p>
-    </div>
-  );
-
-  const sessionPicker = showSessions ? (
-    <div>
-      <h3 className="mb-2 text-[13px] font-semibold text-white">
-        Choose your session
-      </h3>
-      {isOneOnOne ? (
-        <SessionSlotPicker
-          sessions={sessionDates}
-          selectedDate={selectedDate}
-          onSelect={setSelectedDate}
-        />
-      ) : sessionDates.length > 0 ? (
-        <div className="hide-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-          {sessionDates.map((occ) => {
-            const isSelected = sameInstant(selectedDate, occ.date);
-            return (
-              <button
-                key={occ.date}
-                type="button"
-                onClick={() => setSelectedDate(occ.date)}
-                disabled={occ.is_fully_booked}
-                className={`flex min-w-[92px] shrink-0 flex-col items-start rounded-xl border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-45 ${
-                  isSelected
-                    ? "border-transparent bg-gradient-to-br from-[#7038F5] to-[#B724EA] text-white"
-                    : "border-white/10 bg-[#121426] text-white hover:border-[#9B30FF]/60"
-                }`}
-              >
-                <span className="text-[13px] font-semibold">
-                  {formatIST(occ.date, "eee d MMM")}
-                </span>
-                <span
-                  className={`text-xs ${isSelected ? "text-white/85" : "text-white/55"}`}
-                >
-                  {formatIST(occ.date, "h:mm a")}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="rounded-xl border border-white/10 bg-[#121426] px-4 py-3 text-sm text-white/60">
-          No upcoming sessions
-        </p>
-      )}
-    </div>
-  ) : null;
-
-  const tierSelect =
-    !eventHasPassed && hasTiers && !isFree ? (
-      <label className="block">
-        <span className="mb-2 block text-[13px] font-semibold text-white">
-          Ticket type
-        </span>
-        <span className="relative block">
-          <select
-            value={selectedTierId}
-            onChange={(e) => setSelectedTierId(e.target.value)}
-            className={SELECT}
-          >
-            {priceTiers.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} — {rupees(t.price_cents)}
-              </option>
-            ))}
-          </select>
-          <FiChevronDown className="pointer-events-none absolute top-1/2 right-4 h-4 w-4 -translate-y-1/2 text-white/50" />
-        </span>
-      </label>
-    ) : null;
-
-  const guestStepper = !eventHasPassed ? (
-    <div className="flex items-center justify-between">
-      <span className="text-[13px] font-semibold text-white">Guests</span>
-      {maxGuests > 0 ? (
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            aria-label="Fewer guests"
-            onClick={() => setGuests((g) => Math.max(1, g - 1))}
-            disabled={guests <= 1}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white transition hover:bg-white/10 disabled:opacity-30"
-          >
-            <FiMinus className="h-3.5 w-3.5" />
-          </button>
-          <span className="min-w-5 text-center text-sm font-semibold">
-            {guests}
-          </span>
-          <button
-            type="button"
-            aria-label="More guests"
-            onClick={() => setGuests((g) => Math.min(maxGuests, g + 1))}
-            disabled={guests >= maxGuests}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 text-white transition hover:bg-white/10 disabled:opacity-30"
-          >
-            <FiPlus className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ) : (
-        <span className="text-xs font-semibold text-red-400">Fully booked</span>
-      )}
-    </div>
-  ) : null;
-
-  return (
-    <>
-      {/* Desktop: sticky "Details" card in the right column */}
-      <aside className="hidden lg:block">
-        <div className="sticky top-10 flex flex-col gap-4">
-          <div className={`flex flex-col gap-5 p-5 ${CARD}`}>
-            <h2 className="font-outfit text-[15px] font-semibold text-white">
-              Details
-            </h2>
-            <DetailRows
-              date={selectedDate}
-              durationMinutes={durationMinutes}
-              place={place}
-              spotsLeft={spotsLeft}
-              capacity={capacity}
-            />
-            {sessionPicker}
-            {tierSelect}
-            {guestStepper}
-            <div className={`pt-4 ${DIVIDER}`}>{priceBlock}</div>
-            {eventHasPassed ? (
-              <p className="rounded-full bg-white/5 py-3 text-center text-sm font-medium text-white/50">
-                Event has passed
-              </p>
-            ) : (
-              <button
-                type="button"
-                onClick={book}
-                disabled={bookDisabled}
-                className={`h-11 rounded-full text-sm font-semibold ${GRADIENT_BTN}`}
-              >
-                {bookLabel}
-              </button>
-            )}
-            <p className="-mt-2 text-center text-[11px] leading-4 text-white/45">
-              {cancellationCopy}
-            </p>
-          </div>
-          {passSlot}
-        </div>
-      </aside>
-
-      {/* Tablet + mobile: price bar pinned to the bottom, opens the drawer */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0E0F1F]/95 px-6 pt-3 pb-[max(16px,env(safe-area-inset-bottom))] backdrop-blur-xl md:left-20 lg:hidden">
-        <div className="mx-auto flex max-w-[608px] items-center justify-between gap-4">
-          {priceBlock}
-          {eventHasPassed ? (
-            <span className="rounded-full bg-white/5 px-6 py-3 text-sm font-medium text-white/50">
-              Passed
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setDrawerOpen(true)}
-              disabled={spotsLeft <= 0}
-              className={`h-11 w-40 rounded-full text-sm font-semibold md:w-56 ${GRADIENT_BTN}`}
-            >
-              {bookLabel}
-            </button>
-          )}
-        </div>
       </div>
-
-      {drawerOpen && (
-        <div className="fixed inset-0 z-[260] flex items-end justify-center lg:hidden">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
-            onClick={() => setDrawerOpen(false)}
-          />
-          <div className="animate-slide-up relative flex max-h-[85vh] w-full max-w-[608px] flex-col gap-5 overflow-y-auto rounded-t-[28px] border-t border-white/10 bg-[#0E0F1F] p-6 pb-8 text-white">
-            <div className="flex items-center justify-between">
-              <h3 className="font-outfit text-lg font-semibold">
-                Booking details
-              </h3>
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setDrawerOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 transition hover:bg-white/15"
-              >
-                <FiX className="h-4 w-4" />
-              </button>
-            </div>
-            {passSlot}
-            {sessionPicker}
-            {tierSelect}
-            {guestStepper}
-            <div
-              className={`flex items-center justify-between gap-4 pt-4 ${DIVIDER}`}
-            >
-              {priceBlock}
-              <button
-                type="button"
-                onClick={book}
-                disabled={bookDisabled}
-                className={`h-11 w-40 rounded-full text-sm font-semibold ${GRADIENT_BTN}`}
-              >
-                {spotsLeft <= 0 ? "Fully Booked" : "Continue"}
-              </button>
-            </div>
-            <p className="text-center text-[11px] text-white/45">
-              {cancellationCopy}
-            </p>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }
 
@@ -605,37 +208,51 @@ function BookingWidget({
 /* ------------------------------------------------------------------ */
 function HostRow({ host }: { host: PublicHostProfileDTO }) {
   return (
-    <div className="flex items-center gap-3">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        // Some hosts have avatar_url = "" — `??` would keep the empty string.
-        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-        src={host.avatar_url || "/assets/home/profile1.png"}
-        alt=""
-        className="h-10 w-10 shrink-0 rounded-full object-cover"
-      />
-      <div className="min-w-0 flex-1">
-        <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
-          <span className="truncate">
-            {host.first_name} {host.last_name}
-          </span>
-          {host.is_identity_verified && (
-            <LuBadgeCheck
-              className="h-4 w-4 shrink-0 text-[#B57BFF]"
-              aria-label="Verified host"
-            />
-          )}
-        </p>
-        <p className="truncate text-xs text-white/55">
-          {host.tagline ?? (host.city ? `Host in ${host.city}` : "Host")}
-        </p>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          // Some hosts have avatar_url = "" — `??` would keep the empty string.
+          // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+          src={host.avatar_url || "/assets/home/profile1.png"}
+          alt=""
+          className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-white/15"
+        />
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-1.5 text-sm font-semibold text-white">
+            <span className="truncate">
+              {host.first_name} {host.last_name}
+            </span>
+            {host.is_identity_verified && (
+              <LuBadgeCheck
+                className="h-4 w-4 shrink-0 text-[#B57BFF]"
+                aria-label="Verified host"
+              />
+            )}
+          </p>
+          <p className="truncate text-xs text-white/55">
+            {host.tagline ?? (host.city ? `Host in ${host.city}` : "Host")}
+          </p>
+        </div>
+        <Link
+          href={`/host/${host.slug}`}
+          className="shrink-0 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/15"
+        >
+          View Profile
+        </Link>
       </div>
-      <Link
-        href={`/host/${host.slug}`}
-        className="shrink-0 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-white/15"
-      >
-        View Profile
-      </Link>
+      {isUnverifiedHost(host) && (
+        <p className="flex items-start gap-2 rounded-2xl border border-amber-400/25 bg-amber-400/[0.08] px-3.5 py-2.5 text-xs leading-5 text-amber-100/80">
+          <LuShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+          <span>
+            <span className="font-semibold text-amber-200">
+              Community event.
+            </span>{" "}
+            This host isn&apos;t verified by MySlotMate. Never pay outside the
+            app, and report anything that feels off.
+          </span>
+        </p>
+      )}
     </div>
   );
 }
@@ -662,59 +279,66 @@ function LocationSection({
 
   return (
     <section>
-      <h2 className="font-outfit mb-3 text-[15px] font-semibold text-white">
-        Location
-      </h2>
+      <h2 className={SECTION_H}>Location</h2>
       {isOnline ? (
-        <div className={`p-5 text-sm text-white/70 ${CARD}`}>
-          <p className="font-semibold text-white">Online experience</p>
-          <p className="mt-1">Join from anywhere via video call.</p>
+        <div className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
+            <FiVideo className="h-5 w-5 text-[#D8B4FE]" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-[15px] font-semibold text-white">
+              Online experience
+            </p>
+            <p className="text-sm text-white/55">
+              Join from anywhere on a video call.
+            </p>
+          </div>
           {meetingLink && (
             <a
               href={meetingLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 inline-block text-sm font-semibold text-[#B57BFF] hover:text-[#D4ABFF]"
+              className="shrink-0 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/15"
             >
-              Join meeting
+              Join
             </a>
           )}
         </div>
       ) : (
-        <>
-          <div className="h-[180px] overflow-hidden rounded-2xl bg-[#131328]">
-            {location ? (
-              <iframe
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                title="Meeting location map"
-                // Google's embed has no dark style; invert it to sit on the dark page.
-                className="[filter:invert(90%)_hue-rotate(180deg)_saturate(0.6)]"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-white/45">
-                Exact meeting point shared after booking
-              </div>
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+          <div className="flex items-center gap-4 p-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
+              <FiMapPin className="h-5 w-5 text-[#D8B4FE]" />
+            </span>
+            <p className="min-w-0 flex-1 text-[15px] leading-snug font-semibold text-white">
+              {location ?? "Exact meeting point shared after booking"}
+            </p>
+            {directions && (
+              <a
+                href={directions}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Get directions"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/15"
+              >
+                <FiNavigation className="h-4 w-4" />
+              </a>
             )}
           </div>
-          <p className="mt-3 text-sm font-semibold text-white">
-            {location ?? "Location shared after booking"}
-          </p>
-          {directions && (
-            <a
-              href={directions}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-block text-[13px] font-semibold text-[#B57BFF] hover:text-[#D4ABFF]"
-            >
-              Get Directions
-            </a>
+          {location && (
+            <iframe
+              width="100%"
+              height="200"
+              style={{ border: 0 }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
+              title="Meeting location map"
+              // Google's embed has no dark style; invert it to sit on the dark page.
+              className="block [filter:invert(90%)_hue-rotate(180deg)_saturate(0.6)]"
+            />
           )}
-        </>
+        </div>
       )}
     </section>
   );
@@ -742,8 +366,8 @@ function GuestReviews({
 
   return (
     <section>
-      <h2 className="font-outfit mb-3 flex items-center gap-2 text-[15px] font-semibold text-white">
-        Guest Reviews
+      <h2 className={`${SECTION_H} flex items-center gap-2`}>
+        Guest reviews
         {rating ? (
           <span className="flex items-center gap-1 text-sm font-semibold text-amber-400">
             <FiStar className="h-3.5 w-3.5 fill-amber-400" />
@@ -797,7 +421,7 @@ function AllPhotosModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[250] overflow-y-auto bg-black/90">
+    <div className="msm-modal fixed inset-0 z-[250] overflow-y-auto bg-black/90">
       <div className="mx-auto w-full max-w-[1120px] px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">All photos</h2>
@@ -840,7 +464,13 @@ export default function ExperienceDetailClient({
   const router = useRouter();
   const { userId } = useStoredAuth();
   const [showAllPhotos, setShowAllPhotos] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
+  // Session picked from the date chips; carried to the tickets step.
+  const [pickedDate, setPickedDate] = useState<string | null>(null);
+  const [allDates, setAllDates] = useState(false);
+  // Auth lives in localStorage: render the public website chrome until
+  // mounted, then the app chrome (sidebar) for signed-in users.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Server-rendered event keeps the page content in the initial HTML; the
   // client query takes over once it resolves. The route param is a slug (or a
@@ -897,24 +527,6 @@ export default function ExperienceDetailClient({
     else router.push("/explore");
   };
 
-  const handleBook = (date: string, guests: number, tierId?: string) => {
-    if (!userId) {
-      setShowLogin(true);
-      return;
-    }
-    if (!date) {
-      toast.error("Please select a date");
-      return;
-    }
-    const encodedDate = encodeURIComponent(date);
-    const tierParam = tierId ? `&tier=${encodeURIComponent(tierId)}` : "";
-    // Booking operates on the real event UUID (needed to create the booking),
-    // so carry that in the URL rather than the slug.
-    router.push(
-      `/experience/${eventId}/book?date=${encodedDate}&guests=${guests}${tierParam}`,
-    );
-  };
-
   // Same skeleton the route's `loading.tsx` shows, so the server boundary and
   // this client-side branch look identical.
   if (eventLoading) {
@@ -943,34 +555,104 @@ export default function ExperienceDetailClient({
   const rating = ratingData?.average_rating ?? null;
   const totalReviews = ratingData?.total_reviews ?? 0;
   const baseDate = event.next_available_date ?? event.time;
-
-  const passCard = event.monthly_pass_price_cents ? (
-    <MonthlyPassCard
-      eventId={event.id}
-      priceCents={event.monthly_pass_price_cents}
-      sessionLimit={event.monthly_pass_session_limit ?? null}
-      singleSessionPriceCents={event.price_cents}
-      availability={availability}
-      onRequireLogin={() => setShowLogin(true)}
-    />
+  const appChrome = mounted && Boolean(userId);
+  const manyDates =
+    event.is_recurring ||
+    event.schedule_type === "custom_dates" ||
+    (!!event.custom_dates && event.custom_dates.length > 0);
+  const chip =
+    "inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/80 backdrop-blur";
+  const hostedBy = host ? (
+    <div>
+      <p className="mb-3 text-xs font-semibold tracking-[0.14em] text-white/45 uppercase">
+        Hosted by
+      </p>
+      <HostRow host={host} />
+    </div>
   ) : null;
 
+  // Bar under the page: lowest price + whether anything is still bookable.
+  const tiers = event.price_tiers ?? [];
+  const fromCents = tiers.length
+    ? Math.min(...tiers.map((t) => t.price_cents))
+    : (event.price_cents ?? 0);
+  const upcoming = (availability ?? []).filter(
+    (a) => new Date(a.date) >= new Date(),
+  );
+  const hasPassed = availability
+    ? upcoming.length === 0 && !!baseDate && new Date(baseDate) < new Date()
+    : false;
+  const soldOut = availability
+    ? upcoming.length > 0 && upcoming.every((a) => a.is_fully_booked)
+    : event.capacity - event.total_bookings <= 0;
+
+  // Up to four open dates to pick from here (one chip per day); the rest of
+  // the choice happens on the tickets step.
+  const openDays: string[] = [];
+  const seenDays = new Set<string>();
+  for (const a of upcoming) {
+    if (a.is_fully_booked) continue;
+    const day = formatIST(a.date, "yyyy-MM-dd");
+    if (seenDays.has(day)) continue;
+    seenDays.add(day);
+    openDays.push(a.date);
+  }
+  const dateChips = allDates ? openDays : openDays.slice(0, 4);
+  const shownDate = pickedDate ?? openDays[0] ?? baseDate;
+  const endDate =
+    shownDate && event.duration_minutes
+      ? new Date(
+          new Date(shownDate).getTime() + event.duration_minutes * 60_000,
+        )
+      : null;
+  const ticketsHref = `/experience/${resolvedParams.slug}/tickets${
+    shownDate && dateChips.length > 0
+      ? `?date=${encodeURIComponent(shownDate)}`
+      : ""
+  }`;
+  const barStatus = hasPassed
+    ? "Event has passed"
+    : soldOut
+      ? "Fully booked"
+      : null;
   return (
     <>
-      <Navbar dark />
+      {appChrome && <Navbar dark />}
 
-      <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-lg:pb-24 md:pl-20 min-[80rem]:pl-[230px]">
-        <div className="mx-auto w-full max-w-[1216px] pb-12 md:px-10 md:pt-10">
+      <main
+        className={`relative isolate min-h-screen overflow-x-clip bg-[#080914] pb-32 font-[family-name:var(--font-inter)] text-white ${appChrome ? "" : ""}`}
+      >
+        {/* Ambient glow taken from the poster itself */}
+        {images[0] && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[900px] overflow-hidden"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={images[0]}
+              alt=""
+              className="h-full w-full scale-125 object-cover opacity-40 blur-[100px] saturate-150"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#080914]/20 via-[#080914]/70 to-[#080914]" />
+          </div>
+        )}
+
+        {/* Inside main so it sits on the dark page, not the bare body. */}
+        {!appChrome && <WebsiteNav />}
+
+        <div className="mx-auto w-full max-w-[1080px] px-5 pt-4 pb-10 md:px-8 md:pt-8">
           <button
             type="button"
             onClick={handleBack}
-            className="mb-5 hidden items-center gap-2 text-sm text-white/70 transition hover:text-white md:inline-flex"
+            className="mb-6 hidden items-center gap-2 text-sm text-white/60 transition hover:text-white md:inline-flex"
           >
-            <FiArrowLeft className="h-4 w-4" /> Explore
+            <FiArrowLeft className="h-4 w-4" /> Back to events
           </button>
 
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="flex min-w-0 flex-col">
+          <div className="grid gap-8 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-14">
+            {/* Left: poster + host, sticky on desktop */}
+            <div className="flex flex-col gap-7 lg:sticky lg:top-8 lg:self-start">
               <Hero
                 images={images}
                 title={event.title}
@@ -980,137 +662,170 @@ export default function ExperienceDetailClient({
                 onBack={handleBack}
                 onShowAll={() => setShowAllPhotos(true)}
               />
+              <div className="hidden lg:block">{hostedBy}</div>
+            </div>
 
-              <div className="flex flex-col gap-6 px-6 pt-5 md:px-0">
-                <header>
+            {/* Right: what, when, book, where, about */}
+            <div className="flex min-w-0 flex-col gap-9">
+              <header>
+                <div className="flex flex-wrap items-center gap-2">
                   {event.mood && (
-                    <span className="inline-block rounded-full bg-[#9333EA] px-3 py-1 text-[11px] leading-none font-bold tracking-wider text-white uppercase">
+                    <span className={chip}>
+                      <i className="h-1.5 w-1.5 rounded-full bg-[#D8B4FE]" />
                       {getMoodDisplayLabel(event.mood)}
                     </span>
                   )}
-                  <h1 className="font-outfit mt-3 flex items-center gap-2 text-[22px] leading-7 font-bold text-white">
-                    {event.is_private && (
-                      <LuLock className="h-5 w-5 shrink-0 text-white/60" />
-                    )}
-                    {event.title}
-                  </h1>
-                  <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/60">
-                    {rating && totalReviews > 0 ? (
-                      <span className="flex items-center gap-1">
-                        <FiStar className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        <span className="font-semibold text-amber-400">
-                          {rating.toFixed(2)}
-                        </span>
-                        ({totalReviews} reviews)
-                      </span>
-                    ) : (
-                      <span className="font-semibold text-[#B57BFF]">NEW</span>
-                    )}
-                    {event.duration_minutes ? (
+                  <span className={chip}>
+                    {event.is_private ? (
                       <>
-                        <span aria-hidden>•</span>
-                        {formatDuration(event.duration_minutes)}
+                        <LuLock className="h-3.5 w-3.5" /> Private event
                       </>
-                    ) : null}
-                    <span aria-hidden>•</span>
-                    <span className="truncate">{place}</span>
-                  </p>
-                </header>
-
-                <div className={DIVIDER} />
-
-                {host && (
-                  <>
-                    <HostRow host={host} />
-                    <div className={DIVIDER} />
-                  </>
-                )}
-
-                <section>
-                  <h2 className="font-outfit mb-2 text-[15px] font-semibold text-white">
-                    About the Experience
-                  </h2>
-                  {event.hook_line && (
-                    <p className="mb-2 text-sm leading-6 font-medium text-white/85">
-                      {event.hook_line}
-                    </p>
-                  )}
-                  {event.description ? (
-                    <RichTextView
-                      html={event.description}
-                      className="text-sm leading-6 !text-white/70 [&_*]:![background-color:transparent] [&_*]:![color:inherit] [&_a]:![color:#B57BFF] [&_h1]:mt-4 [&_h1]:font-semibold [&_h1]:![color:#fff] [&_h2]:mt-4 [&_h2]:font-semibold [&_h2]:![color:#fff] [&_h3]:mt-3 [&_h3]:font-semibold [&_h3]:![color:#fff] [&_li]:mt-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-2 [&_strong]:![color:#fff] [&_ul]:list-disc [&_ul]:pl-5"
-                    />
+                    ) : (
+                      <>
+                        <FiUsers className="h-3.5 w-3.5" /> Public event
+                      </>
+                    )}
+                  </span>
+                  {rating && totalReviews > 0 ? (
+                    <span className={chip}>
+                      <FiStar className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                      {rating.toFixed(1)}
+                      <span className="text-white/50">({totalReviews})</span>
+                    </span>
                   ) : (
-                    <p className="text-sm text-white/55">
-                      No description available.
-                    </p>
+                    <span className={`${chip} text-[#D8B4FE]`}>New</span>
                   )}
-                </section>
+                </div>
 
-                {/* Desktop shows these in the sticky card instead */}
-                <section className="lg:hidden">
-                  <div className={`mb-6 ${DIVIDER}`} />
-                  <h2 className="font-outfit mb-3 text-[15px] font-semibold text-white">
-                    Details
-                  </h2>
-                  <DetailRows
-                    date={baseDate}
-                    durationMinutes={event.duration_minutes}
-                    place={place}
-                    spotsLeft={event.capacity - event.total_bookings}
-                    capacity={event.capacity}
+                <h1 className="font-outfit mt-5 text-[clamp(28px,3.4vw,42px)] leading-[1.1] font-medium tracking-[-0.02em] text-balance text-white">
+                  {event.title}
+                </h1>
+
+                <ul className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[15px] text-white/75">
+                  {shownDate && (
+                    <li className="flex items-center gap-2">
+                      <FiCalendar className="h-4 w-4 text-white/50" />
+                      {formatIST(shownDate, "EEE, d MMM")}
+                      {manyDates && dateChips.length <= 1 && (
+                        <span className="text-white/45">+ more dates</span>
+                      )}
+                    </li>
+                  )}
+                  {shownDate && (
+                    <li className="flex items-center gap-2">
+                      <FiClock className="h-4 w-4 text-white/50" />
+                      {formatIST(shownDate, "h:mm a")}
+                      {endDate && ` – ${formatIST(endDate, "h:mm a")}`}
+                    </li>
+                  )}
+                  <li className="flex min-w-0 items-center gap-2">
+                    <FiMapPin className="h-4 w-4 shrink-0 text-white/50" />
+                    <span className="truncate">{place}</span>
+                  </li>
+                </ul>
+
+                {dateChips.length > 1 && (
+                  <div className="mt-6 flex flex-wrap gap-2.5">
+                    {dateChips.map((d) => {
+                      const on = d === shownDate;
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => setPickedDate(d)}
+                          aria-pressed={on}
+                          className={`flex min-w-[84px] shrink-0 flex-col items-center rounded-2xl px-4 py-2.5 text-[15px] leading-snug font-medium transition ${
+                            on
+                              ? "bg-white text-[#080914]"
+                              : "bg-white/[0.07] text-white hover:bg-white/[0.12]"
+                          }`}
+                        >
+                          <span
+                            className={
+                              on ? "text-[#080914]/60" : "text-white/60"
+                            }
+                          >
+                            {formatIST(d, "EEE")}
+                          </span>
+                          {formatIST(d, "d MMM")}
+                        </button>
+                      );
+                    })}
+                    {openDays.length > 4 && (
+                      <button
+                        type="button"
+                        onClick={() => setAllDates((v) => !v)}
+                        className="flex min-w-[84px] shrink-0 flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 px-4 py-2.5 text-[13px] leading-snug font-medium text-white/70 transition hover:border-white/40 hover:text-white"
+                      >
+                        {allDates ? (
+                          "Show less"
+                        ) : (
+                          <>
+                            +{openDays.length - 4}
+                            <span>more</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </header>
+
+              {hostedBy && (
+                <div className={`pt-7 lg:hidden ${DIVIDER}`}>{hostedBy}</div>
+              )}
+
+              <LocationSection
+                location={event.location}
+                isOnline={event.is_online}
+                meetingLink={event.meeting_link}
+                googleMapsUrl={event.google_maps_url}
+              />
+
+              <section>
+                <h2 className={SECTION_H}>About the event</h2>
+                {event.hook_line && (
+                  <p className="font-outfit mb-4 text-xl leading-snug font-normal text-white">
+                    {event.hook_line}
+                  </p>
+                )}
+                {event.description ? (
+                  <RichTextView
+                    html={event.description}
+                    className="text-[15px] leading-7 !text-white/70 [&_*]:![background-color:transparent] [&_*]:![color:inherit] [&_a]:![color:#B57BFF] [&_h1]:mt-5 [&_h1]:font-semibold [&_h1]:![color:#fff] [&_h2]:mt-5 [&_h2]:font-semibold [&_h2]:![color:#fff] [&_h3]:mt-4 [&_h3]:font-semibold [&_h3]:![color:#fff] [&_li]:mt-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mt-2 [&_strong]:![color:#fff] [&_ul]:list-disc [&_ul]:pl-5"
                   />
-                </section>
+                ) : (
+                  <p className="text-sm text-white/55">
+                    No description available.
+                  </p>
+                )}
+              </section>
 
-                <div className={DIVIDER} />
-
-                <LocationSection
-                  location={event.location}
-                  isOnline={event.is_online}
-                  meetingLink={event.meeting_link}
-                  googleMapsUrl={event.google_maps_url}
-                />
-
-                <GuestReviews
-                  reviews={reviews ?? []}
-                  rating={rating}
-                  totalReviews={totalReviews}
-                />
-              </div>
+              <GuestReviews
+                reviews={reviews ?? []}
+                rating={rating}
+                totalReviews={totalReviews}
+              />
             </div>
-
-            <BookingWidget
-              passSlot={passCard ?? undefined}
-              price={event.price_cents}
-              isFree={event.is_free}
-              priceTiers={event.price_tiers ?? []}
-              eventDate={event.time}
-              capacity={event.capacity}
-              totalBookings={event.total_bookings}
-              durationMinutes={event.duration_minutes}
-              place={place}
-              availability={availability}
-              isRecurring={
-                event.is_recurring ||
-                event.schedule_type === "custom_dates" ||
-                (!!event.custom_dates && event.custom_dates.length > 0)
-              }
-              isOneOnOne={event.session_type === "one_on_one"}
-              cancellationPolicy={event.cancellation_policy}
-              onBook={handleBook}
-            />
           </div>
         </div>
-
-        <Footer dark />
       </main>
+
+      <BookingPill
+        label={
+          event.is_free
+            ? "Book tickets · Free"
+            : `Book tickets from ${rupees(fromCents)}`
+        }
+        status={barStatus}
+        href={ticketsHref}
+      />
 
       <AllPhotosModal
         isOpen={showAllPhotos}
         onClose={() => setShowAllPhotos(false)}
         images={images}
       />
-      <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
     </>
   );
 }

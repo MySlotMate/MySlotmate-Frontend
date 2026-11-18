@@ -1,13 +1,39 @@
 "use client";
 
+import LocationButton from "~/components/LocationButton";
+import { nearFirst, placeName, useSavedLocation } from "~/lib/nearby";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Heart, Lock, MapPin, Star, X } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeCheck,
+  Bell,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Plus,
+  ScanLine,
+  Share2,
+  Star,
+  Ticket,
+} from "lucide-react";
 import { toast } from "sonner";
 import { BecomeHostModal } from "~/components/become-host";
+import SlotCard from "~/components/website/SlotCard";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
+import { useNotifications } from "~/hooks/useNotifications";
 import {
+  categoriesFor,
+  categoryOf,
+  kindOf,
+  type Category,
+  type EventKind,
+} from "~/lib/categories";
+import { moodTheme } from "~/lib/categoryTheme";
+import { eventPriceLabel } from "~/lib/price";
+import {
+  useBookingsByUser,
   useIsExperienceSaved,
   useListHosts,
   useListPublicEvents,
@@ -15,18 +41,20 @@ import {
   useSaveExperience,
   useUnsaveExperience,
 } from "~/hooks/useApi";
-import { eventPriceLabel } from "~/lib/price";
 import { formatIST } from "~/lib/datetime";
-import { getMoodDisplayLabel, normalizeMood } from "~/lib/moods";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import type { HomepageMarketingConfig } from "./ShowcaseSections";
 
-// Sizes below follow the Figma "Home feed · Desktop 1440" frame.
+// Shared with the Explore page.
 export const CARD = "border border-white/[0.06] bg-[#131328]";
 export const GRADIENT_BTN =
   "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white transition hover:brightness-110";
 const FALLBACK_COVER = "/assets/home/hiking.webp";
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+// Defaults when the admin hasn't set homepage_marketing_config limits.
+const FEATURED_DEFAULT = 6;
+const TRENDING_DEFAULT = 10;
 
 // Recurring events keep their first `time`, so prefer the next open date.
 const whenOf = (e: EventDTO) => new Date(e.next_available_date ?? e.time);
@@ -36,37 +64,10 @@ export const ratingOf = (r: number | null | undefined) =>
 
 export const coverOf = (e: EventDTO) => e.cover_image_url ?? FALLBACK_COVER;
 
+const dayKey = (d: Date | number) => formatIST(new Date(d), "yyyy-MM-dd");
+
 const placeOf = (e: EventDTO) =>
-  e.is_online ? "Online" : (e.location ?? "TBA");
-
-const greetingFor = (hour: number) =>
-  hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
-
-function SectionHeader({
-  title,
-  href,
-  linkLabel = "See All",
-}: {
-  title: string;
-  href?: string;
-  linkLabel?: string;
-}) {
-  return (
-    <div className="mb-4 flex items-center justify-between">
-      <h2 className="font-outfit text-xl leading-6 font-semibold text-white">
-        {title}
-      </h2>
-      {href && (
-        <Link
-          href={href}
-          className="text-sm font-medium text-[#B57BFF] hover:text-[#D4ABFF]"
-        >
-          {linkLabel}
-        </Link>
-      )}
-    </div>
-  );
-}
+  e.is_online ? "Online" : (e.location ?? "Location shared after booking");
 
 /** Heart-button state for an event card: saved flag + login-aware toggle. */
 export function useSaveToggle(eventId: string) {
@@ -95,144 +96,6 @@ export function useSaveToggle(eventId: string) {
   };
 
   return { saved, toggleSave };
-}
-
-function FeaturedCard({
-  event,
-  host,
-}: {
-  event: EventDTO;
-  host?: PublicHostProfileDTO;
-}) {
-  const { saved, toggleSave } = useSaveToggle(event.id);
-  const price = eventPriceLabel(event);
-  const rating = ratingOf(event.avg_rating);
-  const href = `/experience/${event.slug}`;
-
-  return (
-    <article
-      className={`flex w-full shrink-0 snap-start flex-col overflow-hidden rounded-[20px] ${CARD}`}
-    >
-      <div className="relative aspect-[342/215] w-full overflow-hidden md:aspect-[19/8] lg:aspect-[830/265]">
-        <Link href={href} className="block h-full">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={coverOf(event)}
-            alt={event.title}
-            className="h-full w-full object-cover"
-          />
-        </Link>
-        <button
-          type="button"
-          onClick={toggleSave}
-          aria-label={saved ? "Remove from saved" : "Save experience"}
-          className="absolute top-3.5 right-3.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/15 backdrop-blur-md transition hover:bg-white/25"
-        >
-          <Heart
-            className={`h-[18px] w-[18px] ${saved ? "fill-[#E040FB] text-[#E040FB]" : "text-white"}`}
-          />
-        </button>
-      </div>
-      <div className="flex flex-col p-5">
-        <div className="flex h-[22px] items-center justify-between">
-          {event.mood ? (
-            <span className="rounded-md bg-[#9333EA] px-2.5 py-1 text-[11px] leading-none font-bold tracking-wider text-white uppercase">
-              {getMoodDisplayLabel(event.mood)}
-            </span>
-          ) : (
-            <span />
-          )}
-          {rating ? (
-            <span className="flex items-center gap-1 text-sm">
-              <Star className="h-4 w-4 text-amber-400" />
-              <span className="font-semibold text-amber-400">{rating}</span>
-              {event.total_reviews > 0 && (
-                <span className="text-white/60">({event.total_reviews})</span>
-              )}
-            </span>
-          ) : (
-            <span className="text-xs font-semibold text-[#B57BFF]">NEW</span>
-          )}
-        </div>
-        <Link href={href} className="mt-3.5">
-          <h3 className="font-outfit flex items-center gap-2 text-lg leading-6 font-semibold text-white">
-            {event.is_private && (
-              <Lock className="h-4 w-4 shrink-0 text-white/60" />
-            )}
-            <span className="line-clamp-1">{event.title}</span>
-          </h3>
-        </Link>
-        {host && (
-          <div className="mt-3 flex h-6 items-center gap-2 text-sm text-white/60">
-            {host.avatar_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={host.avatar_url}
-                alt=""
-                className="h-6 w-6 rounded-full object-cover"
-              />
-            )}
-            <span className="truncate">
-              Hosted by {host.first_name} {host.last_name}
-            </span>
-          </div>
-        )}
-        <span className="mt-3.5 flex min-w-0 items-center gap-1.5 text-sm leading-5 text-white/60">
-          <MapPin className="h-3.5 w-3.5 shrink-0" />
-          <span className="truncate">{placeOf(event)}</span>
-        </span>
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <span className="text-[15px] font-bold text-white">
-            {price}
-            {price !== "Free" && " / person"}
-          </span>
-          <Link
-            href={href}
-            className={`flex h-10 shrink-0 items-center justify-center rounded-full px-7 text-sm font-semibold ${GRADIENT_BTN}`}
-          >
-            Book Slot
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function UpcomingCard({ event }: { event: EventDTO }) {
-  return (
-    <Link
-      href={`/experience/${event.slug}`}
-      className={`group flex flex-col overflow-hidden rounded-2xl ${CARD}`}
-    >
-      <div className="h-[140px] w-full overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={coverOf(event)}
-          alt={event.title}
-          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-        />
-      </div>
-      <div className="flex flex-col gap-0.5 px-3 pt-2.5 pb-3">
-        {event.mood && (
-          <span className="text-[11px] font-bold tracking-wide text-[#C084FC] uppercase">
-            {getMoodDisplayLabel(event.mood)}
-          </span>
-        )}
-        <h3 className="flex items-center gap-1.5 text-[13px] font-semibold text-white">
-          {event.is_private && (
-            <Lock className="h-3 w-3 shrink-0 text-white/60" />
-          )}
-          <span className="truncate">{event.title}</span>
-        </h3>
-        <p className="truncate text-xs text-white/50">
-          {formatIST(whenOf(event), "MMM d")} • {placeOf(event)}
-        </p>
-        <p className="mt-0.5 text-[13px] font-bold text-white">
-          {eventPriceLabel(event)}
-        </p>
-      </div>
-    </Link>
-  );
 }
 
 export function HostCard({
@@ -277,6 +140,327 @@ export function HostCard({
   );
 }
 
+/** "Your next plan": the soonest upcoming booking, styled as a ticket. */
+function NextPlan({ event, at }: { event: EventDTO; at: Date }) {
+  const days = Math.round(
+    (new Date(dayKey(at)).getTime() - new Date(dayKey(Date.now())).getTime()) /
+      DAY_MS,
+  );
+  const countdown =
+    days <= 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
+  return (
+    <Link
+      href="/activities"
+      className="group relative flex items-stretch overflow-hidden rounded-3xl bg-gradient-to-r from-[#2A1550] to-[#1B1D33] ring-1 ring-[#A020F0]/30"
+    >
+      <span className="relative w-24 shrink-0 overflow-hidden sm:w-32">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={coverOf(event)}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-4 py-4 sm:px-6">
+        <span className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] text-[#D8B4FE] uppercase">
+          <Ticket className="h-3.5 w-3.5" /> Your next plan
+        </span>
+        <span className="font-outfit line-clamp-1 text-lg font-semibold text-white sm:text-xl">
+          {event.title}
+        </span>
+        <span className="text-sm text-white/60">
+          {formatIST(at, "EEE, d MMM · h:mm a")}
+        </span>
+      </span>
+      {/* Perforation */}
+      <span
+        aria-hidden="true"
+        className="relative my-3 hidden w-px border-l border-dashed border-white/20 sm:block"
+      >
+        <span className="absolute -top-6 -left-3 h-6 w-6 rounded-full bg-[#080914]" />
+        <span className="absolute -bottom-6 -left-3 h-6 w-6 rounded-full bg-[#080914]" />
+      </span>
+      <span className="flex shrink-0 flex-col items-center justify-center gap-2 px-4 sm:px-7">
+        <span className="font-outfit text-sm font-semibold whitespace-nowrap text-white sm:text-base">
+          {countdown}
+        </span>
+        <span className="hidden h-9 items-center rounded-full bg-white px-4 text-[13px] font-semibold text-[#080914] transition group-hover:bg-white/90 sm:flex">
+          View ticket
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Hero: one event at a time, details left, poster right              */
+/* ------------------------------------------------------------------ */
+
+function Hero({ events }: { events: EventDTO[] }) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const touchX = useRef<number | null>(null);
+  const count = events.length;
+  const go = (i: number) => setIndex(((i % count) + count) % count);
+
+  useEffect(() => {
+    if (count < 2 || paused) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      if (!document.hidden) setIndex((i) => (i + 1) % count);
+    }, 6000);
+    return () => window.clearInterval(id);
+  }, [count, paused]);
+
+  if (count === 0) return null;
+  const e = events[Math.min(index, count - 1)]!;
+  const href = `/experience/${e.slug}`;
+  const price = eventPriceLabel(e);
+
+  return (
+    <section
+      aria-roledescription="carousel"
+      aria-label="Featured events"
+      className="relative isolate overflow-hidden border-b border-white/[0.06]"
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+      onTouchStart={(ev) => (touchX.current = ev.touches[0]?.clientX ?? null)}
+      onTouchEnd={(ev) => {
+        const start = touchX.current;
+        const end = ev.changedTouches[0]?.clientX;
+        touchX.current = null;
+        if (start == null || end == null || Math.abs(end - start) < 40) return;
+        go(index + (end < start ? 1 : -1));
+      }}
+    >
+      {/* Backdrop: the poster, blurred into the page */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={`bg-${e.id}`}
+        src={coverOf(e)}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 -z-20 h-full w-full scale-125 animate-[hero-stack-fade_0.7s_ease-out] object-cover opacity-50 blur-[80px]"
+      />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#080914] via-[#080914]/85 to-[#080914]/40" />
+      <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-[#080914] to-transparent" />
+
+      <div className="mx-auto grid max-w-[1280px] grid-cols-1 items-center gap-8 px-5 py-10 md:grid-cols-[minmax(0,1fr)_auto] md:gap-16 md:px-6 md:py-16 lg:px-10 lg:py-20">
+        {/* Details */}
+        <div
+          key={`text-${e.id}`}
+          className="order-2 min-w-0 animate-[hero-stack-fade_0.5s_ease-out] md:order-1"
+        >
+          <p className="text-sm font-medium text-[#D8B4FE]">
+            {formatIST(whenOf(e), "EEE, d MMM · h:mm a")}
+          </p>
+          <h2 className="font-outfit mt-3 line-clamp-2 text-[30px] leading-[1.1] font-semibold tracking-[-0.02em] text-white md:text-[48px]">
+            {e.title}
+          </h2>
+          <p className="mt-3 flex items-center gap-1.5 text-[15px] text-white/65 md:text-lg">
+            <MapPin className="h-4 w-4 shrink-0" />
+            <span className="truncate">{placeOf(e)}</span>
+          </p>
+          <p className="mt-4 text-[15px] font-semibold text-white">
+            {price === "Free" ? "Free" : `${price} onwards`}
+          </p>
+          <Link
+            href={href}
+            className="font-outfit mt-6 inline-flex h-12 items-center rounded-full bg-white px-7 text-[15px] font-semibold text-[#080914] transition hover:bg-white/90"
+          >
+            Book tickets
+          </Link>
+        </div>
+
+        {/* Poster: a fixed 4:5 frame. Older covers in other shapes are shown
+            whole over a blurred fill instead of being cropped. */}
+        <Link
+          key={`poster-${e.id}`}
+          href={href}
+          tabIndex={-1}
+          aria-hidden="true"
+          className="relative order-1 mx-auto block aspect-[4/5] w-[62%] max-w-[260px] animate-[hero-stack-fade_0.5s_ease-out] overflow-hidden rounded-2xl bg-[#121426] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] ring-1 ring-white/10 md:order-2 md:mr-0 md:w-[300px] md:max-w-none"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={coverOf(e)}
+            alt=""
+            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-xl"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={coverOf(e)}
+            alt=""
+            className="relative h-full w-full object-contain"
+          />
+        </Link>
+      </div>
+
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label="Previous event"
+            onClick={() => go(index - 1)}
+            className="absolute top-1/2 left-3 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 lg:flex"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next event"
+            onClick={() => go(index + 1)}
+            className="absolute top-1/2 right-3 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition hover:bg-white/20 lg:flex"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute inset-x-0 bottom-5 flex justify-center gap-1.5">
+            {events.map((ev, i) => (
+              <button
+                key={ev.id}
+                type="button"
+                aria-label={`Show event ${i + 1}`}
+                aria-current={i === index}
+                onClick={() => go(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === index
+                    ? "w-6 bg-white"
+                    : "w-1.5 bg-white/30 hover:bg-white/60"
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Pieces                                                             */
+/* ------------------------------------------------------------------ */
+
+function SectionHeader({
+  title,
+  href,
+  linkLabel = "See all",
+}: {
+  title: string;
+  href?: string;
+  linkLabel?: string;
+}) {
+  return (
+    <div className="mb-6 flex items-end justify-between gap-4 md:mb-8">
+      <h2 className="font-outfit text-[22px] leading-tight font-semibold tracking-[-0.01em] text-white md:text-[28px]">
+        {title}
+      </h2>
+      {href && (
+        <Link
+          href={href}
+          className="group flex shrink-0 items-center gap-1 text-sm font-semibold text-white/60 transition hover:text-white"
+        >
+          {linkLabel}
+          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+        </Link>
+      )}
+    </div>
+  );
+}
+
+/** Small, uniform category tile: name on top, illustration below. */
+function VibeTile({ category }: { category: Category }) {
+  const theme = moodTheme(category.art ?? category.moods[0]!);
+  return (
+    <Link
+      href={`/explore?type=experiences&cat=${category.key}`}
+      style={{ backgroundColor: theme.bg }}
+      className="group relative flex aspect-[5/6] w-[118px] shrink-0 flex-col overflow-hidden rounded-[20px] ring-1 ring-white/[0.08] transition duration-300 hover:-translate-y-1 md:w-auto"
+    >
+      <span className="relative z-10 px-3 pt-3 text-[14px] leading-tight font-semibold text-white">
+        {category.label}
+      </span>
+      {theme.art && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={theme.art}
+          alt=""
+          loading="lazy"
+          className="absolute inset-x-0 bottom-[-6%] h-[82%] w-full object-cover object-top transition duration-500 group-hover:scale-105"
+        />
+      )}
+    </Link>
+  );
+}
+
+/** Compact card for a 1:1 session: who, what, how long, how much. */
+function SessionCard({
+  event: e,
+  host,
+}: {
+  event: EventDTO;
+  host?: PublicHostProfileDTO;
+}) {
+  const price = eventPriceLabel(e);
+  const mins = e.duration_minutes ?? 60;
+  const length =
+    mins < 60
+      ? `${mins} min`
+      : `${Number.isInteger(mins / 60) ? mins / 60 : (mins / 60).toFixed(1)} hr`;
+  return (
+    <Link
+      href={`/experience/${e.slug}`}
+      className="group flex gap-4 rounded-3xl border border-white/[0.08] bg-[#121426] p-3 transition hover:border-white/20"
+    >
+      <span className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-2xl sm:w-28">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={coverOf(e)}
+          alt=""
+          loading="lazy"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+        />
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col py-1 pr-1">
+        {host && (
+          <span className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-white/55">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={
+                // Some hosts have avatar_url = "".
+                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                host.avatar_url || "/assets/home/avatar-placeholder.svg"
+              }
+              alt=""
+              className="h-5 w-5 shrink-0 rounded-full object-cover"
+            />
+            <span className="truncate">
+              {host.first_name} {host.last_name}
+            </span>
+            {host.is_identity_verified && (
+              <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-[#A020F0]" />
+            )}
+          </span>
+        )}
+        <span className="font-outfit mt-1.5 line-clamp-2 text-[15px] leading-snug font-semibold text-white">
+          {e.title}
+        </span>
+        <span className="mt-auto flex items-center justify-between gap-2 pt-2 text-xs text-white/50">
+          <span className="truncate">
+            {length} · {e.is_online ? "Online" : "In person"}
+          </span>
+          <span className="font-outfit shrink-0 text-sm font-bold text-[#D8B4FE]">
+            {price}
+          </span>
+        </span>
+      </span>
+    </Link>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Page                                                               */
+/* ------------------------------------------------------------------ */
+
 export default function HomeFeed({
   initialEvents,
   initialHosts,
@@ -286,8 +470,6 @@ export default function HomeFeed({
   initialHosts?: PublicHostProfileDTO[];
   initialMarketingConfig?: HomepageMarketingConfig | null;
 }) {
-  const [greeting, setGreeting] = useState("Hello");
-  const [mood, setMood] = useState<string | null>(null);
   const {
     closeBecomeHostModal,
     handleListTimeClick,
@@ -297,6 +479,8 @@ export default function HomeFeed({
   const isHost = hostStatus === "approved";
   const hostInReview =
     hostStatus === "pending" || hostStatus === "under_review";
+  const { userId } = useStoredAuth();
+  const { unreadCount } = useNotifications();
 
   const { data: events } = useListPublicEvents(
     initialEvents ? { success: true, data: initialEvents } : undefined,
@@ -310,377 +494,443 @@ export default function HomeFeed({
       ? { success: true, data: initialMarketingConfig }
       : undefined,
   );
-
-  // Client-only: the page is ISR-cached, a server-side greeting would go stale.
-  useEffect(() => {
-    setGreeting(greetingFor(Number(formatIST(new Date(), "H"))));
-  }, []);
+  const { data: bookings } = useBookingsByUser(
+    userId && userId !== "existing" ? userId : null,
+  );
 
   const hostById = useMemo(
     () => new Map((hosts ?? []).map((h) => [h.id, h])),
     [hosts],
   );
+  const eventById = useMemo(
+    () => new Map((events ?? []).map((e) => [e.id, e])),
+    [events],
+  );
 
-  const upcoming = useMemo(() => {
+  // The city from the top-bar picker: things there (or online) lead every row.
+  const place = useSavedLocation();
+  const city = placeName(place);
+
+  // Public, upcoming, soonest first — in or near the chosen city first.
+  const open = useMemo(() => {
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-    return (events ?? [])
-      .filter((e) => whenOf(e) >= startOfToday)
-      .sort((a, b) => whenOf(a).getTime() - whenOf(b).getTime());
-  }, [events]);
+    return nearFirst(
+      (events ?? [])
+        .filter((e) => !e.is_private && whenOf(e) >= startOfToday)
+        .sort((a, b) => whenOf(a).getTime() - whenOf(b).getTime()),
+      place,
+    );
+  }, [events, place]);
 
-  const filtered = useMemo(() => {
-    return upcoming.filter((e) => !mood || normalizeMood(e.mood) === mood);
-  }, [upcoming, mood]);
-
-  // Admin-pinned featured events (homepage_marketing_config) win; else soonest.
-  const featured = useMemo(() => {
-    const limit = marketingConfig?.featured_limit ?? 3;
-    const ids = marketingConfig?.featured_event_ids ?? [];
-    const pinned = filtered
+  // Admin-pinned featured events lead the hero; the soonest fill the rest.
+  // Admin (homepage_marketing_config) picks the events and how many to show:
+  // pinned events in the admin's order, topped up with the soonest ones.
+  const pick = (ids: string[], limit: number, fallback: EventDTO[]) => {
+    const pinned = open
       .filter((e) => ids.includes(e.id))
       .sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
-    return (pinned.length > 0 && !mood ? pinned : filtered).slice(0, limit);
-  }, [filtered, marketingConfig, mood]);
-
-  // Auto-advance the featured carousel every 4s; pauses on hover. To loop
-  // forward instead of rewinding, a copy of the first card sits after the last
-  // one: we scroll onto the copy, then jump (instantly, same picture) back to
-  // the real first card.
-  const featuredRef = useRef<HTMLDivElement>(null);
-  const [featuredPaused, setFeaturedPaused] = useState(false);
-  const [featuredIndex, setFeaturedIndex] = useState(0);
-  const cardOffsets = (row: HTMLElement) => {
-    const cards = Array.from(row.querySelectorAll("article"));
-    return cards.map((c) => c.offsetLeft - (cards[0]?.offsetLeft ?? 0));
+    const rest = fallback.filter((e) => !ids.includes(e.id));
+    // Admin picks stay in, but ones in the chosen city move to the front.
+    return [...nearFirst(pinned, place), ...nearFirst(rest, place)].slice(
+      0,
+      Math.max(0, limit),
+    );
   };
-  // Nearest card to the scroll position; can be the copy (index = length).
-  const nearestCard = (row: HTMLElement) => {
-    const offsets = cardOffsets(row);
-    let best = 0;
-    offsets.forEach((o, i) => {
-      if (
-        Math.abs(o - row.scrollLeft) < Math.abs(offsets[best]! - row.scrollLeft)
+
+  const featured = useMemo(
+    () =>
+      pick(
+        marketingConfig?.featured_event_ids ?? [],
+        marketingConfig?.featured_limit ?? FEATURED_DEFAULT,
+        open,
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pick only reads `open` and `place`
+    [open, marketingConfig, place],
+  );
+
+  const nextPlan = useMemo(() => {
+    const now = Date.now();
+    const next = (bookings ?? [])
+      .filter(
+        (b) =>
+          b.status === "confirmed" &&
+          new Date(b.occurrence_date).getTime() > now &&
+          eventById.has(b.event_id),
       )
-        best = i;
-    });
-    return best;
-  };
-  const currentFeatured = (row: HTMLElement) =>
-    nearestCard(row) % featured.length;
-  const goToFeatured = (i: number) => {
-    const row = featuredRef.current;
+      .sort(
+        (a, b) => Date.parse(a.occurrence_date) - Date.parse(b.occurrence_date),
+      )[0];
+    return next
+      ? {
+          event: eventById.get(next.event_id)!,
+          at: new Date(next.occurrence_date),
+        }
+      : null;
+  }, [bookings, eventById]);
+
+  // Most booked first: the one curated row on the page.
+  // Admin-curated list (curated_event_ids / curated_limit). Without picks,
+  // the most booked group experiences of the next four weeks.
+  const trending = useMemo(() => {
+    const cutoff = Date.now() + 4 * WEEK_MS;
+    const mostBooked = [...open]
+      .filter(
+        (e) => kindOf(e) === "experience" && whenOf(e).getTime() <= cutoff,
+      )
+      .sort(
+        (a, b) =>
+          (b.total_bookings ?? 0) - (a.total_bookings ?? 0) ||
+          (b.avg_rating ?? 0) - (a.avg_rating ?? 0),
+      );
+    return pick(
+      marketingConfig?.curated_event_ids ?? [],
+      marketingConfig?.curated_limit ?? TRENDING_DEFAULT,
+      mostBooked,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pick only reads `open` and `place`
+  }, [open, marketingConfig, place]);
+  const trendingRef = useRef<HTMLDivElement>(null);
+  const [trendEdge, setTrendEdge] = useState({ start: true, end: false });
+  const scrollTrending = (dir: 1 | -1) => {
+    const row = trendingRef.current;
     if (row)
-      row.scrollTo({ left: cardOffsets(row)[i] ?? 0, behavior: "smooth" });
+      row.scrollBy({ left: dir * row.clientWidth * 0.9, behavior: "smooth" });
   };
-  // Sitting on the copy → swap to the real first card without animation.
-  const unwrapLoop = () => {
-    const row = featuredRef.current;
-    if (row && featured.length > 1 && nearestCard(row) === featured.length)
-      row.scrollTo({ left: 0, behavior: "instant" });
-  };
-  useEffect(() => {
-    setFeaturedIndex(0);
-    featuredRef.current?.scrollTo({ left: 0 });
-  }, [featured]);
-  useEffect(() => {
-    // Swiping past the last card lands on the copy too.
-    const row = featuredRef.current;
-    row?.addEventListener("scrollend", unwrapLoop);
-    return () => row?.removeEventListener("scrollend", unwrapLoop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers only read the ref
-  }, [featured]);
-  useEffect(() => {
-    const row = featuredRef.current;
-    if (!row || featured.length < 2 || featuredPaused) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let unwrapTimer: number | undefined;
-    const id = window.setInterval(() => {
-      // A smooth scroll started in a background tab freezes halfway.
-      if (document.hidden) return;
-      goToFeatured(nearestCard(row) + 1);
-      // Fallback for browsers without `scrollend` (older Safari).
-      unwrapTimer = window.setTimeout(unwrapLoop, 900);
-    }, 4000);
-    return () => {
-      window.clearInterval(id);
-      window.clearTimeout(unwrapTimer);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- helpers only read the ref
-  }, [featured, featuredPaused]);
 
-  const thisWeek = useMemo(() => {
-    const shown = new Set(featured.map((e) => e.id));
-    const rest = filtered.filter((e) => !shown.has(e.id));
-    const cutoff = Date.now() + WEEK_MS;
-    const week = rest.filter((e) => whenOf(e).getTime() <= cutoff);
-    return (week.length > 0 ? week : rest).slice(0, 3);
-  }, [filtered, featured]);
-
-  const more = useMemo(() => {
-    const shown = new Set([...featured, ...thisWeek].map((e) => e.id));
-    return filtered.filter((e) => !shown.has(e.id)).slice(0, 3);
-  }, [filtered, featured, thisWeek]);
-
-  const categories = useMemo(() => {
-    const byMood = new Map<string, { count: number; image: string }>();
-    for (const e of upcoming) {
-      if (!e.mood) continue;
-      const key = normalizeMood(e.mood);
-      const cur = byMood.get(key);
-      if (cur) cur.count++;
-      else byMood.set(key, { count: 1, image: coverOf(e) });
+  // Categories that have something on, most events first.
+  const byCategory = (kind: EventKind) => {
+    const count = new Map<string, number>();
+    for (const e of open) {
+      if (kindOf(e) !== kind) continue;
+      const c = categoryOf(e);
+      if (c.key !== "other") count.set(c.key, (count.get(c.key) ?? 0) + 1);
     }
-    return [...byMood.entries()]
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, 6);
-  }, [upcoming]);
-
-  const pickMood = (key: string) => {
-    setMood((cur) => (cur === key ? null : key));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    return categoriesFor(kind)
+      .filter((c) => count.has(c.key))
+      .sort((a, b) => (count.get(b.key) ?? 0) - (count.get(a.key) ?? 0));
   };
+  // Only categories that have something on right now.
+  const experienceCats = byCategory("experience");
+  const sessionCats = byCategory("session");
+  const sessionList = open.filter((e) => kindOf(e) === "session");
+  const sessionCount = sessionList.length;
+  const sessions = sessionList.slice(0, 4);
 
-  const filtering = Boolean(mood);
-  const topHosts = (hosts ?? []).slice(0, 3);
-
+  // Hosts based in the chosen city first.
+  const topHosts = useMemo(() => {
+    const list = hosts ?? [];
+    if (!city) return list.slice(0, 12);
+    const here = (h: (typeof list)[number]) =>
+      (h.city ?? "").toLowerCase().includes(city.toLowerCase());
+    return [...list.filter(here), ...list.filter((h) => !here(h))].slice(0, 12);
+  }, [hosts, city]);
   return (
-    <div className="w-full font-[family-name:var(--font-inter)]">
-      <div className="mx-auto w-full max-w-[1210px] px-6 pt-6 pb-16 md:px-10 md:pt-10 min-[90rem]:pr-6 min-[90rem]:pl-[41px]">
-        <header className="flex items-start justify-between">
-          <div>
-            <h1 className="font-outfit text-[28px] leading-9 font-bold text-white">
-              {greeting} <span aria-hidden>👋</span>
-            </h1>
-            <p className="mt-0.5 text-sm text-white/60">
-              Discover experiences happening around you.
-            </p>
-          </div>
-          <Link
-            href="/activities"
-            aria-label="Your bookings and messages"
-            className={`mt-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full md:mt-3 ${CARD} hover:bg-[#1b1b36]`}
-          >
-            <Bell className="h-[18px] w-[18px] text-white" />
-          </Link>
-        </header>
+    <div className="w-full overflow-x-clip font-[family-name:var(--font-inter)]">
+      {/* Phone header (tablet and up use the top bar) */}
+      <div className="flex items-center gap-3 px-5 pt-4 pb-3 md:hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/assets/brand/logo-horizontal-white.png"
+          alt="MySlotMate"
+          width={1048}
+          height={209}
+          className="h-6 w-auto"
+        />
+        <LocationButton className="ml-auto h-9 max-w-[150px] text-[13px]" />
+        <Link
+          href="/notifications"
+          aria-label={
+            unreadCount
+              ? `Notifications, ${unreadCount} unread`
+              : "Notifications"
+          }
+          className="relative flex h-10 w-10 items-center justify-center rounded-full text-white/80"
+        >
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F43F5E] px-1 text-[10px] font-bold text-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Link>
+      </div>
 
-        <div className="mt-7 flex flex-col gap-9 lg:grid lg:grid-cols-[minmax(0,1fr)_281px] lg:gap-[33px]">
-          <div className="flex min-w-0 flex-col gap-9 max-lg:contents">
-            {mood && (
-              <button
-                type="button"
-                onClick={() => setMood(null)}
-                className="flex w-fit items-center gap-1.5 rounded-full bg-[#9B30FF]/20 px-3 py-1 text-sm font-medium text-[#D4ABFF]"
-              >
-                {getMoodDisplayLabel(mood)}
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
+      <Hero events={featured} />
 
-            {filtering && filtered.length === 0 && (
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-16 px-5 pt-12 pb-20 md:gap-24 md:px-6 md:pt-16 lg:px-10">
+        {nextPlan && <NextPlan event={nextPlan.event} at={nextPlan.at} />}
+
+        {experienceCats.length > 0 && (
+          <section>
+            <SectionHeader
+              title="Explore by vibe"
+              href="/explore?type=experiences"
+            />
+            <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-6 [&::-webkit-scrollbar]:hidden">
+              {experienceCats.map((c) => (
+                <VibeTile key={c.key} category={c} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {trending.length > 0 && (
+          <section>
+            <SectionHeader
+              title="Trending this month"
+              href="/explore?type=experiences"
+              linkLabel="See more"
+            />
+            {/* One swipeable row: four in view on desktop, arrows on the sides */}
+            <div className="relative">
               <div
-                className={`rounded-[20px] p-8 text-center text-white/60 ${CARD}`}
+                ref={trendingRef}
+                onScroll={(ev) => {
+                  const r = ev.currentTarget;
+                  setTrendEdge({
+                    start: r.scrollLeft <= 4,
+                    end: r.scrollLeft + r.clientWidth >= r.scrollWidth - 4,
+                  });
+                }}
+                className="-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 [scrollbar-width:none] md:mx-0 md:scroll-px-0 md:gap-6 md:px-0 [&::-webkit-scrollbar]:hidden"
               >
-                No experiences match.{" "}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMood(null);
-                  }}
-                  className="font-semibold text-[#B57BFF]"
-                >
-                  Clear filters
-                </button>
-              </div>
-            )}
-
-            {featured.length > 0 && (
-              <section>
-                <SectionHeader
-                  title={filtering ? "Top Matches" : "Featured Tonight"}
-                  href="/experiences"
-                />
-                <div
-                  ref={featuredRef}
-                  onPointerEnter={() => setFeaturedPaused(true)}
-                  onPointerLeave={() => setFeaturedPaused(false)}
-                  onScroll={(ev) =>
-                    setFeaturedIndex(currentFeatured(ev.currentTarget))
-                  }
-                  className="flex snap-x snap-mandatory gap-4 overflow-x-auto [scrollbar-width:none]"
-                >
-                  {featured.map((e) => (
-                    <FeaturedCard
-                      key={e.id}
+                {trending.map((e, i) => (
+                  <div
+                    key={e.id}
+                    className="flex w-[78%] shrink-0 snap-start sm:w-[44%] md:w-[calc((100%-24px)/2)] lg:w-[calc((100%-72px)/4)]"
+                  >
+                    <SlotCard
                       event={e}
                       host={hostById.get(e.host_id)}
+                      index={i}
                     />
-                  ))}
-                  {featured.length > 1 && (
-                    // Loop copy of the first card — hidden from screen readers
-                    // and keyboard focus.
-                    <div className="contents" aria-hidden="true" inert>
-                      <FeaturedCard
-                        event={featured[0]!}
-                        host={hostById.get(featured[0]!.host_id)}
-                      />
-                    </div>
-                  )}
-                </div>
-                {featured.length > 1 && (
-                  <div className="mt-3 flex justify-center gap-1.5">
-                    {featured.map((e, i) => (
-                      <button
-                        key={e.id}
-                        type="button"
-                        aria-label={`Show featured event ${i + 1}`}
-                        aria-current={i === featuredIndex}
-                        onClick={() => goToFeatured(i)}
-                        className={`h-1.5 rounded-full transition-all ${
-                          i === featuredIndex
-                            ? "w-5 bg-[#B57BFF]"
-                            : "w-1.5 bg-white/25 hover:bg-white/50"
-                        }`}
-                      />
-                    ))}
                   </div>
-                )}
-              </section>
-            )}
+                ))}
+              </div>
+              {trending.length > 4 && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Scroll back"
+                    onClick={() => scrollTrending(-1)}
+                    className={`absolute top-[38%] left-0 z-10 hidden h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-[#121426]/90 text-white shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur transition hover:bg-[#1B1D33] md:flex ${
+                      trendEdge.start ? "pointer-events-none opacity-0" : ""
+                    }`}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Scroll forward"
+                    onClick={() => scrollTrending(1)}
+                    className={`absolute top-[38%] right-0 z-10 hidden h-11 w-11 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-[#121426]/90 text-white shadow-[0_10px_30px_rgba(0,0,0,0.6)] backdrop-blur transition hover:bg-[#1B1D33] md:flex ${
+                      trendEdge.end ? "pointer-events-none opacity-0" : ""
+                    }`}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </>
+              )}
+            </div>
+          </section>
+        )}
 
-            {thisWeek.length > 0 && (
-              <section>
-                <SectionHeader title="Upcoming This Week" href="/experiences" />
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
-                  {thisWeek.map((e) => (
-                    <UpcomingCard key={e.id} event={e} />
-                  ))}
-                </div>
-              </section>
-            )}
+        {topHosts.length > 0 && (
+          <section>
+            <SectionHeader title="Hosts on MySlotMate" href="/hosts" />
+            <div className="-mx-5 flex gap-6 overflow-x-auto px-5 pb-1 [scrollbar-width:none] md:mx-0 md:gap-8 md:px-0 [&::-webkit-scrollbar]:hidden">
+              {topHosts.map((h) => {
+                const rating = ratingOf(h.avg_rating_override ?? h.avg_rating);
+                return (
+                  <Link
+                    key={h.id}
+                    href={`/host/${h.slug}`}
+                    className="group flex w-[88px] shrink-0 flex-col items-center text-center md:w-[112px]"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={
+                        // Some hosts have avatar_url = "".
+                        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                        h.avatar_url || "/assets/home/avatar-placeholder.svg"
+                      }
+                      alt=""
+                      loading="lazy"
+                      className="h-[88px] w-[88px] rounded-full object-cover ring-1 ring-white/10 transition group-hover:ring-white/40 md:h-[112px] md:w-[112px]"
+                    />
+                    <span className="mt-3 flex w-full items-center justify-center gap-1 text-sm font-medium text-white">
+                      <span className="truncate">{h.first_name}</span>
+                      {h.is_identity_verified && (
+                        <BadgeCheck className="h-3.5 w-3.5 shrink-0 text-[#A020F0]" />
+                      )}
+                    </span>
+                    {rating && (
+                      <span className="mt-0.5 flex items-center gap-1 text-xs text-white/45">
+                        <Star className="h-3 w-3 fill-current" />
+                        {rating}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
-            {more.length > 0 && (
-              <section className="max-lg:order-1">
-                <SectionHeader title="Continue Exploring" />
-                <div className="grid grid-cols-3 gap-3 md:gap-4">
-                  {more.map((e) => (
+        {/* 1:1 sessions: a short intro and the next few sessions to book */}
+        {sessions.length > 0 && (
+          <section className="grid gap-8 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:gap-12">
+            <div className="flex flex-col items-start">
+              <p className="text-xs font-semibold tracking-[0.14em] text-[#D8B4FE] uppercase">
+                1:1 sessions
+              </p>
+              <h2 className="font-outfit mt-3 text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white md:text-[32px]">
+                Learn from someone who&apos;s done it.
+              </h2>
+              <p className="mt-3 text-[15px] leading-6 text-white/55">
+                Private time with mentors, coaches and teachers. Pick a slot
+                that suits you and it&apos;s just the two of you.
+              </p>
+              {sessionCats.length > 0 && (
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {sessionCats.map((c) => (
                     <Link
-                      key={e.id}
-                      href={`/experience/${e.slug}`}
-                      className="group min-w-0"
+                      key={c.key}
+                      href={`/explore?type=sessions&cat=${c.key}`}
+                      className="flex h-9 items-center gap-1.5 rounded-full border border-white/12 px-3.5 text-[13px] font-medium text-white/75 transition hover:border-white/30 hover:text-white"
                     >
-                      <div className="h-[100px] overflow-hidden rounded-xl">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={coverOf(e)}
-                          alt={e.title}
-                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                        />
-                      </div>
-                      <p className="mt-2 truncate text-[13px] font-medium text-white">
-                        {e.title}
-                      </p>
-                      <p className="text-xs text-white/50">
-                        {eventPriceLabel(e)}
-                        {!e.is_free && " / person"}
-                      </p>
+                      <c.icon className="h-3.5 w-3.5 text-[#D8B4FE]" />
+                      {c.label}
                     </Link>
                   ))}
                 </div>
-              </section>
-            )}
-
-            {categories.length > 0 && (
-              <section
-                id="explore-categories"
-                className="scroll-mt-24 max-lg:order-1"
+              )}
+              <Link
+                href="/explore?type=sessions"
+                className="mt-6 flex h-11 items-center gap-2 rounded-full border border-white/15 px-5 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
               >
-                <SectionHeader title="Explore Categories" />
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                  {categories.map(([key, { count, image }]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => pickMood(key)}
-                      className={`relative h-[120px] overflow-hidden rounded-2xl text-left ring-2 transition ${mood === key ? "ring-[#B57BFF]" : "ring-transparent hover:ring-white/20"}`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={image}
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10" />
-                      <div className="absolute bottom-2.5 left-3">
-                        <p className="font-outfit text-sm font-semibold text-white">
-                          {getMoodDisplayLabel(key)}
-                        </p>
-                        <p className="text-[11px] text-white/70">
-                          {count} active
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
+                See all {sessionCount} sessions
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
 
-          <aside className="flex min-w-0 flex-col gap-6 max-lg:contents">
-            {!filtering && topHosts.length > 0 && (
-              <section>
-                <SectionHeader
-                  title="Meet Our Hosts"
-                  href="/hosts"
-                  linkLabel="View All"
+            <div className="grid gap-3 sm:grid-cols-2 md:gap-4">
+              {sessions.map((e) => (
+                <SessionCard
+                  key={e.id}
+                  event={e}
+                  host={hostById.get(e.host_id)}
                 />
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-3.5 lg:flex lg:flex-col">
-                  {topHosts.map((h) => (
-                    <HostCard key={h.id} host={h} />
-                  ))}
-                </div>
-              </section>
-            )}
+              ))}
+            </div>
+          </section>
+        )}
 
-            <section className={`overflow-hidden rounded-[20px] ${CARD}`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/assets/home/heropic2.webp"
-                alt="People at a hosted workshop"
-                className="h-40 w-full object-cover lg:h-[158px]"
-              />
-              <div className="flex flex-col p-4">
-                <h2 className="font-outfit text-lg font-semibold text-white">
-                  {isHost ? "Host Something New" : "Share Your Passion"}
-                </h2>
-                <p className="mt-1.5 text-[13px] leading-5 text-white/60">
-                  {isHost
-                    ? "Turn your next idea into an experience people can book."
-                    : hostInReview
-                      ? "Your host application is being reviewed. We'll let you know soon."
-                      : "Host events, grow your community, and earn on your terms."}
-                </p>
-                {hostInReview ? (
-                  <Link
-                    href="/become-host"
-                    className="mt-3.5 flex h-10 items-center justify-center rounded-full border border-white/10 bg-[#1B1C33] text-sm font-semibold text-[#D8B4FE] transition hover:bg-[#232445]"
-                  >
-                    View Application
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleListTimeClick}
-                    className={`mt-3.5 h-10 rounded-full text-sm font-semibold ${GRADIENT_BTN}`}
-                  >
-                    {isHost ? "Create an Experience" : "Become a Host"}
-                  </button>
-                )}
+        {/* Host call-to-action */}
+        <section className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-[#3B1772] via-[#1D1140] to-[#100E1C] ring-1 ring-white/10">
+          <div className="pointer-events-none absolute -top-32 -left-24 h-80 w-80 rounded-full bg-[#A020F0]/30 blur-3xl" />
+          <div className="pointer-events-none absolute -right-20 -bottom-40 h-80 w-80 rounded-full bg-[#F472B6]/15 blur-3xl" />
+
+          <div className="relative grid md:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)]">
+            {/* Illustration in its own window (it has a dark backdrop) */}
+            <div className="order-1 p-3 md:order-2 md:p-4 md:pl-0">
+              <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-[24px] bg-[#100E1C] ring-1 ring-white/[0.06] sm:h-64 md:h-full md:min-h-[340px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/assets/illustrations/approved/host-setting-the-stage.webp"
+                  alt="A host stringing lights over a pottery table as a guest arrives with a plant"
+                  loading="lazy"
+                  className="h-full w-full object-cover object-[50%_45%] md:object-contain"
+                />
               </div>
-            </section>
-          </aside>
-        </div>
+            </div>
+
+            <div className="order-2 flex flex-col px-6 pt-3 pb-7 md:order-1 md:justify-center md:p-12">
+              <span className="flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-[#E9D8FD] uppercase">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#F472B6]" />
+                {isHost ? "For hosts" : "Host on MySlotMate"}
+              </span>
+              <h2 className="font-outfit mt-4 text-[28px] leading-[1.1] font-semibold tracking-[-0.02em] text-white md:text-[40px]">
+                {isHost ? (
+                  <>
+                    Got your next idea?{" "}
+                    <span className="text-[#D8B4FE]">
+                      Put it on the calendar.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Turn what you love into{" "}
+                    <span className="text-[#D8B4FE]">
+                      something people book.
+                    </span>
+                  </>
+                )}
+              </h2>
+              <p className="mt-3 max-w-md text-[15px] leading-6 text-white/60">
+                {hostInReview
+                  ? "Your host application is being reviewed. Meanwhile, you can host free events."
+                  : isHost
+                    ? "Publish in minutes, share one link, and welcome guests at the door."
+                    : "Start with a free event today. Get verified when you're ready to sell tickets."}
+              </p>
+
+              {!hostInReview && (
+                <ol className="mt-6 flex flex-wrap items-center gap-2">
+                  {(isHost
+                    ? [
+                        [Plus, "Create"],
+                        [Share2, "Share"],
+                        [ScanLine, "Check in"],
+                      ]
+                    : [
+                        [Plus, "Create for free"],
+                        [Share2, "Share your link"],
+                        [BadgeCheck, "Get verified"],
+                      ]
+                  ).map(([Icon, label], i, all) => {
+                    const StepIcon = Icon as typeof Plus;
+                    return (
+                      <li
+                        key={label as string}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="flex h-10 items-center gap-2 rounded-full bg-white/[0.08] pr-4 pl-1.5 text-sm font-medium text-white ring-1 ring-white/10">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#A020F0]/40 text-[#F3E8FF]">
+                            <StepIcon className="h-3.5 w-3.5" />
+                          </span>
+                          {label as string}
+                        </span>
+                        {i < all.length - 1 && (
+                          <ChevronRight className="hidden h-4 w-4 text-white/30 sm:block" />
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+                <button
+                  type="button"
+                  onClick={handleListTimeClick}
+                  className="flex h-12 items-center justify-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-[#080914] shadow-[0_12px_40px_-12px_rgba(255,255,255,0.5)] transition hover:bg-white/90"
+                >
+                  <Ticket className="h-4 w-4" />
+                  {isHost ? "Create an event" : "Host an event"}
+                </button>
+                <Link
+                  href="/host-with-us"
+                  className="group flex items-center justify-center gap-1 text-sm font-semibold text-white/70 transition hover:text-white"
+                >
+                  How hosting works
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <BecomeHostModal

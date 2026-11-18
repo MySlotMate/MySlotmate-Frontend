@@ -52,58 +52,56 @@ export function PauseExperienceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
-          <FiPause className="text-amber-600" size={24} />
+    <div className="msm-modal fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-[#121426] p-8">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/15">
+          <FiPause className="text-amber-300" size={24} />
         </div>
-        <h2 className="mb-2 text-xl font-bold text-gray-900">
+        <h2 className="mb-2 text-xl font-bold text-white">
           Pause {event.title}?
         </h2>
-        <p className="mb-6 text-sm text-gray-500">
+        <p className="mb-6 text-sm text-[#A5A8C3]">
           Select how you would like to pause this experience.
         </p>
 
         <div className="mb-6 space-y-3">
           {/* Pause All */}
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-100 p-3 transition hover:bg-gray-50">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3 transition hover:bg-white/[0.04]">
             <input
               type="radio"
               name="pause-type"
               checked={option === "all"}
               onChange={() => setOption("all")}
-              className="mt-1 h-4 w-4 text-[#0094CA]"
+              className="mt-1 h-4 w-4 text-[#D8B4FE]"
             />
             <div>
-              <p className="text-sm font-semibold text-gray-900">
-                Pause entirely
-              </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm font-semibold text-white">Pause entirely</p>
+              <p className="text-xs text-[#777B98]">
                 Hide the entire experience series.
               </p>
             </div>
           </label>
 
           {/* Pause From Session */}
-          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-100 p-3 transition hover:bg-gray-50">
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3 transition hover:bg-white/[0.04]">
             <input
               type="radio"
               name="pause-type"
               checked={option === "from"}
               onChange={() => setOption("from")}
-              className="mt-1 h-4 w-4 text-[#0094CA]"
+              className="mt-1 h-4 w-4 text-[#D8B4FE]"
             />
             <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-white">
                 Pause from a specific session onwards
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[#777B98]">
                 Keep current sessions, but pause this session and all after it.
               </p>
               {option === "from" && (
-                <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-gray-100">
+                <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-white/10">
                   {availLoading ? (
-                    <div className="p-3 text-center text-xs text-gray-400">
+                    <div className="p-3 text-center text-xs text-[#777B98]">
                       Loading sessions...
                     </div>
                   ) : (
@@ -113,10 +111,10 @@ export function PauseExperienceModal({
                         onClick={() => !a.is_paused && setSelectedDate(a.date)}
                         className={`p-2 text-xs transition ${
                           a.is_paused
-                            ? "cursor-not-allowed text-gray-400 line-through"
+                            ? "cursor-not-allowed text-[#777B98] line-through"
                             : selectedDate === a.date
-                              ? "cursor-pointer bg-[#0094CA]/10 text-[#0094CA]"
-                              : "cursor-pointer hover:bg-gray-50"
+                              ? "cursor-pointer bg-[#A020F0]/10 text-[#D8B4FE]"
+                              : "cursor-pointer hover:bg-white/[0.04]"
                         }`}
                       >
                         {new Date(a.date).toLocaleDateString("en-US", {
@@ -128,7 +126,7 @@ export function PauseExperienceModal({
                           minute: "2-digit",
                         })}
                         {a.is_paused && (
-                          <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                          <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
                             paused
                           </span>
                         )}
@@ -142,25 +140,25 @@ export function PauseExperienceModal({
 
           {/* Pause Specific Date — recurring only */}
           {event.is_recurring && (
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-100 p-3 transition hover:bg-gray-50">
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3 transition hover:bg-white/[0.04]">
               <input
                 type="radio"
                 name="pause-type"
                 checked={option === "date"}
                 onChange={() => setOption("date")}
-                className="mt-1 h-4 w-4 text-[#0094CA]"
+                className="mt-1 h-4 w-4 text-[#D8B4FE]"
               />
               <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-white">
                   Pause specific session
                 </p>
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-[#777B98]">
                   Skip just one occurrence of this series.
                 </p>
                 {option === "date" && (
-                  <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-gray-100">
+                  <div className="mt-2 max-h-32 overflow-y-auto rounded-lg border border-white/10">
                     {availLoading ? (
-                      <div className="p-3 text-center text-xs text-gray-400">
+                      <div className="p-3 text-center text-xs text-[#777B98]">
                         Loading sessions...
                       </div>
                     ) : (
@@ -172,10 +170,10 @@ export function PauseExperienceModal({
                           }
                           className={`p-2 text-xs transition ${
                             a.is_paused
-                              ? "cursor-not-allowed text-gray-400 line-through"
+                              ? "cursor-not-allowed text-[#777B98] line-through"
                               : selectedDate === a.date
-                                ? "cursor-pointer bg-[#0094CA]/10 text-[#0094CA]"
-                                : "cursor-pointer hover:bg-gray-50"
+                                ? "cursor-pointer bg-[#A020F0]/10 text-[#D8B4FE]"
+                                : "cursor-pointer hover:bg-white/[0.04]"
                           }`}
                         >
                           {new Date(a.date).toLocaleDateString("en-US", {
@@ -185,7 +183,7 @@ export function PauseExperienceModal({
                             year: "numeric",
                           })}
                           {a.is_paused && (
-                            <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                            <span className="ml-2 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-300">
                               paused
                             </span>
                           )}
@@ -202,7 +200,7 @@ export function PauseExperienceModal({
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 rounded-lg bg-gray-100 py-3 font-semibold text-gray-900 transition hover:bg-gray-200"
+            className="flex-1 rounded-lg bg-white/[0.06] py-3 font-semibold text-white transition hover:bg-white/10"
           >
             Cancel
           </button>

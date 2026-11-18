@@ -4,8 +4,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
-import { HostNavbar } from "~/components/host-dashboard";
-import Breadcrumb from "~/components/Breadcrumb";
 import { FiX, FiEdit2, FiCheck } from "react-icons/fi";
 import { LuShieldCheck, LuBadgeCheck, LuStar, LuUsers } from "react-icons/lu";
 import { FaInstagram, FaLinkedin, FaGlobe } from "react-icons/fa";
@@ -229,75 +227,64 @@ export default function HostProfileEditPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <HostNavbar />
-
+    <div className="min-h-screen bg-[#080914]">
       {loading ? (
         <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#A020F0] border-t-transparent" />
         </div>
       ) : (
-        <main className="site-x mx-auto max-w-6xl py-8">
-          <Breadcrumb
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Dashboard", href: "/host-dashboard" },
-              { label: "Profile" },
-            ]}
-            className="mb-6"
-          />
-
+        <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 md:py-10 lg:px-10">
           {/* Header row */}
           <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+              <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
                 Host Profile
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-[#A5A8C3]">
                 Manage your public persona and build trust with your guests.
               </p>
             </div>
             {hostId ? (
               <Link
                 href={`/host/${hostData?.slug ?? hostId}`}
-                className="shrink-0 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
+                className="shrink-0 rounded-lg border border-white/15 bg-[#121426] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.04]"
               >
                 Preview Public Profile
               </Link>
             ) : (
-              <span className="shrink-0 rounded-lg border border-gray-200 bg-gray-100 px-5 py-2.5 text-sm font-medium text-gray-400">
+              <span className="shrink-0 rounded-lg border border-white/10 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-[#777B98]">
                 Preview Public Profile
               </span>
             )}
           </div>
 
           {/* ── Profile completion bar ── */}
-          <div className="mt-6 rounded-xl border border-gray-200 bg-white px-6 py-5">
+          <div className="mt-6 rounded-xl border border-white/10 bg-[#121426] px-6 py-5">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <LuShieldCheck className="h-5 w-5 text-[#0094CA]" />
-                <span className="text-sm font-semibold text-gray-900">
+                <LuShieldCheck className="h-5 w-5 text-[#D8B4FE]" />
+                <span className="text-sm font-semibold text-white">
                   Profile Completion
                 </span>
               </div>
               <span
-                className={`text-sm font-bold ${completionPct === 100 ? "text-green-600" : "text-[#0094CA]"}`}
+                className={`text-sm font-bold ${completionPct === 100 ? "text-green-300" : "text-[#D8B4FE]"}`}
               >
                 {completionPct}%
               </span>
             </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-gray-200">
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-[#0094CA] transition-all duration-500"
+                className="h-full rounded-full bg-[#A020F0] transition-all duration-500"
                 style={{ width: `${completionPct}%` }}
               />
             </div>
             {completionPct < 100 && (
               <div className="mt-2 flex items-center justify-between">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-[#A5A8C3]">
                   Almost there! Add a phone number to reach 100%.
                 </p>
-                <button className="text-xs font-semibold text-[#0094CA] hover:underline">
+                <button className="text-xs font-semibold text-[#D8B4FE] hover:underline">
                   Complete now
                 </button>
               </div>
@@ -308,18 +295,18 @@ export default function HostProfileEditPage() {
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* ─── LEFT: Basic Information (2/3) ─── */}
             <div className="space-y-6 lg:col-span-2">
-              <div className="rounded-xl border border-gray-200 bg-white p-6">
+              <div className="rounded-xl border border-white/10 bg-[#121426] p-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-gray-900">
+                  <h2 className="text-lg font-bold text-white">
                     Basic Information
                   </h2>
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#0094CA] to-[#00bde5] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[#0094CA]/20 transition-all duration-200 hover:from-[#008bbd] hover:to-[#00b0d6] hover:shadow-md hover:shadow-[#0094CA]/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#A020F0] to-[#00bde5] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[#A020F0]/20 transition-all duration-200 hover:from-[#008bbd] hover:to-[#00b0d6] hover:shadow-md hover:shadow-[#A020F0]/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                   >
                     {saving ? (
-                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#121426] border-t-transparent" />
                     ) : (
                       <FiCheck className="h-4 w-4" />
                     )}
@@ -335,18 +322,18 @@ export default function HostProfileEditPage() {
                       src={form.avatarUrl}
                       alt="Avatar"
                       loading="lazy"
-                      className="h-20 w-20 rounded-full border-2 border-gray-200 object-cover"
+                      className="h-20 w-20 rounded-full border-2 border-white/10 object-cover"
                     />
                   ) : (
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100">
-                      <span className="text-2xl text-gray-400">👤</span>
+                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/10 bg-white/[0.06]">
+                      <span className="text-2xl text-[#777B98]">👤</span>
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">
+                    <p className="text-sm font-semibold text-white">
                       Your Avatar
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[#A5A8C3]">
                       Recommended 500×500px, JPG or PNG
                     </p>
                     <div
@@ -358,12 +345,12 @@ export default function HostProfileEditPage() {
                       onClick={() => fileInputRef.current?.click()}
                       className={`mt-3 cursor-pointer rounded-lg border-2 border-dashed p-3 text-center transition ${
                         isAvatarDragging
-                          ? "border-[#0094CA] bg-[#0094CA]/5"
-                          : "border-gray-300 hover:border-[#0094CA] hover:bg-gray-50"
+                          ? "border-[#A020F0] bg-[#A020F0]/10"
+                          : "border-white/15 hover:border-[#A020F0] hover:bg-white/[0.04]"
                       }`}
                     >
                       <p
-                        className={`text-xs transition ${isAvatarDragging ? "font-semibold text-[#0094CA]" : "text-gray-500"}`}
+                        className={`text-xs transition ${isAvatarDragging ? "font-semibold text-[#D8B4FE]" : "text-[#A5A8C3]"}`}
                       >
                         {isAvatarDragging
                           ? "Drop image here"
@@ -373,7 +360,7 @@ export default function HostProfileEditPage() {
                     <div className="mt-2 flex gap-3">
                       <button
                         onClick={() => update("avatarUrl", "")}
-                        className="text-xs font-medium text-red-500 hover:underline"
+                        className="text-xs font-medium text-red-400 hover:underline"
                       >
                         Remove
                       </button>
@@ -391,62 +378,62 @@ export default function HostProfileEditPage() {
                 {/* First / Last name */}
                 <div className="mt-6 grid gap-5 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                    <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                       First Name
                     </label>
                     <input
                       value={form.firstName}
                       onChange={(e) => update("firstName", e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      className="w-full rounded-lg border border-white/15 px-4 py-3 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
                     />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                    <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                       Last Name
                     </label>
                     <input
                       value={form.lastName}
                       onChange={(e) => update("lastName", e.target.value)}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      className="w-full rounded-lg border border-white/15 px-4 py-3 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
                     />
                   </div>
                 </div>
 
                 {/* Tagline */}
                 <div className="mt-5">
-                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                     Tagline
                   </label>
                   <input
                     value={form.tagline}
                     onChange={(e) => update("tagline", e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    className="w-full rounded-lg border border-white/15 px-4 py-3 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
                   />
                 </div>
 
                 {/* Bio */}
                 <div className="mt-5">
-                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                     Bio
                   </label>
                   <textarea
                     value={form.bio}
                     onChange={(e) => update("bio", e.target.value)}
                     rows={4}
-                    className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    className="w-full resize-none rounded-lg border border-white/15 px-4 py-3 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
                   />
                 </div>
 
                 {/* Expertise Tags */}
                 <div className="mt-5">
-                  <label className="mb-2 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                  <label className="mb-2 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                     Expertise &amp; Vibe
                   </label>
                   <div className="flex flex-wrap items-center gap-2">
                     {form.expertiseTags.map((tag) => (
                       <span
                         key={tag}
-                        className="flex items-center gap-1 rounded-full bg-[#0094CA] px-3 py-1.5 text-xs font-medium text-white"
+                        className="flex items-center gap-1 rounded-full bg-[#A020F0] px-3 py-1.5 text-xs font-medium text-white"
                       >
                         {tag}
                         <button
@@ -463,7 +450,7 @@ export default function HostProfileEditPage() {
                         onChange={(e) => setNewTag(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && addTag()}
                         placeholder="+ Add Tag"
-                        className="w-24 rounded-lg border border-gray-300 px-3 py-1.5 text-xs outline-none focus:border-[#0094CA]"
+                        className="w-24 rounded-lg border border-white/15 px-3 py-1.5 text-xs outline-none focus:border-[#A020F0]"
                       />
                     </div>
                   </div>
@@ -471,20 +458,20 @@ export default function HostProfileEditPage() {
               </div>
 
               {/* ─── Social Presence ─── */}
-              <div className="rounded-xl border border-gray-200 bg-white p-6">
-                <h2 className="text-lg font-bold text-gray-900">
+              <div className="rounded-xl border border-white/10 bg-[#121426] p-6">
+                <h2 className="text-lg font-bold text-white">
                   Social Presence
                 </h2>
 
                 <div className="mt-5 space-y-4">
                   {/* Instagram */}
-                  <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
+                  <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-pink-500 to-orange-400">
                         <FaInstagram className="h-4 w-4 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-white">
                           Instagram
                         </p>
                         {form.socialInstagram ? (
@@ -492,12 +479,14 @@ export default function HostProfileEditPage() {
                             onClick={() =>
                               window.open(form.socialInstagram, "_blank")
                             }
-                            className="cursor-pointer text-xs text-gray-500 transition hover:text-[#0094CA] hover:underline"
+                            className="cursor-pointer text-xs text-[#A5A8C3] transition hover:text-[#D8B4FE] hover:underline"
                           >
                             {form.socialInstagram}
                           </p>
                         ) : (
-                          <p className="text-xs text-gray-500">Not connected</p>
+                          <p className="text-xs text-[#A5A8C3]">
+                            Not connected
+                          </p>
                         )}
                       </div>
                     </div>
@@ -519,7 +508,7 @@ export default function HostProfileEditPage() {
                             toast.error("Failed to disconnect Instagram");
                           }
                         }}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-[#777B98] hover:text-[#A5A8C3]"
                       >
                         <FiX className="h-4 w-4" />
                       </button>
@@ -553,7 +542,7 @@ export default function HostProfileEditPage() {
                           }
                         }}
                         disabled={connectSocialMutation.isPending}
-                        className="text-sm font-semibold text-[#0094CA] hover:underline disabled:opacity-50"
+                        className="text-sm font-semibold text-[#D8B4FE] hover:underline disabled:opacity-50"
                       >
                         {connectSocialMutation.isPending
                           ? "Connecting..."
@@ -563,13 +552,13 @@ export default function HostProfileEditPage() {
                   </div>
 
                   {/* LinkedIn */}
-                  <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
+                  <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3.5">
                     <div className="flex items-center gap-3">
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0A66C2]">
                         <FaLinkedin className="h-4 w-4 text-white" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-white">
                           LinkedIn
                         </p>
                         {form.socialLinkedin ? (
@@ -577,14 +566,16 @@ export default function HostProfileEditPage() {
                             onClick={() =>
                               window.open(form.socialLinkedin, "_blank")
                             }
-                            className="cursor-pointer text-xs text-[#0094CA] transition hover:underline"
+                            className="cursor-pointer text-xs text-[#D8B4FE] transition hover:underline"
                           >
                             {form.socialLinkedin.includes("linkedin.com")
                               ? form.socialLinkedin
                               : `https://linkedin.com/in/${form.socialLinkedin}`}
                           </p>
                         ) : (
-                          <p className="text-xs text-gray-500">Not connected</p>
+                          <p className="text-xs text-[#A5A8C3]">
+                            Not connected
+                          </p>
                         )}
                       </div>
                     </div>
@@ -610,7 +601,7 @@ export default function HostProfileEditPage() {
                             toast.error("Failed to disconnect LinkedIn");
                           }
                         }}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-[#777B98] hover:text-[#A5A8C3]"
                       >
                         <FiX className="h-4 w-4" />
                       </button>
@@ -641,7 +632,7 @@ export default function HostProfileEditPage() {
                           }
                         }}
                         disabled={connectSocialMutation.isPending}
-                        className="text-sm font-semibold text-[#0094CA] hover:underline disabled:opacity-50"
+                        className="text-sm font-semibold text-[#D8B4FE] hover:underline disabled:opacity-50"
                       >
                         {connectSocialMutation.isPending
                           ? "Connecting..."
@@ -651,13 +642,13 @@ export default function HostProfileEditPage() {
                   </div>
 
                   {/* Website */}
-                  <div className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3.5">
+                  <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200">
-                        <FaGlobe className="h-4 w-4 text-gray-600" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
+                        <FaGlobe className="h-4 w-4 text-[#A5A8C3]" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-white">
                           Website
                         </p>
                         {form.socialWebsite ? (
@@ -665,17 +656,17 @@ export default function HostProfileEditPage() {
                             onClick={() =>
                               window.open(form.socialWebsite, "_blank")
                             }
-                            className="cursor-pointer text-xs text-gray-500 transition hover:text-[#0094CA] hover:underline"
+                            className="cursor-pointer text-xs text-[#A5A8C3] transition hover:text-[#D8B4FE] hover:underline"
                           >
                             {form.socialWebsite}
                           </p>
                         ) : (
-                          <p className="text-xs text-gray-500">Not set</p>
+                          <p className="text-xs text-[#A5A8C3]">Not set</p>
                         )}
                       </div>
                     </div>
                     <button
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-[#777B98] hover:text-[#A5A8C3]"
                       onClick={async () => {
                         const val = prompt(
                           "Enter your website URL (e.g., https://example.com):",
@@ -731,11 +722,11 @@ export default function HostProfileEditPage() {
 
             {/* ─── RIGHT: Trust & Safety (1/3) ─── */}
             <div className="space-y-6">
-              <div className="rounded-xl border border-gray-200 bg-white p-6">
-                <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                  <span className="text-green-500">🛡️</span> Trust &amp; Safety
+              <div className="rounded-xl border border-white/10 bg-[#121426] p-6">
+                <h2 className="flex items-center gap-2 text-lg font-bold text-white">
+                  <span className="text-green-400">🛡️</span> Trust &amp; Safety
                 </h2>
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-[#A5A8C3]">
                   Verification enhances trust.
                 </p>
 
@@ -743,21 +734,21 @@ export default function HostProfileEditPage() {
                   {/* Government ID */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-white">
                         Government ID
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[#A5A8C3]">
                         {form.isGovIdVerified
                           ? "Identity Verified"
                           : "Not verified"}
                       </p>
                     </div>
                     {form.isGovIdVerified ? (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-                        <FiCheck className="h-4 w-4 text-green-600" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/15">
+                        <FiCheck className="h-4 w-4 text-green-300" />
                       </div>
                     ) : (
-                      <button className="rounded-lg bg-[#0094CA] px-4 py-1.5 text-xs font-semibold text-white">
+                      <button className="rounded-lg bg-[#A020F0] px-4 py-1.5 text-xs font-semibold text-white">
                         Verify Now
                       </button>
                     )}
@@ -766,10 +757,10 @@ export default function HostProfileEditPage() {
                   {/* Email */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-white">
                         Email Address
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[#A5A8C3]">
                         {form.email || "No email"}
                       </p>
                     </div>
@@ -778,10 +769,10 @@ export default function HostProfileEditPage() {
                   {/* Phone */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">
+                      <p className="text-sm font-semibold text-white">
                         Phone Number
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-[#A5A8C3]">
                         {form.phone || "No phone number"}
                       </p>
                     </div>
@@ -789,8 +780,8 @@ export default function HostProfileEditPage() {
                 </div>
 
                 {/* Earned Trust Badges */}
-                <div className="mt-6 border-t border-gray-200 pt-5">
-                  <p className="mb-3 text-sm font-semibold text-gray-900">
+                <div className="mt-6 border-t border-white/10 pt-5">
+                  <p className="mb-3 text-sm font-semibold text-white">
                     Earned Trust Badges
                   </p>
                   <div className="flex gap-3">
@@ -798,17 +789,17 @@ export default function HostProfileEditPage() {
                     <div
                       className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
                         form.isIdentityVerified
-                          ? "border-[#0094CA] bg-[#e6f8ff]"
-                          : "border-gray-200 bg-gray-50 opacity-40"
+                          ? "border-[#A020F0] bg-[#241333]"
+                          : "border-white/10 bg-white/[0.04] opacity-40"
                       }`}
                     >
                       <LuBadgeCheck
-                        className={`h-6 w-6 ${form.isIdentityVerified ? "text-[#0094CA]" : "text-gray-400"}`}
+                        className={`h-6 w-6 ${form.isIdentityVerified ? "text-[#D8B4FE]" : "text-[#777B98]"}`}
                       />
-                      <span className="mt-1 text-[10px] font-medium text-gray-700">
+                      <span className="mt-1 text-[10px] font-medium text-white/80">
                         Identity
                       </span>
-                      <span className="text-[10px] text-gray-500">
+                      <span className="text-[10px] text-[#A5A8C3]">
                         Verified
                       </span>
                     </div>
@@ -817,41 +808,41 @@ export default function HostProfileEditPage() {
                     <div
                       className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
                         form.isSuperHost
-                          ? "border-amber-400 bg-amber-50"
-                          : "border-gray-200 bg-gray-50 opacity-40"
+                          ? "border-amber-400 bg-amber-500/10"
+                          : "border-white/10 bg-white/[0.04] opacity-40"
                       }`}
                     >
                       <LuStar
-                        className={`h-6 w-6 ${form.isSuperHost ? "text-amber-500" : "text-gray-400"}`}
+                        className={`h-6 w-6 ${form.isSuperHost ? "text-amber-400" : "text-[#777B98]"}`}
                       />
-                      <span className="mt-1 text-[10px] font-medium text-gray-700">
+                      <span className="mt-1 text-[10px] font-medium text-white/80">
                         Super
                       </span>
-                      <span className="text-[10px] text-gray-500">Host</span>
+                      <span className="text-[10px] text-[#A5A8C3]">Host</span>
                     </div>
 
                     {/* Community Champ */}
                     <div
                       className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
                         form.isCommunityChamp
-                          ? "border-purple-400 bg-purple-50"
-                          : "border-gray-200 bg-gray-50 opacity-40"
+                          ? "border-purple-400 bg-purple-500/10"
+                          : "border-white/10 bg-white/[0.04] opacity-40"
                       }`}
                     >
                       <LuUsers
-                        className={`h-6 w-6 ${form.isCommunityChamp ? "text-purple-500" : "text-gray-400"}`}
+                        className={`h-6 w-6 ${form.isCommunityChamp ? "text-purple-400" : "text-[#777B98]"}`}
                       />
-                      <span className="mt-1 text-[10px] font-medium text-gray-700">
+                      <span className="mt-1 text-[10px] font-medium text-white/80">
                         Community
                       </span>
-                      <span className="text-[10px] text-gray-500">Champ</span>
+                      <span className="text-[10px] text-[#A5A8C3]">Champ</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Pro Tip card */}
-              <div className="rounded-xl bg-[#0094CA] p-5 text-white">
+              <div className="rounded-xl bg-[#A020F0] p-5 text-white">
                 <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
                   <LuBadgeCheck className="h-5 w-5" />
                 </div>

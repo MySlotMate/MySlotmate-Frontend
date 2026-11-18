@@ -17,16 +17,16 @@ export default function AboutSection({
   const aboutText = bio ?? "";
 
   // Color map for expertise tags (cycles through these)
-  const tagColors = ["#0094CA", "#E85D3A", "#7B61FF", "#2ECC71", "#F5A623"];
+  const tagColors = ["#A020F0", "#E85D3A", "#7B61FF", "#2ECC71", "#F5A623"];
 
   return (
     <div className="flex flex-col gap-6">
       {/* About */}
       <div>
-        <h2 className="text-xl font-bold text-gray-900">About {first_name}</h2>
+        <h2 className="text-xl font-bold text-white">About {first_name}</h2>
         {aboutText && (
           <>
-            <div className="mt-3 text-sm leading-relaxed text-gray-600">
+            <div className="mt-3 text-sm leading-relaxed text-[#A5A8C3]">
               {expanded ? (
                 <p style={{ whiteSpace: "pre-line" }}>{aboutText}</p>
               ) : (
@@ -39,7 +39,7 @@ export default function AboutSection({
             {aboutText.length > 250 && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="mt-2 flex items-center gap-1 text-sm font-semibold text-[#0094CA] hover:underline"
+                className="mt-2 flex items-center gap-1 text-sm font-semibold text-[#D8B4FE] hover:underline"
               >
                 {expanded ? "Show less" : "Read more"}
                 <span
@@ -56,7 +56,7 @@ export default function AboutSection({
       {/* Host Vibes — derived from expertise_tags */}
       {expertise_tags.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900">Host Vibes</h3>
+          <h3 className="text-lg font-bold text-white">Host Vibes</h3>
           <div className="mt-3 flex flex-wrap gap-3">
             {expertise_tags.map((tag, i) => {
               const color = tagColors[i % tagColors.length]!;
@@ -78,12 +78,12 @@ export default function AboutSection({
       {/* Moods */}
       {moods.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold text-gray-900">Moods</h3>
+          <h3 className="text-lg font-bold text-white">Moods</h3>
           <div className="mt-3 flex flex-wrap gap-2">
             {moods.map((mood) => (
               <span
                 key={mood}
-                className="rounded-full bg-[#e6f8ff] px-4 py-1.5 text-sm font-medium text-[#0094CA] capitalize"
+                className="rounded-full bg-[#241333] px-4 py-1.5 text-sm font-medium text-[#D8B4FE] capitalize"
               >
                 {mood}
               </span>

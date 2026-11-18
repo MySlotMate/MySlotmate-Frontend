@@ -1,0 +1,443 @@
+<title>MySlotMate Website Story</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one long scroll told across a single weekend. Each homepage chapter is a time-stamped "slot" row on a vertical timeline. Single dark theme = MySlotMate's own app palette. */
+:root{
+  color-scheme: dark;
+  --bg:#080914; --surface:#121426; --elevated:#1b1d33; --violet-surface:#241333;
+  --violet-border:#652a91; --line:rgba(248,247,255,.08); --line-strong:rgba(248,247,255,.14);
+  --primary:#a020f0; --ultra:#bf00ff; --deep:#7b2fff; --lavender:#d8b4fe;
+  --text:#f8f7ff; --text-2:#a5a8c3; --muted:#777b98;
+  --success:#34d399; --warning:#fbbf24;
+  --grad:linear-gradient(90deg,#7b2fff,#a020f0 55%,#bf00ff);
+  --display:"Outfit",ui-sans-serif,system-ui,sans-serif;
+  --body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r-card:22px; --r-field:14px;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--lavender)}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3,h4{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+p{margin:0}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lavender)}
+.lede{color:var(--text-2);font-size:17px;max-width:62ch}
+section.block{padding-block:72px;border-top:1px solid var(--line)}
+.sec-head{display:grid;gap:12px;margin-bottom:36px;max-width:760px}
+.sec-head h2{font-size:clamp(28px,4vw,40px);font-weight:700}
+
+/* hero */
+.hero{position:relative;overflow:hidden;padding-block:72px 56px}
+.sky{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 70% at 70% 0%,rgba(160,32,240,.28),transparent 70%),radial-gradient(40% 50% at 10% 20%,rgba(123,47,255,.16),transparent 70%)}
+.hero .wrap{position:relative;display:grid;gap:22px}
+.hero h1{font-size:clamp(38px,6.4vw,72px);font-weight:800;line-height:1.02;max-width:15ch}
+.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .lede{font-size:18px}
+.skyline{position:relative;margin-top:28px;height:150px;display:flex;align-items:flex-end;gap:6px}
+.bld{flex:1;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:6px 6px 0 0;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:8px;align-content:start}
+.win{height:7px;border-radius:2px;background:rgba(248,247,255,.05)}
+.win.on{background:var(--lavender);box-shadow:0 0 10px rgba(216,180,254,.7)}
+@media (prefers-reduced-motion:no-preference){.win.on{animation:flick 6s ease-in-out infinite}}
+@keyframes flick{0%,100%{opacity:1}50%{opacity:.55}}
+.caption{font-size:12px;color:var(--muted)}
+
+/* slot pill — the signature device */
+.slot{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--violet-surface);border:1px solid var(--violet-border);font-size:12px;font-weight:600;color:var(--lavender);white-space:nowrap;font-variant-numeric:tabular-nums}
+.slot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--ultra);box-shadow:0 0 8px var(--ultra)}
+.slot.booked{background:var(--grad);border-color:transparent;color:#fff}
+.slot.booked::before{background:#fff;box-shadow:none}
+.slot.memory{background:var(--elevated);border-color:var(--line-strong);color:var(--text-2)}
+.slot.memory::before{background:var(--warning);box-shadow:none}
+
+/* compare */
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:24px;display:grid;gap:14px;align-content:start;min-width:0}
+.panel h3{font-size:20px;font-weight:700}
+.panel.mine{background:linear-gradient(180deg,rgba(160,32,240,.14),rgba(18,20,38,1) 60%);border-color:var(--violet-border)}
+ul.clean{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+ul.clean li{display:grid;grid-template-columns:16px 1fr;gap:10px;color:var(--text-2)}
+ul.clean li::before{content:"";width:6px;height:6px;margin-top:9px;border-radius:50%;background:var(--muted)}
+.panel.mine ul.clean li::before{background:var(--ultra)}
+ul.clean b{color:var(--text);font-weight:600}
+
+/* sitemap */
+.map{display:grid;gap:14px}
+.map-root{justify-self:start;background:var(--grad);color:#fff;font-family:var(--display);font-weight:700;padding:12px 20px;border-radius:14px}
+.map-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.node{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:8px;align-content:start}
+.node h4{font-size:16px;font-weight:700}
+.node .path{font-size:12px;color:var(--lavender);font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.node p{font-size:13px;color:var(--text-2)}
+.node .kids{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.chip{font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line-strong);color:var(--text-2)}
+.tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:4px;background:var(--violet-surface);color:var(--lavender);border:1px solid var(--violet-border);justify-self:start}
+.tag.story{background:rgba(251,191,36,.12);color:var(--warning);border-color:rgba(251,191,36,.35)}
+.tag.later{background:transparent;color:var(--muted);border-color:var(--line-strong)}
+
+/* weekend timeline */
+.acts{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px}
+.act{display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-size:13px;color:var(--text-2)}
+.act b{color:var(--text);font-family:var(--display);font-weight:600}
+.timeline{display:grid;gap:0;position:relative}
+.ch{display:grid;grid-template-columns:150px 1fr;gap:28px;padding-block:28px;border-top:1px solid var(--line)}
+.ch:first-child{border-top:0}
+.when{display:grid;gap:8px;align-content:start}
+.when .num{font-family:var(--display);font-size:13px;font-weight:600;color:var(--muted)}
+.body{display:grid;gap:14px;min-width:0}
+.body h3{font-size:clamp(22px,2.8vw,28px);font-weight:700;line-height:1.15}
+.body .job{color:var(--text-2);max-width:68ch}
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.spec div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:6px;align-content:start;min-width:0}
+.spec dt,.spec .k{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.spec p{font-size:13.5px;color:var(--text-2)}
+.copy{font-family:var(--display);font-size:16px;font-weight:600;color:var(--text);line-height:1.35}
+.from{font-size:12px;color:var(--muted)}
+.from b{color:var(--lavender);font-weight:600}
+@media (max-width:720px){.ch{grid-template-columns:1fr;gap:12px}.when{grid-auto-flow:column;justify-content:start;align-items:center}}
+
+/* pages */
+.pages{display:grid;gap:16px}
+.page{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:24px;display:grid;gap:18px}
+.page-top{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:baseline}
+.page-top h3{font-size:24px;font-weight:700}
+.page .promise{font-family:var(--display);font-size:19px;font-weight:600;color:var(--lavender)}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.step{font-size:13px;padding:8px 12px;border-radius:12px;background:var(--elevated);border:1px solid var(--line);color:var(--text)}
+.arrow{color:var(--muted);font-size:13px}
+.page .note{font-size:13px;color:var(--text-2)}
+
+/* devices */
+.devices{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.device{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:grid;gap:10px;align-content:start}
+.device h4{font-size:17px;font-weight:700}
+.device p{font-size:13.5px;color:var(--text-2)}
+.marquee{overflow:hidden;border-radius:12px;border:1px solid var(--line);padding:10px 0;background:var(--bg)}
+.marquee-track{display:flex;gap:18px;width:max-content;font-family:var(--display);font-weight:600;font-size:14px;color:var(--text-2)}
+.marquee-track span::after{content:"✦";margin-left:18px;color:var(--ultra)}
+@media (prefers-reduced-motion:no-preference){.marquee-track{animation:slide 28s linear infinite}}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* questions */
+.qs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.q{border:1px dashed var(--violet-border);border-radius:16px;padding:18px;display:grid;gap:6px}
+.q h4{font-size:15px;font-weight:600}
+.q p{font-size:13px;color:var(--text-2)}
+footer{padding-block:40px 64px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+</style>
+
+<header class="hero">
+  <div class="sky"></div>
+  <div class="wrap">
+    <span class="eyebrow">Website architecture · story-first</span>
+    <h1>From a product you use to a story you <em>show up for.</em></h1>
+    <p class="lede">A page-by-page flow for the MySlotMate website. It borrows how Offlyn joins marketing and product into one site, and it tells MySlotMate's own story: people's time, booked and spent well.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <span class="slot">Fri · 6:40 PM · scrolling</span>
+      <span class="slot booked">Sat · 7:00 PM · booked</span>
+      <span class="slot memory">Sun · a memory</span>
+    </div>
+    <div class="skyline" aria-hidden="true" id="skyline"></div>
+    <p class="caption">Hero idea: a night skyline. Every lit window is a slot happening in the city right now.</p>
+  </div>
+</header>
+
+<main>
+<section class="block">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">01 · What Offlyn gets right</span>
+      <h2>Four pages, each with one job</h2>
+      <p class="lede">Offlyn feels like more than a product because each page does a different job. The homepage hooks you with a feeling and then gets straight to things to do. Every other page sells one audience at a time.</p>
+    </div>
+    <div class="compare">
+      <div class="panel">
+        <h3>How Offlyn is built</h3>
+        <ul class="clean">
+          <li><span><b>Home:</b> a surreal one-line hero ("Because life happens Offlyn"), then the live events grid with a city picker, a "Didn't find anything? Host it" band, and host guides.</span></li>
+          <li><span><b>About:</b> a manifesto that runs Why now → What we're building → Why the founders built it → Who it's for → What we stand for → a closing line.</span></li>
+          <li><span><b>For Hosts:</b> a long sales page. Animated counters, a marquee of event formats, mock product cards labelled "Example", the money breakdown, a comparison table and an FAQ.</span></li>
+          <li><span><b>For Brands:</b> a business page laid out as a four-step process with ROI proof.</span></li>
+          <li><span><b>Throughout:</b> city SEO pages, a blog, a floating "Ask Offlyn" assistant and app download links.</span></li>
+        </ul>
+      </div>
+      <div class="panel mine">
+        <h3>What MySlotMate does differently</h3>
+        <ul class="clean">
+          <li><span><b>The story is on the homepage.</b> Offlyn keeps its story on About. MySlotMate tells the brand story as you scroll, then shows the product as the answer to it.</span></li>
+          <li><span><b>Time is the motif.</b> The site is told across one weekend: Friday's scroll, Saturday's slot, Sunday's memory. It fits the tagline "Book People's Time".</span></li>
+          <li><span><b>Night, not daylight.</b> Offlyn uses a bright meadow. MySlotMate keeps its dark navy and violet, with the city lit up at night.</span></li>
+          <li><span><b>Two kinds of host.</b> Community hosts and professionals get separate pages, because what they need to hear is different.</span></li>
+          <li><span><b>The Journey.</b> Offlyn has nothing like the app's memory timeline. It's MySlotMate's emotional payoff, so it gets its own chapter.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">02 · Sitemap</span>
+      <h2>The site at a glance</h2>
+      <p class="lede">Gold tags are story pages that build belief. Violet tags are product pages people use. "Later" pages can wait until launch.</p>
+    </div>
+    <div class="map">
+      <div class="map-root">myslotmate.com</div>
+      <div class="map-cols">
+        <div class="node"><span class="tag story">Story + product</span><h4>Home</h4><span class="path">/</span><p>The weekend story, with live discovery built into it.</p></div>
+        <div class="node"><span class="tag">Product</span><h4>Explore</h4><span class="path">/explore · /in/guwahati</span><p>Public discovery, open to search engines.</p><div class="kids"><span class="chip">Experience</span><span class="chip">Host profile</span><span class="chip">Community</span><span class="chip">City pages</span></div></div>
+        <div class="node"><span class="tag story">Story</span><h4>Our Story</h4><span class="path">/our-story</span><p>The manifesto: why time matters and why we built this.</p></div>
+        <div class="node"><span class="tag">Audience</span><h4>Host a Community</h4><span class="path">/host</span><p>For people who bring others together.</p></div>
+        <div class="node"><span class="tag">Audience</span><h4>Share Your Expertise</h4><span class="path">/professionals</span><p>For coaches, mentors and experts with bookable time.</p></div>
+        <div class="node"><span class="tag story">Story</span><h4>Stories</h4><span class="path">/stories</span><p>Host guides, member journeys, city round-ups.</p></div>
+        <div class="node"><span class="tag later">Later</span><h4>For Partners</h4><span class="path">/partners</span><p>Venues and brands backing experiences.</p></div>
+      </div>
+      <p class="caption">Always there: a sticky nav (Explore · Our Story · Host · Professionals · Stories · Get the app), a city switcher, a floating "Ask MySlotMate" button, and a footer with city links, the app and legal pages.</p>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">03 · Homepage</span>
+      <h2>One weekend, ten chapters</h2>
+      <p class="lede">Every chapter is labelled with a time, so the homepage reads like a weekend. One slot pill follows the reader down the page. It starts as something they see, gets booked, and ends up as a memory.</p>
+    </div>
+    <div class="acts">
+      <div class="act"><b>Act 1 · Friday night</b> the problem</div>
+      <div class="act"><b>Act 2 · Saturday</b> the answer, the product</div>
+      <div class="act"><b>Act 3 · Sunday</b> what it leaves you with</div>
+    </div>
+
+    <div class="timeline">
+      <article class="ch">
+        <div class="when"><span class="num">Ch 01</span><span class="slot">Fri · 6:40 PM</span></div>
+        <div class="body">
+          <h3>Hero: the city, lit up</h3>
+          <p class="job">Job: make someone feel the brand in one second and give them a way in. The visual is a night skyline where windows light up one by one. Hovering a window shows the slot behind it.</p>
+          <div class="spec">
+            <div><span class="k">Headline</span><p class="copy">Life happens when you show up.</p><p>Sub: Book People's Time.</p></div>
+            <div><span class="k">Actions</span><p>Primary: Find something to do. Secondary: Share your time. Under the CTAs: a strip of three slots happening tonight in your city.</p></div>
+            <div><span class="k">Reuse</span><p>The gradient pill button and the location chip ("Guwahati") from the app.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 02</span><span class="slot">Fri · 9:15 PM</span></div>
+        <div class="body">
+          <h3>The scroll: name the problem</h3>
+          <p class="job">Job: say the thing everyone feels. A phone feed scrolls on its own and slows as the copy builds. Then the screen goes dark.</p>
+          <div class="spec">
+            <div><span class="k">Copy, line by line</span><p class="copy">We scroll. We follow. We save it for another day.</p><p>Then: Discovering something online isn't the same as living it.</p></div>
+            <div><span class="k">Source</span><p class="from">From the brand story: <b>"connecting with people has never been easier, yet meaningful connections often feel harder to find."</b></p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 03</span><span class="slot">Sat · 9:00 AM</span></div>
+        <div class="body">
+          <h3>The people: everyone has something worth sharing</h3>
+          <p class="job">Job: move the story from "things to do" to "people to meet", which is MySlotMate's real difference. Four portrait cards. On hover or tap, each one flips to show the slot that person offers.</p>
+          <div class="spec">
+            <div><span class="k">The four people</span><p>A local artist who wants to teach. A traveller who knows the hidden trails. A creator who brings people together. A professional with years of knowledge.</p></div>
+            <div><span class="k">Card back</span><p>"Sat · 10 AM · Pottery basics · ₹800" or "Free community walk". This shows that both free and paid slots exist.</p></div>
+            <div><span class="k">Reuse</span><p>The Host card and Role Label (Community Host / Professional Host) components.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 04</span><span class="slot booked">Sat · now</span></div>
+        <div class="body">
+          <h3>Happening now in your city</h3>
+          <p class="job">Job: the product reveal, Offlyn's discovery grid placed as the answer to Chapter 2. Live cards with a city picker and three tabs. The slot pill gets "booked" here and turns into the gradient.</p>
+          <div class="spec">
+            <div><span class="k">Header</span><p class="copy">MySlotMate brings it all together.</p><p>"Happening this weekend in Guwahati ▾"</p></div>
+            <div><span class="k">Tabs</span><p>Experiences · Communities · Professionals. Search sits above. "Load more" leads to /explore.</p></div>
+            <div><span class="k">Reuse</span><p>Experience card, Professional Host card with "Book slot", and the Explore segmented control.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 05</span><span class="slot">Sat · 11:30 AM</span></div>
+        <div class="body">
+          <h3>Three ways in</h3>
+          <p class="job">Job: let each visitor see themselves. Three large doors, one per audience, each linking to its own page.</p>
+          <div class="spec">
+            <div><span class="k">Explore</span><p>"Find something new. Meet interesting people. Make time for what matters."</p></div>
+            <div><span class="k">Host a community</span><p>"Turn shared interests into shared experiences."</p></div>
+            <div><span class="k">Share your expertise</span><p>"Make your knowledge bookable, one slot at a time."</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 06</span><span class="slot">Sat · 4:00 PM</span></div>
+        <div class="body">
+          <h3>Communities: where it keeps going</h3>
+          <p class="job">Job: show that MySlotMate isn't one-off ticketing. Bring in the community feed from the app: an announcement post, a live poll, a photo recap.</p>
+          <div class="spec">
+            <div><span class="k">Headline</span><p class="copy">Shared interests become shared experiences.</p></div>
+            <div><span class="k">Reuse</span><p>The Community feed screen (SF Strangers Network): post cards, the poll and the HOST / MEMBER tags, shown inside a desktop frame.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 07</span><span class="slot booked">Sat · 7:00 PM</span></div>
+        <div class="body">
+          <h3>The moment: you showed up</h3>
+          <p class="job">Job: the emotional peak. One full-width, warm, real photo of a room of people and almost no interface. The only UI is a quiet check-in toast.</p>
+          <div class="spec">
+            <div><span class="k">Copy</span><p class="copy">Walk in as a guest. Leave knowing someone.</p></div>
+            <div><span class="k">Why</span><p>The warm photos against the dark interface are already your best visual contrast. This chapter makes full use of it.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 08</span><span class="slot memory">Sun · 10:00 AM</span></div>
+        <div class="body">
+          <h3>Your Journey: every slot becomes a memory</h3>
+          <p class="job">Job: the payoff Offlyn doesn't have. The slot pill settles into a Journey timeline with upcoming, completed and memory entries, plus photos and the people you met.</p>
+          <div class="spec">
+            <div><span class="k">Headline</span><p class="copy">Every slot can lead to something meaningful.</p><p>This is the brand promise, word for word.</p></div>
+            <div><span class="k">Reuse</span><p>The journey-completed and Journey memory detail screens, and the statistic items ("12 experiences attended · 15 connections").</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 09</span><span class="slot">Sun · 2:00 PM</span></div>
+        <div class="body">
+          <h3>Proof, then a nudge</h3>
+          <p class="job">Job: build trust, then turn some readers into hosts. Counters that tick up, three short quotes, then a band that says "Didn't find it? Host it."</p>
+          <div class="spec">
+            <div><span class="k">Counters</span><p>Experiences hosted · People who showed up · Hosts and professionals · Cities. Use real numbers only.</p></div>
+            <div><span class="k">Band</span><p class="copy">Didn't find what you're looking for? Someone's waiting for you to host it.</p></div>
+            <div><span class="k">Then</span><p>Three cards from Stories: host guides and member journeys.</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="ch">
+        <div class="when"><span class="num">Ch 10</span><span class="slot">Sun · 9:00 PM</span></div>
+        <div class="body">
+          <h3>Close: the weekend ends, the point stays</h3>
+          <p class="job">Job: end on the brand's strongest line and the app. The skyline comes back, this time with more windows lit than in the hero.</p>
+          <div class="spec">
+            <div><span class="k">Copy</span><p class="copy">Time is the one thing we can never get back. How you spend it makes all the difference.</p></div>
+            <div><span class="k">Actions</span><p>Get the app (App Store / Play) · Explore this weekend.</p></div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">04 · The other pages</span>
+      <h2>One promise per page</h2>
+      <p class="lede">Each page follows Offlyn's pattern: a single promise, then the sections that prove it.</p>
+    </div>
+    <div class="pages">
+      <div class="page">
+        <div class="page-top"><h3>Our Story</h3><span class="tag story">Manifesto</span></div>
+        <p class="promise">We aren't here to keep you on your screen. We're here to get you out the door.</p>
+        <div class="flow"><span class="step">Why now: time is getting scarcer</span><span class="arrow">→</span><span class="step">What we believe: the five pillars</span><span class="arrow">→</span><span class="step">Why we built it: founders</span><span class="arrow">→</span><span class="step">Who it's for: Explorers · Hosts · Professionals</span><span class="arrow">→</span><span class="step">What we stand for: human, curious, inclusive, energetic, trustworthy</span><span class="arrow">→</span><span class="step">Close: "Discover more. Connect deeper. Experience life."</span></div>
+        <p class="note">The five pillars are already written in the brand story: Human connection, Opportunity for everyone, Real-world discovery, Meaningful time and Community first. A marquee of formats sits between sections: workshops, treks, supper clubs, coaching, open mics, mentorship…</p>
+      </div>
+
+      <div class="page">
+        <div class="page-top"><h3>Host a Community</h3><span class="tag">Audience</span></div>
+        <p class="promise">Bring people together. We'll handle the rest.</p>
+        <div class="flow"><span class="step">Hero + counters</span><span class="arrow">→</span><span class="step">Formats marquee</span><span class="arrow">→</span><span class="step">Your community page</span><span class="arrow">→</span><span class="step">Your host profile</span><span class="arrow">→</span><span class="step">Toolkit: group slots, ticket types, request-to-join, visibility</span><span class="arrow">→</span><span class="step">How to get approved</span><span class="arrow">→</span><span class="step">FAQ</span></div>
+        <p class="note">Every section can be built from screens you already have: the Group/community create flow, the Community feed, members and events, and the Community Host application (Identity → Community info → Past experience → Review → Approved). Show them as cards labelled "Example", as Offlyn does.</p>
+      </div>
+
+      <div class="page">
+        <div class="page-top"><h3>Share Your Expertise</h3><span class="tag">Audience</span></div>
+        <p class="promise">Your knowledge, bookable. One slot at a time.</p>
+        <div class="flow"><span class="step">Hero: a session booking mock</span><span class="arrow">→</span><span class="step">Who it's for: coaches, mentors, consultants, teachers</span><span class="arrow">→</span><span class="step">Availability and pricing</span><span class="arrow">→</span><span class="step">Intake form and terms</span><span class="arrow">→</span><span class="step">Credentials and the Verified badge</span><span class="arrow">→</span><span class="step">MySlotMate compared with DMs, payment links and spreadsheets</span><span class="arrow">→</span><span class="step">FAQ</span></div>
+        <p class="note">Built from the Professional one-to-one flow (Availability, Pricing, Intake form, Booking settings) and the Credential detail screens.</p>
+      </div>
+
+      <div class="page">
+        <div class="page-top"><h3>Explore and its detail pages</h3><span class="tag">Product</span></div>
+        <p class="promise">Everything happening near you, open to anyone.</p>
+        <div class="flow"><span class="step">/explore</span><span class="arrow">→</span><span class="step">/in/{city}</span><span class="arrow">→</span><span class="step">/e/{experience}</span><span class="arrow">→</span><span class="step">/h/{host}</span><span class="arrow">→</span><span class="step">/c/{community}</span></div>
+        <p class="note">This is where the website and the product meet. Web versions of the app screens bring in search traffic. Every page ends with "Continue in the app" for booking.</p>
+      </div>
+
+      <div class="page">
+        <div class="page-top"><h3>Stories</h3><span class="tag story">Story</span></div>
+        <p class="promise">Real slots, real people, real weekends.</p>
+        <div class="flow"><span class="step">Member journeys</span><span class="arrow">·</span><span class="step">Host playbooks</span><span class="arrow">·</span><span class="step">This weekend in {city}</span></div>
+        <p class="note">This keeps the story going after launch. It also feeds the homepage's Chapter 9 cards and a weekly email.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">05 · Signature devices</span>
+      <h2>What makes it feel like MySlotMate</h2>
+    </div>
+    <div class="devices">
+      <div class="device"><h4>The slot pill</h4><p>A small pill with a glowing dot and a time. It goes from seen to booked to memory. It's the visual version of "Book People's Time".</p><div style="display:flex;flex-wrap:wrap;gap:6px"><span class="slot">Sat · 7 PM</span><span class="slot booked">Booked</span><span class="slot memory">Memory</span></div></div>
+      <div class="device"><h4>Time-stamped chapters</h4><p>Section labels are times, not numbers. Scrolling the homepage feels like moving through a weekend.</p></div>
+      <div class="device"><h4>The lit skyline</h4><p>Opens and closes the homepage. More windows are lit at the end, a quiet sign of what happens when people show up.</p></div>
+      <div class="device"><h4>Formats marquee</h4><p>Offlyn's best detail, adapted to cover both sides of MySlotMate.</p><div class="marquee" aria-hidden="true"><div class="marquee-track"><span>Pottery jams</span><span>Hidden-trail treks</span><span>Career mentoring</span><span>Supper clubs</span><span>Yoga 1:1</span><span>Open mics</span><span>Portfolio reviews</span><span>Book clubs</span><span>Pottery jams</span><span>Hidden-trail treks</span><span>Career mentoring</span><span>Supper clubs</span><span>Yoga 1:1</span><span>Open mics</span><span>Portfolio reviews</span><span>Book clubs</span></div></div></div>
+      <div class="device"><h4>Real app UI as proof</h4><p>Screens from your Figma file shown as cards labelled "Example". That keeps product and marketing in one visual language.</p></div>
+      <div class="device"><h4>Warm photos, cool interface</h4><p>Golden-hour photos of real people against dark navy and violet. The contrast carries the feeling.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">06 · Before we design</span>
+      <h2>What I need from you</h2>
+      <p class="lede">The brand story doesn't cover these, and I shouldn't invent them.</p>
+    </div>
+    <div class="qs">
+      <div class="q"><h4>Real numbers</h4><p>Experiences hosted, members, hosts and cities, for the counters. Or should we launch without counters?</p></div>
+      <div class="q"><h4>Money model</h4><p>Commission or fees for hosts and professionals, and payout timing. Offlyn's host page leads with this.</p></div>
+      <div class="q"><h4>Founder story</h4><p>Who built MySlotMate and why, for Our Story.</p></div>
+      <div class="q"><h4>Launch cities</h4><p>Guwahati shows up in the app designs. Which cities get pages at launch?</p></div>
+      <div class="q"><h4>Partners page</h4><p>Are brands and venues part of the plan now, or later?</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">Sources: the MySlotMate brand story, the MySlotMate app design file in Figma, and offlyn.life (Home, About, For Hosts, For Brands), reviewed 14 Nov 2026.</div>
+</footer>
+
+<script>
+(function(){
+  var s=document.getElementById('skyline'); if(!s) return;
+  var heights=[62,88,54,120,76,100,140,70,92,58,110,84,66,128,74];
+  heights.forEach(function(h,i){
+    var b=document.createElement('div'); b.className='bld'; b.style.height=h+'px';
+    var n=Math.floor((h-16)/12)*3;
+    for(var j=0;j<n;j++){var w=document.createElement('div'); w.className='win'+(((i*7+j*13)%9)<2?' on':''); w.style.animationDelay=((i+j)%7)+'s'; b.appendChild(w);}
+    s.appendChild(b);
+  });
+  if(window.innerWidth<600){Array.prototype.slice.call(s.children,9).forEach(function(c){c.remove()});}
+})();
+</script>

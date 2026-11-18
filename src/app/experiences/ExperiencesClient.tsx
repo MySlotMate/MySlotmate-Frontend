@@ -70,7 +70,7 @@ export default function ExperiencesClient({
   const moods = ["all", "adventure", "wellness", "social", "chill", "creative"];
 
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#fafeff,#f2faff)] text-[#16304c]">
+    <main className="min-h-screen bg-[#080914] text-white">
       <components.Navbar />
 
       <div className="site-x mx-auto w-full max-w-[77rem] py-8">
@@ -87,10 +87,10 @@ export default function ExperiencesClient({
             {location && (
               <button
                 onClick={() => setFilterByLocation(!filterByLocation)}
-                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
+                className={`rounded-full border border-[#652A91]/60 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
                   filterByLocation
-                    ? "bg-[#dff3ff] text-[#0e8ae0]"
-                    : "bg-white/90 text-[#5a88ac] hover:bg-white"
+                    ? "bg-white/[0.04] text-[#D8B4FE]"
+                    : "bg-[#121426]/90 text-[#5a88ac] hover:bg-[#121426]"
                 }`}
               >
                 {filterByLocation ? location.city : "Show All Locations"}
@@ -104,10 +104,10 @@ export default function ExperiencesClient({
               <button
                 key={mood}
                 onClick={() => setMoodFilter(mood)}
-                className={`rounded-full border border-sky-200 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
+                className={`rounded-full border border-[#652A91]/60 px-4 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition-all ${
                   moodFilter === mood
-                    ? "bg-[#dff3ff] text-[#0e8ae0]"
-                    : "bg-white/90 text-[#5a88ac] hover:bg-white"
+                    ? "bg-white/[0.04] text-[#D8B4FE]"
+                    : "bg-[#121426]/90 text-[#5a88ac] hover:bg-[#121426]"
                 }`}
               >
                 {mood === "all" ? "All" : mood}
@@ -118,10 +118,10 @@ export default function ExperiencesClient({
 
         {showLoader ? (
           <div className="flex items-center justify-center py-20">
-            <LuLoader2 className="h-10 w-10 animate-spin text-[#0094CA]" />
+            <LuLoader2 className="h-10 w-10 animate-spin text-[#D8B4FE]" />
           </div>
         ) : filteredEvents.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-sky-200 bg-white/80 py-10 text-center text-sm text-[#6f8daa]">
+          <div className="rounded-3xl border border-dashed border-[#652A91]/60 bg-[#121426]/80 py-10 text-center text-sm text-[#A5A8C3]">
             No experiences found.
           </div>
         ) : (

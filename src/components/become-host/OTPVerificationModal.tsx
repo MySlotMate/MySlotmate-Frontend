@@ -93,7 +93,7 @@ export function OTPVerificationModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all">
+    <div className="msm-modal fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all">
       <div className="animate-in fade-in zoom-in relative w-full max-w-md rounded-[24px] border border-white/10 bg-[#131328] p-8 text-white shadow-2xl duration-300">
         <button
           onClick={onClose}

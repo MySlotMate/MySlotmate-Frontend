@@ -5,7 +5,7 @@
  */
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#080914] md:pl-20 min-[80rem]:pl-[230px]">
+    <div className="min-h-screen bg-[#080914]">
       <div className="mx-auto max-w-[1210px] animate-pulse px-6 pt-6 md:px-10 md:pt-10">
         <div className="grid gap-10 lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-12">
           <div className="flex flex-col items-center gap-3">

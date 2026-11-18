@@ -10,34 +10,19 @@ import { useListTimeAction } from "~/hooks/useListTimeAction";
 const Footer = ({ dark = false }: { dark?: boolean } = {}) => {
   const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
     useListTimeAction();
-  // Light (default) and dark (home feed) palettes.
-  const c = dark
-    ? {
-        footer: "border-white/5 bg-[#0B0C18]",
-        heading: "text-white",
-        text: "text-white/55",
-        hover: "hover:text-[#D4ABFF]",
-        divider: "border-white/10",
-        bottom: "text-white/60",
-        icon: "border-white/15 text-white/70 hover:border-[#9B30FF] hover:text-white",
-        input:
-          "border-white/10 bg-[#131425] text-white placeholder:text-white/40 focus:ring-[#9B30FF]",
-        button:
-          "bg-gradient-to-r from-[#8B1CF6] to-[#D61CF2] hover:brightness-110",
-      }
-    : {
-        footer:
-          "border-[#aeddf873] bg-[linear-gradient(180deg,#dff2ff,#f4fbff)]",
-        heading: "text-[#16304c]",
-        text: "text-[#5e88ab]",
-        hover: "hover:text-[#0e8ae0]",
-        divider: "border-[#aeddf873]",
-        bottom: "text-[#000000]",
-        icon: "border-[#7ea4bb73]",
-        input:
-          "border-[#aeddf873] bg-white text-[#0A142F] focus:ring-[#0094CA]",
-        button: "bg-[#0094CA] hover:bg-[#007ba8]",
-      };
+  // One dark palette everywhere (the `dark` prop only changes the grid).
+  const c = {
+    footer: "border-white/5 bg-[#0B0C18]",
+    heading: "text-white",
+    text: "text-white/55",
+    hover: "hover:text-[#D4ABFF]",
+    divider: "border-white/10",
+    bottom: "text-white/60",
+    icon: "border-white/15 text-white/70 hover:border-[#9B30FF] hover:text-white",
+    input:
+      "border-white/10 bg-[#131425] text-white placeholder:text-white/40 focus:ring-[#9B30FF]",
+    button: "bg-gradient-to-r from-[#8B1CF6] to-[#D61CF2] hover:brightness-110",
+  };
 
   return (
     <footer
@@ -49,19 +34,14 @@ const Footer = ({ dark = false }: { dark?: boolean } = {}) => {
             className={`grid grid-cols-1 gap-8 ${dark ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-4"}`}
           >
             <div className="flex flex-col items-center text-center md:items-start md:text-left">
-              {dark ? (
-                <span className="font-outfit mb-3 text-2xl font-bold text-white">
-                  MySlotMate
-                </span>
-              ) : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src="/assets/home/logo.png"
-                  alt="Myslotmate"
-                  loading="lazy"
-                  className="mb-3 h-10 w-auto"
-                />
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/assets/brand/logo-horizontal-white.png"
+                alt="MySlotMate"
+                width={1048}
+                height={209}
+                className="mb-3 h-8 w-auto"
+              />
               <p className={`text-sm ${c.text}`}>
                 A product of Moodverse Pvt Ltd
               </p>

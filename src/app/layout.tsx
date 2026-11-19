@@ -187,6 +187,18 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        {/* Google tag (GTM-KCLPRQJC). Root layout wraps every route, so this
+            one copy covers the whole site. Keep it first in <head>. */}
+        <script
+          async
+          src="https://www.googletagmanager.com/gtm.js?id=GTM-KCLPRQJC"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());",
+          }}
+        />
         {/* JSON-LD Schema Markup */}
         <script
           type="application/ld+json"

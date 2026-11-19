@@ -540,7 +540,7 @@ export default function ExplorePage() {
 
         {/* Results */}
         {loading ? (
-          <div className="grid grid-cols-1 gap-x-6 gap-y-10 min-[480px]:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
@@ -571,7 +571,7 @@ export default function ExplorePage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-x-6 gap-y-10 min-[480px]:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-3 gap-y-4 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
             {results.slice(0, visible).map((e, i) => (
               <SlotCard
                 key={e.id}

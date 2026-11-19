@@ -9,7 +9,10 @@ import { LuShieldCheck, LuBadgeCheck, LuStar, LuUsers } from "react-icons/lu";
 import { FaInstagram, FaLinkedin, FaGlobe } from "react-icons/fa";
 import { toast } from "sonner";
 import { useDragDrop } from "~/hooks/useDragDrop";
+import { EventAlbums } from "~/components/profile/PhotoKit";
+import PhotoAlbums from "~/components/profile/PhotoAlbums";
 import {
+  useEventsByHost,
   useMyHost,
   useUpdateHostProfile,
   useUploadFiles,
@@ -109,6 +112,16 @@ export default function HostProfileEditPage() {
 
   // React Query
   const { data: hostData, isLoading: loading } = useMyHost(validUserId);
+  // Past experiences, for the photo albums below.
+  const { data: myEvents } = useEventsByHost(hostData?.id ?? null);
+  const pastEvents = (myEvents ?? [])
+    .filter(
+      (e) =>
+        e.status !== "draft" &&
+        e.status !== "cancelled" &&
+        new Date(e.next_available_date ?? e.time).getTime() < Date.now(),
+    )
+    .sort((a, b) => Date.parse(b.time) - Date.parse(a.time));
   const updateMutation = useUpdateHostProfile();
   const uploadMutation = useUploadFiles();
   const connectSocialMutation = useConnectSocialMedia();
@@ -854,6 +867,42 @@ export default function HostProfileEditPage() {
               </div>
             </div>
           </div>
+
+          {/* Photos for guests' journeys, and the albums on the profile's
+              Photos tab. */}
+          {hostData && (
+            <>
+              <section className="mt-6 rounded-xl border border-white/10 bg-[#121426] p-6">
+                <div className="mb-5">
+                  <h2 className="text-lg font-bold text-white">
+                    Share photos with your guests
+                  </h2>
+                  <p className="mt-1 text-xs text-[#A5A8C3]">
+                    Add photos to an experience you&apos;ve hosted. Everyone who
+                    went will find them in their journey. Only share photos the
+                    people in them are happy with.
+                  </p>
+                </div>
+                <EventAlbums pastEvents={pastEvents} />
+              </section>
+              <section className="mt-6 rounded-xl border border-white/10 bg-[#121426] p-6">
+                <div className="mb-5">
+                  <h2 className="text-lg font-bold text-white">
+                    Albums on your profile
+                  </h2>
+                  <p className="mt-1 text-xs text-[#A5A8C3]">
+                    The Photos tab of your public profile: past events,
+                    credentials, your work.
+                  </p>
+                </div>
+                <PhotoAlbums
+                  owner={{ userId: validUserId }}
+                  firstName={hostData.first_name}
+                  isMe
+                />
+              </section>
+            </>
+          )}
         </main>
       )}
     </div>

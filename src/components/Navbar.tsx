@@ -411,9 +411,6 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                               Profile
                             </h2>
                           </div>
-                          <span className="font-outfit text-lg font-bold">
-                            MySlotMate
-                          </span>
                         </div>
 
                         {/* User info */}

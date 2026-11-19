@@ -20,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { BecomeHostModal } from "~/components/become-host";
 import SlotCard from "~/components/website/SlotCard";
+import { useConnections } from "~/lib/connections";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useNotifications } from "~/hooks/useNotifications";
@@ -109,7 +110,7 @@ export function HostCard({
   const subtitle = host.tagline ?? (host.city ? `Host in ${host.city}` : null);
   return (
     <div
-      className={`flex flex-col items-center rounded-[20px] px-4 pt-4 pb-4 text-center ${className} ${CARD}`}
+      className={`flex h-full flex-col items-center rounded-[20px] px-4 pt-4 pb-4 text-center ${className} ${CARD}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -122,17 +123,25 @@ export function HostCard({
       <p className="font-outfit mt-2.5 w-full truncate text-[15px] font-semibold text-white">
         {host.first_name} {host.last_name}
       </p>
-      {subtitle && (
-        <p className="w-full truncate text-[13px] text-white/60">{subtitle}</p>
-      )}
-      {rating && (
-        <p className="mt-1.5 flex items-center gap-1 text-[13px] font-semibold text-amber-400">
-          <Star className="h-3 w-3 fill-amber-400" /> {rating}
-        </p>
-      )}
+      {/* Every line is always there (empty or "New host") so cards in a row
+          line up even when a host has no tagline or rating yet. */}
+      <p className="h-5 w-full truncate text-[13px] leading-5 text-white/60">
+        {subtitle ?? "\u00a0"}
+      </p>
+      <p
+        className={`mt-1.5 mb-3 flex h-5 items-center gap-1 text-[13px] font-semibold ${rating ? "text-amber-400" : "text-white/40"}`}
+      >
+        {rating ? (
+          <>
+            <Star className="h-3 w-3 fill-amber-400" /> {rating}
+          </>
+        ) : (
+          "New host"
+        )}
+      </p>
       <Link
         href={`/host/${host.slug}`}
-        className="mt-3 flex h-7 w-full items-center justify-center rounded-full border border-[#9B30FF] text-xs font-semibold tracking-wide text-[#E3CCFF] uppercase transition hover:bg-[#9B30FF]/15"
+        className="mt-auto flex h-7 w-full items-center justify-center rounded-full border border-[#9B30FF] text-xs font-semibold tracking-wide text-[#E3CCFF] uppercase transition hover:bg-[#9B30FF]/15"
       >
         View Profile
       </Link>
@@ -196,6 +205,105 @@ function NextPlan({ event, at }: { event: EventDTO; at: Date }) {
 /*  Hero: one event at a time, details left, poster right              */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Phones, matching the Android app: a "Featured" row of poster cards
+ * with the neighbours peeking in, and the title, place and price under each
+ * poster rather than over it.
+ */
+export function MobileHero({
+  events,
+  hostById,
+}: {
+  events: EventDTO[];
+  hostById: Map<string, PublicHostProfileDTO>;
+}) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const [index, setIndex] = useState(0);
+
+  if (!events.length) return null;
+
+  const onScroll = () => {
+    const row = rowRef.current;
+    const card = row?.firstElementChild as HTMLElement | null;
+    if (!row || !card) return;
+    setIndex(Math.round(row.scrollLeft / (card.offsetWidth + 12)));
+  };
+
+  return (
+    <section aria-label="Featured events" className="pt-2 pb-2 md:hidden">
+      <div className="mb-3 flex items-end justify-between px-5">
+        <h2 className="font-outfit text-[22px] leading-tight font-semibold text-white">
+          Featured
+        </h2>
+        <Link
+          href="/explore?type=experiences"
+          className="text-sm font-semibold text-[#D8B4FE]"
+        >
+          See all
+        </Link>
+      </div>
+
+      <div
+        ref={rowRef}
+        onScroll={onScroll}
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-[8%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {events.map((e) => {
+          const price = eventPriceLabel(e);
+          const host = hostById.get(e.host_id);
+          const hostName = host
+            ? `${host.first_name} ${host.last_name}`.trim()
+            : null;
+          return (
+            <Link
+              key={e.id}
+              href={`/experience/${e.slug}`}
+              className="w-[84%] max-w-[340px] shrink-0 snap-center"
+            >
+              <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-[#121426] ring-1 ring-white/10">
+                {/* Like the Android app: the poster fills the card. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={coverOf(e)}
+                  alt={e.title}
+                  loading="lazy"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </div>
+              <div className="mt-3 px-1">
+                <p className="font-outfit truncate text-[17px] font-semibold text-white">
+                  {e.title}
+                </p>
+                <div className="mt-0.5 flex items-center gap-3">
+                  <p className="min-w-0 flex-1 truncate text-[13px] text-white/55">
+                    {[placeOf(e), hostName].filter(Boolean).join(" · ")}
+                  </p>
+                  <p className="shrink-0 text-[14px] font-semibold text-white">
+                    {price}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {events.length > 1 && (
+        <div className="mt-3 flex justify-center gap-1.5" aria-hidden="true">
+          {events.map((ev, i) => (
+            <span
+              key={ev.id}
+              className={`h-1.5 rounded-full transition-all ${
+                i === index ? "w-5 bg-white" : "w-1.5 bg-white/30"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function Hero({ events }: { events: EventDTO[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -221,7 +329,7 @@ function Hero({ events }: { events: EventDTO[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="Featured events"
-      className="relative isolate overflow-hidden border-b border-white/[0.06]"
+      className="relative isolate hidden overflow-hidden border-b border-white/[0.06] md:block"
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
       onTouchStart={(ev) => (touchX.current = ev.touches[0]?.clientX ?? null)}
@@ -350,8 +458,8 @@ function SectionHeader({
   linkLabel?: string;
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between gap-4 md:mb-8">
-      <h2 className="font-outfit text-[22px] leading-tight font-semibold tracking-[-0.01em] text-white md:text-[28px]">
+    <div className="mb-4 flex items-end justify-between gap-4 md:mb-8">
+      <h2 className="font-outfit text-[20px] leading-tight font-semibold tracking-[-0.01em] text-white md:text-[28px]">
         {title}
       </h2>
       {href && (
@@ -590,6 +698,19 @@ export default function HomeFeed({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- pick only reads `open` and `place`
   }, [open, marketingConfig, place]);
+  // Upcoming experiences from hosts the user has connected with.
+  const { hostIds: connectedIds } = useConnections();
+  const fromConnections = useMemo(
+    () => open.filter((e) => connectedIds.includes(e.host_id)).slice(0, 8),
+    [open, connectedIds],
+  );
+  const connectedHosts = useMemo(
+    () =>
+      connectedIds
+        .map((id) => hostById.get(id))
+        .filter((h): h is NonNullable<typeof h> => Boolean(h)),
+    [connectedIds, hostById],
+  );
   const trendingRef = useRef<HTMLDivElement>(null);
   const [trendEdge, setTrendEdge] = useState({ start: true, end: false });
   const scrollTrending = (dir: 1 | -1) => {
@@ -656,10 +777,61 @@ export default function HomeFeed({
         </Link>
       </div>
 
+      <MobileHero events={featured} hostById={hostById} />
       <Hero events={featured} />
 
-      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-16 px-5 pt-12 pb-20 md:gap-24 md:px-6 md:pt-16 lg:px-10">
+      <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-10 px-5 pt-8 pb-16 md:gap-24 md:px-6 md:pt-16 md:pb-20 lg:px-10">
         {nextPlan && <NextPlan event={nextPlan.event} at={nextPlan.at} />}
+
+        {fromConnections.length > 0 && (
+          <section>
+            <div className="mb-6 flex items-end justify-between gap-4 md:mb-8">
+              <div>
+                <h2 className="font-outfit text-[22px] leading-tight font-semibold tracking-[-0.01em] text-white md:text-[28px]">
+                  From your connections
+                </h2>
+                <div className="mt-2 flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    {connectedHosts.slice(0, 5).map((h) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={h.id}
+                        // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                        src={h.avatar_url || "/assets/home/profile1.png"}
+                        alt=""
+                        className="h-6 w-6 rounded-full object-cover ring-2 ring-[#080914]"
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-white/55">
+                    What the people you&apos;re connected with are hosting
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/profile"
+                className="group hidden shrink-0 items-center gap-1 text-sm font-semibold text-white/60 transition hover:text-white sm:flex"
+              >
+                Manage
+                <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+            <div className="-mx-5 flex snap-x snap-mandatory scroll-px-5 gap-4 overflow-x-auto px-5 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-4 md:gap-6 md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden">
+              {fromConnections.slice(0, 4).map((e, i) => (
+                <div
+                  key={e.id}
+                  className="flex w-[46%] shrink-0 snap-start sm:w-[34%] md:w-auto"
+                >
+                  <SlotCard
+                    event={e}
+                    host={hostById.get(e.host_id)}
+                    index={i}
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {experienceCats.length > 0 && (
           <section>
@@ -698,7 +870,7 @@ export default function HomeFeed({
                 {trending.map((e, i) => (
                   <div
                     key={e.id}
-                    className="flex w-[78%] shrink-0 snap-start sm:w-[44%] md:w-[calc((100%-24px)/2)] lg:w-[calc((100%-72px)/4)]"
+                    className="flex w-[46%] shrink-0 snap-start sm:w-[34%] md:w-[calc((100%-24px)/2)] lg:w-[calc((100%-72px)/4)]"
                   >
                     <SlotCard
                       event={e}
@@ -780,25 +952,33 @@ export default function HomeFeed({
 
         {/* 1:1 sessions: a short intro and the next few sessions to book */}
         {sessions.length > 0 && (
-          <section className="grid gap-8 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:gap-12">
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)] lg:gap-12">
             <div className="flex flex-col items-start">
               <p className="text-xs font-semibold tracking-[0.14em] text-[#D8B4FE] uppercase">
                 1:1 sessions
               </p>
-              <h2 className="font-outfit mt-3 text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white md:text-[32px]">
-                Learn from someone who&apos;s done it.
-              </h2>
-              <p className="mt-3 text-[15px] leading-6 text-white/55">
+              <div className="mt-2 flex w-full items-end justify-between gap-4 lg:block">
+                <h2 className="font-outfit text-[22px] leading-tight font-semibold tracking-[-0.01em] text-white md:text-[32px] lg:mt-1">
+                  Learn from someone who&apos;s done it.
+                </h2>
+                <Link
+                  href="/explore?type=sessions"
+                  className="shrink-0 text-sm font-semibold text-white/60 lg:hidden"
+                >
+                  See all
+                </Link>
+              </div>
+              <p className="mt-3 hidden text-[15px] leading-6 text-white/55 lg:block">
                 Private time with mentors, coaches and teachers. Pick a slot
                 that suits you and it&apos;s just the two of you.
               </p>
               {sessionCats.length > 0 && (
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-4 -mr-5 flex w-[calc(100%+20px)] gap-2 overflow-x-auto pr-5 [scrollbar-width:none] lg:mt-5 lg:mr-0 lg:w-auto lg:flex-wrap lg:overflow-visible lg:pr-0 [&::-webkit-scrollbar]:hidden">
                   {sessionCats.map((c) => (
                     <Link
                       key={c.key}
                       href={`/explore?type=sessions&cat=${c.key}`}
-                      className="flex h-9 items-center gap-1.5 rounded-full border border-white/12 px-3.5 text-[13px] font-medium text-white/75 transition hover:border-white/30 hover:text-white"
+                      className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-white/12 px-3.5 text-[13px] font-medium whitespace-nowrap text-white/75 transition hover:border-white/30 hover:text-white"
                     >
                       <c.icon className="h-3.5 w-3.5 text-[#D8B4FE]" />
                       {c.label}
@@ -808,7 +988,7 @@ export default function HomeFeed({
               )}
               <Link
                 href="/explore?type=sessions"
-                className="mt-6 flex h-11 items-center gap-2 rounded-full border border-white/15 px-5 text-sm font-semibold text-white transition hover:bg-white/[0.06]"
+                className="mt-6 hidden h-11 items-center gap-2 rounded-full border border-white/15 px-5 text-sm font-semibold text-white transition hover:bg-white/[0.06] lg:flex"
               >
                 See all {sessionCount} sessions
                 <ArrowRight className="h-4 w-4" />
@@ -835,7 +1015,7 @@ export default function HomeFeed({
           <div className="relative grid md:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)]">
             {/* Illustration in its own window (it has a dark backdrop) */}
             <div className="order-1 p-3 md:order-2 md:p-4 md:pl-0">
-              <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-[24px] bg-[#100E1C] ring-1 ring-white/[0.06] sm:h-64 md:h-full md:min-h-[340px]">
+              <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-[24px] bg-[#100E1C] ring-1 ring-white/[0.06] sm:h-64 md:h-full md:min-h-[340px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/assets/illustrations/approved/host-setting-the-stage.webp"
@@ -846,12 +1026,12 @@ export default function HomeFeed({
               </div>
             </div>
 
-            <div className="order-2 flex flex-col px-6 pt-3 pb-7 md:order-1 md:justify-center md:p-12">
+            <div className="order-2 flex flex-col px-5 pt-2 pb-6 md:order-1 md:justify-center md:p-12">
               <span className="flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-[#E9D8FD] uppercase">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#F472B6]" />
                 {isHost ? "For hosts" : "Host on MySlotMate"}
               </span>
-              <h2 className="font-outfit mt-4 text-[28px] leading-[1.1] font-semibold tracking-[-0.02em] text-white md:text-[40px]">
+              <h2 className="font-outfit mt-3 text-[22px] leading-[1.15] font-semibold tracking-[-0.02em] text-white md:mt-4 md:text-[40px]">
                 {isHost ? (
                   <>
                     Got your next idea?{" "}
@@ -868,7 +1048,7 @@ export default function HomeFeed({
                   </>
                 )}
               </h2>
-              <p className="mt-3 max-w-md text-[15px] leading-6 text-white/60">
+              <p className="mt-2 max-w-md text-[14px] leading-6 text-white/60 md:mt-3 md:text-[15px]">
                 {hostInReview
                   ? "Your host application is being reviewed. Meanwhile, you can host free events."
                   : isHost
@@ -877,7 +1057,7 @@ export default function HomeFeed({
               </p>
 
               {!hostInReview && (
-                <ol className="mt-6 flex flex-wrap items-center gap-2">
+                <ol className="mt-6 hidden flex-wrap items-center gap-2 sm:flex">
                   {(isHost
                     ? [
                         [Plus, "Create"],
@@ -911,18 +1091,18 @@ export default function HomeFeed({
                 </ol>
               )}
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+              <div className="mt-5 flex items-center gap-4 sm:mt-8 sm:gap-5">
                 <button
                   type="button"
                   onClick={handleListTimeClick}
-                  className="flex h-12 items-center justify-center gap-2 rounded-full bg-white px-7 text-[15px] font-semibold text-[#080914] shadow-[0_12px_40px_-12px_rgba(255,255,255,0.5)] transition hover:bg-white/90"
+                  className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-white px-5 text-[14px] font-semibold whitespace-nowrap text-[#080914] shadow-[0_12px_40px_-12px_rgba(255,255,255,0.5)] transition hover:bg-white/90 sm:h-12 sm:px-7 sm:text-[15px]"
                 >
                   <Ticket className="h-4 w-4" />
                   {isHost ? "Create an event" : "Host an event"}
                 </button>
                 <Link
                   href="/host-with-us"
-                  className="group flex items-center justify-center gap-1 text-sm font-semibold text-white/70 transition hover:text-white"
+                  className="group flex items-center justify-center gap-1 text-[13px] font-semibold whitespace-nowrap text-white/70 transition hover:text-white sm:text-sm"
                 >
                   How hosting works
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />

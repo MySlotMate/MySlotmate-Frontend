@@ -26,6 +26,8 @@ import { formatIST } from "~/lib/datetime";
 import { categoryOf } from "~/lib/categories";
 import { computeBadges, type BadgeState, type Moment } from "~/lib/badges";
 import * as components from "~/components";
+import EventPhotos from "~/components/profile/EventPhotos";
+import Milestones, { BadgeSheet } from "~/components/profile/Milestones";
 import {
   InboxSidebar,
   MyPassesSection,
@@ -35,7 +37,6 @@ import {
   FiAlertCircle,
   FiCalendar,
   FiHeart,
-  FiLock,
   FiMapPin,
   FiMessageCircle,
   FiStar,
@@ -368,196 +369,6 @@ function JourneyHero({
 }
 
 /* ------------------------------------------------------------------ */
-/* Milestone badges                                                    */
-/* ------------------------------------------------------------------ */
-
-function BadgeArt({
-  state,
-  className = "",
-}: {
-  state: BadgeState;
-  className?: string;
-}) {
-  return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={state.def.art}
-      alt=""
-      loading="lazy"
-      className={`${className} ${
-        state.earned ? "" : "opacity-40 grayscale"
-      } transition duration-300`}
-    />
-  );
-}
-
-function BadgeShelf({
-  states,
-  onOpen,
-}: {
-  states: BadgeState[];
-  onOpen: (s: BadgeState) => void;
-}) {
-  const earned = states.filter((s) => s.earned).length;
-  // Earned first (most recent first), then the closest-to-done locked ones.
-  const ordered = [...states].sort((a, b) => {
-    if (a.earned !== b.earned) return a.earned ? -1 : 1;
-    if (a.earned && b.earned)
-      return (b.earnedAt?.at.getTime() ?? 0) - (a.earnedAt?.at.getTime() ?? 0);
-    return b.current / b.def.target - a.current / a.def.target;
-  });
-
-  return (
-    <section className="mt-10">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h2 className="font-outfit text-xl font-bold md:text-[22px]">
-            Milestones
-          </h2>
-          <p className="mt-0.5 text-sm text-white/55">
-            Little badges for the moments that make your story.
-          </p>
-        </div>
-        <span className="shrink-0 rounded-full bg-[#A020F0]/15 px-3 py-1 text-xs font-semibold text-[#D8B4FE]">
-          {earned} / {states.length} collected
-        </span>
-      </div>
-
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-[#F59E0B] via-[#F97362] to-[#B724EA] transition-all"
-          style={{ width: `${(earned / states.length) * 100}%` }}
-        />
-      </div>
-
-      <div className="-mx-6 mt-5 flex snap-x gap-3 overflow-x-auto px-6 pb-2 [scrollbar-width:none] md:mx-0 md:grid md:grid-cols-6 md:overflow-visible md:px-0 lg:grid-cols-8">
-        {ordered.map((s) => (
-          <button
-            key={s.def.key}
-            type="button"
-            onClick={() => onOpen(s)}
-            className={`group flex w-[118px] shrink-0 snap-start flex-col items-center rounded-2xl p-3 text-center transition md:w-auto ${
-              s.earned
-                ? "bg-[#131328] hover:bg-[#1A1A35]"
-                : "bg-[#0E0F1F] hover:bg-[#131328]"
-            }`}
-          >
-            <div className="relative">
-              <BadgeArt
-                state={s}
-                className="h-[84px] w-[84px] group-hover:scale-105"
-              />
-              {!s.earned && (
-                <span className="absolute right-0 bottom-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#1B1C33] text-white/60 ring-2 ring-[#0E0F1F]">
-                  <FiLock className="h-3 w-3" />
-                </span>
-              )}
-            </div>
-            <p
-              className={`mt-2 text-[12px] leading-4 font-semibold ${
-                s.earned ? "text-white" : "text-white/50"
-              }`}
-            >
-              {s.def.name}
-            </p>
-            {s.earned ? (
-              <p className="mt-0.5 text-[10px] text-[#D8B4FE]">
-                {s.earnedAt ? formatIST(s.earnedAt.at, "MMM d, yyyy") : ""}
-              </p>
-            ) : s.def.target > 1 ? (
-              <div className="mt-1.5 w-full">
-                <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.08]">
-                  <div
-                    className="h-full rounded-full bg-white/40"
-                    style={{ width: `${(s.current / s.def.target) * 100}%` }}
-                  />
-                </div>
-                <p className="mt-1 text-[10px] text-white/40">
-                  {s.current} of {s.def.target}
-                </p>
-              </div>
-            ) : (
-              <p className="mt-0.5 text-[10px] text-white/35">Locked</p>
-            )}
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function BadgeSheet({
-  state,
-  onClose,
-}: {
-  state: BadgeState;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  const { def, earned, earnedAt, current } = state;
-  return (
-    <div
-      className="animate-in fade-in msm-modal fixed inset-0 z-[260] flex items-end justify-center bg-black/60 backdrop-blur-sm duration-200 sm:items-center sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={def.name}
-        onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-sm overflow-hidden rounded-t-3xl border border-white/10 bg-[#121426] px-6 pt-8 pb-7 text-center text-white sm:rounded-3xl"
-      >
-        <div className="pointer-events-none absolute -top-20 left-1/2 h-56 w-56 -translate-x-1/2 rounded-full bg-[#F59E0B]/15 blur-3xl" />
-        <button
-          type="button"
-          aria-label="Close"
-          onClick={onClose}
-          className="absolute top-4 right-4 text-white/50 transition hover:text-white"
-        >
-          <FiX size={20} />
-        </button>
-        <BadgeArt state={state} className="relative mx-auto h-44 w-44" />
-        <p className="mt-3 text-[11px] font-bold tracking-wider uppercase">
-          {earned ? (
-            <span className="text-[#FCD34D]">Milestone unlocked</span>
-          ) : (
-            <span className="text-white/40">Not yet</span>
-          )}
-        </p>
-        <h3 className="font-outfit mt-1 text-2xl font-bold">{def.name}</h3>
-        <p className="mx-auto mt-2 max-w-[280px] text-sm leading-6 text-white/65">
-          {earned && earnedAt ? def.earnedLine(earnedAt) : def.how}
-        </p>
-        {earned && earnedAt ? (
-          <p className="mt-3 text-xs text-white/45">
-            Earned {formatIST(earnedAt.at, "MMMM d, yyyy")}
-          </p>
-        ) : (
-          <>
-            {def.target > 1 && (
-              <p className="mt-3 text-xs text-white/45">
-                {current} of {def.target} so far
-              </p>
-            )}
-            <Link
-              href="/explore"
-              className={`mt-5 inline-flex rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
-            >
-              Find an experience
-            </Link>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /* Memories timeline                                                   */
 /* ------------------------------------------------------------------ */
 
@@ -607,81 +418,91 @@ function MemoryTimeline({
               return (
                 <article
                   key={m.booking.id}
-                  className={`flex gap-4 overflow-hidden p-3 ${CARD}`}
+                  className={`overflow-hidden p-3 ${CARD}`}
                 >
-                  <Link
-                    href={`/experience/${m.event.slug}`}
-                    className="aspect-[4/5] w-24 shrink-0 overflow-hidden rounded-xl md:w-28"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={m.event.cover_image_url ?? FALLBACK_COVER}
-                      alt={m.event.title}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                    />
-                  </Link>
-                  <div className="flex min-w-0 flex-1 flex-col py-0.5">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      {isFirst && (
-                        <span className="rounded-md bg-[#F59E0B]/15 px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#FCD34D] uppercase">
-                          Where it all began
-                        </span>
-                      )}
-                      <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/60">
-                        {categoryOf(m.event).label}
-                      </span>
-                    </div>
+                  <div className="flex gap-4">
                     <Link
                       href={`/experience/${m.event.slug}`}
-                      className="font-outfit mt-1.5 line-clamp-2 text-[15px] leading-5 font-semibold hover:text-[#D8B4FE]"
+                      className="aspect-[4/5] w-24 shrink-0 self-start overflow-hidden rounded-xl md:w-28"
                     >
-                      {m.event.title}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={m.event.cover_image_url ?? FALLBACK_COVER}
+                        alt={m.event.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
                     </Link>
-                    <p className="mt-1 flex items-center gap-1.5 text-xs text-white/55">
-                      <FiCalendar className="h-3 w-3 shrink-0" />
-                      {formatIST(m.at, "EEE, MMM d · h:mm a")}
-                    </p>
-                    <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-white/55">
-                      <FiMapPin className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{placeOf(m.event)}</span>
-                    </p>
-
-                    {unlocked.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {unlocked.map((s) => (
-                          <button
-                            key={s.def.key}
-                            type="button"
-                            onClick={() => onBadge(s)}
-                            className="flex items-center gap-1.5 rounded-full bg-[#F59E0B]/10 py-0.5 pr-2.5 pl-0.5 text-[11px] font-semibold text-[#FCD34D] transition hover:bg-[#F59E0B]/20"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={s.def.art} alt="" className="h-6 w-6" />
-                            {s.def.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="mt-auto flex items-center gap-4 pt-2 text-xs">
-                      {m.event.avg_rating ? (
-                        <span className="flex items-center gap-1 text-white/55">
-                          <FiStar className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          <span className="font-semibold text-amber-400">
-                            {m.event.avg_rating.toFixed(1)}
+                    <div className="flex min-w-0 flex-1 flex-col py-0.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {isFirst && (
+                          <span className="rounded-md bg-[#F59E0B]/15 px-2 py-0.5 text-[10px] font-bold tracking-wider text-[#FCD34D] uppercase">
+                            Where it all began
                           </span>
+                        )}
+                        <span className="rounded-md bg-white/[0.06] px-2 py-0.5 text-[10px] font-semibold text-white/60">
+                          {categoryOf(m.event).label}
                         </span>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={() => onReview(m.event.id)}
-                        className="font-semibold text-[#D8B4FE] hover:text-white"
+                      </div>
+                      <Link
+                        href={`/experience/${m.event.slug}`}
+                        className="font-outfit mt-1.5 line-clamp-2 text-[15px] leading-5 font-semibold hover:text-[#D8B4FE]"
                       >
-                        Share how it went
-                      </button>
+                        {m.event.title}
+                      </Link>
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-white/55">
+                        <FiCalendar className="h-3 w-3 shrink-0" />
+                        {formatIST(m.at, "EEE, MMM d · h:mm a")}
+                      </p>
+                      <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-white/55">
+                        <FiMapPin className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{placeOf(m.event)}</span>
+                      </p>
+
+                      {unlocked.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {unlocked.map((s) => (
+                            <button
+                              key={s.def.key}
+                              type="button"
+                              onClick={() => onBadge(s)}
+                              className="flex items-center gap-1.5 rounded-full bg-[#F59E0B]/10 py-0.5 pr-2.5 pl-0.5 text-[11px] font-semibold text-[#FCD34D] transition hover:bg-[#F59E0B]/20"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={s.def.art} alt="" className="h-6 w-6" />
+                              {s.def.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-auto flex items-center gap-4 pt-2 text-xs">
+                        {m.event.avg_rating ? (
+                          <span className="flex items-center gap-1 text-white/55">
+                            <FiStar className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            <span className="font-semibold text-amber-400">
+                              {m.event.avg_rating.toFixed(1)}
+                            </span>
+                          </span>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => onReview(m.event.id)}
+                          className="font-semibold text-[#D8B4FE] hover:text-white"
+                        >
+                          Share how it went
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Host photos get their own row, so the poster keeps
+                      its 4:5 shape instead of stretching beside them. */}
+                  {(m.event.gallery_urls?.length ?? 0) > 0 && (
+                    <div className="mt-3 border-t border-white/[0.06] pt-3">
+                      <EventPhotos event={m.event} variant="strip" />
+                    </div>
+                  )}
                 </article>
               );
             })}
@@ -972,7 +793,9 @@ export default function ActivitiesPage() {
               ]}
             />
 
-            <BadgeShelf states={badgeStates} onOpen={setOpenBadge} />
+            <div className="mt-10">
+              <Milestones states={badgeStates} />
+            </div>
 
             <div
               role="tablist"

@@ -113,7 +113,7 @@ export default function ReviewModal({
             </button>
 
             <div className="relative pr-14">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#121426]/80 px-3 py-1 text-[11px] font-semibold tracking-[0.24em] text-[#0076a3] uppercase shadow-sm backdrop-blur">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#121426]/80 px-3 py-1 text-[11px] font-semibold tracking-[0.24em] text-[#D8B4FE] uppercase shadow-sm backdrop-blur">
                 <FiStar className="h-3.5 w-3.5" />
                 Review Experience
               </div>
@@ -210,7 +210,7 @@ export default function ReviewModal({
               <button
                 type="submit"
                 disabled={loading}
-                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#A020F0] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(0,148,202,0.8)] transition hover:bg-[#0076a3] disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#A020F0] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(0,148,202,0.8)] transition hover:brightness-110 disabled:opacity-50"
               >
                 {loading ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#121426] border-t-transparent" />

@@ -75,7 +75,7 @@ export default function DiscoverGrid({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {top.map((e, i) => (
             <SlotCard
               key={e.id}

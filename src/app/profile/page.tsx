@@ -1,396 +1,573 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "~/utils/firebase";
 import {
-  FiArrowLeft,
-  FiCalendar,
-  FiMail,
-  FiMapPin,
-  FiMoreVertical,
-  FiPhone,
-} from "react-icons/fi";
-import { LuBadgeCheck } from "react-icons/lu";
+  CalendarHeart,
+  ChevronRight,
+  Compass,
+  Mail,
+  Medal,
+  MoreHorizontal,
+  Pencil,
+  Phone,
+  Plus,
+  UserPlus,
+  Users,
+  Wallet,
+  X,
+} from "lucide-react";
+import { toast } from "sonner";
+import { auth } from "~/utils/firebase";
 import * as components from "~/components";
 import { BecomeHostModal } from "~/components/become-host";
+import SlotCard from "~/components/website/SlotCard";
+import PhotoAlbums from "~/components/profile/PhotoAlbums";
+import Milestones from "~/components/profile/Milestones";
+import {
+  CARD,
+  EmptyCard,
+  GRADIENT_BTN,
+  InfoBlock,
+  ProfileIdentity,
+  SkeletonGrid,
+  TagList,
+  ProfileTabs,
+  SecondaryButton,
+  type RoleTone,
+} from "~/components/profile/ProfileKit";
 import {
   useApplicationStatus,
-  useBookingsByUser,
   useEventsByHost,
-  useListPublicEvents,
+  useListHosts,
   useMyHost,
+  useUpdateUserProfile,
   useUserProfile,
 } from "~/hooks/useApi";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { useMoments } from "~/hooks/useMoments";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
+import { computeBadges } from "~/lib/badges";
+import { categoryOf } from "~/lib/categories";
+import { useConnections } from "~/lib/connections";
 import { formatIST } from "~/lib/datetime";
+import type { HostDTO } from "~/lib/api";
 
-// Sizes follow the Figma "Explorer profile · Desktop 1440" frame.
-const CARD = "rounded-2xl border border-white/[0.06] bg-[#131328]";
-const FALLBACK_COVER = "/assets/home/hiking.webp";
+type Tab =
+  | "experiences"
+  | "hosting"
+  | "photos"
+  | "milestones"
+  | "connections"
+  | "about";
 
 // The panel in Navbar holds wallet, host dashboard, admin, support and logout.
 const openMenu = () => window.dispatchEvent(new Event("msm:open-profile"));
 
+function roleFor(
+  host: HostDTO | undefined,
+  hostedCount: number,
+): { label: string; tone: RoleTone } {
+  if (host?.application_status === "approved") {
+    if (host.is_professional)
+      return { label: "Professional host", tone: "pro" };
+    if (host.is_super_host) return { label: "Super host", tone: "host" };
+    return { label: "Community host", tone: "community" };
+  }
+  if (
+    host?.application_status === "pending" ||
+    host?.application_status === "under_review"
+  )
+    return { label: "Explorer · Host in review", tone: "explorer" };
+  if (hostedCount > 0)
+    return { label: "Explorer · Free events", tone: "explorer" };
+  return { label: "Explorer", tone: "explorer" };
+}
+
+/** Explorers edit name and city here; hosts use the host dashboard editor. */
+function EditSheet({
+  userId,
+  name,
+  city,
+  onClose,
+}: {
+  userId: string;
+  name: string;
+  city: string;
+  onClose: () => void;
+}) {
+  const [n, setN] = useState(name);
+  const [c, setC] = useState(city);
+  const update = useUpdateUserProfile();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const save = async () => {
+    if (!n.trim()) return toast.error("Please add your name.");
+    try {
+      await update.mutateAsync({
+        userId,
+        body: { name: n.trim(), city: c.trim() || null },
+      });
+      toast.success("Profile updated");
+      onClose();
+    } catch {
+      toast.error("Couldn't save your profile. Please try again.");
+    }
+  };
+
+  const field =
+    "mt-1.5 h-12 w-full rounded-xl border border-white/10 bg-[#080914] px-4 text-[15px] text-white outline-none placeholder:text-white/35 focus:border-[#A020F0]/60";
+
+  return (
+    <div
+      className="msm-modal fixed inset-0 z-[300] flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit profile"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-t-3xl border border-white/10 bg-[#121426] p-6 text-white sm:rounded-3xl"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="font-outfit text-xl font-bold">Edit profile</h2>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.06] text-white/70 hover:text-white"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <label className="mt-5 block text-sm text-white/70">
+          Name
+          <input
+            value={n}
+            onChange={(e) => setN(e.target.value)}
+            className={field}
+            maxLength={60}
+          />
+        </label>
+        <label className="mt-4 block text-sm text-white/70">
+          City
+          <input
+            value={c}
+            onChange={(e) => setC(e.target.value)}
+            placeholder="e.g. Guwahati"
+            className={field}
+            maxLength={60}
+          />
+        </label>
+        <p className="mt-3 text-xs text-white/45">
+          A bio, interests and photos come with hosting. Start a free experience
+          and your profile grows with it.
+        </p>
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={update.isPending}
+          className={`mt-6 h-12 w-full rounded-full text-sm font-semibold disabled:opacity-60 ${GRADIENT_BTN}`}
+        >
+          {update.isPending ? "Saving…" : "Save"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
-  const router = useRouter();
   const { userId: storedUserId } = useStoredAuth();
   const userId =
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
-  // Stored auth is read on the client only; wait a tick before showing the
-  // logged-out state so the server-rendered HTML matches.
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
-  // The navbar treats a Firebase session as logged in even before the app user
-  // id is stored, so this page must too.
   const [firebaseUser, firebaseLoading] = useAuthState(auth);
   const loggedIn = Boolean(userId) || Boolean(firebaseUser);
   const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
     useListTimeAction();
+  const [tab, setTab] = useState<Tab>("experiences");
+  const [editing, setEditing] = useState(false);
 
   const { data: user } = useUserProfile(userId);
   const { data: application } = useApplicationStatus(userId);
-  const hostStatus = application?.status?.application_status ?? null;
-  const isHost = hostStatus === "approved";
-  const { data: host } = useMyHost(isHost ? userId : null);
+  const hasHostRecord = Boolean(application?.status?.application_status);
+  const { data: host, isLoading: hostLoading } = useMyHost(
+    hasHostRecord ? userId : null,
+  );
+  // Role and edit target depend on the host record; wait for it.
+  const roleReady =
+    application !== undefined && (!hasHostRecord || !hostLoading);
   const { data: hostEvents } = useEventsByHost(host?.id ?? null);
-  const { data: bookings } = useBookingsByUser(userId);
-  const { data: allEvents } = useListPublicEvents();
+  const { moments, ready: momentsReady } = useMoments(userId);
+  const { data: hosts } = useListHosts();
+  const { hostIds: connectedIds, toggle } = useConnections();
 
-  const now = Date.now();
-  const attended = (bookings ?? [])
-    .filter(
-      (b) =>
-        b.status === "confirmed" && new Date(b.occurrence_date).getTime() < now,
-    )
-    .map((b) => ({
-      booking: b,
-      event: allEvents?.find((e) => e.id === b.event_id),
-    }))
-    .filter((x) => x.event)
-    .sort(
-      (a, b) =>
-        new Date(b.booking.occurrence_date).getTime() -
-        new Date(a.booking.occurrence_date).getTime(),
-    );
-  const hostsMet = new Set(attended.map((x) => x.event!.host_id)).size;
-  const created = hostEvents?.length ?? 0;
+  const hosting = useMemo(
+    () =>
+      (hostEvents ?? [])
+        .filter((e) => e.status !== "draft" && e.status !== "cancelled")
+        .sort(
+          (a, b) =>
+            new Date(b.next_available_date ?? b.time).getTime() -
+            new Date(a.next_available_date ?? a.time).getTime(),
+        ),
+    [hostEvents],
+  );
+  const badges = useMemo(() => computeBadges(moments), [moments]);
+  const earned = badges.filter((b) => b.earned);
+  const connected = useMemo(
+    () => (hosts ?? []).filter((h) => connectedIds.includes(h.id)),
+    [hosts, connectedIds],
+  );
+  const hostsMet = new Set(moments.map((m) => m.event.host_id)).size;
 
   const displayName = user?.name ?? firebaseUser?.displayName ?? null;
   const email = user?.email ?? firebaseUser?.email ?? null;
-  const avatarUrl = user?.avatar_url ?? firebaseUser?.photoURL ?? null;
-  const handle = email ? `@${email.split("@")[0]}` : null;
-  const role = isHost
-    ? "Host"
-    : hostStatus === "pending" || hostStatus === "under_review"
-      ? "Host · In review"
-      : "Explorer";
+  const phone = user?.phn_number ?? firebaseUser?.phoneNumber ?? null;
+  // Some accounts store avatar_url = "" — treat it as missing.
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  const avatar = host?.avatar_url || user?.avatar_url || firebaseUser?.photoURL;
+  const city = user?.city ?? host?.city ?? null;
+  const role = roleReady ? roleFor(host, hosting.length) : null;
+  const isApproved = host?.application_status === "approved";
+
+  const tabs: {
+    key: Tab;
+    label: string;
+    count?: number;
+    mobileOnly?: boolean;
+  }[] = [
+    { key: "experiences", label: "Attended", count: moments.length },
+    { key: "hosting", label: "Hosted by me", count: hosting.length },
+    { key: "photos", label: "Photos" },
+    { key: "milestones", label: "Milestones", count: earned.length },
+    { key: "connections", label: "Connections", count: connectedIds.length },
+    { key: "about", label: "About", mobileOnly: true },
+  ];
+
+  // In the card on desktop, in the About tab on phones.
+  const about = (
+    <>
+      {roleReady && !isApproved && (
+        <div className="rounded-2xl border border-[#A020F0]/30 bg-gradient-to-br from-[#3B1772]/60 to-transparent p-4">
+          <p className="text-sm font-semibold">
+            {hosting.length ? "Get verified to earn" : "Share what you love"}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-white/60">
+            {hosting.length
+              ? "Verified hosts sell tickets, get paid out and earn a host badge."
+              : "Host a free experience and your profile shows it up front."}
+          </p>
+          <button
+            type="button"
+            onClick={handleListTimeClick}
+            className="mt-3 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-[#1D1140] transition hover:bg-white/90"
+          >
+            {hosting.length ? "Start earning" : "Host for free"}
+          </button>
+        </div>
+      )}
+      {(host?.expertise_tags?.length ?? 0) > 0 && (
+        <InfoBlock title="Interests">
+          <TagList tags={host!.expertise_tags} />
+        </InfoBlock>
+      )}
+      <InfoBlock title="Only you can see this">
+        <ul className="flex flex-col gap-2 text-[13px] text-white/65">
+          {email && (
+            <li className="flex items-center gap-2.5">
+              <Mail className="h-3.5 w-3.5 shrink-0 text-white/35" />
+              <span className="truncate">{email}</span>
+            </li>
+          )}
+          {phone && (
+            <li className="flex items-center gap-2.5">
+              <Phone className="h-3.5 w-3.5 shrink-0 text-white/35" />
+              {phone}
+            </li>
+          )}
+          <li className="flex items-center gap-2.5">
+            <Users className="h-3.5 w-3.5 shrink-0 text-white/35" />
+            {hostsMet} host{hostsMet === 1 ? "" : "s"} met
+          </li>
+        </ul>
+      </InfoBlock>
+      <div className="flex flex-col">
+        {[
+          { href: "/activities", label: "My journey", icon: Medal },
+          { href: "/wallet", label: "Wallet", icon: Wallet },
+          ...(host
+            ? [
+                {
+                  href: "/host-dashboard",
+                  label: "Host dashboard",
+                  icon: CalendarHeart,
+                },
+              ]
+            : []),
+        ].map((l) => (
+          <Link
+            key={l.href}
+            href={l.href}
+            className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 text-sm text-white/75 transition hover:bg-white/[0.05] hover:text-white"
+          >
+            <l.icon className="h-4 w-4 text-[#D8B4FE]" />
+            <span className="flex-1">{l.label}</span>
+            <ChevronRight className="h-4 w-4 text-white/25" />
+          </Link>
+        ))}
+      </div>
+    </>
+  );
 
   return (
     <main className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28">
       <components.Navbar dark />
 
-      <div className="mx-auto w-full max-w-[1210px] px-6 pt-6 pb-16 font-[family-name:var(--font-inter)] md:px-10 md:pt-10">
+      <div className="mx-auto w-full max-w-[1210px] px-4 pt-5 pb-16 font-[family-name:var(--font-inter)] sm:px-6 md:px-10 md:pt-8">
         {hydrated && !firebaseLoading && !loggedIn ? (
-          <div
-            className={`mx-auto mt-10 flex max-w-md flex-col items-center px-6 py-14 text-center ${CARD}`}
-          >
-            <p className="font-outfit text-lg font-semibold">
-              Log in to see your profile
-            </p>
-            <p className="mt-1.5 text-sm text-white/55">
-              Your experiences, highlights and hosting all live here.
-            </p>
-            <button
-              type="button"
-              onClick={openMenu}
-              className="mt-5 rounded-full bg-gradient-to-r from-[#7038F5] to-[#B724EA] px-6 py-2.5 text-sm font-semibold transition hover:brightness-110"
+          <div className="mx-auto mt-10 max-w-md">
+            <EmptyCard
+              icon={<Users className="h-6 w-6" />}
+              title="Log in to see your profile"
+              text="Your experiences, milestones, hosting and connections all live here."
             >
-              Log in
-            </button>
+              <button
+                type="button"
+                onClick={openMenu}
+                className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
+              >
+                Log in
+              </button>
+            </EmptyCard>
           </div>
         ) : (
-          <div className="grid gap-10 lg:grid-cols-[400px_minmax(0,1fr)] lg:gap-12">
-            {/* Identity column */}
-            <section className="flex flex-col">
-              <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  aria-label="Go back"
-                  onClick={() =>
-                    window.history.length > 1 ? router.back() : router.push("/")
-                  }
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#131328] transition hover:bg-[#1B1C33]"
-                >
-                  <FiArrowLeft className="h-4 w-4" />
-                </button>
-                <span className="text-sm text-white/60">My profile</span>
-                <button
-                  type="button"
-                  aria-label="Account menu"
-                  onClick={openMenu}
-                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-[#131328] transition hover:bg-[#1B1C33]"
-                >
-                  <FiMoreVertical className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="mt-5 flex flex-col items-center text-center">
-                <div className="h-24 w-24 overflow-hidden rounded-full border-2 border-[#9B30FF] bg-[#1B1C33]">
-                  {avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={avatarUrl}
-                      alt=""
-                      referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="font-outfit flex h-full w-full items-center justify-center text-3xl font-bold text-[#D8B4FE]">
-                      {displayName?.[0]?.toUpperCase() ?? ""}
-                    </span>
-                  )}
-                </div>
-                <h1 className="font-outfit mt-3 flex items-center gap-2 text-[26px] leading-8 font-bold">
-                  {displayName ?? (
-                    <span className="inline-block h-7 w-40 animate-pulse rounded bg-white/10" />
-                  )}
-                  {user?.is_verified && (
-                    <LuBadgeCheck
-                      className="h-5 w-5 text-[#B57BFF]"
-                      aria-label="Verified"
-                    />
-                  )}
-                </h1>
-                {handle && (
-                  <p className="mt-1 text-sm text-white/55">{handle}</p>
-                )}
-                <span className="mt-2.5 rounded-full border border-[#9B30FF]/40 bg-[#9B30FF]/15 px-3 py-1 text-xs font-medium text-[#E3CCFF]">
-                  {role}
-                </span>
-                {(user?.city ?? host?.city) && (
-                  <p className="mt-2 flex items-center gap-1 text-[13px] text-white/55">
-                    <FiMapPin className="h-3.5 w-3.5" />
-                    {user?.city ?? host?.city}
-                  </p>
-                )}
-              </div>
-
-              <div className="mt-6 grid grid-cols-3 divide-x divide-white/10 text-center">
-                {[
-                  [attended.length, "Experiences Attended"],
-                  [created, "Experiences Created"],
-                  [hostsMet, "Hosts Met"],
-                ].map(([value, label]) => (
-                  <div key={label} className="px-2">
-                    <p className="font-outfit text-2xl font-bold">{value}</p>
-                    <p className="mt-0.5 text-[11px] leading-4 text-white/55">
-                      {label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {host?.bio ? (
-                <div className={`mt-7 p-5 ${CARD}`}>
-                  <h2 className="font-outfit text-lg font-semibold">
-                    About Me
-                  </h2>
-                  <p className="mt-2 line-clamp-4 text-sm leading-6 text-white/70">
-                    {host.bio}
-                  </p>
-                  {host.expertise_tags.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {host.expertise_tags.slice(0, 5).map((t) => (
-                        <span
-                          key={t}
-                          className="rounded-full border border-white/10 bg-[#1B1C33] px-3 py-1 text-xs text-white/75"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  <Link
-                    href={`/host/${host.slug}`}
-                    className="mt-4 inline-block text-sm font-semibold text-[#D8B4FE] hover:text-white"
-                  >
-                    View public profile
-                  </Link>
-                </div>
-              ) : (
-                <div className={`mt-7 flex flex-col gap-3 p-5 text-sm ${CARD}`}>
-                  <h2 className="font-outfit text-lg font-semibold">Account</h2>
-                  {email && (
-                    <p className="flex items-center gap-2.5 text-white/70">
-                      <FiMail className="h-4 w-4 shrink-0 text-white/45" />
-                      <span className="truncate">{email}</span>
-                    </p>
-                  )}
-                  {(user?.phn_number ?? firebaseUser?.phoneNumber) && (
-                    <p className="flex items-center gap-2.5 text-white/70">
-                      <FiPhone className="h-4 w-4 shrink-0 text-white/45" />
-                      {user?.phn_number ?? firebaseUser?.phoneNumber}
-                    </p>
-                  )}
-                  {user?.created_at && (
-                    <p className="flex items-center gap-2.5 text-white/70">
-                      <FiCalendar className="h-4 w-4 shrink-0 text-white/45" />
-                      Member since {formatIST(user.created_at, "MMMM yyyy")}
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={openMenu}
-                    className="mt-1 w-fit text-sm font-semibold text-[#D8B4FE] hover:text-white"
-                  >
-                    Wallet, settings &amp; support
-                  </button>
-                </div>
-              )}
-            </section>
-
-            {/* Activity column */}
-            <section className="flex min-w-0 flex-col gap-8">
-              <div>
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="font-outfit text-lg font-semibold">
-                    Personal Highlights
-                  </h2>
-                  <Link
-                    href="/activities"
-                    className="text-sm font-medium text-[#D8B4FE] hover:text-white"
-                  >
-                    View all
-                  </Link>
-                </div>
-                {attended.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    {attended.slice(0, 3).map(({ booking, event }) => (
-                      <Link
-                        key={booking.id}
-                        href={`/experience/${event!.slug}`}
-                        className={`group overflow-hidden ${CARD}`}
-                      >
-                        <div className="aspect-[4/5] overflow-hidden">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={event!.cover_image_url ?? FALLBACK_COVER}
-                            alt={event!.title}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                        <div className="p-3">
-                          <p className="truncate text-[13px] font-semibold">
-                            {event!.title}
-                          </p>
-                          <p className="mt-0.5 truncate text-[11px] text-white/50">
-                            {formatIST(booking.occurrence_date, "MMM d, yyyy")}
-                            {!event!.is_online && event!.location
-                              ? ` · ${event!.location.split(",")[0]}`
-                              : ""}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className={`p-5 text-sm text-white/55 ${CARD}`}>
-                    Experiences you attend will show up here.{" "}
-                    <Link
-                      href="/explore"
-                      className="font-semibold text-[#D8B4FE] hover:text-white"
-                    >
-                      Find one
-                    </Link>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <div className="mb-3 flex items-center justify-between">
-                  <h2 className="font-outfit text-lg font-semibold">
-                    Active Experiences
-                  </h2>
-                  {isHost && (
-                    <Link
-                      href="/host-dashboard"
-                      className="text-sm font-medium text-[#D8B4FE] hover:text-white"
-                    >
-                      Host dashboard
-                    </Link>
-                  )}
-                </div>
-                {isHost && hostEvents && hostEvents.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {hostEvents.slice(0, 5).map((e) => (
-                      <Link
-                        key={e.id}
-                        href={`/experience/${e.slug}`}
-                        className={`flex items-center gap-3 p-3 ${CARD}`}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={e.cover_image_url ?? FALLBACK_COVER}
-                          alt=""
-                          className="aspect-[4/5] w-12 shrink-0 rounded-xl object-cover"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold">
-                            {e.title}
-                          </p>
-                          <p className="mt-0.5 text-xs text-white/55">
-                            {formatIST(
-                              e.next_available_date ?? e.time,
-                              "EEE, MMM d · h:mm a",
-                            )}
-                          </p>
-                        </div>
-                        <span className="shrink-0 rounded-md bg-white/5 px-2 py-1 text-[10px] font-bold tracking-wider text-white/60 uppercase">
-                          {e.status}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div
-                    className={`flex flex-col items-center px-6 py-8 text-center ${CARD}`}
-                  >
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#9B30FF]/15">
-                      <FiCalendar className="h-6 w-6 text-[#D8B4FE]" />
-                    </span>
-                    <p className="font-outfit mt-4 text-base font-semibold">
-                      No published experiences yet
-                    </p>
-                    <p className="mt-1.5 max-w-md text-[13px] text-white/55">
-                      {hostStatus === "pending" || hostStatus === "under_review"
-                        ? "Your host application is being reviewed. We'll let you know as soon as you can publish."
-                        : isHost
-                          ? "Create your first experience from the host dashboard."
-                          : "Host your own experiences and earn from your time. Start with a quick host application."}
-                    </p>
-                    {!(
-                      hostStatus === "pending" || hostStatus === "under_review"
-                    ) && (
+          <>
+            <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-10">
+              <ProfileIdentity
+                avatar={avatar}
+                name={displayName}
+                verified={user?.is_verified ?? host?.is_identity_verified}
+                role={role}
+                tagline={host?.tagline}
+                meta={[
+                  ...(city ? [city] : []),
+                  ...(user?.created_at
+                    ? [`Joined ${formatIST(user.created_at, "MMM yyyy")}`]
+                    : []),
+                ]}
+                bio={host?.bio}
+                stats={[
+                  { value: moments.length, label: "Attended" },
+                  hosting.length > 0 || isApproved
+                    ? { value: hosting.length, label: "Hosted" }
+                    : { value: earned.length, label: "Milestones" },
+                  { value: connectedIds.length, label: "Connections" },
+                ]}
+                actions={
+                  roleReady ? (
+                    <>
+                      {host ? (
+                        <SecondaryButton href="/host-dashboard/profile">
+                          <Pencil className="h-4 w-4" /> Edit profile
+                        </SecondaryButton>
+                      ) : (
+                        <SecondaryButton onClick={() => setEditing(true)}>
+                          <Pencil className="h-4 w-4" /> Edit profile
+                        </SecondaryButton>
+                      )}
+                      {host?.slug && (
+                        <SecondaryButton href={`/host/${host.slug}`}>
+                          Public view
+                        </SecondaryButton>
+                      )}
                       <button
                         type="button"
-                        onClick={handleListTimeClick}
-                        className="mt-5 h-11 w-full rounded-full border border-white/10 bg-[#1B1C33] text-sm font-semibold text-[#D8B4FE] transition hover:bg-[#232445]"
+                        aria-label="Wallet, settings and support"
+                        onClick={openMenu}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/80 transition hover:bg-white/10 hover:text-white"
                       >
-                        {isHost
-                          ? "Create an experience"
-                          : "Explore creator pathway"}
+                        <MoreHorizontal className="h-4 w-4" />
                       </button>
-                    )}
-                  </div>
-                )}
+                    </>
+                  ) : (
+                    <span className="h-11 w-full animate-pulse rounded-full bg-white/[0.06]" />
+                  )
+                }
+                extra={about}
+              />
+
+              <div className="min-w-0">
+                <ProfileTabs tabs={tabs} active={tab} onChange={setTab} />
+
+                <div className="mt-5">
+                  {tab === "experiences" ? (
+                    !momentsReady ? (
+                      <SkeletonGrid />
+                    ) : moments.length ? (
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
+                        {moments.slice(0, 9).map(({ booking, event, at }) => (
+                          <Link
+                            key={booking.id}
+                            href={`/experience/${event.slug}`}
+                            className={`group overflow-hidden ${CARD}`}
+                          >
+                            <div className="aspect-[4/5] overflow-hidden">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={
+                                  event.cover_image_url ??
+                                  "/assets/home/hiking.webp"
+                                }
+                                alt={event.title}
+                                loading="lazy"
+                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                            <div className="p-3">
+                              <p className="text-[10px] font-bold tracking-wider text-[#C9A7FF] uppercase">
+                                {categoryOf(event).label}
+                              </p>
+                              <p className="mt-0.5 truncate text-[13px] font-semibold">
+                                {event.title}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-white/50">
+                                {formatIST(at, "MMM d, yyyy")}
+                              </p>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyCard
+                        icon={<Compass className="h-6 w-6" />}
+                        title="Nothing attended yet"
+                        text="Experiences you go to as a guest show up here."
+                      >
+                        <Link
+                          href="/explore"
+                          className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
+                        >
+                          Explore experiences
+                        </Link>
+                      </EmptyCard>
+                    )
+                  ) : tab === "hosting" ? (
+                    !roleReady || (host && !hostEvents) ? (
+                      <SkeletonGrid />
+                    ) : hosting.length ? (
+                      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-3">
+                        {hosting.map((e, i) => (
+                          <SlotCard key={e.id} event={e} index={i} />
+                        ))}
+                      </div>
+                    ) : (
+                      <EmptyCard
+                        icon={<CalendarHeart className="h-6 w-6" />}
+                        title={
+                          isApproved
+                            ? "No experiences published yet"
+                            : "Host something, free"
+                        }
+                        text={
+                          isApproved
+                            ? "Publish your first experience from the host dashboard."
+                            : "Anyone can host a free experience: a walk, a jam, a study circle. People who connect with you will see it first."
+                        }
+                      >
+                        <button
+                          type="button"
+                          onClick={handleListTimeClick}
+                          className={`mt-5 flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
+                        >
+                          <Plus className="h-4 w-4" /> Host an experience
+                        </button>
+                      </EmptyCard>
+                    )
+                  ) : tab === "photos" ? (
+                    <PhotoAlbums
+                      owner={{ userId }}
+                      firstName={displayName?.split(" ")[0] ?? "You"}
+                      isMe
+                    />
+                  ) : tab === "milestones" ? (
+                    <div>
+                      <Milestones states={badges} heading={false} />
+                      <Link
+                        href="/activities"
+                        className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-[#D8B4FE] hover:text-white"
+                      >
+                        See your journey <ChevronRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  ) : tab === "about" ? (
+                    <div className="flex flex-col gap-6">{about}</div>
+                  ) : connected.length ? (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {connected.map((h) => (
+                        <div
+                          key={h.id}
+                          className={`flex items-center gap-3 p-3 ${CARD}`}
+                        >
+                          <Link
+                            href={`/host/${h.slug}`}
+                            className="flex min-w-0 flex-1 items-center gap-3"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                              src={h.avatar_url || "/assets/home/profile1.png"}
+                              alt=""
+                              className="h-12 w-12 shrink-0 rounded-full object-cover"
+                            />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-semibold">
+                                {h.first_name} {h.last_name}
+                              </span>
+                              <span className="block truncate text-xs text-white/50">
+                                {h.tagline ?? h.city}
+                              </span>
+                            </span>
+                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              toggle(h.id);
+                              toast(`Disconnected from ${h.first_name}`);
+                            }}
+                            className="shrink-0 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-white/60 transition hover:border-white/25 hover:text-white"
+                          >
+                            Connected
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <EmptyCard
+                      icon={<UserPlus className="h-6 w-6" />}
+                      title="No connections yet"
+                      text="Connect with hosts you like from their profile. Their new experiences then show up first on your home."
+                    >
+                      <Link
+                        href="/explore?type=hosts"
+                        className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
+                      >
+                        Find hosts
+                      </Link>
+                    </EmptyCard>
+                  )}
+                </div>
               </div>
-            </section>
-          </div>
+            </div>
+          </>
         )}
       </div>
 
@@ -399,6 +576,14 @@ export default function ProfilePage() {
         open={showBecomeHostModal}
         onClose={closeBecomeHostModal}
       />
+      {editing && userId && (
+        <EditSheet
+          userId={userId}
+          name={displayName ?? ""}
+          city={city ?? ""}
+          onClose={() => setEditing(false)}
+        />
+      )}
     </main>
   );
 }

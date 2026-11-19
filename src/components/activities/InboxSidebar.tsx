@@ -152,7 +152,7 @@ export default function InboxSidebar({
 
           <div className="relative flex items-start gap-4 pr-14">
             <div className="min-w-0 flex-1">
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#121426]/80 px-3 py-1 text-[11px] font-semibold tracking-[0.24em] text-[#0076a3] uppercase shadow-sm backdrop-blur">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#121426]/80 px-3 py-1 text-[11px] font-semibold tracking-[0.24em] text-[#D8B4FE] uppercase shadow-sm backdrop-blur">
                 <FiMessageCircle className="h-3.5 w-3.5" />
                 Event Inbox
               </div>
@@ -248,7 +248,7 @@ export default function InboxSidebar({
             <button
               type="submit"
               disabled={sending || !messageText.trim()}
-              className="rounded-lg bg-[#A020F0] px-4 py-2 text-white transition hover:bg-[#0076a3] disabled:opacity-50"
+              className="rounded-lg bg-[#A020F0] px-4 py-2 text-white transition hover:brightness-110 disabled:opacity-50"
             >
               <FiSend className="h-4 w-4" />
             </button>

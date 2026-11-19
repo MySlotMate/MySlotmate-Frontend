@@ -105,7 +105,7 @@ export default function SavedExperiencesPage() {
             </div>
           </div>
         ) : savedWithEvents.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
             {savedWithEvents.map(({ saved, event }) => (
               <div
                 key={saved.id}
@@ -124,7 +124,7 @@ export default function SavedExperiencesPage() {
                   />
                   {/* Badge */}
                   {event.mood && (
-                    <div className="absolute top-3 left-3 rounded-full bg-[#A020F0] px-3 py-1.5 text-xs font-semibold text-white">
+                    <div className="absolute top-2 left-2 max-w-[calc(100%-56px)] truncate rounded-full bg-[#A020F0] px-2 py-0.5 text-[10px] font-semibold text-white sm:top-3 sm:left-3 sm:px-3 sm:py-1.5 sm:text-xs">
                       {event.mood}
                     </div>
                   )}
@@ -133,32 +133,32 @@ export default function SavedExperiencesPage() {
                   <button
                     onClick={() => handleUnsave(event.id)}
                     disabled={removingId === event.id}
-                    className="absolute top-3 right-3 rounded-full bg-[#121426] p-2.5 text-[#D8B4FE] shadow-md transition-all hover:bg-red-500/10 hover:text-red-400 hover:shadow-lg disabled:opacity-60"
+                    className="absolute top-2 right-2 rounded-full bg-[#121426] p-2 text-[#D8B4FE] shadow-md transition-all hover:bg-red-500/10 hover:text-red-400 hover:shadow-lg disabled:opacity-60 sm:top-3 sm:right-3 sm:p-2.5"
                     title="Remove from saved"
                   >
                     {removingId === event.id ? (
                       <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
                     ) : (
-                      <FiTrash2 className="h-5 w-5" />
+                      <FiTrash2 className="h-4 w-4 sm:h-5 sm:w-5" />
                     )}
                   </button>
                 </div>
 
                 {/* Content */}
-                <div className="flex flex-1 flex-col justify-between p-5">
+                <div className="flex flex-1 flex-col justify-between p-3 sm:p-5">
                   {/* Title and Description */}
                   <div>
                     <Link href={`/experience/${event.slug}`}>
-                      <h3 className="line-clamp-2 text-base font-bold text-white transition hover:text-[#D8B4FE]">
+                      <h3 className="line-clamp-2 text-[13px] leading-snug font-bold text-white transition hover:text-[#D8B4FE] sm:text-base">
                         {event.title}
                       </h3>
                     </Link>
-                    <p className="mt-2 line-clamp-2 text-sm text-[#A5A8C3]">
+                    <p className="mt-2 line-clamp-2 hidden text-sm text-[#A5A8C3] sm:block">
                       {event.hook_line ?? event.description?.substring(0, 60)}
                     </p>
 
                     {/* Info */}
-                    <div className="mt-4 flex items-center gap-4 border-t border-white/10 pt-3 text-sm">
+                    <div className="mt-2 flex flex-col gap-1 border-t border-white/10 pt-2 text-sm sm:mt-4 sm:flex-row sm:items-center sm:gap-4 sm:pt-3">
                       {event.location && (
                         <div className="flex flex-1 items-center gap-1.5 text-[#A5A8C3]">
                           <FiMapPin className="h-4 w-4 flex-shrink-0 text-[#D8B4FE]" />
@@ -167,10 +167,7 @@ export default function SavedExperiencesPage() {
                           </span>
                         </div>
                       )}
-                      <div className="flex items-center gap-1 font-bold text-[#D8B4FE]">
-                        <span className="inline-flex h-4 w-4 items-center justify-center text-sm leading-none font-bold">
-                          ₹
-                        </span>
+                      <div className="font-bold text-[#D8B4FE]">
                         {eventPriceLabel(event)}
                       </div>
                     </div>
@@ -179,7 +176,7 @@ export default function SavedExperiencesPage() {
                   {/* CTA Button */}
                   <Link
                     href={`/experience/${event.slug}`}
-                    className="mt-5 w-full rounded-lg bg-[#A020F0] px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-[#0076a3] hover:shadow-md"
+                    className="mt-5 hidden w-full rounded-lg bg-[#A020F0] px-4 py-2.5 text-center text-sm font-semibold text-white shadow-sm transition hover:shadow-md hover:brightness-110 sm:block"
                   >
                     View Experience
                   </Link>
@@ -201,7 +198,7 @@ export default function SavedExperiencesPage() {
             </p>
             <Link
               href="/experiences"
-              className="rounded-lg bg-[#A020F0] px-6 py-3 font-semibold text-white shadow-md transition hover:bg-[#0076a3] hover:shadow-lg"
+              className="rounded-lg bg-[#A020F0] px-6 py-3 font-semibold text-white shadow-md transition hover:brightness-110 hover:shadow-lg"
             >
               Explore Experiences
             </Link>

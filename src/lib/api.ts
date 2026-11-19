@@ -583,6 +583,103 @@ export function getPublicHostProfile(hostId: string) {
   return apiFetch<PublicHostProfileDTO>(`/hosts/${hostId}`);
 }
 
+/**
+ * GET /hosts/{hostID}/events — a host's published events, past included
+ * (no drafts, private or cancelled ones). Public.
+ *
+ * Not on the backend yet (see docs/connections.md): until it is, this 404s
+ * and profiles fall back to the public list, which only has upcoming events.
+ */
+export function getPublicHostEvents(hostId: string) {
+  return apiFetch<EventDTO[]>(`/hosts/${hostId}/events`);
+}
+
+/** A photo inside a profile album. */
+export interface AlbumPhotoDTO {
+  id: string;
+  album_id: string;
+  url: string;
+  caption: string | null;
+  /** Pixel size, so the grid can lay out before images load. */
+  width: number | null;
+  height: number | null;
+  /** Lower comes first. */
+  position: number;
+  created_at: string;
+}
+
+/**
+ * A named group of photos on someone's profile: past events, credentials,
+ * behind the scenes — whatever they make it. Owned by a user (hosts are users).
+ */
+export interface ProfileAlbumDTO {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  position: number;
+  /** Optional cover; defaults to the first photo. */
+  cover_photo_id: string | null;
+  photo_count: number;
+  photos: AlbumPhotoDTO[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AlbumPayload {
+  title?: string;
+  description?: string | null;
+  position?: number;
+  cover_photo_id?: string | null;
+}
+
+export interface AlbumPhotoPayload {
+  url: string;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+}
+
+/**
+ * Profile albums (see the backend PRD). Not on the backend yet: reads 404
+ * and the Photos tab says "coming soon" until they exist.
+ */
+export function getUserAlbums(userId: string) {
+  return apiFetch<ProfileAlbumDTO[]>(`/users/${userId}/albums`);
+}
+/** Same albums, looked up from a host profile (hosts are users too). */
+export function getHostAlbums(hostIdOrSlug: string) {
+  return apiFetch<ProfileAlbumDTO[]>(`/hosts/${hostIdOrSlug}/albums`);
+}
+export function createAlbum(body: AlbumPayload & { title: string }) {
+  return authedFetch<ProfileAlbumDTO>("/users/me/albums", {
+    method: "POST",
+    data: body,
+  });
+}
+export function updateAlbum(albumId: string, body: AlbumPayload) {
+  return authedFetch<ProfileAlbumDTO>(`/users/me/albums/${albumId}`, {
+    method: "PATCH",
+    data: body,
+  });
+}
+export function deleteAlbum(albumId: string) {
+  return authedFetch<null>(`/users/me/albums/${albumId}`, {
+    method: "DELETE",
+  });
+}
+export function addAlbumPhotos(albumId: string, items: AlbumPhotoPayload[]) {
+  return authedFetch<AlbumPhotoDTO[]>(`/users/me/albums/${albumId}/photos`, {
+    method: "POST",
+    data: { items },
+  });
+}
+export function deleteAlbumPhoto(albumId: string, photoId: string) {
+  return authedFetch<null>(`/users/me/albums/${albumId}/photos/${photoId}`, {
+    method: "DELETE",
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /*  Admin                                                              */
 /* ------------------------------------------------------------------ */

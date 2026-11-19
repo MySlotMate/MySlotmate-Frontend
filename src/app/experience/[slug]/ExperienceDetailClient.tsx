@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "~/components/Navbar";
@@ -71,11 +71,24 @@ function Hero({
 }) {
   const [index, setIndex] = useState(0);
   const src = images[index];
+  // Wide flyers: on phones show them at their own shape instead of inside a
+  // tall 4:5 frame with blurred bands (desktop keeps the frame).
+  const [wide, setWide] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const measure = (img: HTMLImageElement | null) => {
+    if (img?.complete && img.naturalWidth)
+      setWide(img.naturalWidth > img.naturalHeight * 1.05);
+  };
+  // The first image often finishes loading before hydration, so onLoad never
+  // fires for it; measure it once mounted too.
+  useEffect(() => measure(imgRef.current), [src]);
   const iconBtn =
     "flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md transition hover:bg-black/60";
 
   return (
-    <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-[#131328] shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)] ring-1 ring-white/10">
+    <div
+      className={`group relative w-full overflow-hidden rounded-[24px] bg-[#131328] shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)] ring-1 ring-white/10 ${wide ? "md:aspect-[4/5]" : "aspect-[4/5]"}`}
+    >
       {src ? (
         <>
           {/* Uploaded flyers vary in ratio, so a blurred copy fills the frame
@@ -85,14 +98,16 @@ function Hero({
             src={src}
             alt=""
             aria-hidden="true"
-            className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+            className={`absolute inset-0 h-full w-full scale-110 object-cover blur-xl ${wide ? "max-md:hidden" : ""}`}
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={src}
             alt={title}
             fetchPriority="high"
-            className="relative block h-full w-full object-contain"
+            ref={imgRef}
+            onLoad={(e) => measure(e.currentTarget)}
+            className={`relative block w-full object-contain ${wide ? "h-auto md:h-full" : "h-full"}`}
           />
         </>
       ) : (

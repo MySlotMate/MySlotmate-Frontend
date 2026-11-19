@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { signOut } from "firebase/auth";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowLeft,
   ArrowLeftRight,
   CalendarDays,
   ChevronRight,
@@ -42,6 +43,28 @@ import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
 import { WalletDisplay } from "../wallet";
 
 const BASE = "/host-dashboard";
+
+/**
+ * Goes to the previous page; in a fresh tab with no history it goes to the
+ * homepage instead, so the button never does nothing.
+ */
+function BackButton({ className = "" }: { className?: string }) {
+  const router = useRouter();
+  return (
+    <button
+      type="button"
+      aria-label="Go back"
+      title="Back"
+      onClick={() => {
+        if (window.history.length > 1) router.back();
+        else router.push("/");
+      }}
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/75 transition hover:bg-white/10 hover:text-white ${className}`}
+    >
+      <ArrowLeft className="h-4 w-4" />
+    </button>
+  );
+}
 
 type NavItem = { label: string; href: string; icon: LucideIcon };
 
@@ -208,8 +231,10 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
     "group relative flex h-11 items-center justify-center rounded-xl text-[15px] font-medium transition xl:justify-start xl:gap-3 xl:px-3";
   const sidebar = (
     <aside className="fixed inset-y-0 left-0 z-[210] hidden w-[76px] flex-col border-r border-white/[0.06] bg-[#0A0B17] md:flex xl:w-[248px]">
-      <div className="flex h-[72px] shrink-0 items-center justify-center xl:justify-start xl:px-6">
-        <Link href={BASE} aria-label="Host dashboard">
+      <div className="flex shrink-0 flex-col items-center gap-3 py-4 xl:h-[72px] xl:flex-row xl:gap-3 xl:px-4 xl:py-0">
+        <BackButton />
+        {/* The logo always goes to the MySlotMate homepage. */}
+        <Link href="/" aria-label="MySlotMate home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/brand/logo-mark.png"
@@ -328,9 +353,10 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
   /* ---------------------------- mobile chrome --------------------------- */
   const topBar = (
     <header className="sticky top-0 z-[200] flex h-14 items-center gap-3 border-b border-white/[0.06] bg-[#080914]/85 px-4 backdrop-blur-xl md:hidden">
+      <BackButton className="-ml-1" />
       <Link
-        href={BASE}
-        aria-label="Host dashboard"
+        href="/"
+        aria-label="MySlotMate home"
         className="flex min-w-0 flex-1 items-center gap-2"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

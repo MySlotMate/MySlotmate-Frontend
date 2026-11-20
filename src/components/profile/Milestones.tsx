@@ -273,7 +273,7 @@ export default function Milestones({
         </p>
       )}
 
-      <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+      <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(120px,1fr))]">
         {earned.map((s) => (
           <button
             key={s.def.key}
@@ -288,10 +288,11 @@ export default function Milestones({
               state={s}
               className="h-[72px] w-[72px] group-hover:scale-105 sm:h-[84px] sm:w-[84px]"
             />
-            <p className="mt-2 text-[12px] leading-4 font-semibold">
+            {/* Two-line name slot so every date lines up across the row. */}
+            <p className="mt-2 line-clamp-2 flex min-h-8 items-center text-[12px] leading-4 font-semibold">
               {s.def.name}
             </p>
-            <p className="mt-0.5 text-[10px] text-[#D8B4FE]">
+            <p className="mt-0.5 text-[10px] whitespace-nowrap text-[#D8B4FE]">
               {s.earnedAt ? formatIST(s.earnedAt.at, "MMM d, yyyy") : ""}
             </p>
           </button>
@@ -304,16 +305,21 @@ export default function Milestones({
             className="group flex flex-col items-center rounded-2xl bg-[#131328] p-3 text-center transition hover:bg-[#1A1A35]"
           >
             {/* A plain locked medallion with the count, same size as a badge. */}
-            <span className="flex h-[72px] w-[72px] flex-col items-center justify-center rounded-full border-2 border-dashed border-white/20 bg-white/[0.03] transition group-hover:border-[#A020F0]/60 sm:h-[84px] sm:w-[84px]">
-              <Lock className="h-4 w-4 text-white/45" />
-              <span className="font-outfit mt-0.5 text-lg leading-none font-bold text-white/80">
-                +{locked.length}
+            {/* Same box as a badge; the circle matches the medal's visible size. */}
+            <span className="flex h-[72px] w-[72px] items-center justify-center sm:h-[84px] sm:w-[84px]">
+              <span className="flex h-[58px] w-[58px] flex-col items-center justify-center rounded-full border-2 border-dashed border-white/20 bg-white/[0.03] transition group-hover:border-[#A020F0]/60 sm:h-[66px] sm:w-[66px]">
+                <Lock className="h-3.5 w-3.5 text-white/45" />
+                <span className="font-outfit mt-0.5 text-base leading-none font-bold text-white/80">
+                  +{locked.length}
+                </span>
               </span>
             </span>
-            <p className="mt-2 text-[12px] leading-4 font-semibold text-white/80">
+            <p className="mt-2 line-clamp-2 flex min-h-8 items-center text-[12px] leading-4 font-semibold text-white/80">
               Yet to unlock
             </p>
-            <p className="mt-0.5 text-[10px] text-white/45">Tap to see all</p>
+            <p className="mt-0.5 text-[10px] whitespace-nowrap text-white/45">
+              Tap to see all
+            </p>
           </button>
         )}
       </div>

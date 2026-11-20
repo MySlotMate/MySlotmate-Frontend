@@ -1,5 +1,6 @@
 "use client";
 
+import Breadcrumbs from "~/components/Breadcrumbs";
 import { use, Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "~/components/Navbar";
@@ -689,8 +690,9 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
   return (
     <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28">
-      <div className="mx-auto flex w-full max-w-[860px] flex-col items-center px-6 pt-10 pb-16 text-center md:px-10 md:pt-16">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#22C55E] text-white">
+      <div className="mx-auto flex w-full max-w-[860px] flex-col items-center px-6 pt-5 pb-16 text-center md:px-10 md:pt-8">
+        <Breadcrumbs className="self-start text-left" />
+        <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#22C55E] text-white">
           <FiCheck className="h-7 w-7 stroke-[2.5]" />
         </div>
         <h1 className="font-outfit mt-4 text-2xl font-bold">

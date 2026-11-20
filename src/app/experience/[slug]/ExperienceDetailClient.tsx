@@ -1,7 +1,7 @@
 "use client";
 
+import Breadcrumbs from "~/components/Breadcrumbs";
 import { useEffect, useRef, useState, use } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "~/components/Navbar";
 import { RichTextView } from "~/components/RichTextView";
@@ -58,7 +58,6 @@ function Hero({
   saved,
   onSave,
   onShare,
-  onBack,
   onShowAll,
 }: {
   images: string[];
@@ -66,7 +65,6 @@ function Hero({
   saved: boolean;
   onSave: () => void;
   onShare: () => void;
-  onBack: () => void;
   onShowAll: () => void;
 }) {
   const [index, setIndex] = useState(0);
@@ -116,14 +114,6 @@ function Hero({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={onBack}
-        aria-label="Go back"
-        className={`absolute top-4 left-4 md:hidden ${iconBtn}`}
-      >
-        <FiArrowLeft className="h-4 w-4" />
-      </button>
       <button
         type="button"
         onClick={onSave}
@@ -320,40 +310,46 @@ function LocationSection({
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
-          <div className="flex items-center gap-4 p-4">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
-              <FiMapPin className="h-5 w-5 text-[#D8B4FE]" />
-            </span>
-            <p className="min-w-0 flex-1 text-[15px] leading-snug font-semibold text-white">
-              {location ?? "Exact meeting point shared after booking"}
-            </p>
-            {directions && (
-              <a
-                href={directions}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Get directions"
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/15"
-              >
-                <FiNavigation className="h-4 w-4" />
-              </a>
-            )}
-          </div>
-          {location && (
-            <iframe
-              width="100%"
-              height="200"
-              style={{ border: 0 }}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              src={`https://maps.google.com/maps?q=${encodeURIComponent(location)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-              title="Meeting location map"
-              // Google's embed has no dark style; invert it to sit on the dark page.
-              className="block [filter:invert(90%)_hue-rotate(180deg)_saturate(0.6)]"
-            />
-          )}
-        </div>
+        // No embedded map: it filled most of a screen. The whole card opens
+        // Google Maps (directions on phones) instead.
+        (() => {
+          const card = (
+            <>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.06]">
+                <FiMapPin className="h-5 w-5 text-[#D8B4FE]" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] leading-snug font-semibold text-white">
+                  {location ?? "Exact meeting point shared after booking"}
+                </span>
+                {directions && (
+                  <span className="mt-0.5 block text-xs text-[#D8B4FE]">
+                    Open in Google Maps
+                  </span>
+                )}
+              </span>
+              {directions && (
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition group-hover:bg-white/15">
+                  <FiNavigation className="h-4 w-4" />
+                </span>
+              )}
+            </>
+          );
+          const cls =
+            "flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4";
+          return directions ? (
+            <a
+              href={directions}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group ${cls} transition hover:border-white/20 hover:bg-white/[0.06]`}
+            >
+              {card}
+            </a>
+          ) : (
+            <div className={cls}>{card}</div>
+          );
+        })()
       )}
     </section>
   );
@@ -476,7 +472,6 @@ export default function ExperienceDetailClient({
   initialEvent: EventDTO | null;
 }) {
   const resolvedParams = use(params);
-  const router = useRouter();
   const { userId } = useStoredAuth();
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   // Session picked from the date chips; carried to the tickets step.
@@ -535,11 +530,6 @@ export default function ExperienceDetailClient({
     } catch {
       toast.error("Failed to copy link");
     }
-  };
-
-  const handleBack = () => {
-    if (window.history.length > 1) router.back();
-    else router.push("/explore");
   };
 
   // Same skeleton the route's `loading.tsx` shows, so the server boundary and
@@ -657,13 +647,7 @@ export default function ExperienceDetailClient({
         {!appChrome && <WebsiteNav />}
 
         <div className="mx-auto w-full max-w-[1080px] px-5 pt-4 pb-10 md:px-8 md:pt-8">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="mb-6 hidden items-center gap-2 text-sm text-white/60 transition hover:text-white md:inline-flex"
-          >
-            <FiArrowLeft className="h-4 w-4" /> Back to events
-          </button>
+          <Breadcrumbs current={event.title} />
 
           <div className="grid gap-8 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-14">
             {/* Left: poster + host, sticky on desktop */}
@@ -674,7 +658,6 @@ export default function ExperienceDetailClient({
                 saved={isSaved}
                 onSave={handleSave}
                 onShare={handleShare}
-                onBack={handleBack}
                 onShowAll={() => setShowAllPhotos(true)}
               />
               <div className="hidden lg:block">{hostedBy}</div>

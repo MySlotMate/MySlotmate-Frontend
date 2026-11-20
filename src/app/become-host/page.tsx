@@ -1,5 +1,6 @@
 "use client";
 
+import Breadcrumbs from "~/components/Breadcrumbs";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -541,6 +542,7 @@ export default function BecomeHostPage() {
 
       <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white">
         <div className="mx-auto w-full max-w-[860px] px-6 py-10 md:px-10">
+          <Breadcrumbs />
           {/* Co-host invitations. Accepting one needs no approved application, so
             surface them here too — otherwise the invitee has to guess the
             /host-dashboard/co-hosting URL. Renders nothing when there are none. */}

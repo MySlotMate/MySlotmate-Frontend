@@ -239,7 +239,7 @@ export default function WalletPage() {
     return (
       <main className="min-h-screen bg-[#080914]">
         <components.Navbar />
-        <div className="site-x mx-auto w-full max-w-[1120px] py-10">
+        <div className="site-x mx-auto w-full max-w-[1120px] pt-24 pb-10">
           <Breadcrumb
             items={[{ label: "Home", href: "/" }, { label: "Wallet" }]}
             className="mb-6"
@@ -266,7 +266,7 @@ export default function WalletPage() {
     <main className="min-h-screen bg-[#080914]">
       <components.Navbar />
 
-      <div className="site-x mx-auto w-full max-w-[1120px] py-8">
+      <div className="site-x mx-auto w-full max-w-[1120px] pt-24 pb-8">
         <Breadcrumb
           items={[{ label: "Home", href: "/" }, { label: "Wallet" }]}
           className="mb-6"

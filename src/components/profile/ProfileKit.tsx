@@ -158,24 +158,24 @@ export function ProfileIdentity({
               />
             )}
           </h1>
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-white/55">
+          {/* Role chip on its own line, facts below it: no stray dot when
+              the line would otherwise wrap in the narrow card. */}
+          <div className="mt-2">
             {role ? (
               <span
-                className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${ROLE_STYLE[role.tone]}`}
+                className={`inline-block rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${ROLE_STYLE[role.tone]}`}
               >
                 {role.label}
               </span>
             ) : (
-              <span className="h-5 w-24 animate-pulse rounded-full bg-white/10" />
-            )}
-            {/* One run of text so a wrap never starts a line with a dot. */}
-            {meta.length > 0 && (
-              <span>
-                <span className="mr-2 text-white/25">·</span>
-                {meta.join(" · ")}
-              </span>
+              <span className="inline-block h-5 w-24 animate-pulse rounded-full bg-white/10 align-middle" />
             )}
           </div>
+          {meta.length > 0 && (
+            <p className="mt-1.5 text-[13px] text-white/55">
+              {meta.join(" · ")}
+            </p>
+          )}
         </div>
 
         {tagline && (
@@ -413,7 +413,7 @@ export function ProfileTabs<K extends string>({
           role="tab"
           aria-selected={active === t.key}
           onClick={() => onChange(t.key)}
-          className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-2.5 py-3.5 text-sm font-semibold transition sm:gap-2 sm:px-3 md:px-4 ${t.mobileOnly ? "lg:hidden" : ""} ${
+          className={`-mb-px flex shrink-0 items-center gap-1.5 rounded-t-lg border-b-2 px-2.5 py-3.5 text-sm font-semibold transition outline-none focus-visible:bg-white/[0.06] sm:gap-2 sm:px-3 md:px-4 ${t.mobileOnly ? "lg:hidden" : ""} ${
             active === t.key
               ? "border-[#B724EA] text-white"
               : "border-transparent text-white/55 hover:text-white"

@@ -1,5 +1,6 @@
 "use client";
 
+import Breadcrumbs from "~/components/Breadcrumbs";
 import { use, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Globe, ShieldCheck, Star, Ticket } from "lucide-react";
@@ -247,6 +248,10 @@ export default function HostProfileClient({
       <Navbar dark />
 
       <div className="mx-auto grid w-full max-w-[1210px] gap-6 px-4 pt-5 pb-16 sm:px-6 md:px-10 md:pt-8 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-10">
+        <Breadcrumbs
+          current={`${host.first_name} ${host.last_name}`.trim()}
+          className="!mb-0 lg:col-span-2"
+        />
         <ProfileIdentity
           // Some hosts have avatar_url = "" — treat it as missing.
           // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing

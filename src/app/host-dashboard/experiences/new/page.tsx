@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useRef, type ReactNode } from "react";
+import { Fragment, useEffect, useState, useRef, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
 import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
-import CouponsManager from "~/components/host/CouponsManager";
+import { CoHostManager } from "~/components/host-dashboard";
 import {
   useMyHost,
   useEventsByHost,
@@ -32,13 +32,14 @@ import {
   FiUpload,
   FiX,
   FiCheck,
-  FiMapPin,
   FiClock,
   FiUsers,
   FiCalendar,
   FiShare2,
   FiExternalLink,
   FiAlertTriangle,
+  FiUserPlus,
+  FiPlus,
   FiMap,
   FiStar,
   FiBookmark,
@@ -217,14 +218,59 @@ function Section({
 }) {
   return (
     <section className="space-y-3">
-      <div className="border-b border-white/[0.08] pb-2">
-        <h2 className="font-outfit text-base font-semibold text-white">
-          {title}
-        </h2>
-        {hint && <p className="mt-0.5 text-xs text-white/40">{hint}</p>}
-      </div>
+      {title && (
+        <div className="border-b border-white/[0.08] pb-2">
+          <h2 className="font-outfit text-base font-semibold text-white">
+            {title}
+          </h2>
+          {hint && <p className="mt-0.5 text-xs text-white/40">{hint}</p>}
+        </div>
+      )}
       {children}
     </section>
+  );
+}
+
+/**
+ * A one-line row that opens to show optional settings, with the current
+ * choice summarised on the right so hosts can skip it at a glance.
+ */
+function MoreOptions({
+  title,
+  summary,
+  defaultOpen = false,
+  children,
+}: {
+  title: string;
+  summary?: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#121426]">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03]"
+      >
+        <span className="flex-1 text-sm font-medium text-white">{title}</span>
+        {summary && (
+          <span className="max-w-[45%] truncate text-xs text-white/45">
+            {summary}
+          </span>
+        )}
+        <FiChevronDown
+          className={`h-4 w-4 shrink-0 text-white/40 transition ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="space-y-4 border-t border-white/[0.06] p-4">
+          {children}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -847,8 +893,8 @@ function TitleAutocomplete({
           }}
           placeholder={
             moodDisabled
-              ? "Pick a mood first to see suggestions"
-              : "Start typing — or pick a suggestion below"
+              ? "Choose a category above first"
+              : "Type a name, or pick a suggestion"
           }
           className={`font-outfit w-full rounded-2xl border border-white/10 bg-[#121426] px-4 py-4 text-xl font-semibold text-white transition outline-none placeholder:text-white/30 focus:border-[#B57BFF] ${
             moodDisabled ? "cursor-not-allowed opacity-50" : ""
@@ -888,7 +934,12 @@ function TitleAutocomplete({
           </div>
         )}
       </div>
-      <p className="text-xs text-white/40">{value.length}/100 characters</p>
+      {/* Only worth showing near the limit. */}
+      {value.length > 80 && (
+        <p className="px-1 text-xs text-white/40">
+          {value.length}/100 characters
+        </p>
+      )}
     </div>
   );
 }
@@ -1220,6 +1271,9 @@ export default function CreateExperiencePage() {
   const [showMapPicker, setShowMapPicker] = useState(false);
 
   const [showErrors, setShowErrors] = useState(false);
+  // Optional bits stay folded until asked for.
+  const [showTagline, setShowTagline] = useState(false);
+  const [showMoreDates, setShowMoreDates] = useState(false);
 
   // Suggestion states
   const titleSuggestions = useSuggestions();
@@ -1375,6 +1429,8 @@ export default function CreateExperiencePage() {
   } = useHostTier();
   // Free-host UI (locks, notes) only once the tier is known.
   const showFreeHostUi = !tierLoading && !isVerified;
+  // Only certified (professional) hosts may offer 1:1 sessions.
+  const isProfessional = Boolean(host?.is_professional);
   const [verifyOpen, setVerifyOpen] = useState(false);
   // Experiences and 1:1 sessions use different category lists: drop a
   // category that doesn't exist in the newly chosen list.
@@ -1544,11 +1600,6 @@ export default function CreateExperiencePage() {
       toast.error("Please enter an experience title");
       return false;
     }
-    if (!form.hookLine.trim()) {
-      setShowErrors(true);
-      toast.error("Please enter a hook line");
-      return false;
-    }
     if (!form.mood) {
       setShowErrors(true);
       toast.error("Please select a mood");
@@ -1677,6 +1728,79 @@ export default function CreateExperiencePage() {
   /* ---------------------------------------------------------------- */
   /*  Form Submission                                                  */
   /* ---------------------------------------------------------------- */
+  /**
+   * The few things a host must fill in, in page order. Drives the
+   * "3 of 5 done · Still needed: …" line by the Publish button.
+   */
+  const requirements = [
+    {
+      key: "category",
+      label: "a category",
+      anchor: "sec-what",
+      done: !!form.mood,
+    },
+    {
+      key: "name",
+      label: "a name",
+      anchor: "sec-what",
+      done: !!form.title.trim(),
+    },
+    {
+      key: "when",
+      label: "date & time",
+      anchor: "sec-when",
+      done:
+        form.sessionType === "one_on_one"
+          ? form.sessionWindows.length > 0
+          : form.scheduleType === "custom_dates"
+            ? form.customDatesList.some((d) => d.date && d.time)
+            : !!form.eventDate && !!form.eventTime,
+    },
+    {
+      key: "where",
+      label: "where",
+      anchor: "sec-where",
+      done: form.isOnline ? true : !!form.location.trim(),
+    },
+    {
+      key: "about",
+      label: "what guests will do",
+      anchor: "sec-about",
+      done: !!form.description.trim(),
+    },
+    ...(!form.isFree && !form.useTiers
+      ? [
+          {
+            key: "price",
+            label: "a price",
+            anchor: "sec-price",
+            done: form.priceCents > 0,
+          },
+        ]
+      : []),
+  ];
+  const missing = requirements.filter((r) => !r.done);
+
+  // With an end time, the length is just end minus start.
+  useEffect(() => {
+    if (form.sessionType !== "group" || !form.eventTime || !form.endTime)
+      return;
+    const [sh = 0, sm = 0] = form.eventTime.split(":").map(Number);
+    const [eh = 0, em = 0] = form.endTime.split(":").map(Number);
+    let mins = eh * 60 + em - (sh * 60 + sm);
+    if (mins <= 0) mins += 24 * 60; // ends after midnight
+    if (mins >= 15 && mins !== form.durationMinutes) {
+      setForm((prev) => ({ ...prev, durationMinutes: mins }));
+      setDurationInputStr(String(mins));
+    }
+  }, [form.sessionType, form.eventTime, form.endTime, form.durationMinutes]);
+  const jumpTo = (r: { anchor: string }) => {
+    setShowErrors(true);
+    document
+      .getElementById(r.anchor)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleSubmit = async (asDraft = false) => {
     // Drafts skip the strict validation so hosts can save work-in-progress.
     // A draft still needs at least a title so the host can find it later.
@@ -1829,7 +1953,15 @@ export default function CreateExperiencePage() {
       const eventRes = await createEvent.mutateAsync({
         host_id: host.id,
         title: form.title.trim(),
-        hook_line: form.hookLine.trim(),
+        // The tagline is optional: fall back to the opening of the description.
+        hook_line:
+          form.hookLine.trim() ||
+          form.description
+            .replace(/<[^>]+>/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 140) ||
+          form.title.trim(),
         mood: form.mood,
         description: form.description.trim(),
         cover_image_url: coverImageUrl,
@@ -1971,52 +2103,6 @@ export default function CreateExperiencePage() {
     },
   });
 
-  const scheduleModes = [
-    {
-      label: "One-time",
-      hint: "Single date & time",
-      active: form.sessionType === "group" && form.scheduleType === "one_time",
-      apply: () => {
-        updateForm("scheduleType", "one_time");
-        updateForm("isRecurring", false);
-        updateForm("sessionType", "group");
-      },
-    },
-    {
-      label: "Recurring",
-      hint: "Repeats daily, weekly or monthly",
-      active: form.sessionType === "group" && form.scheduleType === "recurring",
-      apply: () => {
-        updateForm("scheduleType", "recurring");
-        updateForm("isRecurring", true);
-        updateForm("sessionType", "group");
-      },
-    },
-    {
-      label: "Custom dates",
-      hint: "Pick specific dates, e.g. Aug 15, 22, Sept 5",
-      active:
-        form.sessionType === "group" && form.scheduleType === "custom_dates",
-      apply: () => {
-        updateForm("scheduleType", "custom_dates");
-        updateForm("isRecurring", false);
-        updateForm("sessionType", "group");
-      },
-    },
-    {
-      label: "One-on-one",
-      hint: "Set your hours, we split them into 1:1 slots",
-      active: form.sessionType === "one_on_one",
-      apply: () => {
-        // One-on-one is stored as a custom-dates event whose slots
-        // we generate from the host's availability windows.
-        updateForm("sessionType", "one_on_one");
-        updateForm("scheduleType", "custom_dates");
-        updateForm("isRecurring", false);
-      },
-    },
-  ];
-
   const draftLabel =
     submitType === "draft" ? (
       <>
@@ -2060,7 +2146,7 @@ export default function CreateExperiencePage() {
 
           <div className="grid gap-8 lg:grid-cols-[420px_minmax(0,1fr)] lg:gap-12">
             {/* Left — cover + host */}
-            <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
+            <aside className="min-w-0 space-y-5 lg:sticky lg:top-6 lg:self-start">
               <CoverPoster
                 preview={form.coverImagePreview}
                 title={form.title}
@@ -2074,10 +2160,6 @@ export default function CreateExperiencePage() {
                   updateForm("coverImagePreview", null);
                 }}
               />
-              <p className="px-1 text-xs text-white/40">
-                Profile image — shown on experience cards. Add more photos
-                below.
-              </p>
 
               <div className="space-y-3">
                 <div className="border-b border-white/[0.08] pb-2">
@@ -2103,22 +2185,64 @@ export default function CreateExperiencePage() {
                     )}
                   </div>
                 </div>
+
+                {/* Co-hosts, up front so hosts know they can share the event. */}
+                {createdEventId ? (
+                  <CoHostManager eventId={createdEventId} />
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-white/15 p-3.5">
+                    <button
+                      type="button"
+                      onClick={() => void handleSubmit(true)}
+                      disabled={isSubmitting}
+                      className="flex w-full items-center gap-3 text-left disabled:opacity-60"
+                    >
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-[#B57BFF]/60 text-[#D8B4FE]">
+                        <FiUserPlus size={16} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-semibold text-white">
+                          Add co-hosts
+                        </span>
+                        <span className="block text-xs text-white/45">
+                          Saves a draft first, then invite people to host with
+                          you
+                        </span>
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </aside>
 
-            {/* Right — form */}
-            <div className="min-w-0 space-y-9">
-              <Segmented<"public" | "private">
-                value={form.isPrivate ? "private" : "public"}
-                onChange={(v) => updateForm("isPrivate", v === "private")}
-                options={[
-                  { value: "public", label: "Public" },
-                  { value: "private", label: "Private" },
-                ]}
-              />
+            {/* Right — one short page: the essentials, then optional extras */}
+            <div className="min-w-0 space-y-9 pb-36 lg:pb-0">
+              {/* Professional hosts can also offer 1:1 sessions. */}
+              {isProfessional && (
+                <Segmented<"event" | "session">
+                  value={
+                    form.sessionType === "one_on_one" ? "session" : "event"
+                  }
+                  onChange={(v) => {
+                    if (v === "session") {
+                      updateForm("sessionType", "one_on_one");
+                      updateForm("scheduleType", "custom_dates");
+                      updateForm("isRecurring", false);
+                    } else {
+                      updateForm("sessionType", "group");
+                      updateForm("scheduleType", "one_time");
+                      updateForm("isRecurring", false);
+                    }
+                  }}
+                  options={[
+                    { value: "event", label: "Event" },
+                    { value: "session", label: "1:1 session" },
+                  ]}
+                />
+              )}
 
-              {/* Basics */}
-              <div className="space-y-5">
+              {/* What */}
+              <section id="sec-what" className="scroll-mt-24 space-y-5">
                 <MoodSelector
                   kind={
                     form.sessionType === "one_on_one" ? "session" : "experience"
@@ -2134,8 +2258,10 @@ export default function CreateExperiencePage() {
                   }}
                   hasError={showErrors && !form.mood}
                 />
-
-                {/* Title — typeahead filtered by mood-keyed templates */}
+                <p className="!mb-2 text-sm font-semibold text-white">
+                  Name of your{" "}
+                  {form.sessionType === "one_on_one" ? "session" : "experience"}
+                </p>
                 <TitleAutocomplete
                   mood={form.mood}
                   value={form.title}
@@ -2150,876 +2276,1100 @@ export default function CreateExperiencePage() {
                   blurTimer={titleBlurTimer}
                   titleSuggestions={titleSuggestions}
                 />
-
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={form.hookLine}
-                    onChange={(e) => {
-                      updateForm("hookLine", e.target.value);
-                      void hookSuggestions.generateSuggestions(
-                        e.target.value,
-                        "hookLine",
-                        { title: form.title },
-                      );
-                    }}
-                    onBlur={() => hookSuggestions.clearSuggestions()}
-                    placeholder="Hook line — a short catchy phrase *"
-                    aria-label="Hook line"
-                    className={`${FIELD} ${
-                      showErrors && !form.hookLine.trim()
-                        ? "!border-red-500 !bg-red-500/10"
-                        : ""
-                    }`}
-                    maxLength={150}
-                  />
-                  <p className="px-1 text-xs text-white/40">
-                    {form.hookLine.length}/150 characters
-                  </p>
-                  {hookSuggestions.suggestions.length > 0 && (
-                    <SuggestionChips
-                      suggestions={hookSuggestions.suggestions}
-                      isLoading={hookSuggestions.isLoading}
-                      onSelect={(suggestion) => {
-                        updateForm("hookLine", suggestion);
-                        hookSuggestions.clearSuggestions();
-                      }}
-                      onDismiss={hookSuggestions.clearSuggestions}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* When */}
-              <Section title="When">
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {scheduleModes.map((m) => (
-                    <button
-                      key={m.label}
-                      type="button"
-                      onClick={m.apply}
-                      className={`rounded-2xl border p-3.5 text-left transition ${
-                        m.active
-                          ? "border-[#B57BFF] bg-[#7038F5]/15"
-                          : "border-white/[0.06] bg-[#131328] hover:border-white/20"
-                      }`}
-                    >
-                      <div
-                        className={`text-sm font-medium ${m.active ? "text-[#D8B4FE]" : "text-white"}`}
-                      >
-                        {m.label}
-                      </div>
-                      <div className="mt-0.5 text-xs text-white/40">
-                        {m.hint}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {form.sessionType === "group" &&
-                  (form.scheduleType === "one_time" ||
-                    form.scheduleType === "recurring") && (
-                    <Rows>
-                      <Row label="Date" error={showErrors && !form.eventDate}>
-                        <input
-                          type="date"
-                          value={form.eventDate}
-                          onChange={(e) =>
-                            updateForm("eventDate", e.target.value)
-                          }
-                          min={new Date().toISOString().split("T")[0]}
-                          className={ROW_INPUT}
-                        />
-                      </Row>
-                      <Row
-                        label="Start time"
-                        error={showErrors && !form.eventTime}
-                      >
-                        <input
-                          type="time"
-                          value={form.eventTime}
-                          onChange={(e) =>
-                            updateForm("eventTime", e.target.value)
-                          }
-                          className={ROW_INPUT}
-                        />
-                      </Row>
-                      <Row label="End time (optional)">
-                        <input
-                          type="time"
-                          value={form.endTime}
-                          onChange={(e) =>
-                            updateForm("endTime", e.target.value)
-                          }
-                          className={ROW_INPUT}
-                        />
-                      </Row>
-                      {form.scheduleType === "recurring" && (
-                        <Row label="Repeats">
-                          <select
-                            value={form.recurrenceRule}
-                            onChange={(e) =>
-                              updateForm("recurrenceRule", e.target.value)
-                            }
-                            className={ROW_INPUT}
-                          >
-                            <option value="">Select frequency</option>
-                            <option value="FREQ=DAILY">Daily</option>
-                            <option value="FREQ=WEEKLY">Weekly</option>
-                            <option value="FREQ=WEEKLY;INTERVAL=2">
-                              Every 2 weeks
-                            </option>
-                            <option value="FREQ=MONTHLY">Monthly</option>
-                          </select>
-                        </Row>
-                      )}
-                    </Rows>
-                  )}
-                {form.sessionType === "group" &&
-                  (form.scheduleType === "one_time" ||
-                    form.scheduleType === "recurring") && (
-                    <p className="px-1 text-xs text-white/40">
-                      Leave the end time empty to calculate it from the
-                      duration.
-                    </p>
-                  )}
-
-                {form.sessionType === "group" &&
-                  form.scheduleType === "custom_dates" && (
-                    <div className="space-y-3">
-                      {form.customDatesList.map((slot, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <div className="min-w-0 flex-1">
-                            <Rows>
-                              <Row label="Date">
-                                <input
-                                  type="date"
-                                  value={slot.date}
-                                  onChange={(e) =>
-                                    updateCustomSlot(
-                                      idx,
-                                      "date",
-                                      e.target.value,
-                                    )
-                                  }
-                                  min={new Date().toISOString().split("T")[0]}
-                                  className={ROW_INPUT}
-                                />
-                              </Row>
-                              <Row label="Start time">
-                                <input
-                                  type="time"
-                                  value={slot.time}
-                                  onChange={(e) =>
-                                    updateCustomSlot(
-                                      idx,
-                                      "time",
-                                      e.target.value,
-                                    )
-                                  }
-                                  className={ROW_INPUT}
-                                />
-                              </Row>
-                            </Rows>
-                          </div>
-                          {form.customDatesList.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeCustomSlot(idx)}
-                              className="p-2 text-white/40 transition hover:text-red-400"
-                              title="Remove slot"
-                              aria-label="Remove slot"
-                            >
-                              <FiX size={18} />
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      <AddPill onClick={addCustomSlot}>
-                        Add another date
-                      </AddPill>
-                    </div>
-                  )}
-
-                {form.sessionType === "one_on_one" && (
-                  <SessionWindowsEditor
-                    windows={form.sessionWindows}
-                    onWindowsChange={(windows) =>
-                      updateForm("sessionWindows", windows)
-                    }
-                    breakMinutes={form.breakMinutes}
-                    onBreakMinutesChange={(minutes) =>
-                      updateForm("breakMinutes", minutes)
-                    }
-                    durationMinutes={form.durationMinutes}
-                    isWeekly={form.sessionIsWeekly}
-                    onIsWeeklyChange={(weekly) =>
-                      updateForm("sessionIsWeekly", weekly)
-                    }
-                    showErrors={showErrors}
-                  />
-                )}
-              </Section>
-
-              {/* Where */}
-              <Section title="Where">
-                <Segmented<"in_person" | "online">
-                  value={form.isOnline ? "online" : "in_person"}
-                  onChange={(v) => updateForm("isOnline", v === "online")}
-                  options={[
-                    {
-                      value: "in_person",
-                      label: (
-                        <>
-                          <FiMapPin size={15} /> In-person
-                        </>
-                      ),
-                    },
-                    { value: "online", label: <>🌐 Online</> },
-                  ]}
-                />
-
-                {form.isOnline ? (
-                  <Rows>
-                    <Row label="Meeting link">
-                      <input
-                        type="url"
-                        value={form.meetingLink}
-                        onChange={(e) =>
-                          updateForm("meetingLink", e.target.value)
-                        }
-                        placeholder="Zoom, Google Meet…"
-                        className={ROW_INPUT}
-                      />
-                    </Row>
-                  </Rows>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex gap-2">
-                      <div className="min-w-0 flex-1">
-                        <LocationSearchInput
-                          value={form.location}
-                          onChange={(val) => updateForm("location", val)}
-                          onSelect={(addr, lat, lng) => {
-                            updateForm("location", addr);
-                            updateForm(
-                              "googleMapsUrl",
-                              `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-                            );
-                          }}
-                          placeholder="Search for a location or locality..."
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowMapPicker(true)}
-                        className="flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm font-semibold text-[#D8B4FE] transition hover:bg-white/10"
-                        title="Pick from map"
-                      >
-                        <FiMap size={18} />
-                        <span className="hidden sm:inline">Pick on map</span>
-                      </button>
-                    </div>
-                    {form.googleMapsUrl && (
-                      <p className="truncate px-1 text-xs text-white/40">
-                        Pinned: {form.googleMapsUrl}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </Section>
-
-              {/* Details */}
-              <Section title="Add details">
-                <div className="space-y-2">
-                  <RichTextEditor
-                    value={form.description}
-                    onChange={(html) => {
-                      handleDescriptionChange(html);
-                      // AI suggestions work better on plain text — strip tags before sending.
-                      const plain = html
-                        .replace(/<[^>]+>/g, " ")
-                        .replace(/\s+/g, " ")
-                        .trim();
-                      void descriptionSuggestions.generateSuggestions(
-                        plain,
-                        "description",
-                        {
-                          title: form.title,
-                          hookLine: form.hookLine,
-                          mood: form.mood,
-                        },
-                      );
-                    }}
-                    onLengthChange={setDescriptionTextLength}
-                    placeholder="Describe what guests will experience, what they'll learn, and what makes your experience special..."
-                    maxLength={2000}
-                    error={showErrors && !form.description.trim()}
-                  />
-                  <div className="flex items-center justify-between gap-3 px-1">
-                    <p className="text-xs text-white/40">
-                      {descriptionTextLength}/2000 characters
-                    </p>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        try {
-                          setIsSummarizing(true);
-                          const res = await fetch("/api/generate-description", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                              title: form.title,
-                              hookLine: form.hookLine,
-                              mood: form.mood,
-                              location: form.location,
-                              durationMinutes: form.durationMinutes,
-                            }),
-                          });
-
-                          const data: unknown = await res.json();
-                          const generatedDescription =
-                            getGeneratedDescription(data);
-
-                          if (res.ok && generatedDescription) {
-                            handleDescriptionChange(generatedDescription);
-                            toast.success("Description generated");
-                          } else {
-                            console.error("Generation error", data);
-                            toast.error("Failed to generate description");
-                          }
-                        } catch (err) {
-                          console.error(err);
-                          toast.error("Failed to generate description");
-                        } finally {
-                          setIsSummarizing(false);
-                        }
-                      }}
-                      disabled={isSummarizing}
-                      className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-xs font-medium text-[#D8B4FE] transition hover:bg-white/10 disabled:opacity-60"
-                    >
-                      <LuSparkles className="h-3.5 w-3.5" />
-                      {isSummarizing ? "Writing..." : "Write with AI"}
-                    </button>
-                  </div>
-                  {descriptionWarning && (
-                    <div
-                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${
-                        descriptionWarning.includes("⚠️")
-                          ? "border border-red-500/30 bg-red-500/10 text-red-300"
-                          : "border border-blue-400/30 bg-blue-500/10 text-blue-300"
-                      }`}
-                    >
-                      <FiAlertTriangle size={16} className="shrink-0" />
-                      <span>{descriptionWarning}</span>
-                    </div>
-                  )}
-                  {descriptionSuggestions.suggestions.length > 0 && (
-                    <SuggestionChips
-                      suggestions={descriptionSuggestions.suggestions}
-                      isLoading={descriptionSuggestions.isLoading}
-                      onSelect={(suggestion) => {
-                        const newText = form.description + " " + suggestion;
-                        handleDescriptionChange(newText);
-                        descriptionSuggestions.clearSuggestions();
-                      }}
-                      onDismiss={descriptionSuggestions.clearSuggestions}
-                    />
-                  )}
-                </div>
-
-                <Rows>
-                  <Row label="Duration (min)">
-                    <input
-                      type="text"
-                      {...intField(
-                        durationInputStr,
-                        setDurationInputStr,
-                        "durationMinutes",
-                        15,
-                      )}
-                      placeholder="Minimum 15"
-                      className={ROW_INPUT}
-                    />
-                  </Row>
-                  <Row label="Min group size">
-                    <input
-                      type="text"
-                      {...intField(
-                        minGroupInputStr,
-                        setMinGroupInputStr,
-                        "minGroupSize",
-                        1,
-                      )}
-                      className={ROW_INPUT}
-                    />
-                  </Row>
-                  <Row label="Max group size">
-                    <input
-                      type="text"
-                      {...intField(
-                        maxGroupInputStr,
-                        setMaxGroupInputStr,
-                        "maxGroupSize",
-                        form.minGroupSize || 1,
-                      )}
-                      className={ROW_INPUT}
-                    />
-                  </Row>
-                </Rows>
-                <div className="flex flex-wrap gap-2">
-                  {DURATION_OPTIONS.map((mins) => (
-                    <Chip
-                      key={mins}
-                      active={form.durationMinutes === mins}
-                      onClick={() => {
-                        updateForm("durationMinutes", mins);
-                        setDurationInputStr(mins.toString());
-                      }}
-                    >
-                      {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                    </Chip>
-                  ))}
-                </div>
-                <p className="px-1 text-xs text-white/40">
-                  Max group size is the total number of spots that can book this
-                  session (the event capacity).
-                </p>
-
-                <div className="space-y-2 pt-2">
-                  <p className="text-sm text-white/50">
-                    Languages — pick every language you&apos;ll host in
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {LANGUAGE_OPTIONS.map((lang) => (
-                      <Chip
-                        key={lang}
-                        active={form.languages.includes(lang)}
-                        onClick={() => toggleLanguage(lang)}
-                      >
-                        {lang}
-                      </Chip>
-                    ))}
-                    {/* Custom languages already added */}
-                    {form.languages
-                      .filter((l) => !LANGUAGE_OPTIONS.includes(l))
-                      .map((lang) => (
-                        <Chip
-                          key={lang}
-                          active
-                          onClick={() => toggleLanguage(lang)}
-                        >
-                          {lang} <span className="text-white/80">✕</span>
-                        </Chip>
-                      ))}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={customLanguage}
-                      onChange={(e) => setCustomLanguage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addCustomLanguage();
-                        }
-                      }}
-                      placeholder="Other language…"
-                      className={`${FIELD} !py-2.5`}
-                    />
-                    <button
-                      type="button"
-                      onClick={addCustomLanguage}
-                      className="rounded-full border border-white/10 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
-                    >
-                      Add
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <p className="text-sm text-white/50">Level</p>
-                  <div className="flex flex-wrap gap-2">
-                    {LEVEL_OPTIONS.map((lvl) => (
-                      <Chip
-                        key={lvl}
-                        active={form.level === lvl}
-                        onClick={() => updateForm("level", lvl)}
-                      >
-                        {lvl}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-              </Section>
-
-              {/* Photos */}
-              <Section title="Photos" hint="Cover and gallery photos">
-                <ImageUpload
-                  label=""
-                  multiple
-                  previews={form.galleryPreviews}
-                  onUpload={handleGalleryUpload}
-                  onRemoveMultiple={removeGalleryImage}
-                />
-              </Section>
-
-              {/* Pricing */}
-              <Section title="Tickets">
-                <Segmented<"paid" | "free">
-                  value={form.isFree ? "free" : "paid"}
-                  onChange={(v) => {
-                    if (v === "paid" && showFreeHostUi) {
-                      setVerifyOpen(true);
-                      return;
-                    }
-                    updateForm("isFree", v === "free");
-                  }}
-                  options={[
-                    {
-                      value: "paid",
-                      label: !showFreeHostUi ? (
-                        "Paid"
-                      ) : (
-                        <>
-                          <Lock className="h-3.5 w-3.5" /> Paid
-                        </>
-                      ),
-                    },
-                    { value: "free", label: "Free" },
-                  ]}
-                />
-                {showFreeHostUi && (
-                  <div className="rounded-2xl border border-[#652A91]/50 bg-[#241333]/60 px-4 py-3 text-[13px] leading-5 text-white/70">
-                    <p>
-                      You&apos;re hosting as a{" "}
-                      <span className="font-semibold text-white">
-                        free host
+                {showTagline || form.hookLine ? (
+                  <>
+                    <p className="!mb-2 text-sm font-semibold text-white">
+                      Short tagline{" "}
+                      <span className="font-normal text-white/45">
+                        (optional)
                       </span>
-                      : free events only, up to {FREE_HOST_LIMITS.maxGuests}{" "}
-                      guests. Guests will see it as a community event, and
-                      MySlotMate doesn&apos;t verify free hosts.
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => setVerifyOpen(true)}
-                      className="mt-1.5 font-semibold text-[#D8B4FE] transition hover:text-white"
-                    >
-                      Get verified to sell tickets →
-                    </button>
-                  </div>
-                )}
-
-                {!form.isFree && (
-                  <Segmented<"single" | "tiers">
-                    value={form.useTiers ? "tiers" : "single"}
-                    onChange={(v) => updateForm("useTiers", v === "tiers")}
-                    options={[
-                      { value: "single", label: "Single price" },
-                      { value: "tiers", label: "Multiple ticket types" },
-                    ]}
-                  />
-                )}
-
-                {!form.isFree && !form.useTiers && (
-                  <Rows>
-                    <Row
-                      label="Price per person (₹)"
-                      error={showErrors && form.priceCents <= 0}
-                    >
+                    <div className="space-y-2">
                       <input
                         type="text"
-                        inputMode="decimal"
-                        value={priceInputStr}
+                        value={form.hookLine}
                         onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                            setPriceInputStr(val);
-                            if (val === "") {
-                              updateForm("priceCents", 0);
-                            } else {
-                              const parsed = parseFloat(val);
-                              if (!isNaN(parsed)) {
-                                updateForm(
-                                  "priceCents",
-                                  Math.round(parsed * 100),
-                                );
-                              }
-                            }
-                          }
+                          updateForm("hookLine", e.target.value);
+                          void hookSuggestions.generateSuggestions(
+                            e.target.value,
+                            "hookLine",
+                            { title: form.title },
+                          );
                         }}
-                        onBlur={() => {
-                          const parsed = parseFloat(priceInputStr);
-                          if (isNaN(parsed) || parsed < 0) {
-                            setPriceInputStr("0");
-                            updateForm("priceCents", 0);
-                          } else {
-                            setPriceInputStr(parsed.toString());
-                            updateForm("priceCents", Math.round(parsed * 100));
-                          }
-                        }}
-                        className={ROW_INPUT}
+                        onBlur={() => hookSuggestions.clearSuggestions()}
+                        placeholder="Short tagline (optional), e.g. Paint, sip and unwind"
+                        aria-label="Hook line"
+                        className={FIELD}
+                        maxLength={150}
                       />
-                    </Row>
-                  </Rows>
-                )}
-
-                {!form.isFree && form.useTiers && (
-                  <div className="space-y-3">
-                    {form.priceTiers.map((tier, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <div className="min-w-0 flex-1">
-                          <Rows>
-                            <Row
-                              label="Ticket name"
-                              error={showErrors && !tier.name.trim()}
-                            >
-                              <input
-                                type="text"
-                                value={tier.name}
-                                onChange={(e) =>
-                                  updatePriceTier(index, "name", e.target.value)
-                                }
-                                placeholder="General, VIP…"
-                                className={ROW_INPUT}
-                              />
-                            </Row>
-                            <Row
-                              label="Price (₹)"
-                              error={showErrors && !(Number(tier.priceStr) > 0)}
-                            >
-                              <input
-                                type="text"
-                                inputMode="decimal"
-                                value={tier.priceStr}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                                    updatePriceTier(index, "priceStr", val);
-                                  }
-                                }}
-                                placeholder="0"
-                                className={ROW_INPUT}
-                              />
-                            </Row>
-                          </Rows>
-                        </div>
-                        {form.priceTiers.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removePriceTier(index)}
-                            className="p-2 text-white/40 transition hover:text-red-400"
-                            aria-label="Remove ticket type"
-                          >
-                            <FiX className="h-5 w-5" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <AddPill onClick={addPriceTier}>
-                      Add another ticket type
-                    </AddPill>
-                    <p className="px-1 text-xs text-white/40">
-                      Guests pick one ticket type when booking.
-                    </p>
-                  </div>
-                )}
-
-                {/* Monthly Pass — one payment covers a month of sessions. */}
-                {!form.isFree && (
-                  <>
-                    <ToggleRow
-                      label="Monthly pass"
-                      hint={
-                        form.scheduleType === "one_time"
-                          ? "Pick a recurring or custom-dates schedule to offer a pass."
-                          : "Guests pay once and attend for 30 days."
-                      }
-                      checked={form.monthlyPassEnabled}
-                      disabled={form.scheduleType === "one_time"}
-                      onChange={(v) => updateForm("monthlyPassEnabled", v)}
-                    />
-                    {form.monthlyPassEnabled &&
-                      form.scheduleType !== "one_time" && (
-                        <Rows>
-                          <Row label="Pass price (₹)">
-                            <input
-                              type="number"
-                              min={1}
-                              value={form.monthlyPassPriceStr}
-                              onChange={(e) =>
-                                updateForm(
-                                  "monthlyPassPriceStr",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="2500"
-                              className={ROW_INPUT}
-                            />
-                          </Row>
-                          <Row label="Sessions included">
-                            <input
-                              type="number"
-                              min={1}
-                              value={form.monthlyPassSessionsStr}
-                              onChange={(e) =>
-                                updateForm(
-                                  "monthlyPassSessionsStr",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="All"
-                              className={ROW_INPUT}
-                            />
-                          </Row>
-                          <Row label="Passes available">
-                            <input
-                              type="number"
-                              min={1}
-                              value={form.monthlyPassCapacityStr}
-                              onChange={(e) =>
-                                updateForm(
-                                  "monthlyPassCapacityStr",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Unlimited"
-                              className={ROW_INPUT}
-                            />
-                          </Row>
-                        </Rows>
+                      {form.hookLine.length > 120 && (
+                        <p className="px-1 text-xs text-white/40">
+                          {form.hookLine.length}/150 characters
+                        </p>
                       )}
+                      {hookSuggestions.suggestions.length > 0 && (
+                        <SuggestionChips
+                          suggestions={hookSuggestions.suggestions}
+                          isLoading={hookSuggestions.isLoading}
+                          onSelect={(suggestion) => {
+                            updateForm("hookLine", suggestion);
+                            hookSuggestions.clearSuggestions();
+                          }}
+                          onDismiss={hookSuggestions.clearSuggestions}
+                        />
+                      )}
+                    </div>
                   </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowTagline(true)}
+                    className="-mt-2 flex items-center gap-1.5 px-1 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
+                  >
+                    <FiPlus size={15} /> Add a short tagline
+                  </button>
                 )}
-              </Section>
+              </section>
 
-              {/* Manage */}
-              <Section title="Manage your experience">
-                <div className="space-y-2">
-                  <p className="px-1 text-sm text-white/50">
-                    Cancellation policy
-                  </p>
-                  {CANCELLATION_POLICIES.map((policy) => {
-                    const selected = form.cancellationPolicy === policy.value;
-                    return (
+              {/* When */}
+              <section id="sec-when" className="scroll-mt-24">
+                <Section
+                  title={
+                    form.sessionType === "one_on_one"
+                      ? "When are you free?"
+                      : "When is it?"
+                  }
+                >
+                  {form.sessionType === "group" &&
+                    (form.scheduleType !== "one_time" || showMoreDates) && (
+                      <div className="flex flex-wrap gap-2">
+                        {(
+                          [
+                            ["one_time", "Just once"],
+                            ["recurring", "Repeats"],
+                            ["custom_dates", "Several dates"],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <Chip
+                            key={key}
+                            active={form.scheduleType === key}
+                            onClick={() => {
+                              updateForm("scheduleType", key);
+                              updateForm("isRecurring", key === "recurring");
+                            }}
+                          >
+                            {label}
+                          </Chip>
+                        ))}
+                      </div>
+                    )}
+                  {form.sessionType === "group" &&
+                    (form.scheduleType === "one_time" ||
+                      form.scheduleType === "recurring") && (
+                      <Rows>
+                        <Row label="Date" error={showErrors && !form.eventDate}>
+                          <input
+                            type="date"
+                            value={form.eventDate}
+                            onChange={(e) =>
+                              updateForm("eventDate", e.target.value)
+                            }
+                            min={new Date().toISOString().split("T")[0]}
+                            className={ROW_INPUT}
+                          />
+                        </Row>
+                        <Row
+                          label="Start time"
+                          error={showErrors && !form.eventTime}
+                        >
+                          <input
+                            type="time"
+                            value={form.eventTime}
+                            onChange={(e) =>
+                              updateForm("eventTime", e.target.value)
+                            }
+                            className={ROW_INPUT}
+                          />
+                        </Row>
+                        <Row label="End time (optional)">
+                          <input
+                            type="time"
+                            value={form.endTime}
+                            onChange={(e) =>
+                              updateForm("endTime", e.target.value)
+                            }
+                            className={ROW_INPUT}
+                          />
+                        </Row>
+                        {form.scheduleType === "recurring" && (
+                          <Row label="Repeats">
+                            <select
+                              value={form.recurrenceRule}
+                              onChange={(e) =>
+                                updateForm("recurrenceRule", e.target.value)
+                              }
+                              className={ROW_INPUT}
+                            >
+                              <option value="">Select frequency</option>
+                              <option value="FREQ=DAILY">Daily</option>
+                              <option value="FREQ=WEEKLY">Weekly</option>
+                              <option value="FREQ=WEEKLY;INTERVAL=2">
+                                Every 2 weeks
+                              </option>
+                              <option value="FREQ=MONTHLY">Monthly</option>
+                            </select>
+                          </Row>
+                        )}
+                      </Rows>
+                    )}
+                  {form.sessionType === "group" &&
+                    (form.scheduleType === "one_time" ||
+                      form.scheduleType === "recurring") && (
+                      <p className="px-1 text-xs text-white/40">
+                        No end time? It runs for 1 hour, or set the length in
+                        More options.
+                      </p>
+                    )}
+
+                  {form.sessionType === "group" &&
+                    form.scheduleType === "custom_dates" && (
+                      <div className="space-y-3">
+                        {form.customDatesList.map((slot, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <div className="min-w-0 flex-1">
+                              <Rows>
+                                <Row label="Date">
+                                  <input
+                                    type="date"
+                                    value={slot.date}
+                                    onChange={(e) =>
+                                      updateCustomSlot(
+                                        idx,
+                                        "date",
+                                        e.target.value,
+                                      )
+                                    }
+                                    min={new Date().toISOString().split("T")[0]}
+                                    className={ROW_INPUT}
+                                  />
+                                </Row>
+                                <Row label="Start time">
+                                  <input
+                                    type="time"
+                                    value={slot.time}
+                                    onChange={(e) =>
+                                      updateCustomSlot(
+                                        idx,
+                                        "time",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className={ROW_INPUT}
+                                  />
+                                </Row>
+                              </Rows>
+                            </div>
+                            {form.customDatesList.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCustomSlot(idx)}
+                                className="p-2 text-white/40 transition hover:text-red-400"
+                                title="Remove slot"
+                                aria-label="Remove slot"
+                              >
+                                <FiX size={18} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <AddPill onClick={addCustomSlot}>
+                          Add another date
+                        </AddPill>
+                      </div>
+                    )}
+
+                  {form.sessionType === "one_on_one" && (
+                    <SessionWindowsEditor
+                      windows={form.sessionWindows}
+                      onWindowsChange={(windows) =>
+                        updateForm("sessionWindows", windows)
+                      }
+                      breakMinutes={form.breakMinutes}
+                      onBreakMinutesChange={(minutes) =>
+                        updateForm("breakMinutes", minutes)
+                      }
+                      durationMinutes={form.durationMinutes}
+                      isWeekly={form.sessionIsWeekly}
+                      onIsWeeklyChange={(weekly) =>
+                        updateForm("sessionIsWeekly", weekly)
+                      }
+                      showErrors={showErrors}
+                    />
+                  )}
+                  {form.sessionType === "group" &&
+                    form.scheduleType === "custom_dates" && (
+                      <div className="space-y-3">
+                        {form.customDatesList.map((slot, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <div className="min-w-0 flex-1">
+                              <Rows>
+                                <Row label="Date">
+                                  <input
+                                    type="date"
+                                    value={slot.date}
+                                    onChange={(e) =>
+                                      updateCustomSlot(
+                                        idx,
+                                        "date",
+                                        e.target.value,
+                                      )
+                                    }
+                                    min={new Date().toISOString().split("T")[0]}
+                                    className={ROW_INPUT}
+                                  />
+                                </Row>
+                                <Row label="Start time">
+                                  <input
+                                    type="time"
+                                    value={slot.time}
+                                    onChange={(e) =>
+                                      updateCustomSlot(
+                                        idx,
+                                        "time",
+                                        e.target.value,
+                                      )
+                                    }
+                                    className={ROW_INPUT}
+                                  />
+                                </Row>
+                              </Rows>
+                            </div>
+                            {form.customDatesList.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCustomSlot(idx)}
+                                className="p-2 text-white/40 transition hover:text-red-400"
+                                title="Remove slot"
+                                aria-label="Remove slot"
+                              >
+                                <FiX size={18} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <AddPill onClick={addCustomSlot}>
+                          Add another date
+                        </AddPill>
+                      </div>
+                    )}
+
+                  {form.sessionType === "one_on_one" && (
+                    <SessionWindowsEditor
+                      windows={form.sessionWindows}
+                      onWindowsChange={(windows) =>
+                        updateForm("sessionWindows", windows)
+                      }
+                      breakMinutes={form.breakMinutes}
+                      onBreakMinutesChange={(minutes) =>
+                        updateForm("breakMinutes", minutes)
+                      }
+                      durationMinutes={form.durationMinutes}
+                      isWeekly={form.sessionIsWeekly}
+                      onIsWeeklyChange={(weekly) =>
+                        updateForm("sessionIsWeekly", weekly)
+                      }
+                      showErrors={showErrors}
+                    />
+                  )}
+                  {form.sessionType === "one_on_one" && (
+                    <SessionWindowsEditor
+                      windows={form.sessionWindows}
+                      onWindowsChange={(windows) =>
+                        updateForm("sessionWindows", windows)
+                      }
+                      breakMinutes={form.breakMinutes}
+                      onBreakMinutesChange={(minutes) =>
+                        updateForm("breakMinutes", minutes)
+                      }
+                      durationMinutes={form.durationMinutes}
+                      isWeekly={form.sessionIsWeekly}
+                      onIsWeeklyChange={(weekly) =>
+                        updateForm("sessionIsWeekly", weekly)
+                      }
+                      showErrors={showErrors}
+                    />
+                  )}
+                  {form.sessionType === "one_on_one" && (
+                    <div className="space-y-2">
+                      <p className="px-1 text-sm text-white/50">
+                        Each session lasts
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {DURATION_OPTIONS.map((mins) => (
+                          <Chip
+                            key={mins}
+                            active={form.durationMinutes === mins}
+                            onClick={() => {
+                              updateForm("durationMinutes", mins);
+                              setDurationInputStr(mins.toString());
+                            }}
+                          >
+                            {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
+                          </Chip>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {form.sessionType === "group" &&
+                    form.scheduleType === "one_time" &&
+                    !showMoreDates && (
                       <button
-                        key={policy.value}
                         type="button"
-                        onClick={() =>
-                          updateForm("cancellationPolicy", policy.value)
-                        }
-                        className={`flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition ${
-                          selected
-                            ? "border-[#B57BFF] bg-[#7038F5]/15"
-                            : "border-white/[0.06] bg-[#131328] hover:border-white/20"
+                        onClick={() => setShowMoreDates(true)}
+                        className="flex items-center gap-1.5 px-1 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
+                      >
+                        <FiPlus size={15} /> Repeats, or more than one date?
+                      </button>
+                    )}
+                </Section>
+              </section>
+
+              {/* Where */}
+              <section id="sec-where" className="scroll-mt-24">
+                <Section title="Where?">
+                  {form.isOnline ? (
+                    <Rows>
+                      <Row label="Meeting link">
+                        <input
+                          type="url"
+                          value={form.meetingLink}
+                          onChange={(e) =>
+                            updateForm("meetingLink", e.target.value)
+                          }
+                          placeholder="Zoom, Google Meet…"
+                          className={ROW_INPUT}
+                        />
+                      </Row>
+                    </Rows>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex gap-2">
+                        <div className="min-w-0 flex-1">
+                          <LocationSearchInput
+                            value={form.location}
+                            onChange={(val) => updateForm("location", val)}
+                            onSelect={(addr, lat, lng) => {
+                              updateForm("location", addr);
+                              updateForm(
+                                "googleMapsUrl",
+                                `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                              );
+                            }}
+                            placeholder="Search for a location or locality..."
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowMapPicker(true)}
+                          className="flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm font-semibold text-[#D8B4FE] transition hover:bg-white/10"
+                          title="Pick from map"
+                        >
+                          <FiMap size={18} />
+                          <span className="hidden sm:inline">Pick on map</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => updateForm("isOnline", !form.isOnline)}
+                    className="px-1 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
+                  >
+                    {form.isOnline
+                      ? "Meeting in person instead?"
+                      : "Hosting it online instead?"}
+                  </button>
+                </Section>
+              </section>
+
+              {/* About */}
+              <section id="sec-about" className="scroll-mt-24">
+                <Section title="What will guests do?">
+                  <div className="space-y-2">
+                    <RichTextEditor
+                      value={form.description}
+                      onChange={(html) => {
+                        handleDescriptionChange(html);
+                        // AI suggestions work better on plain text — strip tags before sending.
+                        const plain = html
+                          .replace(/<[^>]+>/g, " ")
+                          .replace(/\s+/g, " ")
+                          .trim();
+                        void descriptionSuggestions.generateSuggestions(
+                          plain,
+                          "description",
+                          {
+                            title: form.title,
+                            hookLine: form.hookLine,
+                            mood: form.mood,
+                          },
+                        );
+                      }}
+                      onLengthChange={setDescriptionTextLength}
+                      placeholder="Describe what guests will experience, what they'll learn, and what makes your experience special..."
+                      maxLength={2000}
+                      error={showErrors && !form.description.trim()}
+                    />
+                    <div className="flex items-center justify-between gap-3 px-1">
+                      <p className="text-xs text-white/40">
+                        {descriptionTextLength}/2000 characters
+                      </p>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            setIsSummarizing(true);
+                            const res = await fetch(
+                              "/api/generate-description",
+                              {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                  title: form.title,
+                                  hookLine: form.hookLine,
+                                  mood: form.mood,
+                                  location: form.location,
+                                  durationMinutes: form.durationMinutes,
+                                }),
+                              },
+                            );
+
+                            const data: unknown = await res.json();
+                            const generatedDescription =
+                              getGeneratedDescription(data);
+
+                            if (res.ok && generatedDescription) {
+                              handleDescriptionChange(generatedDescription);
+                              toast.success("Description generated");
+                            } else {
+                              console.error("Generation error", data);
+                              toast.error("Failed to generate description");
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            toast.error("Failed to generate description");
+                          } finally {
+                            setIsSummarizing(false);
+                          }
+                        }}
+                        disabled={isSummarizing}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-xs font-medium text-[#D8B4FE] transition hover:bg-white/10 disabled:opacity-60"
+                      >
+                        <LuSparkles className="h-3.5 w-3.5" />
+                        {isSummarizing ? "Writing..." : "Write with AI"}
+                      </button>
+                    </div>
+                    {descriptionWarning && (
+                      <div
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${
+                          descriptionWarning.includes("⚠️")
+                            ? "border border-red-500/30 bg-red-500/10 text-red-300"
+                            : "border border-blue-400/30 bg-blue-500/10 text-blue-300"
                         }`}
                       >
-                        <span
-                          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
-                            selected ? "border-[#B57BFF]" : "border-white/30"
-                          }`}
-                        >
-                          {selected && (
-                            <span className="h-2 w-2 rounded-full bg-[#B57BFF]" />
-                          )}
-                        </span>
-                        <span>
-                          <span className="block text-sm font-medium text-white">
-                            {policy.label}
-                          </span>
-                          <span className="block text-xs text-white/50">
-                            {policy.description}
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Attendee Details */}
-                <AttendeeDetailsConfig
-                  enabled={form.requiresAttendeeDetails}
-                  fields={form.attendeeFields}
-                  onToggle={(next) =>
-                    updateForm("requiresAttendeeDetails", next)
-                  }
-                  onFieldsChange={(next) => updateForm("attendeeFields", next)}
-                />
-
-                <PrivacyAccessSection
-                  isPrivate={form.isPrivate}
-                  privateAccessMode={form.privateAccessMode}
-                  accessMode={form.accessMode}
-                  accessPasskey={form.accessPasskey}
-                  showError={showErrors}
-                  canGenerateCodes={!!createdEventId}
-                  onChange={(patch) =>
-                    setForm((prev) => ({ ...prev, ...patch }))
-                  }
-                />
-
-                {/* Codes attach to a saved event, so they unlock once the
-                    experience has been created (draft or published). */}
-                {createdEventId && host?.id ? (
-                  <div className="space-y-6">
-                    {/* Access codes only matter for a private event. */}
-                    {form.isPrivate && (
-                      <CouponsManager
-                        eventId={createdEventId}
-                        hostId={host.id}
-                        kind="access"
+                        <FiAlertTriangle size={16} className="shrink-0" />
+                        <span>{descriptionWarning}</span>
+                      </div>
+                    )}
+                    {descriptionSuggestions.suggestions.length > 0 && (
+                      <SuggestionChips
+                        suggestions={descriptionSuggestions.suggestions}
+                        isLoading={descriptionSuggestions.isLoading}
+                        onSelect={(suggestion) => {
+                          const newText = form.description + " " + suggestion;
+                          handleDescriptionChange(newText);
+                          descriptionSuggestions.clearSuggestions();
+                        }}
+                        onDismiss={descriptionSuggestions.clearSuggestions}
                       />
                     )}
-                    {/* Free-booking coupons only matter for a paid event. */}
-                    {!form.isFree && (
-                      <>
-                        <CouponsManager
-                          eventId={createdEventId}
-                          hostId={host.id}
-                          kind="free"
+                  </div>
+                </Section>
+              </section>
+
+              {/* Spots & price */}
+              <section id="sec-price" className="scroll-mt-24">
+                <Section
+                  title={
+                    form.sessionType === "one_on_one"
+                      ? "Price"
+                      : "Spots & price"
+                  }
+                >
+                  {form.sessionType === "group" && (
+                    <Rows>
+                      <Row label="Spots (max guests)">
+                        <input
+                          type="text"
+                          {...intField(
+                            maxGroupInputStr,
+                            setMaxGroupInputStr,
+                            "maxGroupSize",
+                            form.minGroupSize || 1,
+                          )}
+                          className={ROW_INPUT}
                         />
-                        <CouponsManager
-                          eventId={createdEventId}
-                          hostId={host.id}
-                          kind="discount"
+                      </Row>
+                    </Rows>
+                  )}
+                  <Segmented<"paid" | "free">
+                    value={form.isFree ? "free" : "paid"}
+                    onChange={(v) => {
+                      if (v === "paid" && showFreeHostUi) {
+                        setVerifyOpen(true);
+                        return;
+                      }
+                      updateForm("isFree", v === "free");
+                    }}
+                    options={[
+                      {
+                        value: "paid",
+                        label: !showFreeHostUi ? (
+                          "Paid"
+                        ) : (
+                          <>
+                            <Lock className="h-3.5 w-3.5" /> Paid
+                          </>
+                        ),
+                      },
+                      { value: "free", label: "Free" },
+                    ]}
+                  />
+                  {showFreeHostUi && (
+                    <p className="px-1 text-xs leading-5 text-white/50">
+                      Free hosts can run free events for up to{" "}
+                      {FREE_HOST_LIMITS.maxGuests} guests.{" "}
+                      <button
+                        type="button"
+                        onClick={() => setVerifyOpen(true)}
+                        className="font-semibold text-[#D8B4FE] hover:text-white"
+                      >
+                        Get verified to sell tickets
+                      </button>
+                    </p>
+                  )}
+                  {!form.isFree && !form.useTiers && (
+                    <Rows>
+                      <Row
+                        label="Price per person (₹)"
+                        error={showErrors && form.priceCents <= 0}
+                      >
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          value={priceInputStr}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || /^\d*\.?\d*$/.test(val)) {
+                              setPriceInputStr(val);
+                              if (val === "") {
+                                updateForm("priceCents", 0);
+                              } else {
+                                const parsed = parseFloat(val);
+                                if (!isNaN(parsed)) {
+                                  updateForm(
+                                    "priceCents",
+                                    Math.round(parsed * 100),
+                                  );
+                                }
+                              }
+                            }
+                          }}
+                          onBlur={() => {
+                            const parsed = parseFloat(priceInputStr);
+                            if (isNaN(parsed) || parsed < 0) {
+                              setPriceInputStr("0");
+                              updateForm("priceCents", 0);
+                            } else {
+                              setPriceInputStr(parsed.toString());
+                              updateForm(
+                                "priceCents",
+                                Math.round(parsed * 100),
+                              );
+                            }
+                          }}
+                          className={ROW_INPUT}
                         />
-                      </>
+                      </Row>
+                    </Rows>
+                  )}
+                </Section>
+              </section>
+
+              {/* Everything optional, folded away with sensible defaults */}
+              <Section
+                title="More options"
+                hint="All optional. Good defaults are already set."
+              >
+                <div className="space-y-2">
+                  <MoreOptions
+                    title="Who can see it"
+                    summary={form.isPrivate ? "Private" : "Public"}
+                    defaultOpen={form.isPrivate}
+                  >
+                    <Segmented<"public" | "private">
+                      value={form.isPrivate ? "private" : "public"}
+                      onChange={(v) => updateForm("isPrivate", v === "private")}
+                      options={[
+                        { value: "public", label: "Public" },
+                        { value: "private", label: "Private" },
+                      ]}
+                    />
+                    <p className="px-1 text-xs text-white/45">
+                      {form.isPrivate
+                        ? "Private: only people with your passkey or invite can book."
+                        : "Public: anyone on MySlotMate can find and book it."}
+                    </p>
+                    {form.isPrivate && (
+                      <PrivacyAccessSection
+                        isPrivate={form.isPrivate}
+                        privateAccessMode={form.privateAccessMode}
+                        accessMode={form.accessMode}
+                        accessPasskey={form.accessPasskey}
+                        showError={showErrors}
+                        canGenerateCodes={!!createdEventId}
+                        onChange={(patch) =>
+                          setForm((prev) => ({ ...prev, ...patch }))
+                        }
+                      />
                     )}
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-white/40">
-                    Save this experience (draft or publish) to add access codes
-                    and free-booking coupons — they attach to the saved event.
-                  </div>
-                )}
+                  </MoreOptions>
+                  {form.sessionType === "group" && !form.endTime && (
+                    <MoreOptions
+                      title="How long it lasts"
+                      summary={
+                        form.durationMinutes >= 60
+                          ? `${form.durationMinutes / 60} h`
+                          : `${form.durationMinutes} min`
+                      }
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {DURATION_OPTIONS.map((mins) => (
+                          <Chip
+                            key={mins}
+                            active={form.durationMinutes === mins}
+                            onClick={() => {
+                              updateForm("durationMinutes", mins);
+                              setDurationInputStr(mins.toString());
+                            }}
+                          >
+                            {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
+                          </Chip>
+                        ))}
+                      </div>
+                      <Rows>
+                        <Row label="Duration (min)">
+                          <input
+                            type="text"
+                            {...intField(
+                              durationInputStr,
+                              setDurationInputStr,
+                              "durationMinutes",
+                              15,
+                            )}
+                            placeholder="Minimum 15"
+                            className={ROW_INPUT}
+                          />
+                        </Row>
+                      </Rows>
+                    </MoreOptions>
+                  )}
+                  <MoreOptions
+                    title="Refunds"
+                    summary={
+                      CANCELLATION_POLICIES.find(
+                        (pol) => pol.value === form.cancellationPolicy,
+                      )?.label ?? "Flexible"
+                    }
+                  >
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {CANCELLATION_POLICIES.map((policy) => (
+                          <Chip
+                            key={policy.value}
+                            active={form.cancellationPolicy === policy.value}
+                            onClick={() =>
+                              updateForm("cancellationPolicy", policy.value)
+                            }
+                          >
+                            {policy.label}
+                          </Chip>
+                        ))}
+                      </div>
+                      <p className="px-1 text-xs text-white/45">
+                        {CANCELLATION_POLICIES.find(
+                          (p) => p.value === form.cancellationPolicy,
+                        )?.description ?? "Pick how refunds work for guests."}
+                      </p>
+                    </div>
+                  </MoreOptions>
+                  <MoreOptions
+                    title="Language, level & group size"
+                    summary={[
+                      `Min ${form.minGroupSize || 1}`,
+                      form.languages.join(", ") || "No language set",
+                      form.level,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  >
+                    <Rows>
+                      <Row label="Min group size">
+                        <input
+                          type="text"
+                          {...intField(
+                            minGroupInputStr,
+                            setMinGroupInputStr,
+                            "minGroupSize",
+                            1,
+                          )}
+                          className={ROW_INPUT}
+                        />
+                      </Row>
+                    </Rows>
+                    <div className="space-y-2">
+                      <p className="text-sm text-white/50">
+                        Languages — pick every language you&apos;ll host in
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {LANGUAGE_OPTIONS.map((lang) => (
+                          <Chip
+                            key={lang}
+                            active={form.languages.includes(lang)}
+                            onClick={() => toggleLanguage(lang)}
+                          >
+                            {lang}
+                          </Chip>
+                        ))}
+                        {/* Custom languages already added */}
+                        {form.languages
+                          .filter((l) => !LANGUAGE_OPTIONS.includes(l))
+                          .map((lang) => (
+                            <Chip
+                              key={lang}
+                              active
+                              onClick={() => toggleLanguage(lang)}
+                            >
+                              {lang} <span className="text-white/80">✕</span>
+                            </Chip>
+                          ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={customLanguage}
+                          onChange={(e) => setCustomLanguage(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              addCustomLanguage();
+                            }
+                          }}
+                          placeholder="Other language…"
+                          className={`${FIELD} !py-2.5`}
+                        />
+                        <button
+                          type="button"
+                          onClick={addCustomLanguage}
+                          className="rounded-full border border-white/10 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
+                        >
+                          Add
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm text-white/50">Level</p>
+                      <div className="flex flex-wrap gap-2">
+                        {LEVEL_OPTIONS.map((lvl) => (
+                          <Chip
+                            key={lvl}
+                            active={form.level === lvl}
+                            onClick={() => updateForm("level", lvl)}
+                          >
+                            {lvl}
+                          </Chip>
+                        ))}
+                      </div>
+                    </div>
+                  </MoreOptions>
+                  {!form.isFree && (
+                    <MoreOptions
+                      title="Ticket types & monthly pass"
+                      summary={
+                        form.useTiers
+                          ? `${form.priceTiers.length} ticket types`
+                          : "One price"
+                      }
+                    >
+                      {!form.isFree && (
+                        <Segmented<"single" | "tiers">
+                          value={form.useTiers ? "tiers" : "single"}
+                          onChange={(v) =>
+                            updateForm("useTiers", v === "tiers")
+                          }
+                          options={[
+                            { value: "single", label: "Single price" },
+                            { value: "tiers", label: "Multiple ticket types" },
+                          ]}
+                        />
+                      )}
+                      {!form.isFree && form.useTiers && (
+                        <div className="space-y-3">
+                          {form.priceTiers.map((tier, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <Rows>
+                                  <Row
+                                    label="Ticket name"
+                                    error={showErrors && !tier.name.trim()}
+                                  >
+                                    <input
+                                      type="text"
+                                      value={tier.name}
+                                      onChange={(e) =>
+                                        updatePriceTier(
+                                          index,
+                                          "name",
+                                          e.target.value,
+                                        )
+                                      }
+                                      placeholder="General, VIP…"
+                                      className={ROW_INPUT}
+                                    />
+                                  </Row>
+                                  <Row
+                                    label="Price (₹)"
+                                    error={
+                                      showErrors && !(Number(tier.priceStr) > 0)
+                                    }
+                                  >
+                                    <input
+                                      type="text"
+                                      inputMode="decimal"
+                                      value={tier.priceStr}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (
+                                          val === "" ||
+                                          /^\d*\.?\d*$/.test(val)
+                                        ) {
+                                          updatePriceTier(
+                                            index,
+                                            "priceStr",
+                                            val,
+                                          );
+                                        }
+                                      }}
+                                      placeholder="0"
+                                      className={ROW_INPUT}
+                                    />
+                                  </Row>
+                                </Rows>
+                              </div>
+                              {form.priceTiers.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removePriceTier(index)}
+                                  className="p-2 text-white/40 transition hover:text-red-400"
+                                  aria-label="Remove ticket type"
+                                >
+                                  <FiX className="h-5 w-5" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <AddPill onClick={addPriceTier}>
+                            Add another ticket type
+                          </AddPill>
+                          <p className="px-1 text-xs text-white/40">
+                            Guests pick one ticket type when booking.
+                          </p>
+                        </div>
+                      )}
+                      {!form.isFree && (
+                        <>
+                          <ToggleRow
+                            label="Monthly pass"
+                            hint={
+                              form.scheduleType === "one_time"
+                                ? "Pick a recurring or custom-dates schedule to offer a pass."
+                                : "Guests pay once and attend for 30 days."
+                            }
+                            checked={form.monthlyPassEnabled}
+                            disabled={form.scheduleType === "one_time"}
+                            onChange={(v) =>
+                              updateForm("monthlyPassEnabled", v)
+                            }
+                          />
+                          {form.monthlyPassEnabled &&
+                            form.scheduleType !== "one_time" && (
+                              <Rows>
+                                <Row label="Pass price (₹)">
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={form.monthlyPassPriceStr}
+                                    onChange={(e) =>
+                                      updateForm(
+                                        "monthlyPassPriceStr",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="2500"
+                                    className={ROW_INPUT}
+                                  />
+                                </Row>
+                                <Row label="Sessions included">
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={form.monthlyPassSessionsStr}
+                                    onChange={(e) =>
+                                      updateForm(
+                                        "monthlyPassSessionsStr",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="All"
+                                    className={ROW_INPUT}
+                                  />
+                                </Row>
+                                <Row label="Passes available">
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    value={form.monthlyPassCapacityStr}
+                                    onChange={(e) =>
+                                      updateForm(
+                                        "monthlyPassCapacityStr",
+                                        e.target.value,
+                                      )
+                                    }
+                                    placeholder="Unlimited"
+                                    className={ROW_INPUT}
+                                  />
+                                </Row>
+                              </Rows>
+                            )}
+                        </>
+                      )}
+                    </MoreOptions>
+                  )}
+                  <MoreOptions
+                    title="More photos"
+                    summary={
+                      form.galleryPreviews.length
+                        ? `${form.galleryPreviews.length} added`
+                        : "None"
+                    }
+                  >
+                    <ImageUpload
+                      label=""
+                      multiple
+                      previews={form.galleryPreviews}
+                      onUpload={handleGalleryUpload}
+                      onRemoveMultiple={removeGalleryImage}
+                    />
+                  </MoreOptions>
+                  <MoreOptions
+                    title="Guest details at booking"
+                    summary={
+                      form.requiresAttendeeDetails
+                        ? `${form.attendeeFields.length} field${form.attendeeFields.length === 1 ? "" : "s"} required`
+                        : "Off"
+                    }
+                  >
+                    <AttendeeDetailsConfig
+                      enabled={form.requiresAttendeeDetails}
+                      fields={form.attendeeFields}
+                      onToggle={(next) =>
+                        updateForm("requiresAttendeeDetails", next)
+                      }
+                      onFieldsChange={(next) =>
+                        updateForm("attendeeFields", next)
+                      }
+                    />
+                  </MoreOptions>
+                </div>
               </Section>
 
-              {/* Actions */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => void handleSubmit(false)}
-                  disabled={isSubmitting}
-                  className={`flex w-full items-center justify-center gap-2.5 rounded-full px-6 py-4 font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 ${GRADIENT}`}
-                >
-                  {submitType === "publish" ? (
-                    <>
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      <span>Publishing...</span>
-                    </>
+              {/* Publish: fixed to the bottom on phones, in place on desktop */}
+              <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#080914]/95 px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur-xl lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+                <p className="mb-2 text-xs leading-5 text-white/55">
+                  {missing.length === 0 ? (
+                    <span className="text-emerald-300">
+                      All set. Ready to publish.
+                    </span>
                   ) : (
                     <>
-                      <FiCheck size={18} />
-                      <span>Publish experience</span>
+                      {requirements.length - missing.length} of{" "}
+                      {requirements.length} done · Still needed:{" "}
+                      {missing.map((m, i) => (
+                        <Fragment key={m.key}>
+                          {i > 0 && ", "}
+                          <button
+                            type="button"
+                            onClick={() => jumpTo(m)}
+                            className="font-semibold text-[#D8B4FE] underline-offset-2 hover:underline"
+                          >
+                            {m.label}
+                          </button>
+                        </Fragment>
+                      ))}
                     </>
                   )}
-                </button>
-                <button
-                  onClick={() => void handleSubmit(true)}
-                  disabled={isSubmitting}
-                  className="flex w-full items-center justify-center gap-2.5 rounded-full border border-white/15 px-6 py-4 font-semibold text-white transition hover:bg-white/[0.06] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {draftLabel}
-                </button>
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => void handleSubmit(true)}
+                    disabled={isSubmitting}
+                    className="shrink-0 rounded-full border border-white/15 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-white/[0.06] disabled:opacity-50"
+                  >
+                    {draftLabel}
+                  </button>
+                  <button
+                    onClick={() => {
+                      const first = missing[0];
+                      if (first) {
+                        setShowErrors(true);
+                        toast.error(`Still needed: ${first.label}`);
+                        jumpTo(first);
+                        return;
+                      }
+                      void handleSubmit(false);
+                    }}
+                    disabled={isSubmitting}
+                    className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 ${GRADIENT}`}
+                  >
+                    {submitType === "publish" ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <span>Publishing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <FiCheck size={18} />
+                        <span>Publish</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

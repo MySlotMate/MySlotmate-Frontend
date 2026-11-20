@@ -73,7 +73,7 @@ export default function ExperiencesClient({
     <main className="min-h-screen bg-[#080914] text-white">
       <components.Navbar />
 
-      <div className="site-x mx-auto w-full max-w-[77rem] py-8">
+      <div className="site-x mx-auto w-full max-w-[77rem] pt-24 pb-8">
         <Breadcrumb
           items={[{ label: "Home", href: "/" }, { label: "Experiences" }]}
           className="mb-6"

@@ -26,6 +26,13 @@ import type { ProfileAlbumDTO } from "~/lib/api";
 import { EmptyCard, GRADIENT_BTN } from "./ProfileKit";
 import { Lightbox } from "./PhotoKit";
 
+/** The backend's message (limits, moderation) when it sent one. */
+function errMsg(e: unknown, fallback: string) {
+  return e instanceof Error && e.message && !e.message.startsWith("Request failed")
+    ? e.message
+    : fallback;
+}
+
 /**
  * The Photos tab: named albums shown like folders on an Android home screen —
  * four small previews and "+N" for the rest. One place for any purpose:
@@ -129,8 +136,8 @@ function NewAlbumSheet({
       const res = await save.mutateAsync({ body: { title: title.trim() } });
       toast.success("Album created. Now add some photos.");
       onCreated(res.data);
-    } catch {
-      toast.error("Couldn't create the album. Please try again.");
+    } catch (e) {
+      toast.error(errMsg(e, "Couldn't create the album. Please try again."));
     }
   };
 
@@ -232,9 +239,9 @@ function AlbumView({
     if (!t || t === album.title) return setTitle(album.title);
     try {
       await save.mutateAsync({ id: album.id, body: { title: t } });
-    } catch {
+    } catch (e) {
       setTitle(album.title);
-      toast.error("Couldn't rename the album.");
+      toast.error(errMsg(e, "Couldn't rename the album."));
     }
   };
 
@@ -251,7 +258,10 @@ function AlbumView({
     }
     try {
       const sizes = await Promise.all(files.map(sizeOf));
-      const res = await upload.mutateAsync({ files, folder: "general" });
+      // The dedicated album folder; older backends only accept "general".
+      const res = await upload
+        .mutateAsync({ files, folder: "users/albums" })
+        .catch(() => upload.mutateAsync({ files, folder: "general" }));
       await addPhotos.mutateAsync({
         albumId: album.id,
         items: (res.data ?? []).map((r, i) => ({
@@ -263,8 +273,8 @@ function AlbumView({
       toast.success(
         `${files.length} photo${files.length === 1 ? "" : "s"} added`,
       );
-    } catch {
-      toast.error("Couldn't add those photos. Please try again.");
+    } catch (e) {
+      toast.error(errMsg(e, "Couldn't add those photos. Please try again."));
     }
   };
 
@@ -274,8 +284,8 @@ function AlbumView({
       await remove.mutateAsync(album.id);
       toast.success("Album deleted");
       onClose();
-    } catch {
-      toast.error("Couldn't delete the album.");
+    } catch (e) {
+      toast.error(errMsg(e, "Couldn't delete the album."));
     }
   };
 

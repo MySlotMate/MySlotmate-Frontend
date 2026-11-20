@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
@@ -8,14 +9,12 @@ import {
   ChevronRight,
   Compass,
   Mail,
-  Medal,
-  MoreHorizontal,
+  Settings,
   Pencil,
   Phone,
   Plus,
   UserPlus,
   Users,
-  Wallet,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -54,15 +53,9 @@ import { useConnections } from "~/lib/connections";
 import { formatIST } from "~/lib/datetime";
 import type { HostDTO } from "~/lib/api";
 
-type Tab =
-  | "experiences"
-  | "hosting"
-  | "photos"
-  | "milestones"
-  | "connections"
-  | "about";
+type Tab = "experiences" | "hosting" | "photos" | "milestones";
 
-// The panel in Navbar holds wallet, host dashboard, admin, support and logout.
+// Settings (the sheet in Navbar): wallet, hosting, account, help and logout.
 const openMenu = () => window.dispatchEvent(new Event("msm:open-profile"));
 
 function roleFor(
@@ -83,6 +76,53 @@ function roleFor(
   if (hostedCount > 0)
     return { label: "Explorer · Free events", tone: "explorer" };
   return { label: "Explorer", tone: "explorer" };
+}
+
+/** The hosts you're connected with, opened from the Connections stat. */
+function ConnectionsSheet({
+  onClose,
+  children,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      className="animate-in fade-in msm-modal fixed inset-0 z-[320] flex items-end justify-center bg-black/60 backdrop-blur-sm duration-200 sm:items-center sm:p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Connections"
+        onClick={(e) => e.stopPropagation()}
+        className="animate-slide-up flex max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] border border-white/10 bg-[#0E0F1F] text-white sm:animate-none sm:rounded-[28px]"
+      >
+        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-white/20 sm:hidden" />
+        <div className="flex items-center justify-between px-5 pt-4 pb-3">
+          <h3 className="font-outfit text-lg font-bold">Connections</h3>
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-white/55 transition hover:bg-white/10 hover:text-white"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+          {children}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 /** Explorers edit name and city here; hosts use the host dashboard editor. */
@@ -195,6 +235,29 @@ export default function ProfilePage() {
     useListTimeAction();
   const [tab, setTab] = useState<Tab>("experiences");
   const [editing, setEditing] = useState(false);
+  const [showConnections, setShowConnections] = useState(false);
+  // Settings links here with ?edit=1 or ?view=connections (or, when you're
+  // already on this page, sends the same query as an event).
+  useEffect(() => {
+    const apply = (q: string) => {
+      const p = new URLSearchParams(q);
+      if (p.get("edit") === "1") setEditing(true);
+      if (p.get("view") === "connections") setShowConnections(true);
+    };
+    const onAction = (e: Event) => apply(String((e as CustomEvent).detail));
+    window.addEventListener("msm:profile-action", onAction);
+    return () => window.removeEventListener("msm:profile-action", onAction);
+  }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("edit") === "1") setEditing(true);
+    if (params.get("view") === "connections") setShowConnections(true);
+    if (!params.has("edit") && !params.has("view")) return;
+    params.delete("edit");
+    params.delete("view");
+    const q = params.toString();
+    window.history.replaceState(null, "", `/profile${q ? `?${q}` : ""}`);
+  }, []);
 
   const { data: user } = useUserProfile(userId);
   const { data: application } = useApplicationStatus(userId);
@@ -239,21 +302,18 @@ export default function ProfilePage() {
   const role = roleReady ? roleFor(host, hosting.length) : null;
   const isApproved = host?.application_status === "approved";
 
-  const tabs: {
-    key: Tab;
-    label: string;
-    count?: number;
-    mobileOnly?: boolean;
-  }[] = [
+  const showHosted = hosting.length > 0 || isApproved;
+  // Four at most, so the bar fits a phone. Connections opens from its stat.
+  const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: "experiences", label: "Attended", count: moments.length },
-    { key: "hosting", label: "Hosted by me", count: hosting.length },
+    ...(showHosted
+      ? [{ key: "hosting" as const, label: "Hosted", count: hosting.length }]
+      : []),
     { key: "photos", label: "Photos" },
     { key: "milestones", label: "Milestones", count: earned.length },
-    { key: "connections", label: "Connections", count: connectedIds.length },
-    { key: "about", label: "About", mobileOnly: true },
   ];
 
-  // In the card on desktop, in the About tab on phones.
+  // Desktop only, under the card. Phones reach these through Settings.
   const about = (
     <>
       {roleReady && !isApproved && (
@@ -300,31 +360,6 @@ export default function ProfilePage() {
           </li>
         </ul>
       </InfoBlock>
-      <div className="flex flex-col">
-        {[
-          { href: "/activities", label: "My journey", icon: Medal },
-          { href: "/wallet", label: "Wallet", icon: Wallet },
-          ...(host
-            ? [
-                {
-                  href: "/host-dashboard",
-                  label: "Host dashboard",
-                  icon: CalendarHeart,
-                },
-              ]
-            : []),
-        ].map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 text-sm text-white/75 transition hover:bg-white/[0.05] hover:text-white"
-          >
-            <l.icon className="h-4 w-4 text-[#D8B4FE]" />
-            <span className="flex-1">{l.label}</span>
-            <ChevronRight className="h-4 w-4 text-white/25" />
-          </Link>
-        ))}
-      </div>
     </>
   );
 
@@ -370,7 +405,11 @@ export default function ProfilePage() {
                   hosting.length > 0 || isApproved
                     ? { value: hosting.length, label: "Hosted" }
                     : { value: earned.length, label: "Milestones" },
-                  { value: connectedIds.length, label: "Connections" },
+                  {
+                    value: connectedIds.length,
+                    label: "Connections",
+                    onClick: () => setShowConnections(true),
+                  },
                 ]}
                 actions={
                   roleReady ? (
@@ -389,23 +428,32 @@ export default function ProfilePage() {
                           Public view
                         </SecondaryButton>
                       )}
-                      <button
-                        type="button"
-                        aria-label="Wallet, settings and support"
-                        onClick={openMenu}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-white/80 transition hover:bg-white/10 hover:text-white"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
                     </>
                   ) : (
                     <span className="h-11 w-full animate-pulse rounded-full bg-white/[0.06]" />
                   )
                 }
                 extra={about}
+                corner={
+                  <button
+                    type="button"
+                    aria-label="Settings"
+                    title="Settings"
+                    onClick={openMenu}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/75 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <Settings className="h-[18px] w-[18px]" />
+                  </button>
+                }
               />
 
               <div className="min-w-0">
+                {/* Phones: interests sit above the tabs (desktop has them in the card's side). */}
+                {(host?.expertise_tags?.length ?? 0) > 0 && (
+                  <div className="mb-4 lg:hidden">
+                    <TagList tags={host!.expertise_tags} />
+                  </div>
+                )}
                 <ProfileTabs tabs={tabs} active={tab} onChange={setTab} />
 
                 <div className="mt-5">
@@ -508,62 +556,7 @@ export default function ProfilePage() {
                         See your journey <ChevronRight className="h-4 w-4" />
                       </Link>
                     </div>
-                  ) : tab === "about" ? (
-                    <div className="flex flex-col gap-6">{about}</div>
-                  ) : connected.length ? (
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {connected.map((h) => (
-                        <div
-                          key={h.id}
-                          className={`flex items-center gap-3 p-3 ${CARD}`}
-                        >
-                          <Link
-                            href={`/host/${h.slug}`}
-                            className="flex min-w-0 flex-1 items-center gap-3"
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                              src={h.avatar_url || "/assets/home/profile1.png"}
-                              alt=""
-                              className="h-12 w-12 shrink-0 rounded-full object-cover"
-                            />
-                            <span className="min-w-0">
-                              <span className="block truncate text-sm font-semibold">
-                                {h.first_name} {h.last_name}
-                              </span>
-                              <span className="block truncate text-xs text-white/50">
-                                {h.tagline ?? h.city}
-                              </span>
-                            </span>
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              toggle(h.id);
-                              toast(`Disconnected from ${h.first_name}`);
-                            }}
-                            className="shrink-0 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-white/60 transition hover:border-white/25 hover:text-white"
-                          >
-                            Connected
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <EmptyCard
-                      icon={<UserPlus className="h-6 w-6" />}
-                      title="No connections yet"
-                      text="Connect with hosts you like from their profile. Their new experiences then show up first on your home."
-                    >
-                      <Link
-                        href="/explore?type=hosts"
-                        className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
-                      >
-                        Find hosts
-                      </Link>
-                    </EmptyCard>
-                  )}
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -576,6 +569,64 @@ export default function ProfilePage() {
         open={showBecomeHostModal}
         onClose={closeBecomeHostModal}
       />
+      {showConnections && (
+        <ConnectionsSheet onClose={() => setShowConnections(false)}>
+          {connected.length ? (
+            <div className="grid gap-2.5">
+              {connected.map((h) => (
+                <div
+                  key={h.id}
+                  className={`flex items-center gap-3 p-3 ${CARD}`}
+                >
+                  <Link
+                    href={`/host/${h.slug}`}
+                    className="flex min-w-0 flex-1 items-center gap-3"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                      src={h.avatar_url || "/assets/home/profile1.png"}
+                      alt=""
+                      className="h-12 w-12 shrink-0 rounded-full object-cover"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-semibold">
+                        {h.first_name} {h.last_name}
+                      </span>
+                      <span className="block truncate text-xs text-white/50">
+                        {h.tagline ?? h.city}
+                      </span>
+                    </span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggle(h.id);
+                      toast(`Disconnected from ${h.first_name}`);
+                    }}
+                    className="shrink-0 rounded-full border border-white/10 px-3 py-1.5 text-xs font-semibold text-white/60 transition hover:border-white/25 hover:text-white"
+                  >
+                    Connected
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyCard
+              icon={<UserPlus className="h-6 w-6" />}
+              title="No connections yet"
+              text="Connect with hosts you like from their profile. Their new experiences then show up first on your home."
+            >
+              <Link
+                href="/explore?type=hosts"
+                className={`mt-5 rounded-full px-6 py-2.5 text-sm font-semibold ${GRADIENT_BTN}`}
+              >
+                Find hosts
+              </Link>
+            </EmptyCard>
+          )}
+        </ConnectionsSheet>
+      )}
       {editing && userId && (
         <EditSheet
           userId={userId}

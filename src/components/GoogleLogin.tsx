@@ -8,6 +8,7 @@ import {
   signInWithPopup,
   signInWithCustomToken,
 } from "firebase/auth";
+import type { LoginHint } from "~/lib/savedAccounts";
 import { auth } from "~/utils/firebase";
 import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
@@ -28,6 +29,8 @@ interface GoogleLoginProps {
   /** Optional context, e.g. why sign-in is being asked for here. */
   title?: string;
   subtitle?: string;
+  /** Switching to a saved account: open its login method, prefilled. */
+  hint?: LoginHint | null;
 }
 
 type LoginType = "google" | "phone";
@@ -37,6 +40,7 @@ export default function GoogleLogin({
   onClose,
   title = "Log in or sign up",
   subtitle = "Find events near you and book your spot in a tap.",
+  hint = null,
 }: GoogleLoginProps) {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
@@ -53,6 +57,14 @@ export default function GoogleLogin({
   const [name, setName] = useState("");
 
   // Reset all states and auto-transition to name setup if current user has a Guest User profile
+  useEffect(() => {
+    if (open && hint) {
+      setLoginType(hint.method);
+      if (hint.method === "phone" && hint.phone)
+        setPhone(hint.phone.replace(/^\+91/, "").replace(/\D/g, ""));
+    }
+  }, [open, hint]);
+
   useEffect(() => {
     if (open) {
       const storedId = localStorage.getItem("msm_user_id");
@@ -104,6 +116,14 @@ export default function GoogleLogin({
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
+      // Always let people pick the Google account (needed to add a second
+      // account); when switching, suggest the one they chose.
+      provider.setCustomParameters({
+        prompt: "select_account",
+        ...(hint?.method === "google" && hint.email
+          ? { login_hint: hint.email }
+          : {}),
+      });
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
 

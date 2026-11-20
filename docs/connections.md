@@ -4,7 +4,7 @@
 
 The web app now has one profile layout for everyone: explorers, free hosts and verified hosts. People can **Connect** with a host from the host's profile. Once connected, that host's upcoming experiences show first on Home under **From your connections**.
 
-The backend has no connections API yet, so the web app keeps connections **on the device** for now (`src/lib/connections.ts`, localStorage key `msm_connections_v1`). They don't sync across devices, hosts can't see who connected, and the host's connection count can't be shown. This spec covers what the backend needs so the app can switch over. The hook's shape stays the same; only the three storage helpers in that file change to API calls.
+**Status:** phase 1 is live. The web app reads and writes connections through `/users/me/connections` (`src/lib/connections.ts`) and shows `connections_count` on host profiles. Connections saved in a browser before the API existed (localStorage key `msm_connections_v1`) are sent up once, the first time that person is signed in, then cleared.
 
 ## What "connect" means
 

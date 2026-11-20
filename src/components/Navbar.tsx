@@ -1,23 +1,10 @@
 "use client";
 import { useState, useRef, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { signOut } from "firebase/auth";
 import { auth } from "~/utils/firebase";
 import { FiMenu, FiX, FiChevronRight } from "react-icons/fi";
 import { IoLocationSharp } from "react-icons/io5";
-import {
-  LuCalendarDays,
-  LuBookmarkMinus,
-  LuMessageSquare,
-  LuShield,
-  LuFileText,
-  LuLogOut,
-  LuArrowLeft,
-  LuHome,
-  LuHeart,
-  LuUser,
-} from "react-icons/lu";
 import Link from "next/link";
 import GoogleLogin from "./GoogleLogin";
 import LocationModal, {
@@ -27,6 +14,13 @@ import LocationModal, {
 } from "./LocationModal";
 import { BecomeHostModal } from "./become-host";
 import { WalletDisplay } from "./wallet";
+import AccountSheet from "./AccountSheet";
+import {
+  rememberAccount,
+  useSavedAccounts,
+  type LoginHint,
+  type SavedAccount,
+} from "~/lib/savedAccounts";
 import {
   useMyProfile,
   useApplicationStatus,
@@ -50,7 +44,6 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
   const profileRef = useRef<HTMLDivElement>(null);
   const profilePanelRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const { userId: storedUserId } = useStoredAuth();
 
   useEffect(() => {
@@ -130,7 +123,6 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
   // Hydration guard: ensure component is mounted before rendering content that depends on client-side state
   useEffect(() => {
     setMounted(true);
-    setPortalTarget(document.body);
   }, []);
 
   const validUserId =
@@ -171,8 +163,27 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
     }
     return null;
   }, [firebaseUser, dbProfile]);
-  const { data: hostData, isLoading: hostLoading } =
-    useApplicationStatus(validUserId);
+  const { data: hostData } = useApplicationStatus(validUserId);
+
+  // Accounts used on this device, for the switcher in Settings.
+  const { accounts: savedAccounts, forget: forgetAccount } = useSavedAccounts();
+  const [loginHint, setLoginHint] = useState<LoginHint | null>(null);
+  const [addingAccount, setAddingAccount] = useState(false);
+  useEffect(() => {
+    if (!user || !validUserId) return;
+    rememberAccount({
+      id: validUserId,
+      name: user.displayName,
+      email: user.email === "" ? null : user.email,
+      phone: user.phoneNumber,
+      photo: user.photoURL,
+      method: firebaseUser?.providerData.some(
+        (p) => p.providerId === "google.com",
+      )
+        ? "google"
+        : "phone",
+    });
+  }, [user, validUserId, firebaseUser]);
 
   const hostStatus = hostData?.status?.application_status ?? null;
 
@@ -182,11 +193,9 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
   const navIdToken = useIdToken();
   const { data: cohostSummary } = useCoHostSummary(navIdToken);
   const hasCoHostInvites = (cohostSummary?.received ?? 0) > 0;
-  // A co-host needs the dashboard to edit the shared experience, work its door
-  // and withdraw its earnings — with or without an approved application of their
-  // own. The entry vanishes on its own once the share goes inactive (see
+  // A co-host without their own host profile reaches the dashboard through
+  // the settings sheet. The entry vanishes once the share goes inactive (see
   // coHostActive in cohost_repository.go), so nothing has to be revoked by hand.
-  const canOpenHostDashboard = hostStatus === "approved" || hasCoHostInvites;
 
   const isAdminUser = useMemo(() => {
     if (!user?.email) return false;
@@ -196,8 +205,6 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
       .map((e) => e.trim());
     return adminEmails.includes(user.email.toLowerCase());
   }, [user?.email]);
-
-  const showBecomeHostButton = !hostLoading && !!validUserId && !hostStatus;
 
   useEffect(() => {
     if (hostData?.status?.id) {
@@ -250,6 +257,18 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
 
     // Sign out from Firebase
     void signOut(auth);
+  };
+
+  // Sign out, then open the login for the chosen account (or a new one).
+  const switchAccount = (a: SavedAccount | null) => {
+    void handleLogout();
+    setLoginHint(
+      a
+        ? { method: a.method, email: a.email, phone: a.phone, name: a.name }
+        : null,
+    );
+    setAddingAccount(!a);
+    setShowLogin(true);
   };
 
   return (
@@ -355,8 +374,9 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
 
             <div className="relative" ref={profileRef}>
               {user ? (
-                <button
-                  onClick={() => setProfileOpen(!profileOpen)}
+                <Link
+                  href="/profile"
+                  aria-label="Profile"
                   suppressHydrationWarning
                   className={`flex cursor-pointer items-center gap-2 rounded-full border-2 p-0.5 transition hover:shadow-md ${dark ? "border-[#9B30FF]" : "border-[#A020F0]"}`}
                 >
@@ -368,7 +388,7 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                     className="h-8 w-8 rounded-full object-cover"
                     referrerPolicy="no-referrer"
                   />
-                </button>
+                </Link>
               ) : (
                 <button
                   onClick={() => setShowLogin(true)}
@@ -386,310 +406,25 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                 </button>
               )}
 
-              {profileOpen && user && portalTarget
-                ? createPortal(
-                    <>
-                      <div
-                        className="msm-modal fixed inset-0 z-[1000] bg-black/30"
-                        onClick={() => setProfileOpen(false)}
-                      />
-                      <div
-                        ref={profilePanelRef}
-                        className="fixed top-0 right-0 z-[1010] flex h-full w-full max-w-sm flex-col border-l border-white/10 bg-[#0E0F1F] text-white shadow-2xl"
-                      >
-                        {/* Header */}
-                        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => setProfileOpen(false)}
-                              className="rounded-lg p-1 transition hover:bg-white/10"
-                              aria-label="Back"
-                            >
-                              <LuArrowLeft className="h-5 w-5 text-white/90" />
-                            </button>
-                            <h2 className="text-lg font-bold text-white">
-                              Profile
-                            </h2>
-                          </div>
-                        </div>
-
-                        {/* User info */}
-                        <div className="flex items-center gap-4 px-5 py-5">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={
-                              user.photoURL ??
-                              "/assets/home/avatar-placeholder.svg"
-                            }
-                            alt=""
-                            loading="lazy"
-                            className="h-14 w-14 rounded-full object-cover"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className="flex-1 overflow-hidden">
-                            <p className="truncate text-base font-bold text-white">
-                              {user.displayName}
-                            </p>
-                            <p className="truncate text-sm text-white/55">
-                              {user.phoneNumber ?? user.email}
-                            </p>
-                          </div>
-                          {hostStatus === "pending" ||
-                          hostStatus === "under_review" ? (
-                            <span className="ml-auto flex-shrink-0 rounded-full bg-amber-500/15 px-2.5 py-1 text-[10px] font-bold tracking-wide text-amber-300 uppercase">
-                              Under Review
-                            </span>
-                          ) : hostStatus === "approved" ? (
-                            <span className="ml-auto flex-shrink-0 rounded-full bg-[#9B30FF]/20 px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#D8B4FE] uppercase">
-                              Verified Host
-                            </span>
-                          ) : null}
-                        </div>
-
-                        {/* Wallet */}
-                        {validUserId && (
-                          <div className="mx-5 mb-3">
-                            <WalletDisplay
-                              userId={validUserId}
-                              userName={user.displayName ?? undefined}
-                              userEmail={user.email ?? undefined}
-                              userPhone={user.phoneNumber ?? undefined}
-                              variant="sidebar"
-                              dark
-                            />
-                          </div>
-                        )}
-
-                        <div className="flex-1 overflow-y-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                          {/* Host Dashboard card — approved hosts and co-hosts */}
-                          {canOpenHostDashboard && (
-                            <div className="mb-4 flex items-center justify-between rounded-xl border border-[#9B30FF]/30 bg-[#9B30FF]/10 px-4 py-3">
-                              <div>
-                                <p className="text-sm font-bold text-white">
-                                  Host Dashboard
-                                </p>
-                                <p className="text-xs text-white/55">
-                                  Manage your experiences
-                                </p>
-                              </div>
-                              <Link
-                                href="/host-dashboard"
-                                onClick={() => setProfileOpen(false)}
-                                className="rounded-xl bg-gradient-to-r from-[#7038F5] to-[#B724EA] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
-                              >
-                                Go Now
-                              </Link>
-                            </div>
-                          )}
-
-                          {hasCoHostInvites && hostStatus !== "approved" && (
-                            <div className="mb-4 flex items-center justify-between rounded-xl border border-[#9B30FF]/30 bg-[#9B30FF]/10 px-4 py-3">
-                              <div>
-                                <p className="text-sm font-bold text-white">
-                                  Co-hosting
-                                </p>
-                                <p className="text-xs text-white/55">
-                                  Experiences shared with you
-                                </p>
-                              </div>
-                              <Link
-                                href="/host-dashboard/co-hosting"
-                                onClick={() => setProfileOpen(false)}
-                                className="rounded-xl bg-gradient-to-r from-[#7038F5] to-[#B724EA] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
-                              >
-                                Open
-                              </Link>
-                            </div>
-                          )}
-
-                          {/* Become a Host card - Non-hosts */}
-                          {showBecomeHostButton && (
-                            <div className="z-[10000] mb-4 flex items-center justify-between rounded-xl border border-[#9B30FF]/30 bg-[#9B30FF]/10 px-4 py-3">
-                              <div>
-                                <p className="text-sm font-bold text-white">
-                                  Become a Host
-                                </p>
-                                <p className="text-xs text-white/55">
-                                  Start hosting experiences
-                                </p>
-                              </div>
-                              <button
-                                onClick={() => {
-                                  setShowBecomeHost(true);
-                                  setProfileOpen(false);
-                                }}
-                                className="rounded-xl bg-gradient-to-r from-[#7038F5] to-[#B724EA] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
-                              >
-                                Get Started
-                              </button>
-                            </div>
-                          )}
-
-                          {/* Host dashboard items */}
-                          {canOpenHostDashboard && (
-                            <div className="mb-4 divide-y divide-white/10 rounded-xl border border-white/10">
-                              <Link
-                                href="/host-dashboard"
-                                onClick={() => setProfileOpen(false)}
-                                className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <LuHome className="h-5 w-5 text-white/70" />
-                                  Host dashboard
-                                </span>
-                                <FiChevronRight className="h-4 w-4 text-white/40" />
-                              </Link>
-                              {/* Host profile assumes an approved application —
-                                  a co-host without one has nothing to show there. */}
-                              {hostStatus === "approved" && (
-                                <Link
-                                  href="/host-dashboard/profile"
-                                  onClick={() => setProfileOpen(false)}
-                                  className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                                >
-                                  <span className="flex items-center gap-3">
-                                    <LuUser className="h-5 w-5 text-white/70" />
-                                    Host profile
-                                  </span>
-                                  <FiChevronRight className="h-4 w-4 text-white/40" />
-                                </Link>
-                              )}
-                              <Link
-                                href="/activities"
-                                onClick={() => setProfileOpen(false)}
-                                className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <LuCalendarDays className="h-5 w-5 text-white/70" />
-                                  View all bookings
-                                </span>
-                                <FiChevronRight className="h-4 w-4 text-white/40" />
-                              </Link>
-                              <Link
-                                href="/saved-experiences"
-                                onClick={() => setProfileOpen(false)}
-                                className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <LuHeart className="h-5 w-5 text-white/70" />
-                                  Saved experiences
-                                </span>
-                                <FiChevronRight className="h-4 w-4 text-white/40" />
-                              </Link>
-                            </div>
-                          )}
-
-                          {/* Regular user items */}
-                          {hostStatus !== "approved" && (
-                            <div className="divide-y divide-white/10 rounded-xl border border-white/10">
-                              <Link
-                                href="/activities"
-                                onClick={() => setProfileOpen(false)}
-                                className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <LuCalendarDays className="h-5 w-5 text-white/70" />
-                                  View all bookings
-                                </span>
-                                <FiChevronRight className="h-4 w-4 text-white/40" />
-                              </Link>
-                              <Link
-                                href="/saved-experiences"
-                                onClick={() => setProfileOpen(false)}
-                                className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                              >
-                                <span className="flex items-center gap-3">
-                                  <LuBookmarkMinus className="h-5 w-5 text-white/70" />
-                                  Saved experiences
-                                </span>
-                                <FiChevronRight className="h-4 w-4 text-white/40" />
-                              </Link>
-                            </div>
-                          )}
-
-                          {/* Admin */}
-                          {isAdminUser && (
-                            <>
-                              <p className="mt-5 mb-1 text-xs font-semibold tracking-wide text-white/55 uppercase">
-                                Admin
-                              </p>
-                              <div className="rounded-xl border border-white/10">
-                                <Link
-                                  href="/admin"
-                                  onClick={() => setProfileOpen(false)}
-                                  className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                                >
-                                  <span className="flex items-center gap-3">
-                                    <LuShield className="h-5 w-5 text-white/70" />
-                                    View Admin Dashboard
-                                  </span>
-                                  <FiChevronRight className="h-4 w-4 text-white/40" />
-                                </Link>
-                              </div>
-                            </>
-                          )}
-
-                          {/* Support */}
-                          <p className="mt-5 mb-1 text-xs font-semibold tracking-wide text-white/55 uppercase">
-                            Support
-                          </p>
-                          <div className="rounded-xl border border-white/10">
-                            <Link
-                              href="/support"
-                              onClick={() => setProfileOpen(false)}
-                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                            >
-                              <span className="flex items-center gap-3">
-                                <LuMessageSquare className="h-5 w-5 text-white/70" />
-                                Support &amp; Safety
-                              </span>
-                              <FiChevronRight className="h-4 w-4 text-white/40" />
-                            </Link>
-                          </div>
-
-                          {/* More */}
-                          <p className="mt-5 mb-1 text-xs font-semibold tracking-wide text-white/55 uppercase">
-                            More
-                          </p>
-                          <div className="divide-y divide-white/10 rounded-xl border border-white/10">
-                            <Link
-                              href="/support/terms-conditions"
-                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                            >
-                              <span className="flex items-center gap-3">
-                                <LuShield className="h-5 w-5 text-white/70" />
-                                Terms &amp; Conditions
-                              </span>
-                              <FiChevronRight className="h-4 w-4 text-white/40" />
-                            </Link>
-                            <Link
-                              href="/support/policies"
-                              className="flex w-full items-center justify-between px-4 py-3.5 text-sm text-white/90 transition hover:bg-white/5"
-                            >
-                              <span className="flex items-center gap-3">
-                                <LuFileText className="h-5 w-5 text-white/70" />
-                                Privacy Policy
-                              </span>
-                              <FiChevronRight className="h-4 w-4 text-white/40" />
-                            </Link>
-                          </div>
-
-                          {/* Logout */}
-                          <div className="mt-5 mb-6 rounded-xl border border-white/10">
-                            <button
-                              onClick={handleLogout}
-                              className="flex w-full items-center gap-3 px-4 py-3.5 text-sm text-white/90 transition hover:bg-red-500/10"
-                            >
-                              <LuLogOut className="h-5 w-5 text-white/70" />
-                              Logout
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </>,
-                    portalTarget,
-                  )
-                : null}
+              {profileOpen && user && (
+                <AccountSheet
+                  user={user}
+                  userId={validUserId ?? null}
+                  hostStatus={hostStatus}
+                  hasCoHostInvites={hasCoHostInvites}
+                  isAdmin={isAdminUser}
+                  panelRef={profilePanelRef}
+                  onClose={() => setProfileOpen(false)}
+                  onLogout={handleLogout}
+                  city={location?.city ?? null}
+                  onBecomeHost={() => setShowBecomeHost(true)}
+                  onChangeCity={() => setLocationOpen(true)}
+                  accounts={savedAccounts.filter((a) => a.id !== validUserId)}
+                  onSwitchAccount={(a) => switchAccount(a)}
+                  onAddAccount={() => switchAccount(null)}
+                  onForgetAccount={forgetAccount}
+                />
+              )}
             </div>
           </div>
 
@@ -807,217 +542,29 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
             </div>
 
             {user ? (
-              <>
-                <div className="mb-4 flex w-full items-center gap-3 rounded-lg py-2">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={user.photoURL ?? "/assets/home/avatar-placeholder.svg"}
-                    alt=""
-                    loading="lazy"
-                    className="h-10 w-10 rounded-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="overflow-hidden text-left">
-                    <p className="truncate text-sm font-semibold text-white">
-                      {user.displayName}
-                    </p>
-                    <p className="truncate text-xs text-[#A5A8C3]">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Become a Host — mobile - Non-hosts */}
-                {showBecomeHostButton && (
-                  <div className="mb-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                    <div>
-                      <p className="text-sm font-bold text-white">
-                        Become a Host
-                      </p>
-                      <p className="text-xs text-[#A5A8C3]">
-                        Start hosting experiences
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowBecomeHost(true);
-                        setMobileOpen(false);
-                      }}
-                      className="rounded-xl bg-[#A020F0] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#8A1AD0]"
-                    >
-                      Get Started
-                    </button>
-                  </div>
-                )}
-
-                {hasCoHostInvites && hostStatus !== "approved" && (
-                  <div className="mb-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                    <div>
-                      <p className="text-sm font-bold text-white">Co-hosting</p>
-                      <p className="text-xs text-[#A5A8C3]">
-                        Experiences shared with you
-                      </p>
-                    </div>
-                    <Link
-                      href="/host-dashboard/co-hosting"
-                      onClick={() => setMobileOpen(false)}
-                      className="rounded-xl bg-[#A020F0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
-                    >
-                      Open
-                    </Link>
-                  </div>
-                )}
-
-                {/* Host Dashboard card — mobile: approved hosts and co-hosts */}
-                {canOpenHostDashboard && (
-                  <div className="mb-3 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
-                    <div>
-                      <p className="text-sm font-bold text-white">
-                        Host Dashboard
-                      </p>
-                      <p className="text-xs text-[#A5A8C3]">
-                        Manage your experiences
-                      </p>
-                    </div>
-                    <Link
-                      href="/host-dashboard"
-                      onClick={() => setMobileOpen(false)}
-                      className="rounded-xl bg-[#A020F0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
-                    >
-                      Go Now
-                    </Link>
-                  </div>
-                )}
-
-                <div className="mb-3 space-y-1.5">
-                  {canOpenHostDashboard && (
-                    <>
-                      <Link
-                        href="/host-dashboard"
-                        onClick={() => setMobileOpen(false)}
-                        className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
-                      >
-                        <span className="flex items-center gap-3">
-                          <LuHome className="h-5 w-5 text-[#A5A8C3]" />
-                          Host dashboard
-                        </span>
-                        <FiChevronRight className="h-4 w-4 text-[#777B98]" />
-                      </Link>
-                      {hostStatus === "approved" && (
-                        <Link
-                          href="/host-dashboard/profile"
-                          onClick={() => setMobileOpen(false)}
-                          className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
-                        >
-                          <span className="flex items-center gap-3">
-                            <LuUser className="h-5 w-5 text-[#A5A8C3]" />
-                            Host profile
-                          </span>
-                          <FiChevronRight className="h-4 w-4 text-[#777B98]" />
-                        </Link>
-                      )}
-                    </>
-                  )}
-                  <Link
-                    href="/activities"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
-                  >
-                    <span className="flex items-center gap-3">
-                      <LuCalendarDays className="h-5 w-5 text-[#A5A8C3]" />
-                      View all bookings
-                    </span>
-                    <FiChevronRight className="h-4 w-4 text-[#777B98]" />
-                  </Link>
-                  <Link
-                    href="/saved-experiences"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
-                  >
-                    <span className="flex items-center gap-3">
-                      <LuHeart className="h-5 w-5 text-[#A5A8C3]" />
-                      Saved experiences
-                    </span>
-                    <FiChevronRight className="h-4 w-4 text-[#777B98]" />
-                  </Link>
-                </div>
-
-                {isAdminUser && (
-                  <div className="mb-3">
-                    <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
-                      Admin
-                    </p>
-                    <Link
-                      href="/admin"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
-                    >
-                      <span className="flex items-center gap-3">
-                        <LuShield className="h-5 w-5 text-[#A5A8C3]" />
-                        Pending applications
-                      </span>
-                      <FiChevronRight className="h-4 w-4 text-[#777B98]" />
-                    </Link>
-                  </div>
-                )}
-
-                <hr className="my-3" />
-
-                <div className="mb-3">
-                  <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
-                    Support
-                  </p>
-                  <Link
-                    href="/support"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
-                  >
-                    <span className="flex items-center gap-3">
-                      <LuMessageSquare className="h-5 w-5 text-[#A5A8C3]" />
-                      Support &amp; Safety
-                    </span>
-                    <FiChevronRight className="h-4 w-4 text-[#777B98]" />
-                  </Link>
-                </div>
-
-                <div className="mb-3">
-                  <p className="mb-1.5 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
-                    More
-                  </p>
-                  <div className="space-y-1.5">
-                    <Link
-                      href="/support/terms-conditions"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
-                    >
-                      <span className="flex items-center gap-3">
-                        <LuShield className="h-5 w-5 text-[#A5A8C3]" />
-                        Terms &amp; Conditions
-                      </span>
-                      <FiChevronRight className="h-4 w-4 text-[#777B98]" />
-                    </Link>
-                    <Link
-                      href="/support/policies"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-white/[0.04]"
-                    >
-                      <span className="flex items-center gap-3">
-                        <LuFileText className="h-5 w-5 text-[#A5A8C3]" />
-                        Privacy Policy
-                      </span>
-                      <FiChevronRight className="h-4 w-4 text-[#777B98]" />
-                    </Link>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleLogout}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-white/80 transition hover:bg-red-500/10"
-                >
-                  <LuLogOut className="h-5 w-5 text-[#A5A8C3]" />
-                  Logout
-                </button>
-              </>
+              <Link
+                href="/profile"
+                onClick={() => setMobileOpen(false)}
+                className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-[#131328] p-3 text-left transition hover:bg-[#1A1A35]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={user.photoURL ?? "/assets/home/avatar-placeholder.svg"}
+                  alt=""
+                  loading="lazy"
+                  className="h-10 w-10 rounded-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold text-white">
+                    {user.displayName}
+                  </span>
+                  <span className="block text-xs text-white/50">
+                    View profile
+                  </span>
+                </span>
+                <FiChevronRight className="h-4 w-4 text-white/40" />
+              </Link>
             ) : (
               <button
                 onClick={() => {
@@ -1040,7 +587,30 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
         </div>
       )}
 
-      <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
+      <GoogleLogin
+        open={showLogin}
+        onClose={() => {
+          setShowLogin(false);
+          setLoginHint(null);
+          setAddingAccount(false);
+        }}
+        hint={loginHint}
+        {...(loginHint
+          ? {
+              title: `Switch to ${loginHint.name?.split(" ")[0] ?? "your account"}`,
+              subtitle:
+                loginHint.method === "google"
+                  ? `Continue with Google as ${loginHint.email ?? "that account"}.`
+                  : "We'll send a code to that number.",
+            }
+          : addingAccount
+            ? {
+                title: "Add an account",
+                subtitle:
+                  "Sign in with another account. You can switch back from Settings.",
+              }
+            : {})}
+      />
       <LocationModal
         open={locationOpen}
         onClose={() => setLocationOpen(false)}

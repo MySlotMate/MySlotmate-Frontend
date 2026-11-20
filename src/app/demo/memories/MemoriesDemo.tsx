@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
+  Settings,
   CalendarDays,
   ImagePlus,
   Images,
@@ -9,7 +11,9 @@ import {
   MapPin,
   RotateCcw,
 } from "lucide-react";
+import AccountSheet from "~/components/AccountSheet";
 import EventPhotos from "~/components/profile/EventPhotos";
+import { ProfileIdentity } from "~/components/profile/ProfileKit";
 import { MobileHero } from "~/components/home/HomeFeed";
 import { useListHosts, useListPublicEvents } from "~/hooks/useApi";
 import { AlbumFolder } from "~/components/profile/PhotoAlbums";
@@ -100,6 +104,7 @@ export default function MemoriesDemo() {
   const [gallery, setGallery] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [openAlbum, setOpenAlbum] = useState<number | null>(null);
+  const [sheet, setSheet] = useState(false);
   const { data: liveEvents } = useListPublicEvents();
   const { data: liveHosts } = useListHosts();
   const hostMap = new Map((liveHosts ?? []).map((h) => [h.id, h]));
@@ -271,6 +276,113 @@ export default function MemoriesDemo() {
               events={(liveEvents ?? []).slice(0, 6)}
               hostById={hostMap}
             />
+          </div>
+        </section>
+
+        <section className="mt-14 max-w-[360px]">
+          <h2 className="font-outfit mb-4 text-xl font-bold">
+            Profile card + account sheet
+          </h2>
+          <ProfileIdentity
+            avatar="/assets/home/people1.webp"
+            name="Riya Sharma"
+            verified
+            role={{ label: "Community host", tone: "community" }}
+            tagline="Pottery, chai and long walks"
+            meta={["Guwahati", "Joined Oct 2026"]}
+            stats={[
+              { value: 6, label: "Attended" },
+              { value: 3, label: "Hosted" },
+              { value: 12, label: "Connections" },
+            ]}
+            actions={null}
+            corner={
+              <button
+                type="button"
+                aria-label="Account and settings"
+                onClick={() => setSheet(true)}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-white/75 transition hover:bg-white/10 hover:text-white"
+              >
+                <Settings className="h-[18px] w-[18px]" />
+              </button>
+            }
+          />
+          {sheet && (
+            <AccountSheet
+              user={{
+                displayName: "Riya Sharma",
+                email: "riya@example.com",
+                phoneNumber: null,
+                photoURL: "/assets/home/people1.webp",
+              }}
+              userId={null}
+              hostStatus="approved"
+              hasCoHostInvites={false}
+              isAdmin={false}
+              onClose={() => setSheet(false)}
+              onLogout={() => setSheet(false)}
+              city="Guwahati"
+              onBecomeHost={() => undefined}
+              onChangeCity={() => undefined}
+              accounts={[
+                {
+                  id: "demo-2",
+                  name: "MySlotMate Studio",
+                  email: "studio@example.com",
+                  phone: null,
+                  photo: null,
+                  method: "google",
+                  lastUsed: 0,
+                },
+              ]}
+              onSwitchAccount={() => setSheet(false)}
+              onAddAccount={() => setSheet(false)}
+              onForgetAccount={() => undefined}
+            />
+          )}
+        </section>
+
+        <section className="mt-14">
+          <h2 className="font-outfit text-xl font-bold">Notifications</h2>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {(
+              [
+                [
+                  "Success",
+                  () => toast.success("Album created. Now add some photos."),
+                ],
+                [
+                  "Error",
+                  () =>
+                    toast.error("Couldn't add those photos. Please try again."),
+                ],
+                [
+                  "Info",
+                  () => toast.info("Photos from the host are in your journey."),
+                ],
+                [
+                  "Warning",
+                  () => toast.warning("An album holds up to 50 photos."),
+                ],
+                [
+                  "With details",
+                  () =>
+                    toast.success("Connected with Dank", {
+                      description:
+                        "Their new experiences will show up first on your home.",
+                    }),
+                ],
+              ] as [string, () => void][]
+            ).map(([label, fire]) => (
+              <button
+                key={label}
+                type="button"
+                onClick={fire}
+                className="rounded-full border border-white/15 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/10"
+              >
+                {label}
+              </button>
+            ))}
           </div>
         </section>
 

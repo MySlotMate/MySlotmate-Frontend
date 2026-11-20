@@ -6,6 +6,7 @@ import Providers from "~/components/Providers";
 import AppSidebar from "~/components/home/AppSidebar";
 import { env } from "~/env";
 import { Toaster } from "sonner";
+import { AlertTriangle, Check, Info, Loader2, X } from "lucide-react";
 
 const appUrl = "https://www.myslotmate.com";
 
@@ -241,7 +242,43 @@ export default function RootLayout({
           <AppSidebar />
           {children}
         </Providers>
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster
+          position="top-right"
+          theme="dark"
+          closeButton
+          gap={10}
+          icons={{
+            success: (
+              <span className="msm-toast-icon msm-toast-icon--success">
+                <Check className="h-3.5 w-3.5" strokeWidth={3} />
+              </span>
+            ),
+            error: (
+              <span className="msm-toast-icon msm-toast-icon--error">
+                <X className="h-3.5 w-3.5" strokeWidth={3} />
+              </span>
+            ),
+            warning: (
+              <span className="msm-toast-icon msm-toast-icon--warning">
+                <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </span>
+            ),
+            info: (
+              <span className="msm-toast-icon msm-toast-icon--info">
+                <Info className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </span>
+            ),
+            loading: (
+              <span className="msm-toast-icon msm-toast-icon--info">
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin"
+                  strokeWidth={2.5}
+                />
+              </span>
+            ),
+          }}
+          toastOptions={{ className: "msm-toast" }}
+        />
       </body>
     </html>
   );

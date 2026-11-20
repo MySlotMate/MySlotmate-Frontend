@@ -28,6 +28,8 @@ const ROLE_STYLE: Record<RoleTone, string> = {
 export interface Stat {
   value: ReactNode;
   label: string;
+  /** Makes the stat a button (e.g. Connections opens the list). */
+  onClick?: () => void;
 }
 
 /**
@@ -55,6 +57,7 @@ export function ProfileIdentity({
   actions,
   note,
   extra,
+  corner,
 }: {
   avatar?: string | null;
   name: string | null;
@@ -70,28 +73,58 @@ export function ProfileIdentity({
   note?: ReactNode;
   /** Desktop only: shown under the card (phones get it in the About tab). */
   extra?: ReactNode;
+  /**
+   * A small button for the top-right corner (settings). Phones get it in a
+   * header row above the avatar; desktop pins it to the card's corner.
+   */
+  corner?: ReactNode;
 }) {
   const [more, setMore] = useState(false);
   const longBio = (bio?.length ?? 0) > 160;
 
   const statBlock = (cls: string) => (
-    <dl className={cls}>
-      {stats.map((s) => (
-        <div key={s.label} className="flex min-w-0 flex-col items-center">
-          <dd className="font-outfit flex h-7 items-center justify-center gap-1 text-lg leading-none font-bold lg:text-xl">
-            {s.value}
-          </dd>
-          <dt className="mt-0.5 max-w-full truncate text-center text-[11px] leading-4 text-white/50">
-            {s.label}
-          </dt>
-        </div>
-      ))}
-    </dl>
+    <div className={cls}>
+      {stats.map((s) => {
+        const body = (
+          <>
+            <span className="font-outfit flex h-7 items-center justify-center gap-1 text-lg leading-none font-bold lg:text-xl">
+              {s.value}
+            </span>
+            <span className="mt-0.5 block max-w-full truncate text-center text-[11px] leading-4 text-white/50">
+              {s.label}
+            </span>
+          </>
+        );
+        return s.onClick ? (
+          <button
+            key={s.label}
+            type="button"
+            onClick={s.onClick}
+            className="-my-1 flex min-w-0 flex-col items-center rounded-xl py-1 transition hover:bg-white/[0.05]"
+          >
+            {body}
+          </button>
+        ) : (
+          <div key={s.label} className="flex min-w-0 flex-col items-center">
+            {body}
+          </div>
+        );
+      })}
+    </div>
   );
 
   return (
     <aside className="lg:sticky lg:top-[92px] lg:self-start">
-      <div className="lg:rounded-3xl lg:border lg:border-white/[0.06] lg:bg-[#121426] lg:p-6">
+      {corner && (
+        <div className="mb-3 flex items-center justify-between lg:hidden">
+          <p className="font-outfit text-lg font-bold">Profile</p>
+          {corner}
+        </div>
+      )}
+      <div className="relative lg:rounded-3xl lg:border lg:border-white/[0.06] lg:bg-[#121426] lg:p-6">
+        {corner && (
+          <div className="absolute top-4 right-4 hidden lg:block">{corner}</div>
+        )}
         <div className="flex items-center gap-5 lg:block">
           <div className="h-[76px] w-[76px] shrink-0 overflow-hidden rounded-full bg-[#1B1C33] ring-2 ring-[#A020F0]/50 ring-offset-2 ring-offset-[#080914] lg:h-24 lg:w-24 lg:ring-offset-[#121426]">
             {avatar ? (

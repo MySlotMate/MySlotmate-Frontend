@@ -76,10 +76,10 @@ export default function HostProfileClient({
   const { data: hostEventsAuthed } = useEventsByHost(hostId || null);
   // /events/host needs a login; visitors fall back to the public list.
   const { data: publicEvents } = useListPublicEvents();
-  // Past events: the public list only has upcoming ones and the full host
-  // list needs that host's own login, so pull in every source we have —
-  // the host-events endpoint (once the backend adds it), the host's own list
-  // when they view themselves, and experiences the viewer went to.
+  // Past events come from the public host-events endpoint; the other sources
+  // fill in while it loads (or if it fails): the upcoming public list, the
+  // host's own list when they view themselves, and experiences the viewer
+  // went to.
   const { events: hostPublicEvents, supported: pastSupported } =
     usePublicHostEvents(hostId || null);
   const { moments: myMoments } = useMoments(userId);
@@ -255,20 +255,31 @@ export default function HostProfileClient({
           verified={host.is_identity_verified}
           role={hostRole(host)}
           tagline={host.tagline}
-          meta={host.city ? [host.city] : []}
+          meta={[
+            ...(host.city ? [host.city] : []),
+            ...(host.connections_count
+              ? [
+                  `${host.connections_count} connection${host.connections_count === 1 ? "" : "s"}`,
+                ]
+              : []),
+          ]}
           bio={host.bio}
           stats={[
             // A dash until events load, rather than a misleading 0.
             {
               value:
-                publicEvents || host.events_hosted_override != null
+                hostPublicEvents ||
+                publicEvents ||
+                host.events_hosted_override != null
                   ? totalEvents
                   : "–",
               label: "Hosted",
             },
             {
               value:
-                publicEvents || host.people_met_override != null
+                hostPublicEvents ||
+                publicEvents ||
+                host.people_met_override != null
                   ? peopleMet
                   : "–",
               label: "Guests",

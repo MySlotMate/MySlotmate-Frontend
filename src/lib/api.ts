@@ -324,6 +324,7 @@ export interface UploadFilesPayload {
 
 export type UploadFolder =
   | "general"
+  | "users/albums"
   | "blogs/covers"
   | "events/covers"
   | "events/gallery"
@@ -571,6 +572,8 @@ export interface PublicHostProfileDTO {
   events_hosted_override: number | null;
   people_met_override: number | null;
   avg_rating_override: number | null;
+  /** How many people have connected with this host. */
+  connections_count?: number;
 }
 
 /** GET /hosts — list all approved hosts (public) */
@@ -586,9 +589,7 @@ export function getPublicHostProfile(hostId: string) {
 /**
  * GET /hosts/{hostID}/events — a host's published events, past included
  * (no drafts, private or cancelled ones). Public.
- *
- * Not on the backend yet (see docs/connections.md): until it is, this 404s
- * and profiles fall back to the public list, which only has upcoming events.
+ * Accepts the host id or slug.
  */
 export function getPublicHostEvents(hostId: string) {
   return apiFetch<EventDTO[]>(`/hosts/${hostId}/events`);
@@ -641,8 +642,8 @@ export interface AlbumPhotoPayload {
 }
 
 /**
- * Profile albums (see the backend PRD). Not on the backend yet: reads 404
- * and the Photos tab says "coming soon" until they exist.
+ * Profile albums (see the backend PRD). Albums belong to users; hosts are
+ * looked up through their user. Limits: 30 albums, 50 photos each.
  */
 export function getUserAlbums(userId: string) {
   return apiFetch<ProfileAlbumDTO[]>(`/users/${userId}/albums`);
@@ -676,6 +677,32 @@ export function addAlbumPhotos(albumId: string, items: AlbumPhotoPayload[]) {
 }
 export function deleteAlbumPhoto(albumId: string, photoId: string) {
   return authedFetch<null>(`/users/me/albums/${albumId}/photos/${photoId}`, {
+    method: "DELETE",
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Connections (phase 1: people connect with hosts)                   */
+/* ------------------------------------------------------------------ */
+
+export interface ConnectionDTO {
+  host_id: string;
+  created_at: string;
+}
+
+/** GET /users/me/connections — hosts the signed-in user is connected with. */
+export function getMyConnections() {
+  return authedFetch<ConnectionDTO[]>("/users/me/connections");
+}
+/** PUT /users/me/connections/{hostId} — connect (idempotent). */
+export function connectHost(hostId: string) {
+  return authedFetch<unknown>(`/users/me/connections/${hostId}`, {
+    method: "PUT",
+  });
+}
+/** DELETE /users/me/connections/{hostId} — disconnect (idempotent). */
+export function disconnectHost(hostId: string) {
+  return authedFetch<unknown>(`/users/me/connections/${hostId}`, {
     method: "DELETE",
   });
 }

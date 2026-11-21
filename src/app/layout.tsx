@@ -4,6 +4,7 @@ import { type Metadata, type Viewport } from "next";
 import { Geist, Inter, Manrope, Outfit } from "next/font/google";
 import Providers from "~/components/Providers";
 import AppSidebar from "~/components/home/AppSidebar";
+import AuthGate from "~/components/AuthGate";
 import { env } from "~/env";
 import { Toaster } from "sonner";
 import { AlertTriangle, Check, Info, Loader2, X } from "lucide-react";
@@ -239,6 +240,7 @@ export default function RootLayout({
       </head>
       <body className="max-w-screen overflow-x-clip bg-[#080914] text-white">
         <Providers>
+          <AuthGate />
           <AppSidebar />
           {children}
         </Providers>

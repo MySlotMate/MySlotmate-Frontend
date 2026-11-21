@@ -86,13 +86,10 @@ async function refreshFirebaseToken(): Promise<boolean> {
 /** A signed-in UI whose token the server rejects: log out instead of looping on errors. */
 async function endDeadSession(msg: string): Promise<string> {
   if (typeof window === "undefined" || !getStoredUserId()) return msg;
-  clearStoredAuth();
-  try {
-    const { auth } = await import("~/utils/firebase");
-    await auth.signOut();
-  } catch {
-    // already signed out of firebase
-  }
+  // Firebase first, then our ids: the other order lets useStoredAuth restore
+  // the id from the still-live Firebase session (see lib/signOut.ts).
+  const { signOutEverywhere } = await import("~/lib/signOut");
+  await signOutEverywhere({ redirect: false });
   return "Your session has expired. Please log in again.";
 }
 

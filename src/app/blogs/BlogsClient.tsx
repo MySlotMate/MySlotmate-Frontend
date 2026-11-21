@@ -25,7 +25,12 @@ import {
   useUploadFiles,
 } from "~/hooks/useApi";
 import type { BlogCreatePayload, BlogDTO } from "~/lib/api";
-import { getStoredUserId, setStoredUserId } from "~/lib/auth-storage";
+import {
+  getLoggedOutAt,
+  getStoredUserId,
+  setStoredUserId,
+} from "~/lib/auth-storage";
+import { isSigningOut } from "~/lib/signOut";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import { RichTextView } from "~/components/RichTextView";
 import { ImageCropModal } from "~/components/ImageCropModal";
@@ -553,7 +558,9 @@ export default function BlogsClient({
           return;
         }
 
-        setStoredUserId(resolvedUserId);
+        // Don't restore an id while (or after) the user is logging out.
+        if (!isSigningOut() && auth.currentUser && !getLoggedOutAt())
+          setStoredUserId(resolvedUserId);
         if (active) setBackendUserId(resolvedUserId);
       } catch {
         if (active) setBackendUserId(null);

@@ -187,7 +187,7 @@ export default function PrivacyPolicyPage() {
         <Section id="who-we-are" title="Who we are">
           <p>
             MySlotMate is a platform for discovering and booking local
-            experiences, run by Myslotmate Private Limited. Where this policy
+            experiences, run by Moodverse Private Limited. Where this policy
             says &quot;we&quot; or &quot;us&quot;, it means that company, which
             is the controller of the personal information described here.
           </p>
@@ -352,7 +352,7 @@ export default function PrivacyPolicyPage() {
       <footer className="mt-12 rounded-2xl border border-white/10 bg-[#121426] p-6">
         <h2 className="text-lg font-bold text-white">Contact us</h2>
         <p className="mt-2 text-white/80">
-          Myslotmate Private Limited, Guwahati, Assam, India &middot;{" "}
+          Moodverse Private Limited, Guwahati, Assam, India &middot;{" "}
           <a
             className="font-semibold text-[#D8B4FE] hover:underline"
             href={`mailto:${CONTACT_EMAIL}`}

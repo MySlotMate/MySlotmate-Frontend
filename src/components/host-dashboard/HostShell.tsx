@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { signOut } from "firebase/auth";
+import { signOutEverywhere } from "~/lib/signOut";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -239,10 +239,8 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
   const focus = FOCUS_ROUTES.test(path);
 
   const logout = () => {
-    clearStoredAuth();
-    queryClient.clear();
     setMenuOpen(false);
-    void signOut(auth);
+    void signOutEverywhere();
   };
 
   /* ---------------------------- desktop rail ---------------------------- */

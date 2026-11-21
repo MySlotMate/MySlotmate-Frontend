@@ -1,31 +1,38 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { FaInstagram, FaLinkedin } from "react-icons/fa";
+import { FaFacebook, FaInstagram, FaLinkedin } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
+
+/**
+ * The one footer for the whole site, signed in or out. The app's
+ * `Home.Footer` renders this too, so the two can't drift apart again.
+ */
 
 const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
   {
-    title: "Explore",
+    title: "Discover",
     links: [
-      { href: "/experiences", label: "All events" },
-      { href: "/about", label: "About MySlotMate" },
-      { href: "/hosts", label: "Hosts" },
-      { href: "/blogs", label: "Stories" },
+      { href: "/experiences", label: "Explore events" },
+      { href: "/about", label: "About us" },
+      { href: "/host-with-us", label: "Host with us" },
+      { href: "/host-dashboard", label: "Host dashboard" },
     ],
   },
   {
-    title: "Host",
+    title: "Quick links",
     links: [
-      { href: "/host-with-us", label: "Host with us" },
-      { href: "/host-dashboard", label: "Host dashboard" },
+      { href: "/support/policies", label: "Guidelines" },
+      { href: "/hosts", label: "Community" },
+      { href: "/blogs", label: "Blogs & stories" },
+      { href: "/support", label: "Safety" },
     ],
   },
   {
     title: "Help",
     links: [
       { href: "/support", label: "Support" },
-      { href: "/support/terms-conditions", label: "Terms and conditions" },
-      { href: "/privacy", label: "Privacy policy" },
+      { href: "/support/terms-conditions", label: "Terms" },
+      { href: "/privacy", label: "Privacy" },
+      { href: "mailto:support@myslotmate.com", label: "Email us" },
     ],
   },
 ];
@@ -42,40 +49,41 @@ const SOCIALS = [
     Icon: FaLinkedin,
   },
   { href: "https://x.com/myslotmate?s=20", label: "X", Icon: FaXTwitter },
+  {
+    href: "https://www.facebook.com/share/1E1dpBwZd3/",
+    label: "Facebook",
+    Icon: FaFacebook,
+  },
 ];
 
-/** Violet footer: closing line, links and socials. */
-export default function WebsiteFooter() {
+/** Quiet dark footer: brand, three link columns, one small bottom line. */
+export default function WebsiteFooter({
+  className = "",
+}: {
+  className?: string;
+}) {
+  const link = "w-fit text-sm text-white/55 transition hover:text-white";
   return (
-    <footer className="relative isolate w-full overflow-hidden bg-gradient-to-br from-[#7B2FFF] via-[#8420DC] to-[#6414AA] pb-[env(safe-area-inset-bottom)] text-white">
-      <div className="mx-auto max-w-[1280px] px-5 pt-20 pb-10 md:px-10 md:pt-28">
-        <div className="flex flex-col justify-between gap-10 md:flex-row md:items-center">
-          <p className="font-outfit text-[clamp(32px,4vw,52px)] leading-[1.1] font-normal tracking-[-0.02em]">
-            See you out there.
-          </p>
-          <Link
-            href="/host-with-us"
-            className="font-outfit flex h-14 w-fit shrink-0 items-center gap-2 rounded-2xl bg-white px-7 text-[17px] font-semibold text-[#7B2FFF] transition hover:bg-white/90"
-          >
-            Host with MySlotMate <ArrowUpRight className="h-5 w-5" />
-          </Link>
-        </div>
-
-        <div className="mt-16 grid gap-12 border-t border-white/20 pt-14 sm:grid-cols-2 lg:grid-cols-[1.5fr_repeat(3,1fr)]">
-          <div className="flex flex-col gap-5">
+    <footer
+      className={`w-full border-t border-white/[0.06] bg-[#080914] pb-[env(safe-area-inset-bottom)] text-white ${className}`}
+    >
+      <div className="mx-auto max-w-[1280px] px-5 py-10 md:px-10 md:py-12">
+        <div className="flex flex-col gap-8 lg:flex-row lg:justify-between">
+          {/* Brand */}
+          <div className="flex flex-col gap-4 lg:max-w-xs">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/logo-horizontal-white.png"
               alt="MySlotMate"
               width={1048}
               height={209}
-              className="h-10 w-fit"
+              className="h-7 w-fit opacity-90"
             />
-            <p className="max-w-[340px] text-base leading-relaxed text-white/80">
-              Events, workshops and meetups across Northeast India, hosted by
-              people who love what they do.
+            <p className="text-sm leading-relaxed text-white/50">
+              Events, workshops and meetups across Northeast India. See you out
+              there.
             </p>
-            <div className="mt-1 flex gap-3">
+            <div className="flex gap-1">
               {SOCIALS.map(({ href, label, Icon }) => (
                 <a
                   key={label}
@@ -83,34 +91,45 @@ export default function WebsiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 transition hover:bg-white/25"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-white/50 transition hover:bg-white/[0.06] hover:text-white"
                 >
-                  <Icon className="h-5 w-5" />
+                  <Icon className="h-4 w-4" />
                 </a>
               ))}
             </div>
           </div>
-          {COLUMNS.map((col) => (
-            <div key={col.title} className="flex flex-col gap-4">
-              <span className="text-sm font-semibold tracking-[0.08em] text-white/65 uppercase">
-                {col.title}
-              </span>
-              {col.links.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className="text-[17px] font-medium transition hover:text-white/75"
-                >
-                  {l.label}
-                </Link>
-              ))}
-            </div>
-          ))}
+
+          {/* Links */}
+          <div className="grid grid-cols-3 gap-x-6 gap-y-8 sm:gap-x-12 lg:gap-x-16">
+            {COLUMNS.map((col) => (
+              <nav
+                key={col.title}
+                aria-label={col.title}
+                className="flex flex-col gap-2.5"
+              >
+                <span className="mb-1 text-xs font-medium text-white/85">
+                  {col.title}
+                </span>
+                {col.links.map((l) =>
+                  l.href.startsWith("mailto:") ? (
+                    <a key={l.label} href={l.href} className={link}>
+                      {l.label}
+                    </a>
+                  ) : (
+                    <Link key={l.label} href={l.href} className={link}>
+                      {l.label}
+                    </Link>
+                  ),
+                )}
+              </nav>
+            ))}
+          </div>
         </div>
 
-        <p className="mt-16 border-t border-white/20 pt-8 text-sm text-white/70">
-          © {new Date().getFullYear()} MySlotMate
-        </p>
+        <div className="mt-10 flex flex-col gap-1 border-t border-white/[0.06] pt-5 text-xs text-white/40 sm:flex-row sm:justify-between">
+          <p>© {new Date().getFullYear()} MySlotMate</p>
+          <p>A product of Moodverse Private Limited</p>
+        </div>
       </div>
     </footer>
   );

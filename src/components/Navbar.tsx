@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { signOut } from "firebase/auth";
 import { auth } from "~/utils/firebase";
 import { FiMenu, FiX, FiChevronRight } from "react-icons/fi";
 import { IoLocationSharp } from "react-icons/io5";
@@ -30,7 +29,8 @@ import { useIdToken } from "~/hooks/useIdToken";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useQueryClient } from "@tanstack/react-query";
 import { env } from "~/env";
-import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
+import { setStoredHostId } from "~/lib/auth-storage";
+import { signOutEverywhere } from "~/lib/signOut";
 
 export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
   const [firebaseUser] = useAuthState(auth);
@@ -243,25 +243,21 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
     return () => window.removeEventListener("msm:open-profile", open);
   }, [user]);
 
+  // Log out and land on the signed-out home page. See signOutEverywhere for
+  // why the order of steps matters.
   const handleLogout = async () => {
-    clearStoredAuth();
-    localStorage.removeItem("msm_location");
-    localStorage.removeItem("msm_geo_asked");
-
-    // Clear query cache
-    void queryClient.clear();
-
-    // Close modals
     setProfileOpen(false);
     setMobileOpen(false);
-
-    // Sign out from Firebase
-    void signOut(auth);
+    await signOutEverywhere();
   };
 
   // Sign out, then open the login for the chosen account (or a new one).
-  const switchAccount = (a: SavedAccount | null) => {
-    void handleLogout();
+  const switchAccount = async (a: SavedAccount | null) => {
+    // Stay on this page: the login opens right after.
+    setProfileOpen(false);
+    setMobileOpen(false);
+    await signOutEverywhere({ redirect: false });
+    queryClient.clear();
     setLoginHint(
       a
         ? { method: a.method, email: a.email, phone: a.phone, name: a.name }
@@ -420,8 +416,8 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
                   onBecomeHost={() => setShowBecomeHost(true)}
                   onChangeCity={() => setLocationOpen(true)}
                   accounts={savedAccounts.filter((a) => a.id !== validUserId)}
-                  onSwitchAccount={(a) => switchAccount(a)}
-                  onAddAccount={() => switchAccount(null)}
+                  onSwitchAccount={(a) => void switchAccount(a)}
+                  onAddAccount={() => void switchAccount(null)}
                   onForgetAccount={forgetAccount}
                 />
               )}

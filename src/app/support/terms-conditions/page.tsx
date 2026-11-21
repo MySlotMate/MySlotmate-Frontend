@@ -18,7 +18,7 @@ const sections: TermSection[] = [
       <div className="space-y-6">
         <p className="text-white/80">
           This Host Terms of Engagement (&quot;Agreement&quot;) is a legally
-          binding contract between Myslotmate Private Limited
+          binding contract between Moodverse Private Limited
           (&quot;Company,&quot; &quot;we,&quot; &quot;our&quot;) and you, the
           individual or entity accepting these terms (&quot;Host&quot; or
           &quot;you&quot;). By clicking &quot;I Agree&quot; or using the

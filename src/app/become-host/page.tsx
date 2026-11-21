@@ -39,7 +39,6 @@ interface HostFormData {
   socialWebsite: string;
   preferredDays: string[];
   groupSize: number;
-  isProfessional: boolean;
 }
 
 const MOODS = [
@@ -115,7 +114,6 @@ export default function BecomeHostPage() {
     socialWebsite: "",
     preferredDays: [],
     groupSize: 5,
-    isProfessional: false,
   });
 
   // Keep a guest's answers across the sign-in (and signup) round trip.
@@ -434,7 +432,6 @@ export default function BecomeHostPage() {
         social_instagram: form.socialInstagram.trim() || null,
         social_linkedin: form.socialLinkedin.trim() || null,
         social_website: form.socialWebsite.trim() || null,
-        is_professional: form.isProfessional,
       });
       toast.success("Application saved as draft.");
     } catch (err) {
@@ -513,7 +510,6 @@ export default function BecomeHostPage() {
         social_instagram: form.socialInstagram.trim() || null,
         social_linkedin: form.socialLinkedin.trim() || null,
         social_website: form.socialWebsite.trim() || null,
-        is_professional: form.isProfessional,
       });
 
       setStoredHostId(res.data.id);
@@ -688,34 +684,6 @@ export default function BecomeHostPage() {
                     </select>
                   </div>
                 </div>
-
-                {/* Professional host toggle */}
-                <label
-                  className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
-                    form.isProfessional
-                      ? "border-[#9B30FF] bg-[#9B30FF]/10"
-                      : "border-white/10 bg-[#131328] hover:border-white/25"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={form.isProfessional}
-                    onChange={(e) =>
-                      updateField("isProfessional", e.target.checked)
-                    }
-                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/10 text-[#D8B4FE] accent-[#9B30FF]"
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-white">
-                      I&apos;m a professional host
-                    </span>
-                    <span className="mt-0.5 block text-xs text-white/55">
-                      Check this if you host experiences professionally
-                      (certified trainer, licensed guide, studio, etc.).
-                      Professional hosts are highlighted in Explore.
-                    </span>
-                  </span>
-                </label>
 
                 <div>
                   <div className="mb-1.5 flex items-center justify-between">

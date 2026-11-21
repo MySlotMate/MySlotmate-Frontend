@@ -34,7 +34,7 @@ export default function PayoutScheduleCard({
       : 0;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
+    <div className="rounded-2xl border border-white/10 bg-[#121426] p-5">
       <h3 className="text-sm font-semibold text-white">Payout schedule</h3>
       <p className="mt-1 text-xs leading-5 text-[#A5A8C3]">
         Each event is paid after it ends, or weekly with up to 50% early and the

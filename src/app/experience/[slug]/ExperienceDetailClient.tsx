@@ -744,7 +744,11 @@ export default function ExperienceDetailClient({
                     </li>
                   )}
                   <li className="flex min-w-0 items-center gap-2">
-                    <FiMapPin className="h-4 w-4 shrink-0 text-white/50" />
+                    {event.is_online ? (
+                      <FiVideo className="h-4 w-4 shrink-0 text-white/50" />
+                    ) : (
+                      <FiMapPin className="h-4 w-4 shrink-0 text-white/50" />
+                    )}
                     <span className="truncate">{place}</span>
                   </li>
                 </ul>

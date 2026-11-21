@@ -109,7 +109,7 @@ export function TaxDetailsCard({
   const progressPct = gross ? Math.min(100, (gross / threshold) * 100) : 0;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
+    <div className="rounded-2xl border border-white/10 bg-[#121426] p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-sm font-semibold text-white">Tax details</h3>

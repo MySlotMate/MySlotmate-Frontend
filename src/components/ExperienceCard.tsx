@@ -15,8 +15,10 @@ import {
   Calendar,
   ArrowRight,
   Lock,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
+import EventCover from "~/components/EventCover";
 
 export type ExperienceCardItem = {
   id?: string;
@@ -30,6 +32,8 @@ export type ExperienceCardItem = {
   price: string;
   time?: string;
   location?: string | null;
+  /** Online events show a video icon and "Online" instead of a place. */
+  isOnline?: boolean;
   isRecurring?: boolean;
   capacity?: number;
   totalBookings?: number;
@@ -163,6 +167,7 @@ export const ExperienceCard = ({
   price,
   time,
   location,
+  isOnline = false,
   isRecurring,
   capacity,
   totalBookings,
@@ -312,19 +317,19 @@ export const ExperienceCard = ({
           href={href}
           className="relative block aspect-[4/5] w-full overflow-hidden rounded-[20px] bg-white/[0.06]"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl || "/assets/home/hiking.webp"}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imageUrl || "/assets/home/hiking.webp"}
+          {imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl"
+            />
+          )}
+          <EventCover
+            src={imageUrl}
             alt={title}
-            loading="lazy"
             className="relative h-full w-full object-contain transition-transform duration-700 group-hover:scale-110"
           />
 
@@ -418,12 +423,24 @@ export const ExperienceCard = ({
           </div>
 
           <div className="flex items-start gap-2 border-l border-white/10 pl-3">
-            <MapPin
-              className="mt-0.5 h-4.5 w-4.5 shrink-0"
-              style={{ stroke: `url(#icon-gradient-${id ?? "default"})` }}
-              strokeWidth={2.5}
-            />
-            {location ? (
+            {isOnline ? (
+              <Video
+                className="mt-0.5 h-4.5 w-4.5 shrink-0"
+                style={{ stroke: `url(#icon-gradient-${id ?? "default"})` }}
+                strokeWidth={2.5}
+              />
+            ) : (
+              <MapPin
+                className="mt-0.5 h-4.5 w-4.5 shrink-0"
+                style={{ stroke: `url(#icon-gradient-${id ?? "default"})` }}
+                strokeWidth={2.5}
+              />
+            )}
+            {isOnline ? (
+              <p className="text-[12px] leading-snug font-bold text-white">
+                Online
+              </p>
+            ) : location ? (
               <div className="min-w-0">
                 <p className="line-clamp-2 text-[12px] leading-snug font-bold text-white">
                   {location}

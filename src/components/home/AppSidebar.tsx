@@ -32,6 +32,12 @@ export default function AppSidebar() {
     return mounted && userId ? (
       <HomeSidebar active="explore" tabBar={false} />
     ) : null;
+  // Public website pages (About, Stories, Host with us): signed-in people
+  // keep the app's navigation instead of seeing a "Log in" bar.
+  if (path === "/about" || path === "/host-with-us")
+    return mounted && userId ? <HomeSidebar active="profile" /> : null;
+  if (path === "/blogs" || path.startsWith("/blogs/"))
+    return mounted && userId ? <HomeSidebar active="explore" /> : null;
   // Booking has its own bottom action bar on mobile.
   if (/^\/experience\/[^/]+\/book$/.test(path))
     return <HomeSidebar active="explore" tabBar={false} />;

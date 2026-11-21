@@ -27,6 +27,7 @@ import {
   FiClock,
   FiLock,
   FiMapPin,
+  FiVideo,
   FiShield,
 } from "react-icons/fi";
 import { LuLoader2, LuWallet } from "react-icons/lu";
@@ -900,7 +901,11 @@ function BookingContent({ eventId }: { eventId: string }) {
                 {hasStart ? formatIST(startDate, "EEE, d MMM yyyy") : "TBD"}
               </span>
               <span className="flex min-w-0 items-center gap-1.5">
-                <FiMapPin className="h-4 w-4 shrink-0 text-white/45" />
+                {event.is_online ? (
+                  <FiVideo className="h-4 w-4 shrink-0 text-white/45" />
+                ) : (
+                  <FiMapPin className="h-4 w-4 shrink-0 text-white/45" />
+                )}
                 <span className="truncate">
                   {event.is_online ? "Online" : (event.location ?? "TBA")}
                 </span>

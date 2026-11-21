@@ -28,6 +28,7 @@ import {
   Users,
   Wallet,
   type LucideIcon,
+  Video,
 } from "lucide-react";
 import { auth } from "~/utils/firebase";
 import { EarningsChart } from "~/components/host-dashboard";
@@ -52,6 +53,7 @@ import {
   useTodaySchedule,
 } from "~/hooks/useApi";
 import type { AttentionItemDTO, EventDTO } from "~/lib/api";
+import EventCover from "~/components/EventCover";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -262,11 +264,18 @@ function SessionRow({
                 {formatIST(start, "h:mm a")}
                 {end && ` – ${formatIST(end, "h:mm a")}`}
               </span>
-              {ev.location && (
+              {ev.is_online ? (
                 <span className="flex min-w-0 items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate">{ev.location}</span>
+                  <Video className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">Online</span>
                 </span>
+              ) : (
+                ev.location && (
+                  <span className="flex min-w-0 items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{ev.location}</span>
+                  </span>
+                )
               )}
             </p>
           </div>
@@ -881,9 +890,10 @@ export default function HostTodayPage() {
                   <ul className="space-y-3">
                     {myEvents.slice(0, 4).map((ev) => (
                       <li key={ev.id} className="flex items-center gap-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={ev.cover_image_url ?? "/assets/home/hiking.webp"}
+                        <EventCover
+                          src={ev.cover_image_url}
+                          seed={ev.id}
+                          iconSize="sm"
                           alt=""
                           loading="lazy"
                           className="h-12 w-12 shrink-0 rounded-xl object-cover"

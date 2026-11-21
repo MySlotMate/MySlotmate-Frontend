@@ -36,6 +36,7 @@ import {
   useApplicationStatus,
   useCoHostSummary,
   useHostAttentionItems,
+  useHostPendingJoinRequestCount,
   useMyProfile,
 } from "~/hooks/useApi";
 import { useIdToken } from "~/hooks/useIdToken";
@@ -172,6 +173,7 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
   const { data: attention } = useHostAttentionItems(hostId);
   const unread =
     attention?.find((a) => a.type === "unread_message")?.count ?? 0;
+  const { data: pendingRequests = 0 } = useHostPendingJoinRequestCount(idToken);
 
   // Close the sheet whenever the route changes.
   useEffect(() => setMenuOpen(false), [path]);
@@ -227,7 +229,12 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
       ],
     },
   ];
-  const badgeFor = (href: string) => (href === MESSAGES.href ? unread : 0);
+  const badgeFor = (href: string) =>
+    href === MESSAGES.href
+      ? unread
+      : href === REQUESTS.href
+        ? pendingRequests
+        : 0;
 
   const focus = FOCUS_ROUTES.test(path);
 

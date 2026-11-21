@@ -17,6 +17,7 @@ import {
   getSavedLocation,
   type CityLocation,
 } from "../LocationModal";
+import EventCover from "~/components/EventCover";
 
 interface TrendingCardProps {
   id: string;
@@ -82,9 +83,8 @@ const TrendingCard = ({
     >
       {/* Changed fixed h/w to aspect-square w-full */}
       <div className="relative aspect-square w-full overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl || "/assets/home/hiking.webp"}
+        <EventCover
+          src={imageUrl}
           alt={title}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -246,7 +246,7 @@ const Trending = () => {
                 id={event.id}
                 slug={event.slug}
                 title={event.title}
-                imageUrl={event.cover_image_url ?? "/assets/home/hiking.webp"}
+                imageUrl={event.cover_image_url ?? ""}
                 pricing={eventPriceLabel(event)}
                 duration={`${event.duration_minutes ?? 0} mins`}
                 mood={event.mood ?? "Experience"}

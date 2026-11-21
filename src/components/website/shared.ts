@@ -6,22 +6,12 @@ export const GRADIENT =
   "bg-gradient-to-r from-[#7B2FFF] via-[#A020F0] to-[#BF00FF]";
 export const SURFACE = "border border-white/[0.06] bg-[#121426]";
 
-/** Shown when an event has no cover image. Order matters: it is cycled. */
-export const FALLBACK_PHOTOS = [
-  "/assets/home/heropic1.webp",
-  "/assets/home/heropic2.webp",
-  "/assets/home/heropic3.webp",
-  "/assets/home/hiking.webp",
-  "/assets/home/cover.webp",
-  "/assets/home/people1.webp",
-];
-
 // Recurring events keep their first `time`, so prefer the next open date.
 export const whenOf = (e: EventDTO) =>
   new Date(e.next_available_date ?? e.time);
 
-export const coverOf = (e: EventDTO, i = 0) =>
-  e.cover_image_url ?? FALLBACK_PHOTOS[i % FALLBACK_PHOTOS.length]!;
+/** The event's cover, or null: render it with <EventCover>, never a stock photo. */
+export const coverOf = (e: EventDTO) => e.cover_image_url ?? null;
 
 /** Upcoming, bookable events, soonest first. */
 export function upcomingEvents(events: EventDTO[] | undefined) {

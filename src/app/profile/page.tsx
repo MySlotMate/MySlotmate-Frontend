@@ -52,6 +52,7 @@ import { categoryOf } from "~/lib/categories";
 import { useConnections } from "~/lib/connections";
 import { formatIST } from "~/lib/datetime";
 import type { HostDTO } from "~/lib/api";
+import EventCover from "~/components/EventCover";
 
 type Tab = "experiences" | "hosting" | "photos" | "milestones";
 
@@ -469,12 +470,8 @@ export default function ProfilePage() {
                             className={`group overflow-hidden ${CARD}`}
                           >
                             <div className="aspect-[4/5] overflow-hidden">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={
-                                  event.cover_image_url ??
-                                  "/assets/home/hiking.webp"
-                                }
+                              <EventCover
+                                src={event.cover_image_url}
                                 alt={event.title}
                                 loading="lazy"
                                 className="h-full w-full object-cover transition duration-300 group-hover:scale-105"

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
-import { FiX, FiEdit2, FiCheck } from "react-icons/fi";
-import { LuShieldCheck, LuBadgeCheck, LuStar, LuUsers } from "react-icons/lu";
+import { FiX, FiCamera, FiExternalLink, FiCheck } from "react-icons/fi";
+import { LuBadgeCheck, LuStar, LuUsers } from "react-icons/lu";
 import { FaInstagram, FaLinkedin, FaGlobe } from "react-icons/fa";
 import { toast } from "sonner";
 import { useDragDrop } from "~/hooks/useDragDrop";
@@ -16,104 +16,47 @@ import {
   useMyHost,
   useUpdateHostProfile,
   useUploadFiles,
-  useConnectSocialMedia,
-  useDisconnectSocialMedia,
 } from "~/hooks/useApi";
 
-/* ------------------------------------------------------------------ */
-/*  Types & mock data                                                  */
-/* ------------------------------------------------------------------ */
-
-interface HostProfileData {
+/** The fields a host edits here. Name, email and phone come from the account. */
+interface Editable {
   avatarUrl: string;
-  firstName: string;
-  lastName: string;
   tagline: string;
   bio: string;
-  expertiseTags: string[];
-  socialInstagram: string;
-  socialLinkedin: string;
-  socialWebsite: string;
-  // Trust & Safety
-  isGovIdVerified: boolean;
-  email: string;
-  phone: string;
-  // Badges
-  isIdentityVerified: boolean;
-  isSuperHost: boolean;
-  isCommunityChamp: boolean;
+  tags: string[];
+  instagram: string;
+  linkedin: string;
+  website: string;
 }
 
-const INITIAL: HostProfileData = {
-  avatarUrl:
-    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
-  firstName: "Julian",
-  lastName: "Warin",
-  tagline: "Curating mindful experiences in downtown lofts.",
-  bio: "Hi, I'm Julian! I've been hosting art events for over 5 years. My spaces are designed to help you disconnect and focus on creativity. I love minimal design, organic coffee, and indie electronic music.",
-  expertiseTags: ["#Minimalism", "#Wellness", "#RemoteWork"],
-  socialInstagram: "",
-  socialLinkedin: "Julian Warin",
-  socialWebsite: "www.julianwarin.dot.pr",
-  isGovIdVerified: true,
-  email: "julian@example.com",
-  phone: "",
-  isIdentityVerified: true,
-  isSuperHost: true,
-  isCommunityChamp: false,
+const EMPTY: Editable = {
+  avatarUrl: "",
+  tagline: "",
+  bio: "",
+  tags: [],
+  instagram: "",
+  linkedin: "",
+  website: "",
 };
 
-/* ------------------------------------------------------------------ */
-/*  Page                                                               */
-/* ------------------------------------------------------------------ */
+const FIELD =
+  "w-full rounded-xl border border-white/10 bg-[#0D0F1E] px-4 py-3 text-sm text-white placeholder-[#777B98] outline-none transition focus:border-[#A020F0]";
 
+/**
+ * Host profile: what guests see about you. Two tabs, "About you" and
+ * "Photos". One Save button that appears only when something changed.
+ */
 export default function HostProfileEditPage() {
   const [user] = useAuthState(auth);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const avatarDropZoneRef = useRef<HTMLDivElement>(null);
 
-  const [form, setForm] = useState<HostProfileData>(INITIAL);
-  const [newTag, setNewTag] = useState("");
-  const [hostId, setHostId] = useState<string | null>(null);
-  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
-
-  // Drag and drop for avatar - define handleAvatarFiles before useDragDrop
-  const handleAvatarFiles = useCallback((files: File[]) => {
-    const file = files[0];
-    if (file?.type.startsWith("image/")) {
-      const url = URL.createObjectURL(file);
-      setForm((p) => ({ ...p, avatarUrl: url }));
-      setPendingAvatarFile(file);
-      toast.success("Avatar image selected!");
-    } else if (file) {
-      toast.error("Please select a valid image file (PNG, JPG, JPEG)");
-    }
-  }, []);
-
-  const {
-    isDragging: isAvatarDragging,
-    handleDragEnter: handleAvatarDragEnter,
-    handleDragLeave: handleAvatarDragLeave,
-    handleDragOver: handleAvatarDragOver,
-    handleDrop: handleAvatarDrop,
-  } = useDragDrop({
-    onDrop: handleAvatarFiles,
-    accept: "image/*",
-  });
-
-  // Read userId from localStorage
   const [storedUserId, setStoredUserId] = useState<string | null>(null);
-  useEffect(() => {
-    setStoredUserId(localStorage.getItem("msm_user_id"));
-  }, []);
-
+  useEffect(() => setStoredUserId(localStorage.getItem("msm_user_id")), []);
   const validUserId =
     storedUserId && storedUserId !== "existing" ? storedUserId : null;
 
-  // React Query
-  const { data: hostData, isLoading: loading } = useMyHost(validUserId);
-  // Past experiences, for the photo albums below.
-  const { data: myEvents } = useEventsByHost(hostData?.id ?? null);
+  const { data: host, isLoading } = useMyHost(validUserId);
+  const { data: myEvents } = useEventsByHost(host?.id ?? null);
   const pastEvents = (myEvents ?? [])
     .filter(
       (e) =>
@@ -122,789 +65,459 @@ export default function HostProfileEditPage() {
         new Date(e.next_available_date ?? e.time).getTime() < Date.now(),
     )
     .sort((a, b) => Date.parse(b.time) - Date.parse(a.time));
+
   const updateMutation = useUpdateHostProfile();
   const uploadMutation = useUploadFiles();
-  const connectSocialMutation = useConnectSocialMedia();
-  const disconnectSocialMutation = useDisconnectSocialMedia();
-  const saving = updateMutation.isPending;
 
-  /* Populate form from API data */
+  const saved = useMemo<Editable>(
+    () =>
+      host
+        ? {
+            avatarUrl: host.avatar_url ?? "",
+            tagline: host.tagline ?? "",
+            bio: host.bio ?? "",
+            tags: host.expertise_tags ?? [],
+            instagram: host.social_instagram ?? "",
+            linkedin: host.social_linkedin ?? "",
+            website: host.social_website ?? "",
+          }
+        : EMPTY,
+    [host],
+  );
+
+  const [form, setForm] = useState<Editable>(EMPTY);
+  const [pendingAvatar, setPendingAvatar] = useState<File | null>(null);
+  const [newTag, setNewTag] = useState("");
+  const [tab, setTab] = useState<"about" | "photos">("about");
+
   useEffect(() => {
-    if (hostData) {
-      setHostId(hostData.id);
-      localStorage.setItem("msm_host_id", hostData.id);
-      setForm({
-        avatarUrl: hostData.avatar_url ?? "",
-        firstName: hostData.first_name,
-        lastName: hostData.last_name,
-        tagline: hostData.tagline ?? "",
-        bio: hostData.bio ?? "",
-        expertiseTags: hostData.expertise_tags ?? [],
-        socialInstagram: hostData.social_instagram ?? "",
-        socialLinkedin: hostData.social_linkedin ?? "",
-        socialWebsite: hostData.social_website ?? "",
-        isGovIdVerified: hostData.is_identity_verified,
-        email: user?.email ?? "",
-        phone: hostData.phn_number ?? "",
-        isIdentityVerified: hostData.is_identity_verified,
-        isSuperHost: hostData.is_super_host,
-        isCommunityChamp: hostData.is_community_champ,
-      });
-    }
-  }, [hostData, user?.email]);
+    if (!host) return;
+    localStorage.setItem("msm_host_id", host.id);
+    setForm(saved);
+  }, [host, saved]);
 
-  /* helpers */
-  const update = <K extends keyof HostProfileData>(
-    key: K,
-    value: HostProfileData[K],
-  ) => setForm((p) => ({ ...p, [key]: value }));
+  const dirty =
+    !!pendingAvatar || JSON.stringify(form) !== JSON.stringify(saved);
+
+  const set = <K extends keyof Editable>(key: K, value: Editable[K]) =>
+    setForm((p) => ({ ...p, [key]: value }));
+
+  const pickAvatar = useCallback((files: File[]) => {
+    const file = files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose a JPG or PNG image.");
+      return;
+    }
+    setForm((p) => ({ ...p, avatarUrl: URL.createObjectURL(file) }));
+    setPendingAvatar(file);
+  }, []);
+
+  const drag = useDragDrop({ onDrop: pickAvatar, accept: "image/*" });
 
   const addTag = () => {
-    const tag = newTag.trim().startsWith("#")
-      ? newTag.trim()
-      : `#${newTag.trim()}`;
-    if (tag.length > 1 && !form.expertiseTags.includes(tag)) {
-      update("expertiseTags", [...form.expertiseTags, tag]);
-    }
+    const raw = newTag.trim().replace(/^#/, "");
+    if (raw && !form.tags.includes(`#${raw}`))
+      set("tags", [...form.tags, `#${raw}`]);
     setNewTag("");
   };
 
-  const removeTag = (tag: string) =>
-    update(
-      "expertiseTags",
-      form.expertiseTags.filter((t) => t !== tag),
-    );
-
-  const handleAvatarChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files ?? []);
-      handleAvatarFiles(files);
-    },
-    [handleAvatarFiles],
-  );
-
-  const handleSave = async () => {
-    if (!hostId) {
-      toast.error("Host profile not loaded yet.");
-      return;
-    }
+  const save = async () => {
+    if (!host) return;
     try {
-      // Upload new avatar if changed
-      let avatarUrl: string | undefined;
-      if (pendingAvatarFile) {
-        try {
-          const uploadRes = await uploadMutation.mutateAsync({
-            files: [pendingAvatarFile],
-            folder: "hosts/avatars",
-          });
-          avatarUrl = uploadRes.data[0]?.url;
-          setPendingAvatarFile(null);
-        } catch {
-          // Upload failed, continue with existing avatar
-        }
+      let avatarUrl = form.avatarUrl;
+      if (pendingAvatar) {
+        const res = await uploadMutation.mutateAsync({
+          files: [pendingAvatar],
+          folder: "hosts/avatars",
+        });
+        avatarUrl = res.data[0]?.url ?? saved.avatarUrl;
       }
-
       await updateMutation.mutateAsync({
-        hostId,
+        hostId: host.id,
         body: {
-          tagline: form.tagline || null,
-          bio: form.bio || null,
-          avatar_url: avatarUrl ?? (form.avatarUrl || null),
-          expertise_tags: form.expertiseTags,
-          social_instagram: form.socialInstagram || null,
-          social_linkedin: form.socialLinkedin || null,
-          social_website: form.socialWebsite || null,
+          tagline: form.tagline.trim() || null,
+          bio: form.bio.trim() || null,
+          avatar_url: avatarUrl || null,
+          expertise_tags: form.tags,
+          social_instagram: form.instagram.trim() || null,
+          social_linkedin: form.linkedin.trim() || null,
+          social_website: form.website.trim() || null,
         },
       });
-      toast.success("Profile saved!");
+      setPendingAvatar(null);
+      toast.success("Profile saved");
     } catch {
-      toast.error("Failed to save profile. Please try again.");
+      toast.error("Couldn't save your profile. Please try again.");
     }
   };
 
-  /* profile completion */
-  const completionChecks = [
-    !!form.firstName,
-    !!form.lastName,
-    !!form.tagline,
-    !!form.bio,
-    form.expertiseTags.length > 0,
-    !!form.avatarUrl,
-    form.isGovIdVerified,
-    !!form.email,
-    !!form.phone,
-    !!form.socialLinkedin || !!form.socialInstagram,
-  ];
-  const completionPct = Math.round(
-    (completionChecks.filter(Boolean).length / completionChecks.length) * 100,
-  );
+  const saving = updateMutation.isPending || uploadMutation.isPending;
+
+  /* What's still missing, in the order worth fixing. */
+  const missing = [
+    !form.avatarUrl && "a photo",
+    !form.tagline && "a tagline",
+    !form.bio && "a bio",
+    form.tags.length === 0 && "a few tags",
+    !form.instagram && !form.linkedin && !form.website && "a social link",
+    host && !host.is_identity_verified && "ID verification",
+  ].filter(Boolean) as string[];
+  const total = 6;
+  const donePct = Math.round(((total - missing.length) / total) * 100);
+
+  if (isLoading || (!host && validUserId)) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center bg-[#080914]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#A020F0] border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (!host) {
+    return (
+      <main className="mx-auto w-full max-w-3xl px-4 py-10">
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+          No host profile found. Please apply as a host first.
+        </div>
+      </main>
+    );
+  }
+
+  const name = `${host.first_name} ${host.last_name}`.trim();
 
   return (
-    <div className="min-h-screen bg-[#080914]">
-      {loading ? (
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#A020F0] border-t-transparent" />
+    <div className="min-h-screen bg-[#080914] pb-28">
+      <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:py-10">
+        {/* Header */}
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
+              Profile
+            </h1>
+            <p className="mt-1 text-sm text-[#A5A8C3]">
+              What guests see about you.
+            </p>
+          </div>
+          <Link
+            href={`/host/${host.slug ?? host.id}`}
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/[0.06]"
+          >
+            <FiExternalLink className="h-4 w-4" aria-hidden />
+            <span className="hidden sm:inline">View public profile</span>
+            <span className="sm:hidden">View</span>
+          </Link>
         </div>
-      ) : (
-        <main className="mx-auto w-full max-w-[1240px] px-4 py-6 sm:px-6 md:py-10 lg:px-10">
-          {/* Header row */}
-          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
-                Host Profile
-              </h1>
-              <p className="mt-1 text-sm text-[#A5A8C3]">
-                Manage your public persona and build trust with your guests.
-              </p>
-            </div>
-            {hostId ? (
-              <Link
-                href={`/host/${hostData?.slug ?? hostId}`}
-                className="shrink-0 rounded-lg border border-white/15 bg-[#121426] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.04]"
+
+        {/* Identity card */}
+        <section className="mt-5 rounded-2xl border border-white/10 bg-[#121426] p-5">
+          <div className="flex items-center gap-4">
+            <div
+              onDragEnter={drag.handleDragEnter}
+              onDragLeave={drag.handleDragLeave}
+              onDragOver={drag.handleDragOver}
+              onDrop={drag.handleDrop}
+              className="shrink-0"
+            >
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Change photo"
+                className={`group relative h-20 w-20 shrink-0 overflow-hidden rounded-full ring-2 transition ${
+                  drag.isDragging ? "ring-[#A020F0]" : "ring-white/10"
+                }`}
               >
-                Preview Public Profile
-              </Link>
-            ) : (
-              <span className="shrink-0 rounded-lg border border-white/10 bg-white/[0.06] px-5 py-2.5 text-sm font-medium text-[#777B98]">
-                Preview Public Profile
-              </span>
-            )}
+                {form.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={form.avatarUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center bg-[#A020F0]/20 text-2xl font-semibold text-[#E9D5FF]">
+                    {name.charAt(0).toUpperCase() || "?"}
+                  </span>
+                )}
+                <span className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition group-hover:opacity-100">
+                  <FiCamera className="h-5 w-5 text-white" />
+                </span>
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".png,.jpg,.jpeg"
+              className="hidden"
+              onChange={(e) => pickAvatar(Array.from(e.target.files ?? []))}
+            />
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-lg font-semibold text-white">
+                {name}
+              </p>
+              <p className="truncate text-xs text-[#777B98]">
+                {user?.email ?? host.phn_number ?? ""}
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <Badge
+                  on={host.is_identity_verified}
+                  icon={LuBadgeCheck}
+                  label={
+                    host.is_identity_verified
+                      ? "ID verified"
+                      : "ID not verified"
+                  }
+                />
+                {host.is_super_host && (
+                  <Badge on icon={LuStar} label="Super host" />
+                )}
+                {host.is_community_champ && (
+                  <Badge on icon={LuUsers} label="Community champ" />
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* ── Profile completion bar ── */}
-          <div className="mt-6 rounded-xl border border-white/10 bg-[#121426] px-6 py-5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <LuShieldCheck className="h-5 w-5 text-[#D8B4FE]" />
-                <span className="text-sm font-semibold text-white">
-                  Profile Completion
-                </span>
-              </div>
-              <span
-                className={`text-sm font-bold ${completionPct === 100 ? "text-green-300" : "text-[#D8B4FE]"}`}
-              >
-                {completionPct}%
+          {/* Completion */}
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-white">
+                {missing.length === 0
+                  ? "Your profile is complete"
+                  : `Profile ${donePct}% done`}
               </span>
+              {missing.length > 0 && (
+                <span className="text-[#777B98]">
+                  Add {missing.slice(0, 2).join(" and ")}
+                </span>
+              )}
             </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-[#A020F0] transition-all duration-500"
-                style={{ width: `${completionPct}%` }}
+                className={`h-full rounded-full transition-all ${missing.length === 0 ? "bg-green-400" : "bg-[#A020F0]"}`}
+                style={{ width: `${donePct}%` }}
               />
             </div>
-            {completionPct < 100 && (
-              <div className="mt-2 flex items-center justify-between">
-                <p className="text-xs text-[#A5A8C3]">
-                  Almost there! Add a phone number to reach 100%.
-                </p>
-                <button className="text-xs font-semibold text-[#D8B4FE] hover:underline">
-                  Complete now
-                </button>
-              </div>
-            )}
           </div>
+        </section>
 
-          {/* ── Body: Two columns ── */}
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* ─── LEFT: Basic Information (2/3) ─── */}
-            <div className="space-y-6 lg:col-span-2">
-              <div className="rounded-xl border border-white/10 bg-[#121426] p-6">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-white">
-                    Basic Information
-                  </h2>
-                  <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-[#A020F0] to-[#00bde5] px-4 py-2 text-sm font-bold text-white shadow-sm shadow-[#A020F0]/20 transition-all duration-200 hover:from-[#008bbd] hover:to-[#00b0d6] hover:shadow-md hover:shadow-[#A020F0]/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+        {/* Tabs */}
+        <div className="mt-5 flex rounded-full border border-white/10 bg-[#121426] p-1">
+          {(
+            [
+              ["about", "About you"],
+              ["photos", "Photos"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`flex-1 rounded-full py-2 text-sm font-medium transition ${
+                tab === key
+                  ? "bg-[#A020F0] text-white"
+                  : "text-[#A5A8C3] hover:text-white"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "about" ? (
+          <section className="mt-4 space-y-4 rounded-2xl border border-white/10 bg-[#121426] p-5">
+            <Field label="Tagline" hint="One line that sums up what you host.">
+              <input
+                value={form.tagline}
+                onChange={(e) => set("tagline", e.target.value)}
+                maxLength={90}
+                placeholder="e.g. Sunrise treks around Guwahati"
+                className={FIELD}
+              />
+            </Field>
+
+            <Field label="Bio" hint="Who you are and why guests will love it.">
+              <textarea
+                value={form.bio}
+                onChange={(e) => set("bio", e.target.value)}
+                rows={5}
+                placeholder="A few lines about you…"
+                className={`${FIELD} resize-none`}
+              />
+            </Field>
+
+            <Field label="Tags" hint="Press Enter to add.">
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/10 bg-[#0D0F1E] p-2 focus-within:border-[#A020F0]">
+                {form.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="flex items-center gap-1 rounded-full bg-[#A020F0]/20 px-3 py-1 text-xs font-medium text-[#E9D5FF]"
                   >
-                    {saving ? (
-                      <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[#121426] border-t-transparent" />
-                    ) : (
-                      <FiCheck className="h-4 w-4" />
-                    )}
-                    <span>{saving ? "Saving..." : "Save Changes"}</span>
-                  </button>
-                </div>
-
-                {/* Avatar */}
-                <div className="mt-6 flex items-center gap-5">
-                  {form?.avatarUrl?.trim() ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={form.avatarUrl}
-                      alt="Avatar"
-                      loading="lazy"
-                      className="h-20 w-20 rounded-full border-2 border-white/10 object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/10 bg-white/[0.06]">
-                      <span className="text-2xl text-[#777B98]">👤</span>
-                    </div>
-                  )}
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-white">
-                      Your Avatar
-                    </p>
-                    <p className="text-xs text-[#A5A8C3]">
-                      Recommended 500×500px, JPG or PNG
-                    </p>
-                    <div
-                      ref={avatarDropZoneRef}
-                      onDragEnter={handleAvatarDragEnter}
-                      onDragLeave={handleAvatarDragLeave}
-                      onDragOver={handleAvatarDragOver}
-                      onDrop={handleAvatarDrop}
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`mt-3 cursor-pointer rounded-lg border-2 border-dashed p-3 text-center transition ${
-                        isAvatarDragging
-                          ? "border-[#A020F0] bg-[#A020F0]/10"
-                          : "border-white/15 hover:border-[#A020F0] hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <p
-                        className={`text-xs transition ${isAvatarDragging ? "font-semibold text-[#D8B4FE]" : "text-[#A5A8C3]"}`}
-                      >
-                        {isAvatarDragging
-                          ? "Drop image here"
-                          : "Drag or click to upload"}
-                      </p>
-                    </div>
-                    <div className="mt-2 flex gap-3">
-                      <button
-                        onClick={() => update("avatarUrl", "")}
-                        className="text-xs font-medium text-red-400 hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".png,.jpg,.jpeg"
-                      className="hidden"
-                      onChange={handleAvatarChange}
-                    />
-                  </div>
-                </div>
-
-                {/* First / Last name */}
-                <div className="mt-6 grid gap-5 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
-                      First Name
-                    </label>
-                    <input
-                      value={form.firstName}
-                      onChange={(e) => update("firstName", e.target.value)}
-                      className="w-full rounded-lg border border-white/15 px-4 py-3 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
-                      Last Name
-                    </label>
-                    <input
-                      value={form.lastName}
-                      onChange={(e) => update("lastName", e.target.value)}
-                      className="w-full rounded-lg border border-white/15 px-4 py-3 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
-                    />
-                  </div>
-                </div>
-
-                {/* Tagline */}
-                <div className="mt-5">
-                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
-                    Tagline
-                  </label>
-                  <input
-                    value={form.tagline}
-                    onChange={(e) => update("tagline", e.target.value)}
-                    className="w-full rounded-lg border border-white/15 px-4 py-3 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
-                  />
-                </div>
-
-                {/* Bio */}
-                <div className="mt-5">
-                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
-                    Bio
-                  </label>
-                  <textarea
-                    value={form.bio}
-                    onChange={(e) => update("bio", e.target.value)}
-                    rows={4}
-                    className="w-full resize-none rounded-lg border border-white/15 px-4 py-3 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
-                  />
-                </div>
-
-                {/* Expertise Tags */}
-                <div className="mt-5">
-                  <label className="mb-2 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
-                    Expertise &amp; Vibe
-                  </label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {form.expertiseTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="flex items-center gap-1 rounded-full bg-[#A020F0] px-3 py-1.5 text-xs font-medium text-white"
-                      >
-                        {tag}
-                        <button
-                          onClick={() => removeTag(tag)}
-                          className="ml-0.5 hover:text-white/70"
-                        >
-                          <FiX className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                    <div className="flex items-center gap-1">
-                      <input
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && addTag()}
-                        placeholder="+ Add Tag"
-                        className="w-24 rounded-lg border border-white/15 px-3 py-1.5 text-xs outline-none focus:border-[#A020F0]"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* ─── Social Presence ─── */}
-              <div className="rounded-xl border border-white/10 bg-[#121426] p-6">
-                <h2 className="text-lg font-bold text-white">
-                  Social Presence
-                </h2>
-
-                <div className="mt-5 space-y-4">
-                  {/* Instagram */}
-                  <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-pink-500 to-orange-400">
-                        <FaInstagram className="h-4 w-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">
-                          Instagram
-                        </p>
-                        {form.socialInstagram ? (
-                          <p
-                            onClick={() =>
-                              window.open(form.socialInstagram, "_blank")
-                            }
-                            className="cursor-pointer text-xs text-[#A5A8C3] transition hover:text-[#D8B4FE] hover:underline"
-                          >
-                            {form.socialInstagram}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-[#A5A8C3]">
-                            Not connected
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {form.socialInstagram ? (
-                      <button
-                        onClick={async () => {
-                          if (!validUserId) {
-                            toast.error("User ID not found");
-                            return;
-                          }
-                          try {
-                            await disconnectSocialMutation.mutateAsync({
-                              userId: validUserId,
-                              platform: "instagram",
-                            });
-                            update("socialInstagram", "");
-                            toast.success("Instagram disconnected");
-                          } catch {
-                            toast.error("Failed to disconnect Instagram");
-                          }
-                        }}
-                        className="text-[#777B98] hover:text-[#A5A8C3]"
-                      >
-                        <FiX className="h-4 w-4" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          const val = prompt(
-                            "Enter your Instagram profile URL (e.g., https://instagram.com/username):",
-                            "https://instagram.com/",
-                          );
-                          if (val?.trim()) {
-                            if (!validUserId) {
-                              toast.error("User ID not found");
-                              return;
-                            }
-                            try {
-                              await connectSocialMutation.mutateAsync({
-                                userId: validUserId,
-                                platform: "instagram",
-                                url: val.trim(),
-                              });
-                              update("socialInstagram", val.trim());
-                              toast.success("Instagram connected!");
-                            } catch (err) {
-                              console.error(
-                                "Failed to connect Instagram:",
-                                err,
-                              );
-                              toast.error("Failed to connect Instagram");
-                            }
-                          }
-                        }}
-                        disabled={connectSocialMutation.isPending}
-                        className="text-sm font-semibold text-[#D8B4FE] hover:underline disabled:opacity-50"
-                      >
-                        {connectSocialMutation.isPending
-                          ? "Connecting..."
-                          : "Connect"}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* LinkedIn */}
-                  <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#0A66C2]">
-                        <FaLinkedin className="h-4 w-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">
-                          LinkedIn
-                        </p>
-                        {form.socialLinkedin ? (
-                          <p
-                            onClick={() =>
-                              window.open(form.socialLinkedin, "_blank")
-                            }
-                            className="cursor-pointer text-xs text-[#D8B4FE] transition hover:underline"
-                          >
-                            {form.socialLinkedin.includes("linkedin.com")
-                              ? form.socialLinkedin
-                              : `https://linkedin.com/in/${form.socialLinkedin}`}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-[#A5A8C3]">
-                            Not connected
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    {form.socialLinkedin ? (
-                      <button
-                        onClick={async () => {
-                          if (!validUserId) {
-                            toast.error("User ID not found");
-                            return;
-                          }
-                          try {
-                            await disconnectSocialMutation.mutateAsync({
-                              userId: validUserId,
-                              platform: "linkedin",
-                            });
-                            update("socialLinkedin", "");
-                            toast.success("LinkedIn disconnected");
-                          } catch (err) {
-                            console.error(
-                              "Failed to disconnect LinkedIn:",
-                              err,
-                            );
-                            toast.error("Failed to disconnect LinkedIn");
-                          }
-                        }}
-                        className="text-[#777B98] hover:text-[#A5A8C3]"
-                      >
-                        <FiX className="h-4 w-4" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          const val = prompt(
-                            "Enter your LinkedIn profile URL (e.g., https://linkedin.com/in/username):",
-                            "https://linkedin.com/in/",
-                          );
-                          if (val?.trim()) {
-                            if (!validUserId) {
-                              toast.error("User ID not found");
-                              return;
-                            }
-                            try {
-                              await connectSocialMutation.mutateAsync({
-                                userId: validUserId,
-                                platform: "linkedin",
-                                url: val.trim(),
-                              });
-                              update("socialLinkedin", val.trim());
-                              toast.success("LinkedIn connected!");
-                            } catch (err) {
-                              console.error("Failed to connect LinkedIn:", err);
-                              toast.error("Failed to connect LinkedIn");
-                            }
-                          }
-                        }}
-                        disabled={connectSocialMutation.isPending}
-                        className="text-sm font-semibold text-[#D8B4FE] hover:underline disabled:opacity-50"
-                      >
-                        {connectSocialMutation.isPending
-                          ? "Connecting..."
-                          : "Connect"}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Website */}
-                  <div className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10">
-                        <FaGlobe className="h-4 w-4 text-[#A5A8C3]" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-white">
-                          Website
-                        </p>
-                        {form.socialWebsite ? (
-                          <p
-                            onClick={() =>
-                              window.open(form.socialWebsite, "_blank")
-                            }
-                            className="cursor-pointer text-xs text-[#A5A8C3] transition hover:text-[#D8B4FE] hover:underline"
-                          >
-                            {form.socialWebsite}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-[#A5A8C3]">Not set</p>
-                        )}
-                      </div>
-                    </div>
+                    {tag}
                     <button
-                      className="text-[#777B98] hover:text-[#A5A8C3]"
-                      onClick={async () => {
-                        const val = prompt(
-                          "Enter your website URL (e.g., https://example.com):",
-                          form.socialWebsite,
-                        );
-                        if (val?.trim()) {
-                          if (!validUserId) {
-                            toast.error("User ID not found");
-                            return;
-                          }
-                          try {
-                            await connectSocialMutation.mutateAsync({
-                              userId: validUserId,
-                              platform: "website",
-                              url: val.trim(),
-                            });
-                            update("socialWebsite", val.trim());
-                            toast.success("Website updated!");
-                          } catch (err) {
-                            console.error("Failed to update website:", err);
-                            toast.error("Failed to update website");
-                          }
-                        } else if (val === "" && form.socialWebsite) {
-                          // User cleared the website
-                          if (!validUserId) {
-                            toast.error("User ID not found");
-                            return;
-                          }
-                          try {
-                            await disconnectSocialMutation.mutateAsync({
-                              userId: validUserId,
-                              platform: "website",
-                            });
-                            update("socialWebsite", "");
-                            toast.success("Website removed");
-                          } catch (err) {
-                            console.error("Failed to remove website:", err);
-                            toast.error("Failed to remove website");
-                          }
-                        }
-                      }}
-                      disabled={
-                        connectSocialMutation.isPending ||
-                        disconnectSocialMutation.isPending
+                      onClick={() =>
+                        set(
+                          "tags",
+                          form.tags.filter((t) => t !== tag),
+                        )
                       }
+                      aria-label={`Remove ${tag}`}
+                      className="hover:text-white"
                     >
-                      <FiEdit2 className="h-4 w-4" />
+                      <FiX className="h-3 w-3" />
                     </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ─── RIGHT: Trust & Safety (1/3) ─── */}
-            <div className="space-y-6">
-              <div className="rounded-xl border border-white/10 bg-[#121426] p-6">
-                <h2 className="flex items-center gap-2 text-lg font-bold text-white">
-                  <span className="text-green-400">🛡️</span> Trust &amp; Safety
-                </h2>
-                <p className="mt-1 text-xs text-[#A5A8C3]">
-                  Verification enhances trust.
-                </p>
-
-                <div className="mt-5 space-y-5">
-                  {/* Government ID */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        Government ID
-                      </p>
-                      <p className="text-xs text-[#A5A8C3]">
-                        {form.isGovIdVerified
-                          ? "Identity Verified"
-                          : "Not verified"}
-                      </p>
-                    </div>
-                    {form.isGovIdVerified ? (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/15">
-                        <FiCheck className="h-4 w-4 text-green-300" />
-                      </div>
-                    ) : (
-                      <button className="rounded-lg bg-[#A020F0] px-4 py-1.5 text-xs font-semibold text-white">
-                        Verify Now
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Email */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        Email Address
-                      </p>
-                      <p className="text-xs text-[#A5A8C3]">
-                        {form.email || "No email"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        Phone Number
-                      </p>
-                      <p className="text-xs text-[#A5A8C3]">
-                        {form.phone || "No phone number"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Earned Trust Badges */}
-                <div className="mt-6 border-t border-white/10 pt-5">
-                  <p className="mb-3 text-sm font-semibold text-white">
-                    Earned Trust Badges
-                  </p>
-                  <div className="flex gap-3">
-                    {/* Identity Verified */}
-                    <div
-                      className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
-                        form.isIdentityVerified
-                          ? "border-[#A020F0] bg-[#241333]"
-                          : "border-white/10 bg-white/[0.04] opacity-40"
-                      }`}
-                    >
-                      <LuBadgeCheck
-                        className={`h-6 w-6 ${form.isIdentityVerified ? "text-[#D8B4FE]" : "text-[#777B98]"}`}
-                      />
-                      <span className="mt-1 text-[10px] font-medium text-white/80">
-                        Identity
-                      </span>
-                      <span className="text-[10px] text-[#A5A8C3]">
-                        Verified
-                      </span>
-                    </div>
-
-                    {/* Super Host */}
-                    <div
-                      className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
-                        form.isSuperHost
-                          ? "border-amber-400 bg-amber-500/10"
-                          : "border-white/10 bg-white/[0.04] opacity-40"
-                      }`}
-                    >
-                      <LuStar
-                        className={`h-6 w-6 ${form.isSuperHost ? "text-amber-400" : "text-[#777B98]"}`}
-                      />
-                      <span className="mt-1 text-[10px] font-medium text-white/80">
-                        Super
-                      </span>
-                      <span className="text-[10px] text-[#A5A8C3]">Host</span>
-                    </div>
-
-                    {/* Community Champ */}
-                    <div
-                      className={`flex flex-col items-center rounded-xl border px-4 py-3 ${
-                        form.isCommunityChamp
-                          ? "border-purple-400 bg-purple-500/10"
-                          : "border-white/10 bg-white/[0.04] opacity-40"
-                      }`}
-                    >
-                      <LuUsers
-                        className={`h-6 w-6 ${form.isCommunityChamp ? "text-purple-400" : "text-[#777B98]"}`}
-                      />
-                      <span className="mt-1 text-[10px] font-medium text-white/80">
-                        Community
-                      </span>
-                      <span className="text-[10px] text-[#A5A8C3]">Champ</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pro Tip card */}
-              <div className="rounded-xl bg-[#A020F0] p-5 text-white">
-                <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-white/20">
-                  <LuBadgeCheck className="h-5 w-5" />
-                </div>
-                <h3 className="text-base font-bold">Pro Tip</h3>
-                <p className="mt-1 text-sm text-white/80">
-                  Hosts with a connected LinkedIn account and verified phone
-                  number get 30% more booking inquiries on average.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Photos for guests' journeys, and the albums on the profile's
-              Photos tab. */}
-          {hostData && (
-            <>
-              <section className="mt-6 rounded-xl border border-white/10 bg-[#121426] p-6">
-                <div className="mb-5">
-                  <h2 className="text-lg font-bold text-white">
-                    Share photos with your guests
-                  </h2>
-                  <p className="mt-1 text-xs text-[#A5A8C3]">
-                    Add photos to an experience you&apos;ve hosted. Everyone who
-                    went will find them in their journey. Only share photos the
-                    people in them are happy with.
-                  </p>
-                </div>
-                <EventAlbums pastEvents={pastEvents} />
-              </section>
-              <section className="mt-6 rounded-xl border border-white/10 bg-[#121426] p-6">
-                <div className="mb-5">
-                  <h2 className="text-lg font-bold text-white">
-                    Albums on your profile
-                  </h2>
-                  <p className="mt-1 text-xs text-[#A5A8C3]">
-                    The Photos tab of your public profile: past events,
-                    credentials, your work.
-                  </p>
-                </div>
-                <PhotoAlbums
-                  owner={{ userId: validUserId }}
-                  firstName={hostData.first_name}
-                  isMe
+                  </span>
+                ))}
+                <input
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === ",") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
+                  onBlur={addTag}
+                  placeholder={form.tags.length ? "Add more" : "e.g. Trekking"}
+                  className="min-w-24 flex-1 bg-transparent px-1 py-1 text-sm text-white placeholder-[#777B98] outline-none"
                 />
-              </section>
-            </>
-          )}
-        </main>
+              </div>
+            </Field>
+
+            <div>
+              <p className="mb-1.5 text-sm font-medium text-white">Links</p>
+              <div className="space-y-2">
+                {(
+                  [
+                    ["instagram", FaInstagram, "instagram.com/yourname"],
+                    ["linkedin", FaLinkedin, "linkedin.com/in/yourname"],
+                    ["website", FaGlobe, "yourwebsite.com"],
+                  ] as const
+                ).map(([key, Icon, ph]) => (
+                  <label key={key} className="relative block">
+                    <Icon
+                      className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-[#777B98]"
+                      aria-hidden
+                    />
+                    <span className="sr-only">{key}</span>
+                    <input
+                      value={form[key]}
+                      onChange={(e) => set(key, e.target.value)}
+                      placeholder={ph}
+                      inputMode="url"
+                      className={`${FIELD} pl-11`}
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-xs text-[#777B98]">
+              Your name, email and phone come from your account settings.
+            </p>
+          </section>
+        ) : (
+          <div className="mt-4 space-y-4">
+            <section className="rounded-2xl border border-white/10 bg-[#121426] p-5">
+              <h2 className="text-sm font-semibold text-white">
+                Share photos with your guests
+              </h2>
+              <p className="mt-1 mb-4 text-xs text-[#777B98]">
+                Add photos to an event you&apos;ve hosted. Everyone who went
+                finds them in their journey. Only share photos the people in
+                them are happy with.
+              </p>
+              <EventAlbums pastEvents={pastEvents} />
+            </section>
+            <section className="rounded-2xl border border-white/10 bg-[#121426] p-5">
+              <h2 className="text-sm font-semibold text-white">
+                Albums on your profile
+              </h2>
+              <p className="mt-1 mb-4 text-xs text-[#777B98]">
+                The Photos tab of your public profile: past events, credentials,
+                your work.
+              </p>
+              <PhotoAlbums
+                owner={{ userId: validUserId }}
+                firstName={host.first_name}
+                isMe
+              />
+            </section>
+          </div>
+        )}
+      </main>
+
+      {/* Save bar: only when there's something to save */}
+      {dirty && (
+        <div className="fixed inset-x-0 bottom-[calc(76px+env(safe-area-inset-bottom))] z-30 px-4 md:bottom-6 md:pl-[92px] xl:pl-[264px]">
+          <div className="mx-auto flex max-w-3xl items-center gap-3 rounded-2xl border border-white/10 bg-[#1A1C33] p-3 pl-4 shadow-2xl shadow-black/50">
+            <p className="flex-1 text-sm text-white">Unsaved changes</p>
+            <button
+              onClick={() => {
+                setForm(saved);
+                setPendingAvatar(null);
+              }}
+              disabled={saving}
+              className="rounded-full px-4 py-2 text-sm font-medium text-[#A5A8C3] transition hover:text-white"
+            >
+              Discard
+            </button>
+            <button
+              onClick={() => void save()}
+              disabled={saving}
+              className="flex items-center gap-1.5 rounded-full bg-[#A020F0] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
+            >
+              {saving ? (
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <FiCheck className="h-4 w-4" />
+              )}
+              Save
+            </button>
+          </div>
+        </div>
       )}
     </div>
+  );
+}
+
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <span className="text-sm font-medium text-white">{label}</span>
+        {hint && <span className="text-xs text-[#777B98]">{hint}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Badge({
+  on,
+  icon: Icon,
+  label,
+}: {
+  on: boolean;
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+}) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium ${
+        on ? "bg-[#A020F0]/15 text-[#E9D5FF]" : "bg-white/[0.06] text-[#777B98]"
+      }`}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </span>
   );
 }

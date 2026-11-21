@@ -39,6 +39,7 @@ import {
   useReviewsByEvent,
 } from "~/hooks/useApi";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
+import EventCover from "~/components/EventCover";
 
 type Tab = "upcoming" | "past" | "photos" | "reviews" | "about";
 
@@ -365,9 +366,8 @@ export default function HostProfileClient({
                       className={`group overflow-hidden ${CARD}`}
                     >
                       <div className="aspect-[4/5] overflow-hidden">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={e.cover_image_url ?? "/assets/home/hiking.webp"}
+                        <EventCover
+                          src={e.cover_image_url}
                           alt={e.title}
                           loading="lazy"
                           className="h-full w-full object-cover opacity-85 transition duration-300 group-hover:scale-105 group-hover:opacity-100"

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import type { BlogDTO } from "~/lib/api";
-import { FALLBACK_PHOTOS } from "../shared";
+import EventCover from "~/components/EventCover";
 
 export const storyDate = (b: BlogDTO) => {
   const d = b.published_at ?? b.created_at;
@@ -29,8 +29,7 @@ function stripMarkup(s: string) {
     .trim();
 }
 
-const cover = (b: BlogDTO, i: number) =>
-  b.cover_image_url ?? FALLBACK_PHOTOS[i % FALLBACK_PHOTOS.length]!;
+const cover = (b: BlogDTO) => b.cover_image_url ?? null;
 
 function Author({ blog }: { blog: BlogDTO }) {
   const name = blog.author_name?.trim()
@@ -79,7 +78,6 @@ function Draft() {
  */
 export function StoryCard({
   blog,
-  i = 0,
   actions,
   className = "",
   style,
@@ -96,9 +94,8 @@ export function StoryCard({
       style={style}
     >
       <div className="relative aspect-[4/3] overflow-hidden rounded-[20px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={cover(blog, i)}
+        <EventCover
+          src={cover(blog)}
           alt=""
           loading="lazy"
           className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
@@ -148,9 +145,8 @@ export function FeaturedStory({
   return (
     <article className="group relative grid overflow-hidden rounded-[32px] border border-white/10 bg-[#121426]/80 p-3 backdrop-blur-md transition duration-300 hover:border-[#652A91] md:grid-cols-[1.25fr_1fr]">
       <div className="relative aspect-[16/11] overflow-hidden rounded-[24px] md:aspect-auto md:min-h-[440px]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={cover(blog, 0)}
+        <EventCover
+          src={cover(blog)}
           alt=""
           className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105"
         />

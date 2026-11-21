@@ -56,7 +56,7 @@ export default function ExperiencesList({
               event.description ??
               "Discover a hosted experience near you."
             }
-            imageUrl={event.cover_image_url ?? "/assets/home/hiking.webp"}
+            imageUrl={event.cover_image_url ?? ""}
             rating={
               event.avg_rating !== null &&
               event.avg_rating !== undefined &&
@@ -67,6 +67,7 @@ export default function ExperiencesList({
             price={eventPriceLabel(event)}
             time={event.time}
             location={event.location}
+            isOnline={event.is_online}
             isRecurring={event.is_recurring}
             capacity={event.capacity}
             totalBookings={event.total_bookings}

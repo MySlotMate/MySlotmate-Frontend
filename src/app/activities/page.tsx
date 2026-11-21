@@ -42,14 +42,15 @@ import {
   FiStar,
   FiX,
   FiXCircle,
+  FiVideo,
 } from "react-icons/fi";
 import { LuQrCode, LuSparkles } from "react-icons/lu";
 import { toast } from "sonner";
+import EventCover from "~/components/EventCover";
 
 const CARD = "rounded-2xl border border-white/[0.06] bg-[#131328]";
 const GRADIENT_BTN =
   "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white transition hover:brightness-110";
-const FALLBACK_COVER = "/assets/home/hiking.webp";
 
 type Tab = "upcoming" | "memories" | "saved";
 
@@ -100,9 +101,8 @@ function UpcomingCard({
         href={`/experience/${event.slug}`}
         className="aspect-[4/5] overflow-hidden"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={event.cover_image_url ?? FALLBACK_COVER}
+        <EventCover
+          src={event.cover_image_url}
           alt={event.title}
           loading="lazy"
           className="h-full w-full object-cover transition duration-300 hover:scale-105"
@@ -119,7 +119,11 @@ function UpcomingCard({
           {booking.quantity > 1 && ` · ${booking.quantity} guests`}
         </p>
         <p className="mt-1.5 flex items-center gap-2 text-[13px] text-white/60">
-          <FiMapPin className="h-3.5 w-3.5 shrink-0" />
+          {event.is_online ? (
+            <FiVideo className="h-3.5 w-3.5 shrink-0" />
+          ) : (
+            <FiMapPin className="h-3.5 w-3.5 shrink-0" />
+          )}
           {event.is_online && event.meeting_link ? (
             <a
               href={event.meeting_link}
@@ -319,9 +323,8 @@ function JourneyHero({
               className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 p-3 transition hover:border-white/25 md:flex-col md:items-stretch"
             >
               <div className="aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-xl md:w-full">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={next.event.cover_image_url ?? FALLBACK_COVER}
+                <EventCover
+                  src={next.event.cover_image_url}
                   alt=""
                   className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                 />
@@ -425,9 +428,8 @@ function MemoryTimeline({
                       href={`/experience/${m.event.slug}`}
                       className="aspect-[4/5] w-24 shrink-0 self-start overflow-hidden rounded-xl md:w-28"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={m.event.cover_image_url ?? FALLBACK_COVER}
+                      <EventCover
+                        src={m.event.cover_image_url}
                         alt={m.event.title}
                         loading="lazy"
                         className="h-full w-full object-cover"
@@ -455,7 +457,11 @@ function MemoryTimeline({
                         {formatIST(m.at, "EEE, MMM d · h:mm a")}
                       </p>
                       <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-white/55">
-                        <FiMapPin className="h-3 w-3 shrink-0" />
+                        {m.event.is_online ? (
+                          <FiVideo className="h-3 w-3 shrink-0" />
+                        ) : (
+                          <FiMapPin className="h-3 w-3 shrink-0" />
+                        )}
                         <span className="truncate">{placeOf(m.event)}</span>
                       </p>
 
@@ -918,9 +924,8 @@ export default function ActivitiesPage() {
                         className={`group flex flex-col overflow-hidden ${CARD}`}
                       >
                         <div className="relative aspect-[4/5] overflow-hidden">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={event.cover_image_url ?? FALLBACK_COVER}
+                          <EventCover
+                            src={event.cover_image_url}
                             alt={event.title}
                             loading="lazy"
                             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"

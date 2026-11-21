@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { Menu, X } from "lucide-react";
 import GoogleLogin from "~/components/GoogleLogin";
 import { BecomeHostModal } from "~/components/become-host";
@@ -14,12 +16,21 @@ const LINKS = [
   { href: "/blogs", label: "Stories" },
 ];
 
-/** Top bar for the logged-out website. Sits over the hero. */
+/**
+ * Top bar for the logged-out website. Sits over the hero. Signed-in people
+ * get the app's own navigation (mounted in the root layout) instead, so a
+ * logged-in guest reading About never sees "Log in / Sign up".
+ */
 export default function WebsiteNav() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
     useListTimeAction();
+  const { userId } = useStoredAuth();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (mounted && userId) return null;
 
   return (
     <>
@@ -103,11 +114,18 @@ export default function WebsiteNav() {
         )}
       </nav>
 
-      <GoogleLogin open={loginOpen} onClose={() => setLoginOpen(false)} />
-      <BecomeHostModal
-        open={showBecomeHostModal}
-        onClose={closeBecomeHostModal}
-      />
+      {/* Rendered at the top of the page so the hero can't paint over it. */}
+      {mounted &&
+        createPortal(
+          <>
+            <GoogleLogin open={loginOpen} onClose={() => setLoginOpen(false)} />
+            <BecomeHostModal
+              open={showBecomeHostModal}
+              onClose={closeBecomeHostModal}
+            />
+          </>,
+          document.body,
+        )}
     </>
   );
 }

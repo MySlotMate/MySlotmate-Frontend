@@ -13,7 +13,6 @@ import {
   formatBlogDate,
   getBlogValue,
   getBlogExcerpt,
-  FALLBACK_BLOG_IMAGE,
   type TOCItem,
 } from "../BlogsClient";
 import HostInvite from "~/components/website/HostInvite";
@@ -23,6 +22,7 @@ import Reveal from "~/components/website/about/Reveal";
 import StarField from "~/components/website/about/StarField";
 import { GRADIENT } from "~/components/website/shared";
 import { StoryCard } from "~/components/website/stories/StoryCard";
+import EventCover from "~/components/EventCover";
 
 const delay = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
 
@@ -317,9 +317,10 @@ export default function BlogDetailClient({
           className="msm-r relative overflow-hidden rounded-[32px] border border-white/10 shadow-[0_40px_120px_-40px_rgb(160_32_240/0.55)]"
           style={delay(0.35)}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={blog.cover_image_url ?? FALLBACK_BLOG_IMAGE}
+          <EventCover
+            src={blog.cover_image_url}
+            seed={blog.slug}
+            iconSize="lg"
             alt=""
             className="aspect-[16/10] w-full object-cover md:aspect-[16/8]"
           />

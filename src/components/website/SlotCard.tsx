@@ -5,12 +5,12 @@ import { formatIST } from "~/lib/datetime";
 import { getMoodDisplayLabel } from "~/lib/moods";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import { coverOf, isOneOnOne, whenOf } from "./shared";
+import EventCover from "~/components/EventCover";
 
 /** Grid card for the website's Discover section: 4:5 poster, then details. */
 export default function SlotCard({
   event,
   host,
-  index = 0,
 }: {
   event: EventDTO;
   host?: PublicHostProfileDTO;
@@ -30,9 +30,8 @@ export default function SlotCard({
       className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.05] bg-[#121426] transition hover:border-white/15 sm:rounded-[20px]"
     >
       <div className="relative aspect-[4/5] overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={coverOf(event, index)}
+        <EventCover
+          src={coverOf(event)}
           alt={event.title}
           loading="lazy"
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"

@@ -94,8 +94,6 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export const FALLBACK_BLOG_IMAGE = "/assets/home/hiking.webp";
-
 // Helper functions for block management
 function generateBlockId() {
   return Math.random().toString(36).substring(2, 11);

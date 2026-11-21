@@ -10,10 +10,11 @@ import {
 import { type EventDTO } from "~/lib/api";
 import { eventPriceLabel } from "~/lib/price";
 import * as components from "~/components";
-import { FiBookmark, FiTrash2, FiMapPin } from "react-icons/fi";
+import { FiBookmark, FiTrash2, FiMapPin, FiVideo } from "react-icons/fi";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "~/hooks/useApi";
 import Breadcrumb from "~/components/Breadcrumb";
+import EventCover from "~/components/EventCover";
 
 interface SavedExperienceWithEvent {
   saved: {
@@ -113,11 +114,8 @@ export default function SavedExperiencesPage() {
               >
                 {/* Image Container */}
                 <div className="relative aspect-[4/5] overflow-hidden bg-white/10">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      event.cover_image_url ?? "/assets/home/placeholder.jpg"
-                    }
+                  <EventCover
+                    src={event.cover_image_url}
                     alt={event.title}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -159,11 +157,15 @@ export default function SavedExperiencesPage() {
 
                     {/* Info */}
                     <div className="mt-2 flex flex-col gap-1 border-t border-white/10 pt-2 text-sm sm:mt-4 sm:flex-row sm:items-center sm:gap-4 sm:pt-3">
-                      {event.location && (
+                      {(event.is_online || event.location) && (
                         <div className="flex flex-1 items-center gap-1.5 text-[#A5A8C3]">
-                          <FiMapPin className="h-4 w-4 flex-shrink-0 text-[#D8B4FE]" />
+                          {event.is_online ? (
+                            <FiVideo className="h-4 w-4 flex-shrink-0 text-[#D8B4FE]" />
+                          ) : (
+                            <FiMapPin className="h-4 w-4 flex-shrink-0 text-[#D8B4FE]" />
+                          )}
                           <span className="truncate text-xs">
-                            {event.location}
+                            {event.is_online ? "Online" : event.location}
                           </span>
                         </div>
                       )}
@@ -198,7 +200,7 @@ export default function SavedExperiencesPage() {
             </p>
             <Link
               href="/experiences"
-              className="rounded-lg bg-[#A020F0] px-6 py-3 font-semibold text-white shadow-md transition hover:brightness-110 hover:shadow-lg"
+              className="rounded-lg bg-[#A020F0] px-6 py-3 font-semibold text-white shadow-md transition hover:shadow-lg hover:brightness-110"
             >
               Explore Experiences
             </Link>

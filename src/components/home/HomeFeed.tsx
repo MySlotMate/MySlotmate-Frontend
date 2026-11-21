@@ -16,6 +16,7 @@ import {
   Share2,
   Star,
   Ticket,
+  Video,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BecomeHostModal } from "~/components/become-host";
@@ -45,12 +46,12 @@ import {
 import { formatIST } from "~/lib/datetime";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import type { HomepageMarketingConfig } from "./ShowcaseSections";
+import EventCover from "~/components/EventCover";
 
 // Shared with the Explore page.
 export const CARD = "border border-white/[0.06] bg-[#131328]";
 export const GRADIENT_BTN =
   "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white transition hover:brightness-110";
-const FALLBACK_COVER = "/assets/home/hiking.webp";
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 // Defaults when the admin hasn't set homepage_marketing_config limits.
@@ -63,7 +64,8 @@ const whenOf = (e: EventDTO) => new Date(e.next_available_date ?? e.time);
 export const ratingOf = (r: number | null | undefined) =>
   r ? r.toFixed(1) : null;
 
-export const coverOf = (e: EventDTO) => e.cover_image_url ?? FALLBACK_COVER;
+/** The event's cover, or null: render it with <EventCover>, never a stock photo. */
+export const coverOf = (e: EventDTO) => e.cover_image_url ?? null;
 
 const dayKey = (d: Date | number) => formatIST(new Date(d), "yyyy-MM-dd");
 
@@ -163,8 +165,7 @@ function NextPlan({ event, at }: { event: EventDTO; at: Date }) {
       className="group relative flex items-stretch overflow-hidden rounded-3xl bg-gradient-to-r from-[#2A1550] to-[#1B1D33] ring-1 ring-[#A020F0]/30"
     >
       <span className="relative w-24 shrink-0 overflow-hidden sm:w-32">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <EventCover
           src={coverOf(event)}
           alt=""
           className="h-full w-full object-cover"
@@ -262,8 +263,7 @@ export function MobileHero({
             >
               <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-[#121426] ring-1 ring-white/10">
                 {/* Like the Android app: the poster fills the card. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <EventCover
                   src={coverOf(e)}
                   alt={e.title}
                   loading="lazy"
@@ -342,14 +342,16 @@ function Hero({ events }: { events: EventDTO[] }) {
       }}
     >
       {/* Backdrop: the poster, blurred into the page */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        key={`bg-${e.id}`}
-        src={coverOf(e)}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 -z-20 h-full w-full scale-125 animate-[hero-stack-fade_0.7s_ease-out] object-cover opacity-50 blur-[80px]"
-      />
+      {e.cover_image_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={`bg-${e.id}`}
+          src={e.cover_image_url}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 -z-20 h-full w-full scale-125 animate-[hero-stack-fade_0.7s_ease-out] object-cover opacity-50 blur-[80px]"
+        />
+      )}
       <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#080914] via-[#080914]/85 to-[#080914]/40" />
       <div className="absolute inset-x-0 bottom-0 -z-10 h-24 bg-gradient-to-t from-[#080914] to-transparent" />
 
@@ -366,7 +368,11 @@ function Hero({ events }: { events: EventDTO[] }) {
             {e.title}
           </h2>
           <p className="mt-3 flex items-center gap-1.5 text-[15px] text-white/65 md:text-lg">
-            <MapPin className="h-4 w-4 shrink-0" />
+            {e.is_online ? (
+              <Video className="h-4 w-4 shrink-0" />
+            ) : (
+              <MapPin className="h-4 w-4 shrink-0" />
+            )}
             <span className="truncate">{placeOf(e)}</span>
           </p>
           <p className="mt-4 text-[15px] font-semibold text-white">
@@ -389,14 +395,15 @@ function Hero({ events }: { events: EventDTO[] }) {
           aria-hidden="true"
           className="relative order-1 mx-auto block aspect-[4/5] w-[62%] max-w-[260px] animate-[hero-stack-fade_0.5s_ease-out] overflow-hidden rounded-2xl bg-[#121426] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] ring-1 ring-white/10 md:order-2 md:mr-0 md:w-[300px] md:max-w-none"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={coverOf(e)}
-            alt=""
-            className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-xl"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          {e.cover_image_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={e.cover_image_url}
+              alt=""
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-xl"
+            />
+          )}
+          <EventCover
             src={coverOf(e)}
             alt=""
             className="relative h-full w-full object-contain"
@@ -520,8 +527,7 @@ function SessionCard({
       className="group flex gap-4 rounded-3xl border border-white/[0.08] bg-[#121426] p-3 transition hover:border-white/20"
     >
       <span className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-2xl sm:w-28">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <EventCover
           src={coverOf(e)}
           alt=""
           loading="lazy"

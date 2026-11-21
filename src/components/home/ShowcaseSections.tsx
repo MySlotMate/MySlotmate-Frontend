@@ -80,6 +80,7 @@ import {
   ExperienceCard,
   type ExperienceCardItem,
 } from "../../components/ExperienceCard";
+import EventCover from "~/components/EventCover";
 
 type CuratedSessionItem = ExperienceCardItem;
 
@@ -383,7 +384,7 @@ const ShowcaseSections = ({
         event.avg_rating !== 0
           ? event.avg_rating.toFixed(1)
           : "NEW",
-      image: event.cover_image_url ?? "/assets/home/hiking.webp",
+      image: event.cover_image_url ?? "",
       overlayTitle: event.title,
       overlaySubtitle: event.location
         ? `In ${event.location}`
@@ -435,7 +436,7 @@ const ShowcaseSections = ({
           "Discover a hosted experience near you.",
         160,
       ),
-      imageUrl: event.cover_image_url ?? "/assets/home/hiking.webp",
+      imageUrl: event.cover_image_url ?? "",
       rating:
         event.avg_rating !== null &&
         event.avg_rating !== undefined &&
@@ -445,6 +446,7 @@ const ShowcaseSections = ({
       price: eventPriceLabel(event),
       time: event.time,
       location: event.location,
+      isOnline: event.is_online,
       isRecurring: event.is_recurring,
       capacity: event.capacity,
       totalBookings: event.total_bookings,
@@ -917,8 +919,7 @@ const ShowcaseSections = ({
                 {/* 16/9 matches the crop the uploader enforces on cover images,
                     so object-cover fits exactly and nothing is shaved off the sides. */}
                 <div className="relative mx-auto aspect-[16/9] w-full overflow-hidden rounded-[20px] shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <EventCover
                     src={featured.image}
                     alt={featured.title}
                     loading="lazy"
@@ -1172,7 +1173,7 @@ const ShowcaseSections = ({
                       />
                     </video>
                   ) : (
-                    <img
+                    <EventCover
                       src={card.image}
                       alt={card.title}
                       className="absolute inset-0 h-full w-full object-cover transition duration-500"
@@ -1350,8 +1351,7 @@ const ShowcaseSections = ({
             href={storyHref}
             className="relative mx-auto mb-12 block w-full max-w-[410px]"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <EventCover
               src={story.image}
               alt={story.title}
               loading="lazy"

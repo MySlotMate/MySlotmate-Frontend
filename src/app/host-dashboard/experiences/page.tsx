@@ -10,20 +10,36 @@ import {
   useHostBoosts,
 } from "~/hooks/useApi";
 import { useIdToken } from "~/hooks/useIdToken";
-import BoostButton from "~/components/host-dashboard/boost/BoostButton";
-import type { BoostStatus } from "~/lib/api";
-import { BOOST_STATUS_LABEL } from "~/lib/boost";
+import { boostHref } from "~/components/host-dashboard/boost/BoostButton";
+import type { BoostStatus, EventDTO } from "~/lib/api";
+import {
+  BOOST_ENABLED,
+  BOOST_STATUS_LABEL,
+  boostBlockers,
+  isOpenBoost,
+} from "~/lib/boost";
 import { cancelEvent, deleteEvent, type BookingDTO } from "~/lib/api";
 import type { OccurrenceAvailability } from "~/lib/api";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useMemo, useCallback } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+  type ComponentType,
+} from "react";
 import {
   FiSearch,
   FiStar,
-  FiCalendar,
   FiEdit2,
   FiTrash2,
-  FiEye,
+  FiExternalLink,
+  FiCalendar,
+  FiTrendingUp,
+  FiImage,
+  FiMoreHorizontal,
   FiPause,
   FiPlay,
   FiShield,
@@ -37,29 +53,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import HostOnSpotBookingModal from "~/components/host-dashboard/HostOnSpotBookingModal";
 import HostBulkImportModal from "~/components/host-dashboard/HostBulkImportModal";
 import ManageCodesModal from "~/components/host-dashboard/ManageCodesModal";
-
-/* ------------------------------------------------------------------ */
-/*  Helper: relative time formatting                                   */
-/* ------------------------------------------------------------------ */
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffHours < 1) return "Just now";
-  if (diffHours < 24) return `${diffHours}H AGO`;
-  if (diffDays === 1) return "1D AGO";
-  if (diffDays < 7) return `${diffDays}D AGO`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)}W AGO`;
-  return date
-    .toLocaleDateString("en-US", { month: "short", year: "numeric" })
-    .toUpperCase();
-}
+import { CANCELLATION_POLICIES } from "~/components/host-dashboard/EventFormKit";
+import EventCover from "~/components/EventCover";
 
 function formatNextDate(dateStr: string | null): string {
-  if (!dateStr) return "Not Scheduled";
+  if (!dateStr) return "Not set";
   const date = new Date(dateStr);
   const now = new Date();
   const tomorrow = new Date(now);
@@ -68,6 +66,86 @@ function formatNextDate(dateStr: string | null): string {
   if (date.toDateString() === now.toDateString()) return "Today";
   if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+const policyLabel = (p: string | null) =>
+  CANCELLATION_POLICIES.find((c) => c.value === p)?.label ?? "No refund policy";
+
+/* ------------------------------------------------------------------ */
+/*  Card "⋯" menu                                                      */
+/* ------------------------------------------------------------------ */
+interface MenuItem {
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  onSelect: () => void;
+  hidden?: boolean;
+  tone?: "amber" | "red" | "purple";
+}
+
+function CardMenu({ items }: { items: MenuItem[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const tone = {
+    amber: "text-amber-300 hover:bg-amber-500/10",
+    red: "text-red-300 hover:bg-red-500/10",
+    purple: "text-[#E9D5FF] hover:bg-[#B724EA]/10",
+    none: "text-white/80 hover:bg-white/[0.06]",
+  };
+
+  return (
+    <div ref={ref} className="relative -mt-1 -mr-1 shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-label="More actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-[#A5A8C3] transition hover:bg-white/10 hover:text-white"
+      >
+        <FiMoreHorizontal className="h-5 w-5" />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-1 w-52 overflow-hidden rounded-xl border border-white/10 bg-[#1A1C33] py-1 shadow-xl shadow-black/40"
+        >
+          {items
+            .filter((i) => !i.hidden)
+            .map(({ label, icon: Icon, onSelect, tone: t }) => (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setOpen(false);
+                  onSelect();
+                }}
+                className={`flex w-full items-center gap-2.5 px-3.5 py-2.5 text-left text-sm transition ${tone[t ?? "none"]}`}
+              >
+                <Icon className="h-4 w-4 opacity-80" />
+                {label}
+              </button>
+            ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -114,27 +192,7 @@ function StatusBadge({ status }: { status: string }) {
 /*  Experience Card Component                                          */
 /* ------------------------------------------------------------------ */
 interface ExperienceCardProps {
-  event: {
-    id: string;
-    title: string;
-    hook_line: string | null;
-    cover_image_url: string | null;
-    status: string;
-    time: string;
-    next_available_date: string | null;
-    /** Set on custom-dates events; `time` only ever holds the first of them. */
-    custom_dates?: string[] | null;
-    avg_rating: number | null;
-    total_bookings: number;
-    total_reviews: number;
-    created_at: string;
-    updated_at: string;
-    paused_at: string | null;
-    paused_from: string | null;
-    paused_dates: string[] | null;
-    cancellation_policy: string | null;
-    is_recurring: boolean;
-  };
+  event: EventDTO;
   hostId: string;
   onResume: (eventId: string) => Promise<void>;
   onPause: (
@@ -250,27 +308,19 @@ function ExperienceCard({
         ? `${event.paused_dates.length} session${event.paused_dates.length > 1 ? "s" : ""} paused`
         : null;
 
-  const footerText = isPaused
-    ? `PAUSED ${formatRelativeTime(event.paused_at ?? event.updated_at)}`
-    : isDraft
-      ? `CREATED ${formatRelativeTime(event.created_at)}`
-      : `LAST EDITED ${formatRelativeTime(event.updated_at)}`;
+  const editHref = `/host-dashboard/experiences/${event.id}`;
 
-  const handleEdit = () => {
-    router.push(`/host-dashboard/experiences/${event.id}`);
-  };
-
-  const handleViewBookings = () => {
-    router.push(`/host-dashboard/experiences/${event.id}?tab=bookings`);
-  };
-
-  const togglePause = async () => {
-    if (isPaused) {
-      await onResume(event.id);
-    } else {
-      setShowPauseConfirm(true);
-    }
-  };
+  // Boost: paid events only. When it can't be boosted yet, the button stays
+  // (so hosts always know where Boost lives) and says why.
+  const isFree = event.is_free || !event.price_cents;
+  const blockers = boostBlockers(event);
+  const boostReady =
+    blockers.length === 0 || (!!boostStatus && isOpenBoost(boostStatus));
+  const boostHint = isDraft
+    ? "publish first"
+    : isPaused
+      ? "resume the event first"
+      : (blockers[0]?.replace(/\.$/, "").toLowerCase() ?? "");
 
   const handlePauseConfirm = async () => {
     setShowPauseConfirm(false);
@@ -281,231 +331,200 @@ function ExperienceCard({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#121426]">
-      {/* Image with status badge */}
-      <div className="relative aspect-[4/5] bg-white/[0.06]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={event.cover_image_url ?? "/assets/home/hiking.webp"}
+    <article className="group/card flex gap-3 rounded-2xl border border-white/10 bg-[#121426] p-3 transition hover:border-white/20">
+      {/* 4:5 cover thumbnail: opens the editor. */}
+      <Link
+        href={editHref}
+        aria-label={`Edit ${event.title}`}
+        className="relative aspect-[4/5] w-24 shrink-0 self-start overflow-hidden rounded-xl sm:w-[104px]"
+      >
+        <EventCover
+          src={event.cover_image_url}
           alt={event.title}
-          loading="lazy"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-          <StatusBadge status={event.status} />
-          {boostStatus === "live" && (
-            <span className="rounded-full bg-gradient-to-r from-[#7038F5] to-[#B724EA] px-2.5 py-1 text-[11px] font-semibold text-white">
-              {BOOST_STATUS_LABEL.live}
-            </span>
-          )}
-        </div>
-      </div>
+          seed={event.id}
+          mood={event.mood}
+          blurFill
+          className="h-full w-full"
+          imgClassName="transition duration-500 group-hover/card:scale-[1.04]"
+        >
+          <FiImage className="h-5 w-5 text-white/70" aria-hidden />
+          <span className="px-2 text-[10px] leading-tight font-semibold text-white/85">
+            Add a cover
+          </span>
+        </EventCover>
+      </Link>
 
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-4">
-        {/* Title row */}
-        <h3 className="line-clamp-1 text-base font-semibold text-white">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex items-start gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
+            <StatusBadge status={event.status} />
+            {boostStatus && isOpenBoost(boostStatus) && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#7038F5] to-[#B724EA] px-2 py-0.5 text-[10px] font-semibold text-white">
+                <FiTrendingUp className="h-3 w-3" aria-hidden />
+                {BOOST_STATUS_LABEL[boostStatus]}
+              </span>
+            )}
+          </div>
+          <CardMenu
+            items={[
+              {
+                label: "Boost this event",
+                icon: FiTrendingUp,
+                onSelect: () => router.push(boostHref(event.id)),
+                hidden: !BOOST_ENABLED || isFree,
+                tone: "purple",
+              },
+              {
+                label: "View public page",
+                icon: FiExternalLink,
+                onSelect: () =>
+                  window.open(`/experience/${event.slug}`, "_blank"),
+                hidden: isDraft || !event.slug,
+              },
+              {
+                label: "On-spot booking",
+                icon: FiUserPlus,
+                onSelect: () => setShowOnSpot(true),
+                hidden: !(isLive && !isExpired),
+              },
+              {
+                label: "Bulk add (Excel)",
+                icon: LuFileSpreadsheet,
+                onSelect: () => setShowBulkImport(true),
+                hidden: !(isLive && !isExpired),
+              },
+              {
+                label: "Codes & passkey",
+                icon: FiKey,
+                onSelect: () => setShowCodes(true),
+              },
+              {
+                label: "Resume all sessions",
+                icon: FiPlay,
+                onSelect: () => void onResume(event.id),
+                hidden: !isPartialPause,
+              },
+              {
+                label: "Pause",
+                icon: FiPause,
+                onSelect: () => setShowPauseConfirm(true),
+                hidden: !isLive && !isPartialPause,
+                tone: "amber",
+              },
+              {
+                label: "Delete",
+                icon: FiTrash2,
+                onSelect: () => setShowDeleteConfirm(true),
+                tone: "red",
+              },
+            ]}
+          />
+        </div>
+
+        <Link
+          href={editHref}
+          className="mt-1.5 line-clamp-2 text-[15px] leading-snug font-semibold text-white transition hover:text-[#E9D5FF]"
+        >
           {event.title}
-        </h3>
+        </Link>
 
-        {/* Info rows */}
-        <div className="mt-3 space-y-2">
-          {/* Next date */}
-          <div className="flex items-center gap-2 text-xs text-[#A5A8C3]">
-            <FiCalendar className="h-3.5 w-3.5" />
-            <span>Next:</span>
-            <span
-              className={
-                isFullPause ? "font-medium text-amber-300" : "text-white/80"
-              }
-            >
-              {isFullPause ? "Paused" : formatNextDate(nextDate)}
-            </span>
-            {isLive && event.avg_rating !== null && (
-              <>
-                <span className="ml-auto flex items-center gap-1 text-white/80">
-                  <FiStar className="h-3.5 w-3.5 text-amber-400" />
-                  {event.avg_rating.toFixed(1)}
-                </span>
-                <span className="text-[#D8B4FE]">({event.total_reviews})</span>
-              </>
-            )}
-            {(isDraft || (isLive && event.avg_rating === null)) && (
-              <span className="ml-auto text-[#777B98]">New</span>
-            )}
-          </div>
-
-          {/* Pause detail (partial pauses keep "Next" populated and show this) */}
-          {isPaused && pauseDetail && !isFullPause && (
-            <div className="flex items-center gap-2 text-xs">
-              <FiPause className="h-3.5 w-3.5 text-amber-300" />
-              <span className="font-medium text-amber-300">{pauseDetail}</span>
-            </div>
-          )}
-
-          {/* Bookings */}
-          <div className="flex items-center gap-2 text-xs text-[#A5A8C3]">
-            <LuBookOpen className="h-3.5 w-3.5" />
-            <span className="text-white/80">{event.total_bookings}</span>
-            <span>Bookings total</span>
-          </div>
-
-          {/* Cancellation Policy */}
-          <div className="flex items-center gap-2 text-xs text-[#A5A8C3]">
-            <FiShield className="h-3.5 w-3.5" />
-            <span className="font-medium text-white/80 capitalize">
-              {event.cancellation_policy ?? "Not set"}
-            </span>
-            <span>Policy</span>
-          </div>
-        </div>
-
-        {/* Action buttons and footer */}
-        <div className="mt-4 border-t border-white/10 pt-4">
-          {isLive && !isExpired && (
-            <BoostButton
-              eventId={event.id}
-              status={boostStatus}
-              className="mb-3 w-full justify-center"
+        {/* One line of facts */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#A5A8C3]">
+          <span
+            className={`inline-flex items-center gap-1 ${isFullPause ? "font-medium text-amber-300" : ""}`}
+          >
+            <FiCalendar className="h-3.5 w-3.5 text-[#777B98]" aria-hidden />
+            {isFullPause
+              ? "Paused"
+              : isExpired
+                ? "Ended"
+                : formatNextDate(nextDate)}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <LuBookOpen className="h-3.5 w-3.5 text-[#777B98]" aria-hidden />
+            {event.total_bookings} booked
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <FiStar
+              className={`h-3.5 w-3.5 ${event.avg_rating !== null ? "text-amber-400" : "text-[#777B98]"}`}
+              aria-hidden
             />
+            {event.avg_rating !== null
+              ? `${event.avg_rating.toFixed(1)} (${event.total_reviews})`
+              : "New"}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <FiShield className="h-3.5 w-3.5 text-[#777B98]" aria-hidden />
+            {policyLabel(event.cancellation_policy)}
+          </span>
+          {isPaused && pauseDetail && !isFullPause && (
+            <span className="font-medium text-amber-300">{pauseDetail}</span>
           )}
-          <div className="mb-2 flex items-center gap-2">
-            {/* Edit button */}
-            <div className="group relative">
-              <button
-                onClick={handleEdit}
-                className="rounded-lg p-2 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#D8B4FE]"
-                title="Edit"
-              >
-                <FiEdit2 className="h-4 w-4" />
-              </button>
-              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-[#A020F0] px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                Edit
-              </span>
-            </div>
-
-            {/* View Bookings button */}
-            {!isDraft && (
-              <div className="group relative">
-                <button
-                  onClick={handleViewBookings}
-                  className="rounded-lg p-2 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#D8B4FE]"
-                  title="View bookings"
-                >
-                  <FiEye className="h-4 w-4" />
-                </button>
-                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-[#A020F0] px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                  View Bookings
-                </span>
-              </div>
-            )}
-
-            {/* On-spot booking button — only for LIVE, non-expired events,
-                where taking a walk-in guest makes sense. */}
-            {isLive && !isExpired && (
-              <div className="group relative">
-                <button
-                  onClick={() => setShowOnSpot(true)}
-                  className="rounded-lg p-2 text-[#777B98] transition hover:bg-[#241333] hover:text-[#D8B4FE]"
-                  title="On-spot booking"
-                >
-                  <FiUserPlus className="h-4 w-4" />
-                </button>
-                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-[#A020F0] px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                  On-spot Booking
-                </span>
-              </div>
-            )}
-
-            {/* Bulk import — the same guest-entry job as on-spot booking, but
-                from a spreadsheet. Same live/non-expired gate. */}
-            {isLive && !isExpired && (
-              <div className="group relative">
-                <button
-                  onClick={() => setShowBulkImport(true)}
-                  className="rounded-lg p-2 text-[#777B98] transition hover:bg-[#241333] hover:text-[#D8B4FE]"
-                  title="Bulk add bookings"
-                >
-                  <LuFileSpreadsheet className="h-4 w-4" />
-                </button>
-                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-[#A020F0] px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                  Bulk Add (Excel)
-                </span>
-              </div>
-            )}
-
-            {/* Codes & passkey — quick manage without opening the full editor. */}
-            <div className="group relative">
-              <button
-                onClick={() => setShowCodes(true)}
-                className="rounded-lg p-2 text-[#777B98] transition hover:bg-[#241333] hover:text-[#D8B4FE]"
-                title="Codes & passkey"
-              >
-                <FiKey className="h-4 w-4" />
-              </button>
-              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-[#A020F0] px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                Codes &amp; passkey
-              </span>
-            </div>
-
-            {/* Pause/Resume button — disabled (but visible) for drafts since a
-                draft is neither live nor paused. */}
-            <div className="group relative">
-              <button
-                onClick={togglePause}
-                disabled={isProcessing || isDraft}
-                className={`rounded-lg p-2 transition ${
-                  isDraft
-                    ? "cursor-not-allowed text-white/30"
-                    : isPaused
-                      ? "text-green-300 hover:bg-green-500/10"
-                      : "text-amber-300 hover:bg-amber-500/10"
-                } ${isProcessing ? "cursor-not-allowed opacity-50" : ""}`}
-                title={
-                  isDraft
-                    ? "Publish the experience first"
-                    : isPaused
-                      ? "Resume"
-                      : "Pause"
-                }
-              >
-                {isProcessing ? (
-                  <LuRotateCcw className="h-4 w-4 animate-spin" />
-                ) : isPaused ? (
-                  <FiPlay className="h-4 w-4" />
-                ) : (
-                  <FiPause className="h-4 w-4" />
-                )}
-              </button>
-              <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 rounded bg-[#A020F0] px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                {isDraft
-                  ? "Publish first to enable"
-                  : isPaused
-                    ? "Resume Experience"
-                    : "Pause Experience"}
-              </span>
-            </div>
-
-            {/* Delete button */}
-            <div className="group relative ml-auto">
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="rounded-lg p-2 text-[#777B98] transition hover:bg-red-500/10 hover:text-red-300"
-                title="Delete"
-              >
-                <FiTrash2 className="h-4 w-4" />
-              </button>
-              <span className="pointer-events-none absolute right-0 bottom-full mb-2 rounded bg-[#A020F0] px-2 py-1 text-xs whitespace-nowrap text-white opacity-0 transition group-hover:opacity-100">
-                Delete
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-medium tracking-wide text-[#777B98]">
-              {footerText}
-            </span>
-          </div>
         </div>
+
+        {/* Actions */}
+        <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-3">
+          <Link
+            href={editHref}
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/[0.06]"
+          >
+            <FiEdit2 className="h-3.5 w-3.5" aria-hidden />
+            Edit
+          </Link>
+          {isDraft ? (
+            <Link
+              href={editHref}
+              className="inline-flex items-center rounded-full bg-[#A020F0] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#8A1AD0]"
+            >
+              Publish
+            </Link>
+          ) : isFullPause ? (
+            <button
+              type="button"
+              onClick={() => void onResume(event.id)}
+              disabled={isProcessing}
+              className="inline-flex items-center gap-1.5 rounded-full bg-green-500/15 px-3 py-1.5 text-xs font-semibold text-green-300 transition hover:bg-green-500/25 disabled:opacity-50"
+            >
+              {isProcessing ? (
+                <LuRotateCcw className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              ) : (
+                <FiPlay className="h-3.5 w-3.5" aria-hidden />
+              )}
+              Resume
+            </button>
+          ) : (
+            <Link
+              href={`${editHref}?tab=bookings`}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-white/[0.06]"
+            >
+              <LuBookOpen className="h-3.5 w-3.5" aria-hidden />
+              Bookings
+            </Link>
+          )}
+          {BOOST_ENABLED && !isFree && (
+            <Link
+              href={boostHref(event.id)}
+              title={
+                boostReady ? "Promote this event with paid ads" : boostHint
+              }
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                boostReady
+                  ? "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white hover:opacity-90"
+                  : "border border-[#B724EA]/40 text-[#D8B4FE] hover:bg-[#B724EA]/10"
+              }`}
+            >
+              <FiTrendingUp className="h-3.5 w-3.5" aria-hidden />
+              {boostStatus && isOpenBoost(boostStatus)
+                ? BOOST_STATUS_LABEL[boostStatus]
+                : "Boost"}
+            </Link>
+          )}
+        </div>
+        {BOOST_ENABLED && !isFree && !boostReady && boostHint && (
+          <p className="mt-1.5 text-[11px] text-[#777B98]">
+            Boost: {boostHint}
+          </p>
+        )}
       </div>
 
       {/* Quick codes & passkey manager */}
@@ -668,7 +687,7 @@ function ExperienceCard({
           </div>
         </div>
       )}
-    </div>
+    </article>
   );
 }
 
@@ -681,9 +700,9 @@ function CreateNewCard() {
   return (
     <div
       onClick={() => router.push("/host-dashboard/experiences/new")}
-      className="group flex min-h-70 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 bg-[#121426] transition hover:border-[#A020F0] hover:bg-white/[0.04]"
+      className="group flex min-h-[150px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/10 bg-[#121426] p-4 transition hover:border-[#A020F0] hover:bg-white/[0.04]"
     >
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.06] group-hover:bg-[#A020F0]/10">
+      <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06] group-hover:bg-[#A020F0]/10">
         <span className="text-2xl text-[#777B98] group-hover:text-[#D8B4FE]">
           +
         </span>
@@ -849,19 +868,30 @@ export default function ExperiencesPage() {
               insights.
             </p>
           </div>
-          <button
-            onClick={() => router.push("/host-dashboard/experiences/new")}
-            className="flex items-center gap-2 rounded-lg bg-[#A020F0] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
-          >
-            <span>+</span>
-            Create New Experience
-          </button>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            {BOOST_ENABLED && (
+              <Link
+                href="/host-dashboard/promote"
+                className="flex items-center gap-2 rounded-lg border border-[#B724EA]/40 px-4 py-2.5 text-sm font-semibold text-[#E9D5FF] transition hover:bg-[#B724EA]/10"
+              >
+                <FiTrendingUp className="h-4 w-4" aria-hidden />
+                Boost an event
+              </Link>
+            )}
+            <button
+              onClick={() => router.push("/host-dashboard/experiences/new")}
+              className="flex items-center gap-2 rounded-lg bg-[#A020F0] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
+            >
+              <span>+</span>
+              Create New Experience
+            </button>
+          </div>
         </div>
 
         {/* Tabs and Filters */}
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* Tabs */}
-          <div className="flex items-center gap-1 border-b border-white/10 pb-0">
+          <div className="-mx-4 flex items-center gap-1 overflow-x-auto border-b border-white/10 px-4 pb-0 sm:mx-0 sm:px-0">
             {[
               { key: "all" as const, label: "All Listings", count: counts.all },
               { key: "live" as const, label: "Live", count: counts.live },
@@ -871,7 +901,7 @@ export default function ExperiencesPage() {
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`relative px-4 py-2 text-sm font-medium transition ${
+                className={`relative shrink-0 px-4 py-2 text-sm font-medium whitespace-nowrap transition ${
                   tab === key
                     ? "text-white"
                     : "text-[#A5A8C3] hover:text-white/80"
@@ -896,7 +926,7 @@ export default function ExperiencesPage() {
 
           {/* Search and Sort */}
           <div className="flex items-center gap-3">
-            <div className="relative">
+            <div className="relative min-w-0 flex-1 lg:flex-none">
               <FiSearch className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#777B98]" />
               <input
                 type="text"
@@ -908,7 +938,7 @@ export default function ExperiencesPage() {
             </div>
             <button
               onClick={() => setSort(sort === "newest" ? "oldest" : "newest")}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-[#121426] px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/[0.04]"
+              className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-[#121426] px-4 py-2 text-sm font-medium whitespace-nowrap text-white/80 transition hover:bg-white/[0.04]"
             >
               <svg
                 width="16"
@@ -933,7 +963,7 @@ export default function ExperiencesPage() {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-1 gap-6 min-[480px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filteredEvents.length > 0 ? (
             <>
               {filteredEvents.map((event) => (
@@ -973,24 +1003,6 @@ export default function ExperiencesPage() {
             </>
           )}
         </div>
-
-        {/* Load More (placeholder) */}
-        {filteredEvents.length > 6 && (
-          <div className="mt-8 flex justify-center">
-            <button className="flex items-center gap-2 text-sm font-medium text-[#A5A8C3] hover:text-white/80">
-              Load More
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path
-                  d="M3 4.5L6 7.5L9 4.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
-          </div>
-        )}
       </main>
     </div>
   );

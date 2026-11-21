@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     template: "%s | MySlotMate",
   },
   description:
-    "Workshops, open mics, meetups, treks and one-on-one sessions in Guwahati, Shillong and across Northeast India. Book a spot, or host your own for free.",
+    "Workshops, open mics, meetups, treks and one-on-one sessions in Guwahati, Shillong and across Northeast India. Book a slot, or host your own for free.",
   keywords: [
     "events in Guwahati",
     "things to do in Guwahati",

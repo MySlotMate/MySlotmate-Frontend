@@ -1,10 +1,37 @@
 "use client";
 
-import { Fragment, useEffect, useState, useRef, type ReactNode } from "react";
+import { Fragment, useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
+import PayoutTimingFields, {
+  refundPayoutSummary,
+} from "~/components/host-dashboard/PayoutTimingFields";
+import { WEEKLY_PAYOUTS_ENABLED } from "~/lib/boost";
+import {
+  AddPill,
+  Chip,
+  CoverPoster,
+  DURATION_OPTIONS,
+  FIELD,
+  GRADIENT,
+  INLINE_FIELD,
+  INLINE_PICKER,
+  LANGUAGE_OPTIONS,
+  LEVEL_OPTIONS,
+  MAX_FILE_SIZE_BYTES,
+  MAX_FILE_SIZE_MB,
+  MoodSelector,
+  MoreOptions,
+  ROW_INPUT,
+  Row,
+  Rows,
+  Section,
+  Segmented,
+  ToggleRow,
+} from "~/components/host-dashboard/EventFormKit";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
+import { DatePill, TimePill } from "~/components/host-dashboard/DateTimePills";
 import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
 import { CoHostManager } from "~/components/host-dashboard";
 import {
@@ -20,7 +47,7 @@ import { useHostTier } from "~/hooks/useHostTier";
 import { VerifyToEarnSheet } from "~/components/host-dashboard/VerifyToEarn";
 import { FREE_HOST_LIMITS, findOffPlatformPayment } from "~/lib/hostTier";
 import { Lock } from "lucide-react";
-import { categoriesFor, type EventKind } from "~/lib/categories";
+import { categoriesFor } from "~/lib/categories";
 import { useSuggestions } from "~/hooks/useSuggestions";
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { SuggestionChips } from "~/components/SuggestionChips";
@@ -39,6 +66,8 @@ import {
   FiExternalLink,
   FiAlertTriangle,
   FiUserPlus,
+  FiVideo,
+  FiMapPin,
   FiPlus,
   FiMap,
   FiStar,
@@ -65,7 +94,7 @@ import {
   slotsToCustomDates,
   type SessionWindow,
 } from "~/lib/sessionSlots";
-import type { SessionType } from "~/lib/api";
+import type { PayoutMode, SessionType } from "~/lib/api";
 import { toast } from "sonner";
 import { GoogleLogin, MapPickerModal, LocationSearchInput } from "~/components";
 import { ImageCropModal } from "~/components/ImageCropModal";
@@ -140,6 +169,7 @@ interface FormData {
   // list of dated windows expanded into custom_dates.
   sessionIsWeekly: boolean;
   cancellationPolicy: string;
+  payoutMode: PayoutMode;
   // Attendee details
   requiresAttendeeDetails: boolean;
   attendeeFields: string[];
@@ -162,361 +192,6 @@ function getGeneratedDescription(value: unknown): string | null {
 
   const { description } = value;
   return typeof description === "string" ? description : null;
-}
-
-const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
-
-// Preset languages an experience can be conducted in. Hosts may also add a
-// custom one via the "Other" input. Selection is multi-select.
-const LANGUAGE_OPTIONS = ["English", "Hindi", "Bengali", "Assamese"];
-
-const LEVEL_OPTIONS = ["Beginner Friendly", "Intermediate", "Advanced"];
-
-const CANCELLATION_POLICIES = [
-  {
-    value: "flexible",
-    label: "Flexible",
-    description: "Full refund up to 24 hours before",
-  },
-  {
-    value: "moderate",
-    label: "Moderate",
-    description: "Full refund up to 5 days before",
-  },
-  {
-    value: "strict",
-    label: "Strict",
-    description: "50% refund up to 1 week before",
-  },
-  {
-    value: "no_refund",
-    label: "No Refund",
-    description: "Non-refundable once booked",
-  },
-];
-
-const MAX_FILE_SIZE_MB = 5;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
-
-/* ------------------------------------------------------------------ */
-/*  Form building blocks — glass row-cards, pill chips, toggle rows    */
-/* ------------------------------------------------------------------ */
-const GRADIENT = "bg-gradient-to-r from-[#7038F5] to-[#B724EA]";
-const FIELD =
-  "w-full rounded-2xl border border-white/10 bg-[#121426] px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-white/30 focus:border-[#B57BFF]";
-const ROW_INPUT =
-  "row-input min-w-0 flex-1 bg-transparent text-right text-sm text-white outline-none placeholder:text-white/30";
-
-function Section({
-  title,
-  hint,
-  children,
-}: {
-  title: string;
-  hint?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="space-y-3">
-      {title && (
-        <div className="border-b border-white/[0.08] pb-2">
-          <h2 className="font-outfit text-base font-semibold text-white">
-            {title}
-          </h2>
-          {hint && <p className="mt-0.5 text-xs text-white/40">{hint}</p>}
-        </div>
-      )}
-      {children}
-    </section>
-  );
-}
-
-/**
- * A one-line row that opens to show optional settings, with the current
- * choice summarised on the right so hosts can skip it at a glance.
- */
-function MoreOptions({
-  title,
-  summary,
-  defaultOpen = false,
-  children,
-}: {
-  title: string;
-  summary?: string;
-  defaultOpen?: boolean;
-  children: ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#121426]">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-3 px-4 py-3.5 text-left transition hover:bg-white/[0.03]"
-      >
-        <span className="flex-1 text-sm font-medium text-white">{title}</span>
-        {summary && (
-          <span className="max-w-[45%] truncate text-xs text-white/45">
-            {summary}
-          </span>
-        )}
-        <FiChevronDown
-          className={`h-4 w-4 shrink-0 text-white/40 transition ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open && (
-        <div className="space-y-4 border-t border-white/[0.06] p-4">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Rows({ children }: { children: ReactNode }) {
-  return (
-    <div className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.06] bg-[#131328] px-4">
-      {children}
-    </div>
-  );
-}
-
-function Row({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <label className="flex min-h-[52px] items-center justify-between gap-4 py-2">
-      <span
-        className={`shrink-0 text-sm ${error ? "text-red-400" : "text-white/50"}`}
-      >
-        {label}
-      </span>
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
-        {children}
-      </div>
-    </label>
-  );
-}
-
-function Chip({
-  active,
-  onClick,
-  disabled,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`rounded-full border px-4 py-2 text-sm font-medium transition disabled:opacity-40 ${
-        active
-          ? `border-transparent ${GRADIENT} text-white`
-          : "border-white/10 bg-white/[0.06] text-white/70 hover:bg-white/10"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-function Segmented<T extends string>({
-  options,
-  value,
-  onChange,
-}: {
-  options: { value: T; label: ReactNode }[];
-  value: T;
-  onChange: (v: T) => void;
-}) {
-  return (
-    <div className="flex gap-1 rounded-full border border-white/[0.06] bg-[#131328] p-1">
-      {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          onClick={() => onChange(o.value)}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
-            value === o.value
-              ? "bg-white/15 text-white"
-              : "text-white/50 hover:text-white/80"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function ToggleRow({
-  label,
-  hint,
-  checked,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  hint?: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/[0.06] bg-[#131328] px-4 py-3.5">
-      <div className="min-w-0">
-        <p className="text-sm text-white">{label}</p>
-        {hint && <p className="mt-0.5 text-xs text-white/40">{hint}</p>}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={`relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-40 ${
-          checked ? GRADIENT : "bg-white/15"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-[#fff] shadow transition-transform ${
-            checked ? "translate-x-5" : ""
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
-
-function AddPill({
-  onClick,
-  children,
-}: {
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full items-center justify-between rounded-full border border-white/10 bg-white/[0.06] px-5 py-3 text-sm text-white transition hover:bg-white/10"
-    >
-      <span>{children}</span>
-      <span className="text-lg leading-none text-white/70">+</span>
-    </button>
-  );
-}
-
-/* Poster-style cover: shows the profile image, or a gradient with the live title. */
-function CoverPoster({
-  preview,
-  title,
-  mood,
-  isPrivate,
-  onUpload,
-  onRemove,
-}: {
-  preview: string | null;
-  title: string;
-  mood: string;
-  /** Drives the Public / Private badge on the poster. */
-  isPrivate: boolean;
-  onUpload: (files: File[]) => void;
-  onRemove: () => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const pick = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    const ok = files.filter((f) => f.size <= MAX_FILE_SIZE_BYTES);
-    if (ok.length < files.length) {
-      toast.error(`Max size is ${MAX_FILE_SIZE_MB}MB per file.`);
-    }
-    if (ok.length > 0) onUpload(ok);
-    e.target.value = "";
-  };
-
-  return (
-    <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-br from-[#2b1470] via-[#5a1fc4] to-[#B724EA]">
-      {preview ? (
-        <Image
-          src={preview}
-          alt="Cover preview"
-          fill
-          unoptimized
-          className="object-cover"
-        />
-      ) : (
-        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
-          <LuSparkles className="h-6 w-6 text-white/70" />
-          <p className="font-outfit line-clamp-3 text-2xl leading-tight font-extrabold tracking-tight break-words text-white/90">
-            {title.trim() || "Your experience starts here"}
-          </p>
-          {mood && (
-            <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-medium text-white capitalize">
-              {mood}
-            </span>
-          )}
-        </div>
-      )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        onChange={pick}
-        className="hidden"
-      />
-      {/* Who can find this event: updates live with the Public/Private switch */}
-      <span
-        key={isPrivate ? "private" : "public"}
-        role="img"
-        aria-label={isPrivate ? "Private event" : "Public event"}
-        title={isPrivate ? "Private event" : "Public event"}
-        className={`absolute top-4 left-4 flex h-10 w-10 animate-[hero-stack-fade_0.3s_ease-out] items-center justify-center rounded-full backdrop-blur-md ${
-          isPrivate
-            ? "bg-[#080914]/80 text-white ring-1 ring-[#D8B4FE]/40"
-            : "bg-white/90 text-[#080914]"
-        }`}
-      >
-        {isPrivate ? (
-          <LuLock className="h-[18px] w-[18px] text-[#D8B4FE]" />
-        ) : (
-          <LuGlobe className="h-[18px] w-[18px] text-[#7B2FFF]" />
-        )}
-      </span>
-      {preview && (
-        <button
-          type="button"
-          onClick={onRemove}
-          aria-label="Remove cover image"
-          className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition hover:bg-black/70"
-        >
-          <FiX size={16} />
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        aria-label={preview ? "Change cover image" : "Upload cover image"}
-        className="absolute right-4 bottom-4 flex h-11 w-11 items-center justify-center rounded-full bg-[#fff] text-[#5a1fc4] shadow-lg transition hover:scale-105"
-      >
-        <FiUpload size={18} />
-      </button>
-    </div>
-  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -785,52 +460,6 @@ function ImageUpload({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Mood Selector Component                                            */
-/* ------------------------------------------------------------------ */
-function MoodSelector({
-  value,
-  onChange,
-  hasError,
-  kind,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  hasError?: boolean;
-  /** Group experiences and 1:1 sessions have separate category lists. */
-  kind: EventKind;
-}) {
-  const options = categoriesFor(kind);
-  return (
-    <div className="space-y-2">
-      <p className="text-sm text-white/50">
-        {kind === "session"
-          ? "What is your 1:1 session about?"
-          : "What kind of experience is it?"}
-      </p>
-      <div
-        className={`flex flex-wrap gap-2 rounded-xl p-1 transition ${hasError ? "bg-red-500/10 ring-1 ring-red-500" : ""}`}
-      >
-        {options.map((c) => (
-          <button
-            key={c.key}
-            type="button"
-            onClick={() => onChange(c.moods[0]!)}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition ${
-              c.moods.includes(value)
-                ? "bg-gradient-to-r from-[#7038F5] to-[#B724EA] text-white"
-                : "bg-white/[0.06] text-white/80 hover:bg-white/10"
-            }`}
-          >
-            <c.icon className="h-4 w-4" />
-            {c.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Title Autocomplete — typeahead filtered by mood-keyed templates    */
 /* ------------------------------------------------------------------ */
 type TitleSuggestionsBag = ReturnType<typeof useSuggestions>;
@@ -891,12 +520,8 @@ function TitleAutocomplete({
               titleSuggestions.clearSuggestions();
             }, 120);
           }}
-          placeholder={
-            moodDisabled
-              ? "Choose a category above first"
-              : "Type a name, or pick a suggestion"
-          }
-          className={`font-outfit w-full rounded-2xl border border-white/10 bg-[#121426] px-4 py-4 text-xl font-semibold text-white transition outline-none placeholder:text-white/30 focus:border-[#B57BFF] ${
+          placeholder={moodDisabled ? "Event name" : "Event name"}
+          className={`font-outfit w-full rounded-2xl border border-transparent bg-transparent px-2 py-2 text-[28px] leading-tight font-bold text-white transition outline-none placeholder:text-white/30 hover:bg-white/[0.03] focus:border-white/10 focus:bg-white/[0.05] md:text-[32px] ${
             moodDisabled ? "cursor-not-allowed opacity-50" : ""
           } ${hasError ? "!border-red-500 !bg-red-500/10" : ""}`}
           maxLength={100}
@@ -1095,7 +720,7 @@ function PreviewCard({ form }: { form: FormData }) {
           disabled
           className="group flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#A020F0] to-[#A020F0] py-2.5 text-sm font-semibold text-white opacity-50 shadow-[0_16px_32px_rgba(31,167,255,0.32)]"
         >
-          <span>Reserve My Spot</span>
+          <span>Reserve My Slot</span>
           <FiArrowRight className="h-4 w-4" />
         </button>
 
@@ -1151,7 +776,7 @@ function PreviewCard({ form }: { form: FormData }) {
             <div>
               <p className="text-sm font-semibold text-red-300">Rare find</p>
               <p className="text-xs text-red-400">
-                Only {form.maxGroupSize} spot{form.maxGroupSize > 1 ? "s" : ""}{" "}
+                Only {form.maxGroupSize} slot{form.maxGroupSize > 1 ? "s" : ""}{" "}
                 left!
               </p>
             </div>
@@ -1326,6 +951,7 @@ export default function CreateExperiencePage() {
     breakMinutes: 0,
     sessionIsWeekly: true,
     cancellationPolicy: "flexible",
+    payoutMode: "after_event",
     requiresAttendeeDetails: false,
     attendeeFields: [],
     isPrivate: false,
@@ -1754,7 +1380,7 @@ export default function CreateExperiencePage() {
           ? form.sessionWindows.length > 0
           : form.scheduleType === "custom_dates"
             ? form.customDatesList.some((d) => d.date && d.time)
-            : !!form.eventDate && !!form.eventTime,
+            : !!form.eventDate && !!form.eventTime && !!form.endTime,
     },
     {
       key: "where",
@@ -2029,6 +1655,9 @@ export default function CreateExperiencePage() {
             ? form.recurrenceRule
             : undefined,
         cancellation_policy: form.cancellationPolicy,
+        ...(WEEKLY_PAYOUTS_ENABLED && !form.isFree
+          ? { payout_mode: form.payoutMode }
+          : {}),
         requires_attendee_details: form.requiresAttendeeDetails,
         attendee_fields: form.requiresAttendeeDetails
           ? form.attendeeFields
@@ -2123,8 +1752,25 @@ export default function CreateExperiencePage() {
 
   return (
     <>
-      <main className="msm-dark-form min-h-screen bg-[#080914] pb-28 text-white">
-        <div className="mx-auto max-w-[1120px] px-5 py-8 md:px-10">
+      <main className="msm-dark-form relative min-h-screen overflow-x-clip bg-[#080914] pb-28 text-white">
+        {/* Soft colour from the poster behind everything, like the event page */}
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 overflow-hidden"
+        >
+          {form.coverImagePreview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={form.coverImagePreview}
+              alt=""
+              className="h-full w-full scale-125 object-cover opacity-40 blur-[90px]"
+            />
+          ) : (
+            <div className="absolute -top-40 left-1/3 h-[560px] w-[560px] rounded-full bg-[#7B2FFF]/20 blur-[140px]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#080914]/30 via-[#080914]/70 to-[#080914]" />
+        </div>
+        <div className="relative mx-auto max-w-[1120px] px-5 py-8 md:px-10">
           {/* Header */}
           <div className="mb-8 flex items-center gap-3">
             <button
@@ -2215,34 +1861,57 @@ export default function CreateExperiencePage() {
               </div>
             </aside>
 
-            {/* Right — one short page: the essentials, then optional extras */}
-            <div className="min-w-0 space-y-9 pb-36 lg:pb-0">
-              {/* Professional hosts can also offer 1:1 sessions. */}
-              {isProfessional && (
-                <Segmented<"event" | "session">
-                  value={
-                    form.sessionType === "one_on_one" ? "session" : "event"
-                  }
-                  onChange={(v) => {
-                    if (v === "session") {
-                      updateForm("sessionType", "one_on_one");
-                      updateForm("scheduleType", "custom_dates");
-                      updateForm("isRecurring", false);
-                    } else {
-                      updateForm("sessionType", "group");
-                      updateForm("scheduleType", "one_time");
-                      updateForm("isRecurring", false);
-                    }
-                  }}
-                  options={[
-                    { value: "event", label: "Event" },
-                    { value: "session", label: "1:1 session" },
-                  ]}
-                />
-              )}
+            {/* Right — laid out like the finished event page, typed into directly */}
+            <div className="min-w-0 space-y-7">
+              {/* Pills: who can see it, and (professional hosts) event or 1:1 */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => updateForm("isPrivate", !form.isPrivate)}
+                  title="Tap to switch"
+                  className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 text-[13px] font-medium text-white transition hover:border-white/30"
+                >
+                  {form.isPrivate ? (
+                    <LuLock className="h-3.5 w-3.5 text-[#D8B4FE]" />
+                  ) : (
+                    <LuGlobe className="h-3.5 w-3.5 text-[#D8B4FE]" />
+                  )}
+                  {form.isPrivate ? "Private event" : "Public event"}
+                </button>
+                {isProfessional && (
+                  <div className="flex rounded-full border border-white/15 bg-white/[0.04] p-0.5 text-[13px] font-medium">
+                    {(
+                      [
+                        ["group", "Event"],
+                        ["one_on_one", "1:1 session"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => {
+                          updateForm("sessionType", key);
+                          updateForm(
+                            "scheduleType",
+                            key === "one_on_one" ? "custom_dates" : "one_time",
+                          );
+                          updateForm("isRecurring", false);
+                        }}
+                        className={`rounded-full px-3 py-1 transition ${
+                          form.sessionType === key
+                            ? "bg-white text-[#080914]"
+                            : "text-white/65 hover:text-white"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-              {/* What */}
-              <section id="sec-what" className="scroll-mt-24 space-y-5">
+              {/* What: category, then the name as the page's big title */}
+              <section id="sec-what" className="scroll-mt-24 space-y-4">
                 <MoodSelector
                   kind={
                     form.sessionType === "one_on_one" ? "session" : "experience"
@@ -2258,10 +1927,6 @@ export default function CreateExperiencePage() {
                   }}
                   hasError={showErrors && !form.mood}
                 />
-                <p className="!mb-2 text-sm font-semibold text-white">
-                  Name of your{" "}
-                  {form.sessionType === "one_on_one" ? "session" : "experience"}
-                </p>
                 <TitleAutocomplete
                   mood={form.mood}
                   value={form.title}
@@ -2277,334 +1942,166 @@ export default function CreateExperiencePage() {
                   titleSuggestions={titleSuggestions}
                 />
                 {showTagline || form.hookLine ? (
-                  <>
-                    <p className="!mb-2 text-sm font-semibold text-white">
-                      Short tagline{" "}
-                      <span className="font-normal text-white/45">
-                        (optional)
-                      </span>
-                    </p>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={form.hookLine}
-                        onChange={(e) => {
-                          updateForm("hookLine", e.target.value);
-                          void hookSuggestions.generateSuggestions(
-                            e.target.value,
-                            "hookLine",
-                            { title: form.title },
-                          );
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={form.hookLine}
+                      onChange={(e) => {
+                        updateForm("hookLine", e.target.value);
+                        void hookSuggestions.generateSuggestions(
+                          e.target.value,
+                          "hookLine",
+                          { title: form.title },
+                        );
+                      }}
+                      onBlur={() => hookSuggestions.clearSuggestions()}
+                      placeholder="A short tagline, e.g. Paint, sip and unwind"
+                      aria-label="Short tagline"
+                      className={INLINE_FIELD}
+                      maxLength={150}
+                    />
+                    {form.hookLine.length > 120 && (
+                      <p className="px-2 text-xs text-white/40">
+                        {form.hookLine.length}/150 characters
+                      </p>
+                    )}
+                    {hookSuggestions.suggestions.length > 0 && (
+                      <SuggestionChips
+                        suggestions={hookSuggestions.suggestions}
+                        isLoading={hookSuggestions.isLoading}
+                        onSelect={(suggestion) => {
+                          updateForm("hookLine", suggestion);
+                          hookSuggestions.clearSuggestions();
                         }}
-                        onBlur={() => hookSuggestions.clearSuggestions()}
-                        placeholder="Short tagline (optional), e.g. Paint, sip and unwind"
-                        aria-label="Hook line"
-                        className={FIELD}
-                        maxLength={150}
+                        onDismiss={hookSuggestions.clearSuggestions}
                       />
-                      {form.hookLine.length > 120 && (
-                        <p className="px-1 text-xs text-white/40">
-                          {form.hookLine.length}/150 characters
-                        </p>
-                      )}
-                      {hookSuggestions.suggestions.length > 0 && (
-                        <SuggestionChips
-                          suggestions={hookSuggestions.suggestions}
-                          isLoading={hookSuggestions.isLoading}
-                          onSelect={(suggestion) => {
-                            updateForm("hookLine", suggestion);
-                            hookSuggestions.clearSuggestions();
-                          }}
-                          onDismiss={hookSuggestions.clearSuggestions}
-                        />
-                      )}
-                    </div>
-                  </>
+                    )}
+                  </div>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setShowTagline(true)}
-                    className="-mt-2 flex items-center gap-1.5 px-1 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
+                    className="flex items-center gap-1.5 px-2 text-sm font-medium text-white/50 transition hover:text-white"
                   >
                     <FiPlus size={15} /> Add a short tagline
                   </button>
                 )}
               </section>
 
-              {/* When */}
-              <section id="sec-when" className="scroll-mt-24">
-                <Section
-                  title={
-                    form.sessionType === "one_on_one"
-                      ? "When are you free?"
-                      : "When is it?"
-                  }
-                >
-                  {form.sessionType === "group" &&
-                    (form.scheduleType !== "one_time" || showMoreDates) && (
-                      <div className="flex flex-wrap gap-2">
-                        {(
-                          [
-                            ["one_time", "Just once"],
-                            ["recurring", "Repeats"],
-                            ["custom_dates", "Several dates"],
-                          ] as const
-                        ).map(([key, label]) => (
-                          <Chip
-                            key={key}
-                            active={form.scheduleType === key}
-                            onClick={() => {
-                              updateForm("scheduleType", key);
-                              updateForm("isRecurring", key === "recurring");
-                            }}
-                          >
-                            {label}
-                          </Chip>
-                        ))}
-                      </div>
-                    )}
-                  {form.sessionType === "group" &&
-                    (form.scheduleType === "one_time" ||
-                      form.scheduleType === "recurring") && (
-                      <Rows>
-                        <Row label="Date" error={showErrors && !form.eventDate}>
-                          <input
-                            type="date"
-                            value={form.eventDate}
-                            onChange={(e) =>
-                              updateForm("eventDate", e.target.value)
-                            }
-                            min={new Date().toISOString().split("T")[0]}
-                            className={ROW_INPUT}
-                          />
-                        </Row>
-                        <Row
-                          label="Start time"
-                          error={showErrors && !form.eventTime}
+              {/* When: icon rows, like the event page */}
+              <section id="sec-when" className="scroll-mt-24 space-y-3">
+                {form.sessionType === "group" &&
+                  (form.scheduleType === "one_time" ||
+                    form.scheduleType === "recurring") && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <DatePill
+                        value={form.eventDate}
+                        onChange={(v) => updateForm("eventDate", v)}
+                        error={showErrors && !form.eventDate}
+                      />
+                      <TimePill
+                        value={form.eventTime}
+                        onChange={(v) => updateForm("eventTime", v)}
+                        placeholder="Start time"
+                        error={showErrors && !form.eventTime}
+                        ariaLabel="Start time"
+                      />
+                      <span className="text-white/35">to</span>
+                      <TimePill
+                        value={form.endTime}
+                        onChange={(v) => updateForm("endTime", v)}
+                        placeholder="End time"
+                        start={form.eventTime || undefined}
+                        error={showErrors && !form.endTime}
+                        ariaLabel="End time"
+                      />
+                    </div>
+                  )}
+
+                {form.sessionType === "group" &&
+                  (form.scheduleType !== "one_time" || showMoreDates) && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {(
+                        [
+                          ["one_time", "Just once"],
+                          ["recurring", "Repeats"],
+                          ["custom_dates", "Several dates"],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <Chip
+                          key={key}
+                          active={form.scheduleType === key}
+                          onClick={() => {
+                            updateForm("scheduleType", key);
+                            updateForm("isRecurring", key === "recurring");
+                          }}
                         >
-                          <input
-                            type="time"
-                            value={form.eventTime}
-                            onChange={(e) =>
-                              updateForm("eventTime", e.target.value)
-                            }
-                            className={ROW_INPUT}
-                          />
-                        </Row>
-                        <Row label="End time (optional)">
-                          <input
-                            type="time"
-                            value={form.endTime}
-                            onChange={(e) =>
-                              updateForm("endTime", e.target.value)
-                            }
-                            className={ROW_INPUT}
-                          />
-                        </Row>
-                        {form.scheduleType === "recurring" && (
-                          <Row label="Repeats">
-                            <select
-                              value={form.recurrenceRule}
-                              onChange={(e) =>
-                                updateForm("recurrenceRule", e.target.value)
-                              }
-                              className={ROW_INPUT}
-                            >
-                              <option value="">Select frequency</option>
-                              <option value="FREQ=DAILY">Daily</option>
-                              <option value="FREQ=WEEKLY">Weekly</option>
-                              <option value="FREQ=WEEKLY;INTERVAL=2">
-                                Every 2 weeks
-                              </option>
-                              <option value="FREQ=MONTHLY">Monthly</option>
-                            </select>
-                          </Row>
-                        )}
-                      </Rows>
-                    )}
-                  {form.sessionType === "group" &&
-                    (form.scheduleType === "one_time" ||
-                      form.scheduleType === "recurring") && (
-                      <p className="px-1 text-xs text-white/40">
-                        No end time? It runs for 1 hour, or set the length in
-                        More options.
-                      </p>
-                    )}
-
-                  {form.sessionType === "group" &&
-                    form.scheduleType === "custom_dates" && (
-                      <div className="space-y-3">
-                        {form.customDatesList.map((slot, idx) => (
-                          <div key={idx} className="flex items-center gap-2">
-                            <div className="min-w-0 flex-1">
-                              <Rows>
-                                <Row label="Date">
-                                  <input
-                                    type="date"
-                                    value={slot.date}
-                                    onChange={(e) =>
-                                      updateCustomSlot(
-                                        idx,
-                                        "date",
-                                        e.target.value,
-                                      )
-                                    }
-                                    min={new Date().toISOString().split("T")[0]}
-                                    className={ROW_INPUT}
-                                  />
-                                </Row>
-                                <Row label="Start time">
-                                  <input
-                                    type="time"
-                                    value={slot.time}
-                                    onChange={(e) =>
-                                      updateCustomSlot(
-                                        idx,
-                                        "time",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className={ROW_INPUT}
-                                  />
-                                </Row>
-                              </Rows>
-                            </div>
-                            {form.customDatesList.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeCustomSlot(idx)}
-                                className="p-2 text-white/40 transition hover:text-red-400"
-                                title="Remove slot"
-                                aria-label="Remove slot"
-                              >
-                                <FiX size={18} />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <AddPill onClick={addCustomSlot}>
-                          Add another date
-                        </AddPill>
-                      </div>
-                    )}
-
-                  {form.sessionType === "one_on_one" && (
-                    <SessionWindowsEditor
-                      windows={form.sessionWindows}
-                      onWindowsChange={(windows) =>
-                        updateForm("sessionWindows", windows)
-                      }
-                      breakMinutes={form.breakMinutes}
-                      onBreakMinutesChange={(minutes) =>
-                        updateForm("breakMinutes", minutes)
-                      }
-                      durationMinutes={form.durationMinutes}
-                      isWeekly={form.sessionIsWeekly}
-                      onIsWeeklyChange={(weekly) =>
-                        updateForm("sessionIsWeekly", weekly)
-                      }
-                      showErrors={showErrors}
-                    />
+                          {label}
+                        </Chip>
+                      ))}
+                      {form.scheduleType === "recurring" && (
+                        <select
+                          value={form.recurrenceRule}
+                          onChange={(e) =>
+                            updateForm("recurrenceRule", e.target.value)
+                          }
+                          className={INLINE_PICKER}
+                          aria-label="How often it repeats"
+                        >
+                          <option value="">How often?</option>
+                          <option value="FREQ=DAILY">Daily</option>
+                          <option value="FREQ=WEEKLY">Weekly</option>
+                          <option value="FREQ=WEEKLY;INTERVAL=2">
+                            Every 2 weeks
+                          </option>
+                          <option value="FREQ=MONTHLY">Monthly</option>
+                        </select>
+                      )}
+                    </div>
                   )}
-                  {form.sessionType === "group" &&
-                    form.scheduleType === "custom_dates" && (
-                      <div className="space-y-3">
-                        {form.customDatesList.map((slot, idx) => (
-                          <div key={idx} className="flex items-center gap-2">
-                            <div className="min-w-0 flex-1">
-                              <Rows>
-                                <Row label="Date">
-                                  <input
-                                    type="date"
-                                    value={slot.date}
-                                    onChange={(e) =>
-                                      updateCustomSlot(
-                                        idx,
-                                        "date",
-                                        e.target.value,
-                                      )
-                                    }
-                                    min={new Date().toISOString().split("T")[0]}
-                                    className={ROW_INPUT}
-                                  />
-                                </Row>
-                                <Row label="Start time">
-                                  <input
-                                    type="time"
-                                    value={slot.time}
-                                    onChange={(e) =>
-                                      updateCustomSlot(
-                                        idx,
-                                        "time",
-                                        e.target.value,
-                                      )
-                                    }
-                                    className={ROW_INPUT}
-                                  />
-                                </Row>
-                              </Rows>
-                            </div>
-                            {form.customDatesList.length > 1 && (
-                              <button
-                                type="button"
-                                onClick={() => removeCustomSlot(idx)}
-                                className="p-2 text-white/40 transition hover:text-red-400"
-                                title="Remove slot"
-                                aria-label="Remove slot"
-                              >
-                                <FiX size={18} />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                        <AddPill onClick={addCustomSlot}>
-                          Add another date
-                        </AddPill>
-                      </div>
-                    )}
 
-                  {form.sessionType === "one_on_one" && (
-                    <SessionWindowsEditor
-                      windows={form.sessionWindows}
-                      onWindowsChange={(windows) =>
-                        updateForm("sessionWindows", windows)
-                      }
-                      breakMinutes={form.breakMinutes}
-                      onBreakMinutesChange={(minutes) =>
-                        updateForm("breakMinutes", minutes)
-                      }
-                      durationMinutes={form.durationMinutes}
-                      isWeekly={form.sessionIsWeekly}
-                      onIsWeeklyChange={(weekly) =>
-                        updateForm("sessionIsWeekly", weekly)
-                      }
-                      showErrors={showErrors}
-                    />
-                  )}
-                  {form.sessionType === "one_on_one" && (
-                    <SessionWindowsEditor
-                      windows={form.sessionWindows}
-                      onWindowsChange={(windows) =>
-                        updateForm("sessionWindows", windows)
-                      }
-                      breakMinutes={form.breakMinutes}
-                      onBreakMinutesChange={(minutes) =>
-                        updateForm("breakMinutes", minutes)
-                      }
-                      durationMinutes={form.durationMinutes}
-                      isWeekly={form.sessionIsWeekly}
-                      onIsWeeklyChange={(weekly) =>
-                        updateForm("sessionIsWeekly", weekly)
-                      }
-                      showErrors={showErrors}
-                    />
-                  )}
-                  {form.sessionType === "one_on_one" && (
+                {form.sessionType === "group" &&
+                  form.scheduleType === "custom_dates" && (
                     <div className="space-y-2">
-                      <p className="px-1 text-sm text-white/50">
-                        Each session lasts
-                      </p>
-                      <div className="flex flex-wrap gap-2">
+                      {form.customDatesList.map((slot, idx) => (
+                        <div
+                          key={idx}
+                          className="flex flex-wrap items-center gap-2 text-[15px]"
+                        >
+                          <DatePill
+                            value={slot.date}
+                            onChange={(v) => updateCustomSlot(idx, "date", v)}
+                            placeholder={`Date ${idx + 1}`}
+                          />
+                          <TimePill
+                            value={slot.time}
+                            onChange={(v) => updateCustomSlot(idx, "time", v)}
+                            placeholder="Start time"
+                            ariaLabel={`Start time ${idx + 1}`}
+                          />
+                          {form.customDatesList.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeCustomSlot(idx)}
+                              className="p-1.5 text-white/40 transition hover:text-red-400"
+                              aria-label="Remove this date"
+                            >
+                              <FiX size={16} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addCustomSlot}
+                        className="flex items-center gap-1.5 px-2 text-sm font-medium text-[#D8B4FE] transition hover:text-white"
+                      >
+                        <FiPlus size={15} /> Add another date
+                      </button>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <span className="mr-1 text-sm text-white/55">
+                          Each date lasts
+                        </span>
                         {DURATION_OPTIONS.map((mins) => (
                           <Chip
                             key={mins}
@@ -2620,70 +2117,110 @@ export default function CreateExperiencePage() {
                       </div>
                     </div>
                   )}
-                  {form.sessionType === "group" &&
-                    form.scheduleType === "one_time" &&
-                    !showMoreDates && (
-                      <button
-                        type="button"
-                        onClick={() => setShowMoreDates(true)}
-                        className="flex items-center gap-1.5 px-1 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
-                      >
-                        <FiPlus size={15} /> Repeats, or more than one date?
-                      </button>
-                    )}
-                </Section>
+
+                {form.sessionType === "one_on_one" && (
+                  <>
+                    <SessionWindowsEditor
+                      windows={form.sessionWindows}
+                      onWindowsChange={(windows) =>
+                        updateForm("sessionWindows", windows)
+                      }
+                      breakMinutes={form.breakMinutes}
+                      onBreakMinutesChange={(minutes) =>
+                        updateForm("breakMinutes", minutes)
+                      }
+                      durationMinutes={form.durationMinutes}
+                      isWeekly={form.sessionIsWeekly}
+                      onIsWeeklyChange={(weekly) =>
+                        updateForm("sessionIsWeekly", weekly)
+                      }
+                      showErrors={showErrors}
+                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="mr-1 text-sm text-white/55">
+                        Each session
+                      </span>
+                      {DURATION_OPTIONS.map((mins) => (
+                        <Chip
+                          key={mins}
+                          active={form.durationMinutes === mins}
+                          onClick={() => {
+                            updateForm("durationMinutes", mins);
+                            setDurationInputStr(mins.toString());
+                          }}
+                        >
+                          {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
+                        </Chip>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {form.sessionType === "group" &&
+                  form.scheduleType === "one_time" &&
+                  !showMoreDates && (
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreDates(true)}
+                      className="flex items-center gap-1.5 px-2 text-sm font-medium text-white/50 transition hover:text-white"
+                    >
+                      <FiPlus size={15} /> Repeats, or more than one date?
+                    </button>
+                  )}
               </section>
 
-              {/* Where */}
+              {/* Location */}
               <section id="sec-where" className="scroll-mt-24">
-                <Section title="Where?">
+                <Section title="Location">
                   {form.isOnline ? (
-                    <Rows>
-                      <Row label="Meeting link">
-                        <input
-                          type="url"
-                          value={form.meetingLink}
-                          onChange={(e) =>
-                            updateForm("meetingLink", e.target.value)
-                          }
-                          placeholder="Zoom, Google Meet…"
-                          className={ROW_INPUT}
-                        />
-                      </Row>
-                    </Rows>
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.07]">
+                        <FiVideo className="h-5 w-5 text-[#D8B4FE]" />
+                      </span>
+                      <input
+                        type="url"
+                        value={form.meetingLink}
+                        onChange={(e) =>
+                          updateForm("meetingLink", e.target.value)
+                        }
+                        placeholder="Meeting link (Zoom, Google Meet…)"
+                        aria-label="Meeting link"
+                        className={INLINE_FIELD}
+                      />
+                    </div>
                   ) : (
-                    <div className="space-y-3">
-                      <div className="flex gap-2">
-                        <div className="min-w-0 flex-1">
-                          <LocationSearchInput
-                            value={form.location}
-                            onChange={(val) => updateForm("location", val)}
-                            onSelect={(addr, lat, lng) => {
-                              updateForm("location", addr);
-                              updateForm(
-                                "googleMapsUrl",
-                                `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
-                              );
-                            }}
-                            placeholder="Search for a location or locality..."
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowMapPicker(true)}
-                          className="flex shrink-0 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-4 text-sm font-semibold text-[#D8B4FE] transition hover:bg-white/10"
-                          title="Pick from map"
-                        >
-                          <FiMap size={18} />
-                          <span className="hidden sm:inline">Pick on map</span>
-                        </button>
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.07]">
+                        <FiMapPin className="h-5 w-5 text-[#D8B4FE]" />
+                      </span>
+                      <LocationSearchInput
+                        value={form.location}
+                        onChange={(val) => updateForm("location", val)}
+                        onSelect={(addr, lat, lng) => {
+                          updateForm("location", addr);
+                          updateForm(
+                            "googleMapsUrl",
+                            `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                          );
+                        }}
+                        placeholder="Search a place or area"
+                        className={`!rounded-xl !border-transparent !bg-transparent !px-2 !text-[15px] !ring-0 hover:!bg-white/[0.04] focus:!bg-white/[0.06] ${showErrors && !form.location.trim() ? "!ring-1 !ring-red-500" : ""}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMapPicker(true)}
+                        aria-label="Pick on map"
+                        title="Pick on map"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-white transition hover:bg-white/15"
+                      >
+                        <FiMap size={18} />
+                      </button>
                     </div>
                   )}
                   <button
                     type="button"
                     onClick={() => updateForm("isOnline", !form.isOnline)}
-                    className="px-1 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
+                    className="px-2 text-sm font-medium text-white/50 transition hover:text-white"
                   >
                     {form.isOnline
                       ? "Meeting in person instead?"
@@ -2694,7 +2231,7 @@ export default function CreateExperiencePage() {
 
               {/* About */}
               <section id="sec-about" className="scroll-mt-24">
-                <Section title="What will guests do?">
+                <Section title="About the event">
                   <div className="space-y-2">
                     <RichTextEditor
                       value={form.description}
@@ -2799,18 +2336,16 @@ export default function CreateExperiencePage() {
                 </Section>
               </section>
 
-              {/* Spots & price */}
+              {/* Slots & price */}
               <section id="sec-price" className="scroll-mt-24">
                 <Section
                   title={
-                    form.sessionType === "one_on_one"
-                      ? "Price"
-                      : "Spots & price"
+                    form.sessionType === "one_on_one" ? "Price" : "Tickets"
                   }
                 >
                   {form.sessionType === "group" && (
                     <Rows>
-                      <Row label="Spots (max guests)">
+                      <Row label="Slots">
                         <input
                           type="text"
                           {...intField(
@@ -2913,7 +2448,7 @@ export default function CreateExperiencePage() {
                 title="More options"
                 hint="All optional. Good defaults are already set."
               >
-                <div className="space-y-2">
+                <div>
                   <MoreOptions
                     title="Who can see it"
                     summary={form.isPrivate ? "Private" : "Public"}
@@ -2946,99 +2481,40 @@ export default function CreateExperiencePage() {
                       />
                     )}
                   </MoreOptions>
-                  {form.sessionType === "group" && !form.endTime && (
-                    <MoreOptions
-                      title="How long it lasts"
-                      summary={
-                        form.durationMinutes >= 60
-                          ? `${form.durationMinutes / 60} h`
-                          : `${form.durationMinutes} min`
-                      }
-                    >
-                      <div className="flex flex-wrap gap-2">
-                        {DURATION_OPTIONS.map((mins) => (
-                          <Chip
-                            key={mins}
-                            active={form.durationMinutes === mins}
-                            onClick={() => {
-                              updateForm("durationMinutes", mins);
-                              setDurationInputStr(mins.toString());
-                            }}
-                          >
-                            {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                          </Chip>
-                        ))}
-                      </div>
-                      <Rows>
-                        <Row label="Duration (min)">
-                          <input
-                            type="text"
-                            {...intField(
-                              durationInputStr,
-                              setDurationInputStr,
-                              "durationMinutes",
-                              15,
-                            )}
-                            placeholder="Minimum 15"
-                            className={ROW_INPUT}
-                          />
-                        </Row>
-                      </Rows>
-                    </MoreOptions>
-                  )}
                   <MoreOptions
-                    title="Refunds"
-                    summary={
-                      CANCELLATION_POLICIES.find(
-                        (pol) => pol.value === form.cancellationPolicy,
-                      )?.label ?? "Flexible"
-                    }
+                    title="Refunds & payout"
+                    summary={refundPayoutSummary(
+                      form.cancellationPolicy,
+                      form.payoutMode,
+                    )}
                   >
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {CANCELLATION_POLICIES.map((policy) => (
-                          <Chip
-                            key={policy.value}
-                            active={form.cancellationPolicy === policy.value}
-                            onClick={() =>
-                              updateForm("cancellationPolicy", policy.value)
-                            }
-                          >
-                            {policy.label}
-                          </Chip>
-                        ))}
-                      </div>
-                      <p className="px-1 text-xs text-white/45">
-                        {CANCELLATION_POLICIES.find(
-                          (p) => p.value === form.cancellationPolicy,
-                        )?.description ?? "Pick how refunds work for guests."}
-                      </p>
-                    </div>
+                    <PayoutTimingFields
+                      hostId={host?.id ?? null}
+                      isFree={form.isFree}
+                      policy={form.cancellationPolicy}
+                      mode={form.payoutMode}
+                      onChange={(patch) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          ...(patch.policy !== undefined && {
+                            cancellationPolicy: patch.policy,
+                          }),
+                          ...(patch.mode !== undefined && {
+                            payoutMode: patch.mode,
+                          }),
+                        }))
+                      }
+                    />
                   </MoreOptions>
                   <MoreOptions
-                    title="Language, level & group size"
+                    title="Language & level"
                     summary={[
-                      `Min ${form.minGroupSize || 1}`,
                       form.languages.join(", ") || "No language set",
                       form.level,
                     ]
                       .filter(Boolean)
                       .join(" · ")}
                   >
-                    <Rows>
-                      <Row label="Min group size">
-                        <input
-                          type="text"
-                          {...intField(
-                            minGroupInputStr,
-                            setMinGroupInputStr,
-                            "minGroupSize",
-                            1,
-                          )}
-                          className={ROW_INPUT}
-                        />
-                      </Row>
-                    </Rows>
                     <div className="space-y-2">
                       <p className="text-sm text-white/50">
                         Languages — pick every language you&apos;ll host in
@@ -3309,17 +2785,12 @@ export default function CreateExperiencePage() {
                 </div>
               </Section>
 
-              {/* Publish: fixed to the bottom on phones, in place on desktop */}
-              <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#080914]/95 px-5 pt-3 pb-[max(12px,env(safe-area-inset-bottom))] backdrop-blur-xl lg:static lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
-                <p className="mb-2 text-xs leading-5 text-white/55">
-                  {missing.length === 0 ? (
-                    <span className="text-emerald-300">
-                      All set. Ready to publish.
-                    </span>
-                  ) : (
-                    <>
-                      {requirements.length - missing.length} of{" "}
-                      {requirements.length} done · Still needed:{" "}
+              {/* Publish: one floating pill, like the event page's Book button */}
+              <div className="msm-publish-bar sticky bottom-[max(16px,env(safe-area-inset-bottom))] z-30 mt-10">
+                <div className="w-full rounded-[28px] border border-white/10 bg-[#121426]/90 p-2 shadow-[0_18px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+                  {missing.length > 0 && (
+                    <p className="truncate px-3 pt-1 pb-2 text-xs text-white/55">
+                      Still needed:{" "}
                       {missing.map((m, i) => (
                         <Fragment key={m.key}>
                           {i > 0 && ", "}
@@ -3332,43 +2803,47 @@ export default function CreateExperiencePage() {
                           </button>
                         </Fragment>
                       ))}
-                    </>
+                    </p>
                   )}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => void handleSubmit(true)}
-                    disabled={isSubmitting}
-                    className="shrink-0 rounded-full border border-white/15 px-5 py-3.5 text-sm font-semibold text-white transition hover:bg-white/[0.06] disabled:opacity-50"
-                  >
-                    {draftLabel}
-                  </button>
-                  <button
-                    onClick={() => {
-                      const first = missing[0];
-                      if (first) {
-                        setShowErrors(true);
-                        toast.error(`Still needed: ${first.label}`);
-                        jumpTo(first);
-                        return;
-                      }
-                      void handleSubmit(false);
-                    }}
-                    disabled={isSubmitting}
-                    className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 ${GRADIENT}`}
-                  >
-                    {submitType === "publish" ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        <span>Publishing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <FiCheck size={18} />
-                        <span>Publish</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => void handleSubmit(true)}
+                      disabled={isSubmitting}
+                      className="shrink-0 rounded-full px-4 py-3 text-sm font-semibold text-white/75 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+                    >
+                      {draftLabel}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const first = missing[0];
+                        if (first) {
+                          setShowErrors(true);
+                          toast.error(`Still needed: ${first.label}`);
+                          jumpTo(first);
+                          return;
+                        }
+                        void handleSubmit(false);
+                      }}
+                      disabled={isSubmitting}
+                      className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 ${GRADIENT}`}
+                    >
+                      {submitType === "publish" ? (
+                        <>
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          <span>Publishing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <FiCheck size={18} />
+                          <span>
+                            {missing.length
+                              ? `Publish · ${missing.length} left`
+                              : "Publish event"}
+                          </span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

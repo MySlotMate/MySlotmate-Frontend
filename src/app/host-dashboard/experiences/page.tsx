@@ -7,7 +7,12 @@ import {
   usePauseEvent,
   useEventOccurrencesForHost,
   useEventAttendees,
+  useHostBoosts,
 } from "~/hooks/useApi";
+import { useIdToken } from "~/hooks/useIdToken";
+import BoostButton from "~/components/host-dashboard/boost/BoostButton";
+import type { BoostStatus } from "~/lib/api";
+import { BOOST_STATUS_LABEL } from "~/lib/boost";
 import { cancelEvent, deleteEvent, type BookingDTO } from "~/lib/api";
 import type { OccurrenceAvailability } from "~/lib/api";
 import { useRouter } from "next/navigation";
@@ -137,6 +142,8 @@ interface ExperienceCardProps {
     options?: { pausedFrom?: string; pausedDate?: string },
   ) => Promise<void>;
   isProcessing: boolean;
+  /** Latest Marketing Boost status on this event, if any. */
+  boostStatus?: BoostStatus;
 }
 
 function ExperienceCard({
@@ -145,6 +152,7 @@ function ExperienceCard({
   onResume,
   onPause,
   isProcessing,
+  boostStatus,
 }: ExperienceCardProps) {
   const router = useRouter();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -283,8 +291,13 @@ function ExperienceCard({
           loading="lazy"
           className="h-full w-full object-cover"
         />
-        <div className="absolute top-3 left-3">
+        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
           <StatusBadge status={event.status} />
+          {boostStatus === "live" && (
+            <span className="rounded-full bg-gradient-to-r from-[#7038F5] to-[#B724EA] px-2.5 py-1 text-[11px] font-semibold text-white">
+              {BOOST_STATUS_LABEL.live}
+            </span>
+          )}
         </div>
       </div>
 
@@ -349,6 +362,13 @@ function ExperienceCard({
 
         {/* Action buttons and footer */}
         <div className="mt-4 border-t border-white/10 pt-4">
+          {isLive && !isExpired && (
+            <BoostButton
+              eventId={event.id}
+              status={boostStatus}
+              className="mb-3 w-full justify-center"
+            />
+          )}
           <div className="mb-2 flex items-center gap-2">
             {/* Edit button */}
             <div className="group relative">
@@ -703,6 +723,16 @@ export default function ExperiencesPage() {
   } = useEventsByHost(host?.id ?? null);
   const resumeEvent = useResumeEvent();
   const pauseEvent = usePauseEvent();
+  const idToken = useIdToken();
+  const { data: boosts } = useHostBoosts(idToken);
+  // Latest Boost per event (newest request wins).
+  const boostByEvent = useMemo(() => {
+    const m = new Map<string, BoostStatus>();
+    [...(boosts ?? [])]
+      .sort((a, b) => a.requested_at.localeCompare(b.requested_at))
+      .forEach((b) => m.set(b.event_id, b.status));
+    return m;
+  }, [boosts]);
 
   useEffect(() => {
     if (isHydrated && !userId && !hostLoading) {
@@ -914,6 +944,7 @@ export default function ExperiencesPage() {
                   onResume={handleResume}
                   onPause={handlePause}
                   isProcessing={processingId === event.id}
+                  boostStatus={boostByEvent.get(event.id)}
                 />
               ))}
               <CreateNewCard />

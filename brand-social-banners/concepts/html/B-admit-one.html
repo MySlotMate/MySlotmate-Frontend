@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1584px;height:396px;overflow:hidden}
+body{position:relative;font-family:"Bricolage Grotesque",sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}.mono{font-family:"JetBrains Mono",monospace}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='.5'/></svg>");mix-blend-mode:overlay;opacity:.35;pointer-events:none}
+
+body{background:linear-gradient(120deg,#6E1FE6,#A020F0 55%,#C21CF0)}
+.ticket{left:420px;top:40px;width:1120px;height:316px;background:#FFF5E9;border-radius:18px;box-shadow:0 30px 70px rgba(40,6,90,.45);transform:rotate(-1.2deg)}
+.notch{position:absolute;width:44px;height:44px;border-radius:50%;background:#9A22EE}
+.perf{position:absolute;left:820px;top:30px;bottom:30px;border-left:3px dashed #D9C9E8}
+.kicker{font-size:14px;letter-spacing:.24em;color:#8A1FD8}
+h1{font-family:"Instrument Serif",serif;font-weight:400;font-size:96px;line-height:.92;color:#1A0933;letter-spacing:-.01em;margin-top:14px}
+h1 i{color:#A020F0}
+.meta{display:flex;gap:46px;margin-top:22px}
+.meta div{font-size:12px;letter-spacing:.2em;color:#9A8BAE}
+.meta b{display:block;font-family:"Bricolage Grotesque";font-size:20px;letter-spacing:-.01em;color:#1A0933;font-weight:600;margin-top:4px}
+.stub{position:absolute;left:850px;top:34px;width:240px;bottom:34px;display:flex;flex-direction:column;justify-content:space-between}
+.no{font-size:66px;font-weight:800;color:#1A0933;letter-spacing:-.04em;line-height:1}
+.bar{height:64px;background:repeating-linear-gradient(90deg,#1A0933 0 3px,transparent 3px 6px,#1A0933 6px 7px,transparent 7px 11px,#1A0933 11px 15px,transparent 15px 17px)}
+
+</style></head><body>
+<div class="grain"></div>
+<img class="abs" src="file:///Users/subhojitsaha/Desktop/Claude/Frontend-Designs-Myslotmate/MySlotmate-Frontend/public/assets/brand/logo-horizontal-white.png" style="left:64px;top:56px;height:42px">
+<div class="abs ticket">
+  <div class="notch" style="left:-22px;top:136px"></div>
+  <div class="notch" style="right:-22px;top:136px"></div>
+  <div class="notch" style="left:798px;top:-22px"></div>
+  <div class="notch" style="left:798px;bottom:-22px"></div>
+  <div class="perf"></div>
+  <div class="abs" style="left:52px;top:38px">
+    <div class="mono kicker">ADMIT ONE ✦ REAL LIFE ✦ NO SCREENS</div>
+    <h1>Your weekend, <i>booked.</i></h1>
+    <div class="meta mono">
+      <div>WHERE<b>Near you</b></div><div>WHEN<b>This Saturday</b></div><div>WITH<b>New people</b></div>
+    </div>
+  </div>
+  <div class="stub">
+    <div class="mono kicker">SLOT</div>
+    <div class="no">Nº 0001</div>
+    <div class="bar"></div>
+  </div>
+</div>
+</body></html>

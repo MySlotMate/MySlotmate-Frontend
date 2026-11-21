@@ -669,6 +669,120 @@ export function usePayoutHistory(
   });
 }
 
+/** The host's tax profile (PAN, GSTIN). Resolves to null when the host has
+ *  not added one yet (404), so callers can prompt for it. */
+export function useHostTaxProfile(
+  hostId: string | null,
+  idToken?: string | null,
+) {
+  return useQuery({
+    queryKey: ["hostTaxProfile", hostId ?? "", idToken ?? ""] as const,
+    queryFn: async (): Promise<api.HostTaxProfileDTO | null> => {
+      try {
+        const res = await api.getHostTaxProfile(hostId!, idToken!);
+        return res.data ?? null;
+      } catch (e) {
+        if ((e as { status?: number }).status === 404) return null;
+        throw e;
+      }
+    },
+    enabled: !!hostId && !!idToken,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}
+
+export function useUpdateHostTaxProfile(idToken: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: {
+      hostId: string;
+      body: api.UpdateHostTaxProfilePayload;
+    }) => api.updateHostTaxProfile(vars.hostId, vars.body, idToken!),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["hostTaxProfile"] });
+    },
+  });
+}
+
+/** 404-tolerant read: resolves to null when the backend has nothing (or
+ *  doesn't serve the route yet), so screens can fall back quietly. */
+async function orNull<T>(p: Promise<api.Envelope<T>>): Promise<T | null> {
+  try {
+    return (await p).data ?? null;
+  } catch (e) {
+    const status = (e as { status?: number }).status;
+    if (status === 404 || status === 405 || status === 501) return null;
+    throw e;
+  }
+}
+
+/** Can this host pick weekly payouts, plus strikes and any balance owed. */
+export function usePayoutEligibility(
+  hostId: string | null,
+  idToken?: string | null,
+) {
+  return useQuery({
+    queryKey: ["payoutEligibility", hostId ?? "", idToken ?? ""] as const,
+    queryFn: () => orNull(api.getPayoutEligibility(hostId!, idToken!)),
+    enabled: !!hostId && !!idToken,
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+}
+
+/** The event's current Marketing Boost, or null when there is none. */
+export function useEventBoost(eventId: string | null, idToken?: string | null) {
+  return useQuery({
+    queryKey: ["eventBoost", eventId ?? "", idToken ?? ""] as const,
+    queryFn: () => orNull(api.getEventBoost(eventId!, idToken!)),
+    enabled: !!eventId && !!idToken,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+/** Every Boost this host has requested (Promote page, Boosted badges). */
+export function useHostBoosts(idToken?: string | null) {
+  return useQuery({
+    queryKey: ["hostBoosts", idToken ?? ""] as const,
+    queryFn: async () =>
+      (await orNull(api.getHostBoosts(idToken!))) ?? ([] as api.BoostDTO[]),
+    enabled: !!idToken,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+function useBoostMutation<V>(
+  idToken: string | null,
+  fn: (vars: V, token: string) => Promise<api.Envelope<api.BoostDTO>>,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: V) => fn(vars, idToken!),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["eventBoost"] });
+      void qc.invalidateQueries({ queryKey: ["hostBoosts"] });
+    },
+  });
+}
+
+export const useRequestBoost = (idToken: string | null) =>
+  useBoostMutation(
+    idToken,
+    (v: { eventId: string; body: api.BoostRequestPayload }, t) =>
+      api.requestBoost(v.eventId, v.body, t),
+  );
+
+export const useAcceptBoost = (idToken: string | null) =>
+  useBoostMutation(idToken, (boostId: string, t) =>
+    api.acceptBoost(boostId, t),
+  );
+
+export const useStopBoost = (idToken: string | null) =>
+  useBoostMutation(idToken, (boostId: string, t) => api.stopBoost(boostId, t));
+
 export function useEventMessages(eventId: string | null) {
   return useQuery({
     queryKey: queryKeys.eventMessages(eventId ?? ""),

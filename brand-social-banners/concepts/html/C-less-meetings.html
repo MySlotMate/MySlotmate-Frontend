@@ -1,0 +1,48 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1584px;height:396px;overflow:hidden}
+body{position:relative;font-family:"Bricolage Grotesque",sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}.mono{font-family:"JetBrains Mono",monospace}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='.5'/></svg>");mix-blend-mode:overlay;opacity:.35;pointer-events:none}
+
+body{background:#F6F1E9;color:#1A0933}
+.grid{left:0;top:0;width:100%;height:100%;background-image:linear-gradient(#E9E2D6 1px,transparent 1px),linear-gradient(90deg,#E9E2D6 1px,transparent 1px);background-size:44px 44px;opacity:.6}
+h1{font-size:76px;font-weight:700;letter-spacing:-.045em;line-height:1}
+h1 .old{color:#B7AEC2;font-weight:500;text-decoration:line-through;text-decoration-thickness:5px;text-decoration-color:#FF5A3C}
+h1 .grad{background:linear-gradient(90deg,#7B2FFF,#BF00FF);-webkit-background-clip:text;color:transparent}
+.sub{font-size:20px;color:#5B5070;margin-top:20px}
+.day{font-size:13px;letter-spacing:.2em;color:#8E84A0;width:132px;text-align:left;top:34px}
+.ev{position:absolute;width:132px;border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;overflow:hidden;box-shadow:0 6px 14px rgba(26,9,51,.08)}
+.ev b{font-size:15px;font-weight:700;letter-spacing:-.01em;line-height:1.1}
+.ev span{font-family:"JetBrains Mono";font-size:11px;opacity:.8}
+.strike{text-decoration:line-through;text-decoration-color:#FF5A3C;text-decoration-thickness:2px}
+
+</style></head><body>
+<div class="abs grid"></div>
+<img class="abs" src="file:///Users/subhojitsaha/Desktop/Claude/Frontend-Designs-Myslotmate/MySlotmate-Frontend/public/assets/brand/logo-horizontal.png" style="left:64px;top:56px;height:42px">
+<div class="abs" style="left:430px;top:96px">
+  <h1><span class="old">Less meetings.</span><br>More <span class="grad">moments.</span></h1>
+  <p class="sub">Find something real to do this weekend, near you.</p>
+</div>
+<div class="abs mono day" style="left:1004px">THU</div><div class="abs mono day" style="left:1146px">FRI</div><div class="abs mono day" style="left:1288px">SAT</div><div class="abs mono day" style="left:1430px">SUN</div>
+<div class="ev" style="left:1000px;top:68px;height:66px;background:#ECE6DC;color:#9B93A8">
+    <b class="strike">Sprint review</b><span>10:00</span></div>
+<div class="ev" style="left:1000px;top:144px;height:66px;background:#ECE6DC;color:#9B93A8">
+    <b class="strike">Budget sync</b><span>14:00</span></div>
+<div class="ev" style="left:1000px;top:220px;height:120px;background:#A020F0;color:#fff">
+    <b>Pottery night</b><span>19:00</span></div>
+<div class="ev" style="left:1142px;top:68px;height:66px;background:#ECE6DC;color:#9B93A8">
+    <b class="strike">1:1 catch-up</b><span>11:00</span></div>
+<div class="ev" style="left:1142px;top:144px;height:196px;background:#1A0933;color:#fff">
+    <b>Open mic</b><span>20:00 · 3 slots left</span></div>
+<div class="ev" style="left:1284px;top:68px;height:120px;background:#FF7A45;color:#1A0933">
+    <b>Sunrise trek</b><span>05:30</span></div>
+<div class="ev" style="left:1284px;top:198px;height:142px;background:#E6399B;color:#fff">
+    <b>Supper club</b><span>20:00</span></div>
+<div class="ev" style="left:1426px;top:68px;height:86px;background:#D9F26B;color:#1A0933">
+    <b>Book club</b><span>11:00</span></div>
+<div class="ev" style="left:1426px;top:164px;height:176px;background:#7B2FFF;color:#fff">
+    <b>Salsa basics</b><span>17:00</span></div>
+</body></html>

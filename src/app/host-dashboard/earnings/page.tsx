@@ -3,14 +3,23 @@
 import { useHostTier } from "~/hooks/useHostTier";
 import { StartEarning } from "~/components/host-dashboard/VerifyToEarn";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { env } from "~/env";
+import {
+  PayoutBreakdownList,
+  TaxDetailsCard,
+  TaxProfileForm,
+  needsTaxProfile,
+} from "~/components/host-dashboard/TaxDetails";
+import PayoutScheduleCard from "~/components/host-dashboard/PayoutScheduleCard";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { SharedEventsCard } from "~/components/host-dashboard";
 import {
   useEarnings,
   useEventsByHost,
+  useHostTaxProfile,
   useInfiniteHostSales,
   usePayoutHistory,
   usePayoutMethods,
@@ -26,6 +35,7 @@ import {
   FiTrash2,
   FiX,
   FiAlertCircle,
+  FiChevronDown,
 } from "react-icons/fi";
 import { LuWallet, LuBuilding2 } from "react-icons/lu";
 
@@ -152,6 +162,10 @@ function EarningsContent() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
     null,
   ); // methodID to delete
+  // Tax details modal; `taxReason` says why we're asking (e.g. to withdraw).
+  const [showTaxModal, setShowTaxModal] = useState(false);
+  const [taxReason, setTaxReason] = useState<string | undefined>();
+  const [expandedPayout, setExpandedPayout] = useState<string | null>(null);
 
   // Form + loading states
   const [addForm, setAddForm] = useState<AddMethodForm>({
@@ -195,6 +209,24 @@ function EarningsContent() {
     isLoading: loadingMethods,
     refetch: refetchMethods,
   } = usePayoutMethods(hostId, idToken);
+  const taxProfileQuery = useHostTaxProfile(hostId, idToken);
+  const taxProfile = taxProfileQuery.data;
+
+  // PAN is required before withdrawing once the backend supports tax
+  // profiles. Never block when the profile couldn't be loaded.
+  const mustAddPan =
+    env.NEXT_PUBLIC_REQUIRE_TAX_PROFILE === "true" &&
+    taxProfileQuery.isSuccess &&
+    needsTaxProfile(taxProfile);
+
+  const openTaxModal = (reason?: string) => {
+    clearFeedback();
+    setTaxReason(reason);
+    setShowTaxModal(true);
+  };
+  const WITHDRAW_PAN_REASON =
+    "Add your PAN to withdraw. We need it to send your earnings; it's required by law for online marketplaces.";
+
   // ── Sales — phase 1 future-proofing ─────────────────────────────────────
   // Date range (default last 90 days; "all" loads everything).
   const [dateRange, setDateRange] = useState<"90d" | "all">("90d");
@@ -425,9 +457,14 @@ function EarningsContent() {
       void refetchEarnings?.();
       void refetchHistory?.();
     } catch (e: unknown) {
-      setActionError(
-        e instanceof Error ? e.message : "Failed to request payout.",
-      );
+      const msg = e instanceof Error ? e.message : "Failed to request payout.";
+      // Backend refuses withdrawals until a PAN is on file.
+      if (msg.includes("tax_profile_required")) {
+        setShowPayoutModal(false);
+        openTaxModal(WITHDRAW_PAN_REASON);
+      } else {
+        setActionError(msg);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -548,6 +585,10 @@ function EarningsContent() {
                 </p>
                 <button
                   onClick={() => {
+                    if (mustAddPan) {
+                      openTaxModal(WITHDRAW_PAN_REASON);
+                      return;
+                    }
                     clearFeedback();
                     setShowPayoutModal(true);
                   }}
@@ -837,6 +878,16 @@ function EarningsContent() {
                               +{fmtCurrency(s.NetEarningCents ?? 0)} to you
                             </p>
                           )}
+                          {!isRefunded &&
+                            (s.TcsCents ?? 0) + (s.TdsCents ?? 0) > 0 && (
+                              <p className="text-[10px] text-[#777B98]">
+                                incl.{" "}
+                                {fmtCurrency(
+                                  (s.TcsCents ?? 0) + (s.TdsCents ?? 0),
+                                )}{" "}
+                                tax credited to you
+                              </p>
+                            )}
                         </div>
 
                         {/* Status */}
@@ -888,8 +939,8 @@ function EarningsContent() {
               <SharedEventsCard />
             </div>
 
-            {/* ── Fee Breakdown + Payout Methods ── */}
-            <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* ── Fee Breakdown + Payout Methods + Tax details ── */}
+            <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
               {/* Platform Fee Breakdown */}
               <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
                 <h3 className="text-sm font-semibold text-white">
@@ -942,6 +993,12 @@ function EarningsContent() {
                     </span>
                   </div>
                 </div>
+                <p className="mt-4 text-[11px] leading-4 text-[#777B98]">
+                  Guests pay the 8% platform fee at checkout, and MySlotmate
+                  pays the GST on it. Government tax deductions (GST TCS, income
+                  tax TDS) apply only if you&apos;re GST-registered or sell over
+                  ₹5 lakh a year, and are credited back to you.
+                </p>
               </div>
 
               {/* Payout Methods */}
@@ -1054,6 +1111,17 @@ function EarningsContent() {
                   <span>🔒</span> Your financial data is encrypted and secure.
                 </p>
               </div>
+
+              {/* Weekly payouts, cancellation strikes, anything owed */}
+              <PayoutScheduleCard hostId={hostId} idToken={idToken} />
+
+              {/* Tax details — PAN / GSTIN and tax credited this year */}
+              <TaxDetailsCard
+                profile={taxProfile}
+                earnings={earnings}
+                fmt={fmtCurrency}
+                onEdit={() => openTaxModal()}
+              />
             </div>
 
             {/* ── Payout History ── */}
@@ -1091,33 +1159,68 @@ function EarningsContent() {
                             : p.status === "failed"
                               ? "text-red-300"
                               : "text-amber-300";
+                        const b = p.breakdown;
+                        const isOpen = expandedPayout === p.id;
                         return (
-                          <tr key={p.id} className="hover:bg-white/[0.04]">
-                            <td className="px-5 py-4 text-sm text-white">
-                              {format(new Date(p.created_at), "MMM d, yyyy")}
-                            </td>
-                            <td className="px-5 py-4 text-sm text-[#A5A8C3]">
-                              {p.display_reference ??
-                                `#TXN-${p.id.slice(0, 5).toUpperCase()}`}
-                            </td>
-                            <td className="px-5 py-4 text-sm text-[#A5A8C3]">
-                              {p.payout_method_id
-                                ? "Bank •••• ****"
-                                : "Default"}
-                            </td>
-                            <td className="px-5 py-4 text-right text-sm font-semibold text-white">
-                              {fmtCurrency(p.amount_cents)}
-                            </td>
-                            <td className="px-5 py-4 text-right">
-                              <span
-                                className={`text-xs font-semibold ${statusColor}`}
-                              >
-                                •{" "}
-                                {p.status.charAt(0).toUpperCase() +
-                                  p.status.slice(1)}
-                              </span>
-                            </td>
-                          </tr>
+                          <Fragment key={p.id}>
+                            <tr className="hover:bg-white/[0.04]">
+                              <td className="px-5 py-4 text-sm text-white">
+                                {b ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setExpandedPayout(isOpen ? null : p.id)
+                                    }
+                                    aria-expanded={isOpen}
+                                    className="flex items-center gap-1.5 text-left hover:text-[#D8B4FE]"
+                                  >
+                                    <FiChevronDown
+                                      className={`h-3.5 w-3.5 transition ${isOpen ? "rotate-180" : ""}`}
+                                    />
+                                    {format(
+                                      new Date(p.created_at),
+                                      "MMM d, yyyy",
+                                    )}
+                                  </button>
+                                ) : (
+                                  format(new Date(p.created_at), "MMM d, yyyy")
+                                )}
+                              </td>
+                              <td className="px-5 py-4 text-sm text-[#A5A8C3]">
+                                {p.display_reference ??
+                                  `#TXN-${p.id.slice(0, 5).toUpperCase()}`}
+                              </td>
+                              <td className="px-5 py-4 text-sm text-[#A5A8C3]">
+                                {p.payout_method_id
+                                  ? "Bank •••• ****"
+                                  : "Default"}
+                              </td>
+                              <td className="px-5 py-4 text-right text-sm font-semibold text-white">
+                                {fmtCurrency(p.amount_cents)}
+                              </td>
+                              <td className="px-5 py-4 text-right">
+                                <span
+                                  className={`text-xs font-semibold ${statusColor}`}
+                                >
+                                  •{" "}
+                                  {p.status.charAt(0).toUpperCase() +
+                                    p.status.slice(1)}
+                                </span>
+                              </td>
+                            </tr>
+                            {b && isOpen && (
+                              <tr className="bg-white/[0.02]">
+                                <td colSpan={5} className="px-5 pt-1 pb-4">
+                                  <div className="max-w-md">
+                                    <PayoutBreakdownList
+                                      b={b}
+                                      fmt={fmtCurrency}
+                                    />
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
                         );
                       })}
                     </tbody>
@@ -1191,6 +1294,25 @@ function EarningsContent() {
               </button>
             </div>
           </div>
+        </Modal>
+      )}
+
+      {/* ════════════════════════════════════════════════
+          MODAL: Tax details (PAN / GSTIN)
+      ════════════════════════════════════════════════ */}
+      {showTaxModal && (
+        <Modal title="Tax details" onClose={() => setShowTaxModal(false)}>
+          <TaxProfileForm
+            hostId={hostId}
+            idToken={idToken}
+            profile={taxProfile}
+            reason={taxReason}
+            onCancel={() => setShowTaxModal(false)}
+            onSaved={() => {
+              setShowTaxModal(false);
+              setActionSuccess("Tax details saved.");
+            }}
+          />
         </Modal>
       )}
 

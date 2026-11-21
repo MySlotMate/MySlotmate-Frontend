@@ -104,7 +104,7 @@ export default function HostJoinRequestsPage() {
             <p className="mt-1 text-sm text-[#A5A8C3]">
               Guests asking to join your request-only experiences. Each request
               is for one session — approving lets them book that date only, and
-              doesn&apos;t hold a spot or take payment.
+              doesn&apos;t hold a slot or take payment.
             </p>
           </header>
 

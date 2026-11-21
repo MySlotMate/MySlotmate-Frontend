@@ -9,6 +9,7 @@ import ExperienceSkeleton from "./loading";
 import WebsiteNav from "~/components/website/WebsiteNav";
 import {
   useEvent,
+  useEventBoost,
   usePublicHostProfile,
   useReviewsByEvent,
   useEventRating,
@@ -18,6 +19,9 @@ import {
   useEventAvailability,
 } from "~/hooks/useApi";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
+import { useIdToken } from "~/hooks/useIdToken";
+import BoostButton from "~/components/host-dashboard/boost/BoostButton";
+import { BOOST_ENABLED } from "~/lib/boost";
 import {
   FiArrowLeft,
   FiCalendar,
@@ -472,7 +476,7 @@ export default function ExperienceDetailClient({
   initialEvent: EventDTO | null;
 }) {
   const resolvedParams = use(params);
-  const { userId } = useStoredAuth();
+  const { userId, hostId } = useStoredAuth();
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   // Session picked from the date chips; carried to the tickets step.
   const [pickedDate, setPickedDate] = useState<string | null>(null);
@@ -495,6 +499,13 @@ export default function ExperienceDetailClient({
   // event UUID, not the slug — resolve it from the loaded event.
   const eventId = event?.id ?? "";
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
+  // The host looking at their own event gets shortcuts to edit and Boost it.
+  const isOwnEvent = mounted && !!hostId && !!event && event.host_id === hostId;
+  const idToken = useIdToken();
+  const { data: ownBoost } = useEventBoost(
+    isOwnEvent && BOOST_ENABLED ? eventId : null,
+    idToken,
+  );
   const { data: reviews } = useReviewsByEvent(eventId);
   const { data: ratingData } = useEventRating(eventId);
   const { data: availability } = useEventAvailability(eventId);
@@ -652,6 +663,22 @@ export default function ExperienceDetailClient({
           <div className="grid gap-8 lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-14">
             {/* Left: poster + host, sticky on desktop */}
             <div className="flex flex-col gap-7 lg:sticky lg:top-8 lg:self-start">
+              {isOwnEvent && (
+                <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[#121426]/85 p-2 pl-4 backdrop-blur">
+                  <span className="min-w-0 flex-1 truncate text-sm text-white/70">
+                    You’re hosting this
+                  </span>
+                  <Link
+                    href={`/host-dashboard/experiences/${event.id}`}
+                    className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/[0.06] hover:text-white"
+                  >
+                    Edit
+                  </Link>
+                  {event.status === "live" && !event.is_free && (
+                    <BoostButton eventId={event.id} status={ownBoost?.status} />
+                  )}
+                </div>
+              )}
               <Hero
                 images={images}
                 title={event.title}

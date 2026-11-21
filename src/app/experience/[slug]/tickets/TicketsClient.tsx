@@ -313,7 +313,7 @@ export default function TicketsClient({
             </div>
             {event.capacity > 1 && !soldOut && spotsLeft <= 10 && (
               <p className="mt-3 text-sm text-[#D8B4FE]">
-                Only {spotsLeft} spot{spotsLeft === 1 ? "" : "s"} left
+                Only {spotsLeft} slot{spotsLeft === 1 ? "" : "s"} left
               </p>
             )}
           </section>

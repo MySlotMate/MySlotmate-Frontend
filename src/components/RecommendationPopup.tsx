@@ -147,7 +147,7 @@ export function RecommendationPopup({
             </div>
             <div className="flex items-center gap-2 text-sm text-white/65">
               <FiUsers size={14} className="text-[#D8B4FE]" />
-              <span>{spotsLeft} spots left</span>
+              <span>{spotsLeft} slots left</span>
             </div>
           </div>
 

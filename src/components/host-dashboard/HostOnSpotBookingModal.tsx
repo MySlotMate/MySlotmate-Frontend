@@ -423,7 +423,7 @@ export default function HostOnSpotBookingModal({
     }
     if (notEnoughRoom) {
       setError(
-        `Only ${selectedOcc?.remaining} spot(s) left for this slot. Reduce the quantity.`,
+        `Only ${selectedOcc?.remaining} slot(s) left for this session. Reduce the quantity.`,
       );
       return;
     }
@@ -797,7 +797,7 @@ export default function HostOnSpotBookingModal({
                       ? "All upcoming slots are fully booked."
                       : selectedOcc?.is_fully_booked
                         ? "This slot is fully booked. Pick another date."
-                        : `Only ${selectedOcc?.remaining} spot(s) left for this slot.`}
+                        : `Only ${selectedOcc?.remaining} slot(s) left for this session.`}
                 </div>
               )}
 

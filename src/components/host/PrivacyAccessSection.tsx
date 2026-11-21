@@ -122,7 +122,7 @@ export default function PrivacyAccessSection({
               </p>
               <p className="text-xs text-[#A5A8C3]">
                 Approving unlocks booking — the guest still books and pays as
-                normal. Their spot isn&apos;t held until they do.
+                normal. Their slot isn&apos;t held until they do.
               </p>
               <p className="text-xs font-medium text-amber-300">
                 Requires attendee details: turn them on and pick at least one

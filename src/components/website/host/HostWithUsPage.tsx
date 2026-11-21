@@ -91,7 +91,7 @@ const STEPS = [
 const FAQS = [
   {
     q: "Is hosting really free?",
-    a: "Yes. There’s no fee to sign up, no fee to list an event, and no commission taken from your bookings. Hosting on MySlotMate is completely free.",
+    a: "Yes. There’s no fee to sign up, no fee to list an event, and no commission taken from your bookings. Hosting on MySlotMate is completely free. If you’re GST-registered or sell over ₹5 lakh a year, the law requires us to deduct a small amount of tax (GST TCS, income tax TDS) from payouts; it’s credited back to you, not kept by us.",
   },
   {
     q: "Who can host?",
@@ -107,7 +107,7 @@ const FAQS = [
   },
   {
     q: "Can I host free events?",
-    a: "Of course. Choose Free when you set your price, and guests can reserve a spot without paying.",
+    a: "Of course. Choose Free when you set your price, and guests can reserve a slot without paying.",
   },
   {
     q: "How do I get paid for paid events?",
@@ -248,6 +248,12 @@ export default function HostWithUsPage() {
                     <p className="mt-3 max-w-[40ch] text-base leading-relaxed text-[#A5A8C3]">
                       We want more people sharing what they love, so we don’t
                       charge hosts anything.
+                    </p>
+                    <p className="mt-3 max-w-[48ch] text-xs leading-5 text-[#777B98]">
+                      Taxes the government requires us to deduct for you (GST
+                      TCS, income tax TDS) apply only if you’re GST-registered
+                      or sell over ₹5 lakh a year, and are credited back to
+                      you.
                     </p>
                   </div>
 

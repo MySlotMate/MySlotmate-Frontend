@@ -24,6 +24,7 @@ import {
   ScanLine,
   Shield,
   Ticket,
+  TrendingUp,
   UserRound,
   Users,
   Wallet,
@@ -40,6 +41,7 @@ import {
 import { useIdToken } from "~/hooks/useIdToken";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
+import { BOOST_ENABLED } from "~/lib/boost";
 import { WalletDisplay } from "../wallet";
 
 const BASE = "/host-dashboard";
@@ -103,6 +105,11 @@ const EARNINGS: NavItem = {
   label: "Earnings",
   href: `${BASE}/earnings`,
   icon: Wallet,
+};
+const PROMOTE: NavItem = {
+  label: "Promote",
+  href: `${BASE}/promote`,
+  icon: TrendingUp,
 };
 const PROFILE: NavItem = {
   label: "Host profile",
@@ -212,7 +219,12 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
     { title: "Inbox", items: [MESSAGES, REQUESTS] },
     {
       title: "Business",
-      items: hasCoHosting ? [EARNINGS, CO_HOSTS, PROFILE] : [EARNINGS, PROFILE],
+      items: [
+        EARNINGS,
+        ...(BOOST_ENABLED ? [PROMOTE] : []),
+        ...(hasCoHosting ? [CO_HOSTS] : []),
+        PROFILE,
+      ],
     },
   ];
   const badgeFor = (href: string) => (href === MESSAGES.href ? unread : 0);

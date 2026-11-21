@@ -39,7 +39,7 @@ export default function GoogleLogin({
   open,
   onClose,
   title = "Log in or sign up",
-  subtitle = "Find events near you and book your spot in a tap.",
+  subtitle = "Find events near you and book your slot in a tap.",
   hint = null,
 }: GoogleLoginProps) {
   const router = useRouter();

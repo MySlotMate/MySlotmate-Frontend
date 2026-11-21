@@ -90,7 +90,7 @@ export default function JoinRequestModal({
         <div className="space-y-4 px-5 py-4">
           <p className="rounded-lg bg-[#A020F0]/10 px-3 py-2 text-xs text-white">
             The host reviews every request. If they say yes, you&apos;ll be able
-            to book — your spot isn&apos;t held until you do.
+            to book — your slot isn&apos;t held until you do.
             {sessionLabel
               ? " This request covers that session only; other dates need their own request."
               : ""}

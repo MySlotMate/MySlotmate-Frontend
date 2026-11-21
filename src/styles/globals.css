@@ -791,3 +791,16 @@ html:has(.msm-modal:not(.pointer-events-none)) {
     animation: msm-sheet-in-right 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
 }
+
+/* Create event: the floating Publish pill steps aside while a date or time
+   picker is open, so the picker never sits on top of it. */
+.msm-publish-bar {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+body:has([data-msm-picker]) .msm-publish-bar {
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+}

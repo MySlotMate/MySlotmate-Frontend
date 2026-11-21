@@ -21,6 +21,13 @@ export const env = createEnv({
     NEXT_PUBLIC_API_URL: z.string(),
     NEXT_PUBLIC_ADMIN_EMAIL: z.string(),
     NEXT_PUBLIC_GEMINI_API_KEY: z.string().optional(),
+    // "true" once the backend serves /hosts/{id}/tax-profile: hosts must add
+    // a PAN before withdrawing (Payout and tax spec).
+    NEXT_PUBLIC_REQUIRE_TAX_PROFILE: z.enum(["true", "false"]).optional(),
+    // Marketing Boost and weekly (50% early) payouts. Unset: on in
+    // development, off in production until the backend serves them.
+    NEXT_PUBLIC_ENABLE_BOOST: z.enum(["true", "false"]).optional(),
+    NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS: z.enum(["true", "false"]).optional(),
   },
 
   /**
@@ -34,6 +41,11 @@ export const env = createEnv({
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_ADMIN_EMAIL: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
     NEXT_PUBLIC_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+    NEXT_PUBLIC_REQUIRE_TAX_PROFILE:
+      process.env.NEXT_PUBLIC_REQUIRE_TAX_PROFILE,
+    NEXT_PUBLIC_ENABLE_BOOST: process.env.NEXT_PUBLIC_ENABLE_BOOST,
+    NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS:
+      process.env.NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

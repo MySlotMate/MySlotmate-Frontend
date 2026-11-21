@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:1584px;height:396px;overflow:hidden}
+body{position:relative;font-family:"Bricolage Grotesque",sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}.mono{font-family:"JetBrains Mono",monospace}
+.grain{position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='200' height='200' filter='url(%23n)' opacity='.5'/></svg>");mix-blend-mode:overlay;opacity:.35;pointer-events:none}
+
+body{background:radial-gradient(40% 90% at 82% 45%,#D04BFF 0,transparent 70%),linear-gradient(115deg,#24074F 0%,#5B16C9 50%,#A51BF2 100%);color:#fff}
+h1{font-weight:300;font-size:60px;letter-spacing:-.03em;line-height:1}
+h1 b{display:block;font-weight:800;font-size:96px;letter-spacing:-.045em;line-height:.95}
+.sub{font-size:21px;opacity:.8;margin-top:22px}
+.status{right:56px;top:26px;font-size:13px;letter-spacing:.14em;opacity:.75;display:flex;gap:22px}
+.toggle{left:1170px;top:112px;width:330px;height:170px;border-radius:999px;background:linear-gradient(90deg,rgba(255,255,255,.12),rgba(255,255,255,.28));border:2px solid rgba(255,255,255,.55);box-shadow:0 30px 80px rgba(36,7,79,.6),inset 0 0 40px rgba(255,255,255,.12)}
+.knob{position:absolute;right:14px;top:13px;width:140px;height:140px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:0 14px 34px rgba(36,7,79,.5)}
+.tlabel{left:1170px;top:300px;width:330px;text-align:center;font-size:14px;letter-spacing:.3em}
+.tlabel span{color:#E9FF6B}
+
+</style></head><body>
+<div class="grain"></div>
+<img class="abs" src="file:///Users/subhojitsaha/Desktop/Claude/Frontend-Designs-Myslotmate/MySlotmate-Frontend/public/assets/brand/logo-horizontal-white.png" style="left:64px;top:56px;height:42px">
+<div class="abs mono status"><span>✕ NO NOTIFICATIONS</span><span>SOCIAL BATTERY ▮▮▮▮ 100%</span></div>
+<div class="abs" style="left:430px;top:92px">
+  <h1>Switch to<b>offline mode.</b></h1>
+  <p class="sub">Real experiences near you, booked in a tap. Or host your own.</p>
+</div>
+<div class="abs toggle"><div class="knob"><svg width="64" height="64" viewBox="-1 -1 2 2"><path d="M0,-1 C0.09,-0.28 0.28,-0.09 1,0 C0.28,0.09 0.09,0.28 0,1 C-0.09,0.28 -0.28,0.09 -1,0 C-0.28,-0.09 -0.09,-0.28 0,-1Z" fill="#A020F0"/></svg></div></div>
+<div class="abs mono tlabel">OFFLINE MODE · <span>ON</span></div>
+</body></html>

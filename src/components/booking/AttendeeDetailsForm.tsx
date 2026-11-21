@@ -73,7 +73,7 @@ export default function AttendeeDetailsForm({
       <p
         className={`mb-4 text-xs ${dark ? "text-white/55" : "text-[#A5A8C3]"}`}
       >
-        The host needs a few details to confirm your spot. We&apos;ll save these
+        The host needs a few details to confirm your slot. We&apos;ll save these
         for next time.
       </p>
 

@@ -10,11 +10,14 @@ import {
   FiMoreHorizontal,
   FiPause,
   FiPlay,
+  FiTrendingUp,
 } from "react-icons/fi";
+import { BOOST_ENABLED } from "~/lib/boost";
+import { boostHref } from "~/components/host-dashboard/boost/BoostButton";
 import { usePauseEvent, useResumeEvent } from "~/hooks/useApi";
 import { PauseExperienceModal } from "~/components/PauseExperienceModal";
 
-/** "⋯" menu on an event row: view, edit, pause or resume. */
+/** "⋯" menu on an event row: view, edit, boost, pause or resume. */
 export default function EventActionsMenu({
   event,
   hostId,
@@ -132,6 +135,18 @@ export default function EventActionsMenu({
               <FiEdit2 className="h-4 w-4 text-[#A5A8C3]" />
               Edit
             </button>
+            {BOOST_ENABLED && event.status === "live" && (
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  router.push(boostHref(event.id));
+                }}
+                className="flex w-full items-center gap-2 px-3.5 py-2.5 text-left text-sm text-[#E9D5FF] transition hover:bg-[#B724EA]/10"
+              >
+                <FiTrendingUp className="h-4 w-4 text-[#D8B4FE]" />
+                Boost this event
+              </button>
+            )}
             {isPaused ? (
               <button
                 onClick={() => void handleResume()}

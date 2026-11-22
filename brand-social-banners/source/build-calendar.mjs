@@ -55,7 +55,7 @@ const SUB = "Find something real to do this weekend, near you.";
 
 const GUIDES = {
   "linkedin-personal-1584x396": [[60, 190, 330, 330, 1]],
-  "linkedin-company-1128x191": [[20, 110, 150, 150]],
+  "linkedin-company-1128x191": [[39, 75, 224, 116]],
   "facebook-cover-1640x624": [[266, 0, 1108, 624], [60, 470, 330, 330, 1]],
   "x-header-1500x500": [[0, 60, 1500, 380], [40, 330, 340, 340, 1]],
   "youtube-banner-2560x1440": [[507, 508, 1546, 423], [0, 508, 2560, 423]],
@@ -98,8 +98,8 @@ page({ name: "linkedin-personal-1584x396", w: 1584, h: 396, body: `
 
 // Company page: LinkedIn already shows the logo, so no wordmark here.
 page({ name: "linkedin-company-1128x191", w: 1128, h: 191, grid: 32, body: `
-  ${headline({ x: 230, y: 34, size: 46, sub: "Find something real to do this weekend.", subSize: 15 })}
-  ${calendar({ x: 640, y: 22, colW: 104, gap: 8, bodyH: 110, days: [
+  ${headline({ x: 300, y: 36, size: 44, sub: "Find something real to do this weekend.", subSize: 15 })}
+  ${calendar({ x: 680, y: 22, colW: 100, gap: 8, bodyH: 110, days: [
       [[0, 272, "Sprint review", "10:00", "meet"]], [[0, 272, "Open mic", "20:00", "ink"]],
       [[0, 272, "Sunrise trek", "05:30", "orange"]], [[0, 272, "Salsa basics", "17:00", "violet"]]],
     labels: ["THU", "FRI", "SAT", "SUN"] })}` });

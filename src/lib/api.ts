@@ -3026,24 +3026,38 @@ export function purchasePass(
   eventId: string,
   idToken: string,
   idempotencyKey?: string,
+  /** Private experiences: the passkey or per-guest access code. */
+  passkey?: string,
 ) {
   return apiFetch<UserPassDTO>("/passes/", {
     method: "POST",
     headers: getAuthHeader(idToken),
-    data: { event_id: eventId, idempotency_key: idempotencyKey },
+    data: {
+      event_id: eventId,
+      idempotency_key: idempotencyKey,
+      passkey: passkey?.trim() ? passkey.trim() : undefined,
+    },
   });
 }
 
-/** POST /passes/{passID}/reserve — hold a seat on one covered date (free). */
+/**
+ * POST /passes/{passID}/reserve — book one session using one session off the
+ * pass. tierId picks the ticket type: omitted = the basic ticket the pass
+ * covers; a pricier tier charges the difference from the wallet.
+ */
 export function reservePassSession(
   passId: string,
   occurrenceDate: string,
   idToken: string,
+  tierId?: string,
 ) {
   return apiFetch<BookingDTO>(`/passes/${passId}/reserve`, {
     method: "POST",
     headers: getAuthHeader(idToken),
-    data: { occurrence_date: occurrenceDate },
+    data: {
+      occurrence_date: occurrenceDate,
+      ...(tierId ? { price_tier_id: tierId } : {}),
+    },
   });
 }
 

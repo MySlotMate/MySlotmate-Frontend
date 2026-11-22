@@ -23,6 +23,9 @@ import { formatIST, sameInstant } from "~/lib/datetime";
 import type { EventDTO, OccurrenceAvailability } from "~/lib/api";
 import { FiAlertTriangle, FiCalendar, FiMinus, FiPlus } from "react-icons/fi";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useIdToken } from "~/hooks/useIdToken";
+import { useQuery } from "@tanstack/react-query";
+import { getPassForEvent } from "~/lib/api";
 
 const rupees = (cents: number) =>
   `₹${(cents / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
@@ -97,6 +100,14 @@ export default function TicketsClient({
   const event = fetchedEvent ?? initialEvent ?? undefined;
   const { data: availability } = useEventAvailability(event?.id ?? null);
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
+  // The guest's monthly pass, if any — same query (and cache) as the pass card.
+  const idToken = useIdToken();
+  const { data: passRes } = useQuery({
+    queryKey: ["pass", event?.id, idToken],
+    queryFn: () => getPassForEvent(event!.id, idToken!),
+    enabled: !!idToken && !!event?.id,
+  });
+  const myPass = passRes?.data?.pass ?? null;
 
   const [selectedDate, setSelectedDate] = useState(
     initialDate ?? event?.time ?? "",
@@ -150,6 +161,23 @@ export default function TicketsClient({
   const unitPrice = hasTiers
     ? (selectedTier?.price_cents ?? 0)
     : (event.price_cents ?? 0);
+  // A pass holder pays nothing for the basic ticket at checkout, and only the
+  // difference for a pricier one — say so here rather than a full price.
+  const passCovers =
+    !!myPass &&
+    myPass.status === "active" &&
+    guests === 1 &&
+    (myPass.sessions_included == null ||
+      myPass.sessions_used < myPass.sessions_included) &&
+    !!selectedDate &&
+    new Date(selectedDate) >= new Date(myPass.valid_from) &&
+    new Date(selectedDate) <= new Date(myPass.valid_until);
+  const basicTierCents = hasTiers
+    ? Math.min(
+        ...priceTiers.filter((t) => t.is_active).map((t) => t.price_cents),
+      )
+    : unitPrice;
+  const passExtraCents = Math.max(0, unitPrice - basicTierCents);
   const eventHasPassed = selectedDate
     ? new Date(selectedDate) < new Date()
     : false;
@@ -328,6 +356,11 @@ export default function TicketsClient({
                 singleSessionPriceCents={event.price_cents}
                 availability={availability}
                 onRequireLogin={() => setShowLogin(true)}
+                privateAccess={
+                  event.is_private
+                    ? (event.private_access_mode ?? "passkey")
+                    : null
+                }
               />
             </section>
           ) : null}
@@ -364,9 +397,13 @@ export default function TicketsClient({
                 ? "This event has passed"
                 : spotsLeft <= 0
                   ? "Fully booked"
-                  : isFree || unitPrice === 0
-                    ? `Continue · ${guests} ticket${guests === 1 ? "" : "s"}`
-                    : `Continue · ${rupees(unitPrice * guests)}`}
+                  : passCovers && !isFree
+                    ? passExtraCents > 0
+                      ? `Continue · pass + ${rupees(passExtraCents)}`
+                      : "Continue · use my pass"
+                    : isFree || unitPrice === 0
+                      ? `Continue · ${guests} ticket${guests === 1 ? "" : "s"}`
+                      : `Continue · ${rupees(unitPrice * guests)}`}
             </button>
           </StickyAction>
         </BookingShell>

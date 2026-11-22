@@ -724,9 +724,13 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
                 {bookingUser?.name ?? "Guest"}
               </span>
               <span className="font-semibold text-white">
-                {booking?.amount_cents
-                  ? `Paid ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`
-                  : "Free"}
+                {booking?.pass_id
+                  ? booking.amount_cents
+                    ? `Monthly pass + ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`
+                    : "Monthly pass"
+                  : booking?.amount_cents
+                    ? `Paid ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`
+                    : "Free"}
               </span>
             </div>
           </div>

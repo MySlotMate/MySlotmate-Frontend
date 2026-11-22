@@ -716,15 +716,20 @@ export default function ActivitiesPage() {
   const cancelTarget = bookingsWithEvents.find(
     ({ booking }) => booking.id === activeCancelBookingId,
   );
-  const cancelRefunds =
+  const cancelAmountCents = cancelTarget?.booking.amount_cents ?? 0;
+  // A monthly-pass seat follows the same window as a paid ticket: inside it
+  // the session goes back on the pass, outside it the session stays used.
+  const cancelIsPass = Boolean(cancelTarget?.booking.pass_id);
+  const cancelInWindow =
     !cancelTarget ||
-    !(
-      cancelTarget.booking.amount_cents && cancelTarget.booking.amount_cents > 0
-    ) ||
     refundDueOnCancel(
       cancelTarget.event.cancellation_policy,
       cancelTarget.booking.occurrence_date,
     );
+  const cancelRefunds = cancelAmountCents <= 0 || cancelInWindow;
+  // Only money coming back needs a destination.
+  const showRefundPicker = cancelAmountCents > 0 && cancelInWindow;
+  const cancelRupees = `₹${(cancelAmountCents / 100).toLocaleString("en-IN")}`;
 
   const handleCancelBooking = async () => {
     if (!activeCancelBookingId || !userId) return;
@@ -736,12 +741,22 @@ export default function ActivitiesPage() {
         userId,
         refundDestination,
       });
+      const refundWhere =
+        refundDestination === "source"
+          ? "refunded to your card (may take 5–7 working days)"
+          : "refunded to your wallet";
       toast.success(
-        !cancelRefunds
-          ? "Booking cancelled. No refund under this experience's cancellation policy."
-          : refundDestination === "source"
-            ? "Booking cancelled. Refund sent to your card (may take 5–7 working days)."
-            : "Booking cancelled. Refund added to your wallet.",
+        cancelIsPass
+          ? cancelInWindow
+            ? cancelAmountCents > 0
+              ? `Booking cancelled. The session is back on your pass and ${cancelRupees} is ${refundWhere}.`
+              : "Booking cancelled. The session is back on your pass."
+            : "Booking cancelled. Under this experience's cancellation policy, the pass session stays used."
+          : !cancelRefunds
+            ? "Booking cancelled. No refund under this experience's cancellation policy."
+            : cancelAmountCents <= 0
+              ? "Booking cancelled."
+              : `Booking cancelled. ${cancelRupees} ${refundWhere}.`,
       );
       setActiveCancelBookingId(null);
       setRefundDestination("wallet");
@@ -1040,7 +1055,25 @@ export default function ActivitiesPage() {
               notify the host and may be subject to cancellation policies.
             </p>
 
-            {!cancelRefunds && (
+            {cancelIsPass && cancelInWindow && (
+              <p className="mb-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                This session goes back on your monthly pass, so you can use it
+                for another date
+                {cancelAmountCents > 0
+                  ? `. The ${cancelRupees} you paid for the ticket upgrade is refunded too.`
+                  : "."}
+              </p>
+            )}
+            {cancelIsPass && !cancelInWindow && (
+              <p className="mb-6 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-200">
+                It&apos;s too late to get this session back. Under this
+                experience&apos;s cancellation policy, it stays used on your
+                pass
+                {cancelAmountCents > 0 ? " and the upgrade isn't refunded" : ""}
+                . Your seat will be released.
+              </p>
+            )}
+            {!cancelIsPass && !cancelRefunds && (
               <p className="mb-6 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-200">
                 This experience&apos;s cancellation policy gives no refund if
                 you cancel now. Your seat will be released and you won&apos;t
@@ -1050,7 +1083,7 @@ export default function ActivitiesPage() {
 
             {/* Refund destination picker — comment out this block to disable
                 source refund for users (keeping wallet-only as default). */}
-            {cancelRefunds && (
+            {showRefundPicker && (
               <fieldset className="mb-6">
                 <legend className="mb-2 text-xs font-semibold tracking-wide text-white/50 uppercase">
                   Refund destination

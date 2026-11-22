@@ -62,11 +62,9 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const rupees = (cents: number) => `₹${(cents / 100).toLocaleString("en-IN")}`;
 
 /**
- * The monthly-pass half of the price area: buy once, then reserve each covered
- * date for free. Only rendered for events whose host switched a pass on.
- *
- * It carries its own date picker rather than sharing the booking widget's, so
- * the two paths (pay per session / use the pass) stay independent.
+ * The monthly-pass half of the price area: buy a balance of sessions once, then
+ * pick any session and choose "Use my pass" at checkout. Only rendered for
+ * events whose host switched a pass on.
  */
 export default function MonthlyPassCard({
   eventId,
@@ -75,6 +73,7 @@ export default function MonthlyPassCard({
   singleSessionPriceCents,
   availability,
   onRequireLogin,
+  privateAccess = null,
 }: {
   eventId: string;
   priceCents: number;
@@ -82,12 +81,16 @@ export default function MonthlyPassCard({
   singleSessionPriceCents: number | null;
   availability?: OccurrenceAvailability[];
   onRequireLogin: () => void;
+  /** null = public. A private experience gates the pass like a booking. */
+  privateAccess?: "passkey" | "rsvp" | null;
 }) {
   const idToken = useIdToken();
   const { userId } = useStoredAuth();
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
+  const needsCode = privateAccess === "passkey";
 
   const { data: wallet, refetch: refetchWallet } = useWalletBalance(userId);
   const createOrder = useCreateTopupOrder();
@@ -117,11 +120,19 @@ export default function MonthlyPassCard({
     queryClient.invalidateQueries({ queryKey: ["pass", eventId] });
 
   const buy = useMutation({
-    mutationFn: () => purchasePass(eventId, idToken!),
+    mutationFn: () =>
+      purchasePass(
+        eventId,
+        idToken!,
+        undefined,
+        needsCode ? accessCode : undefined,
+      ),
     onSuccess: async () => {
       setConfirming(false);
-      toast.success("Monthly pass active — reserve your dates below");
+      toast.success("Pass active — pick a session and use it at checkout");
       await refresh();
+      // The pass moved wallet money; the cached balance is now wrong.
+      await refetchWallet();
     },
     onError: (e: Error) => {
       setConfirming(false);
@@ -134,6 +145,8 @@ export default function MonthlyPassCard({
     onSuccess: async () => {
       toast.success("Pass cancelled — refunded to your wallet");
       await refresh();
+      // The pass moved wallet money; the cached balance is now wrong.
+      await refetchWallet();
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -246,7 +259,7 @@ export default function MonthlyPassCard({
 
   const coverage =
     sessionLimit != null
-      ? `${sessionLimit} sessions included`
+      ? `${sessionLimit} ${sessionLimit === 1 ? "session" : "sessions"} to use within 30 days`
       : !sessionsKnown
         ? "All sessions"
         : sessionsInWindow === 0
@@ -295,10 +308,11 @@ export default function MonthlyPassCard({
             Active until {formatIST(pass.valid_until, "d MMM")}
           </p>
           <p className="mb-4 text-sm text-[#5f7e9a]">
-            {pass.sessions_used === 1
-              ? "1 session booked"
-              : `${pass.sessions_used} sessions booked`}{" "}
-            — your tickets are ready, nothing else to do.
+            {pass.sessions_included != null
+              ? `${Math.max(0, pass.sessions_included - pass.sessions_used)} of ${pass.sessions_included} sessions left. `
+              : "Unlimited sessions. "}
+            Pick a session above and choose &ldquo;Use my pass&rdquo; at
+            checkout.
           </p>
 
           <Link
@@ -343,10 +357,29 @@ export default function MonthlyPassCard({
                 You can cancel for a full refund within 48 hours, before using a
                 session.
               </p>
+              {needsCode && (
+                <input
+                  type="text"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  placeholder="Access code from the host"
+                  aria-label="Access code"
+                  autoComplete="off"
+                  className="mb-3 w-full rounded-xl border border-white/10 bg-[#080914] px-3 py-2.5 text-sm text-white placeholder:text-white/35 focus:border-[#A020F0] focus:outline-none"
+                />
+              )}
+              {privateAccess === "rsvp" && (
+                <p className="mb-3 text-xs text-amber-200/90">
+                  Only guests the host has approved can buy a pass for this
+                  experience.
+                </p>
+              )}
               <div className="flex gap-2">
                 <button
                   type="button"
-                  disabled={buy.isPending || paying}
+                  disabled={
+                    buy.isPending || paying || (needsCode && !accessCode.trim())
+                  }
                   onClick={() => void handleConfirm()}
                   className="flex-1 rounded-2xl bg-gradient-to-r from-[#A020F0] to-[#A020F0] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition disabled:cursor-not-allowed disabled:opacity-50"
                 >

@@ -30,9 +30,15 @@ import {
   FiVideo,
   FiShield,
 } from "react-icons/fi";
-import { LuLoader2, LuWallet } from "react-icons/lu";
+import { LuLoader2, LuTicket, LuWallet } from "react-icons/lu";
 import { formatIST } from "~/lib/datetime";
-import { unlockEvent, validateCoupon } from "~/lib/api";
+import {
+  getPassForEvent,
+  reservePassSession,
+  unlockEvent,
+  validateCoupon,
+} from "~/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import {
@@ -234,6 +240,34 @@ function BookingContent({ eventId }: { eventId: string }) {
   const setAttendeeValue = (key: string, value: string) =>
     setAttendeeValues((prev) => ({ ...prev, [key]: value }));
 
+  // ── Monthly pass as a way to pay ─────────────────────────────────────
+  // A pass is a balance of sessions. When the guest holds one that covers
+  // this session, it is offered as the payment: one session comes off the
+  // pass and nothing is charged — except the difference when they picked a
+  // pricier ticket than the basic one the pass covers.
+  const { data: passRes } = useQuery({
+    queryKey: ["pass", event?.id, idToken],
+    queryFn: () => getPassForEvent(event!.id, idToken!),
+    enabled: !!idToken && !!event?.id,
+  });
+  const myPass = passRes?.data?.pass ?? null;
+  // An empty ?date= falls back to the event start, like the booking does.
+  const sessionAt = new Date(date !== "" ? date : (event?.time ?? ""));
+  const passSessionsLeft =
+    myPass?.sessions_included != null
+      ? myPass.sessions_included - myPass.sessions_used
+      : null;
+  const passUsable =
+    !!myPass &&
+    myPass.status === "active" &&
+    guests === 1 &&
+    (passSessionsLeft === null || passSessionsLeft > 0) &&
+    !isNaN(sessionAt.getTime()) &&
+    sessionAt >= new Date(myPass.valid_from) &&
+    sessionAt <= new Date(myPass.valid_until);
+  const [payWithPass, setPayWithPass] = useState(true);
+  const usingPass = passUsable && payWithPass;
+
   // When a tier is selected, price comes from that tier; otherwise the single price.
   const selectedTier = tierId
     ? event?.price_tiers?.find((t) => t.id === tierId)
@@ -243,11 +277,23 @@ function BookingContent({ eventId }: { eventId: string }) {
     : selectedTier
       ? selectedTier.price_cents / 100
       : (event?.price_cents ?? 0) / 100;
-  const grossPriceCents = Math.round(pricePerPerson * 100) * guests;
+  // The basic ticket a pass covers: the cheapest active tier (none → the
+  // single price, which the pass covers in full).
+  const activeTiers = (event?.price_tiers ?? []).filter((t) => t.is_active);
+  const basicTierCents = activeTiers.length
+    ? Math.min(...activeTiers.map((t) => t.price_cents))
+    : null;
+  const passUpgradeCents =
+    selectedTier && basicTierCents !== null
+      ? Math.max(0, selectedTier.price_cents - basicTierCents)
+      : 0;
+  const grossPriceCents = usingPass
+    ? passUpgradeCents
+    : Math.round(pricePerPerson * 100) * guests;
   // A booking is comped only when a free-booking code was applied. Access
   // (passkey) never comps — a private paid event is still paid. A free-priced
   // event is handled by the price itself (grossPriceCents = 0).
-  const isComped = couponComps;
+  const isComped = couponComps && !usingPass;
   // Guest-paid platform fee: admin-set, once per paid booking — flat, or a
   // percentage of the tickets floored like the server (0 = off). Must match
   // the server exactly, or the shortfall top-up below comes up short.
@@ -261,7 +307,7 @@ function BookingContent({ eventId }: { eventId: string }) {
   // A discount code comes off the tickets first (floored, like the server);
   // the platform fee is then charged on the discounted tickets.
   const discountCents =
-    couponDiscountPct && grossPriceCents > 0
+    couponDiscountPct && !usingPass && grossPriceCents > 0
       ? Math.floor((grossPriceCents * couponDiscountPct) / 100)
       : 0;
   const ticketsCents = grossPriceCents - discountCents;
@@ -309,10 +355,13 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   // Private events are booking-locked until their gate opens: an approved join
   // request for RSVP events, a verified passkey for everything else.
-  const needsUnlock = isRsvpGated
-    ? !joinApproved
-    : (Boolean(event?.is_private) || Boolean(event?.access_passkey)) &&
-      !passkeyValid;
+  // A pass holder already got through the gate when they bought the pass.
+  const needsUnlock = usingPass
+    ? false
+    : isRsvpGated
+      ? !joinApproved
+      : (Boolean(event?.is_private) || Boolean(event?.access_passkey)) &&
+        !passkeyValid;
 
   const handleUnlock = async () => {
     const code = passkey.trim();
@@ -640,9 +689,23 @@ function BookingContent({ eventId }: { eventId: string }) {
 
       for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         try {
+          if (usingPass && myPass && idToken) {
+            const passRes = await reservePassSession(
+              myPass.id,
+              new Date(date || event.time).toISOString(),
+              idToken,
+              tierId,
+            );
+            toast.success("Booked with your pass");
+            router.push(
+              `/experience/${eventId}/confirmation?booking=${passRes.data.id}`,
+            );
+            return;
+          }
           const bookingRes = await createBooking.mutateAsync({
             user_id: userId,
-            event_id: eventId,
+            // eventId is the URL segment, which may be a slug; the API needs the UUID.
+            event_id: event.id,
             quantity: quantity,
             occurrence_date: new Date(date || event.time).toISOString(),
             idempotency_key: idempotencyKey,
@@ -756,6 +819,10 @@ function BookingContent({ eventId }: { eventId: string }) {
       ) : (
         "Enter passkey to book"
       )
+    ) : usingPass && totalPriceCents === 0 ? (
+      "Book with my pass"
+    ) : usingPass && !hasInsufficientBalance ? (
+      `Use pass + pay ${formatRupees(totalPriceCents)}`
     ) : totalPriceCents === 0 ? (
       isComped ? (
         "Confirm free booking"
@@ -781,10 +848,18 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   const breakdown = (
     <div className="flex flex-col gap-2 px-5 pb-4 text-sm">
+      {usingPass && (
+        <div className="flex justify-between text-emerald-300">
+          <span>Monthly pass · 1 session</span>
+          <span>Covered</span>
+        </div>
+      )}
       {grossPriceCents > 0 && (
         <div className="flex justify-between text-white/60">
           <span>
-            Tickets
+            {usingPass
+              ? `${selectedTier?.name ?? "Ticket"} upgrade`
+              : "Tickets"}
             {guests > 1 &&
               ` (${guests} × ${formatRupees(Math.round(pricePerPerson * 100))})`}
           </span>
@@ -813,6 +888,40 @@ function BookingContent({ eventId }: { eventId: string }) {
       )}
     </div>
   );
+
+  const passOption = passUsable ? (
+    <div className="mt-4 flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setPayWithPass(true)}
+        aria-pressed={payWithPass}
+        className={`flex min-h-12 items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm transition ${payWithPass ? "border-[#9B30FF] bg-[#9B30FF]/10" : "border-white/10"}`}
+      >
+        <span className="flex items-center gap-2 text-white">
+          <LuTicket className="h-4 w-4 -rotate-12 text-[#D8B4FE]" />
+          Use my pass
+        </span>
+        <span className="text-xs text-white/60">
+          {passSessionsLeft === null ? "Unlimited" : `${passSessionsLeft} left`}{" "}
+          · until {formatIST(myPass.valid_until, "d MMM")}
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => setPayWithPass(false)}
+        aria-pressed={!payWithPass}
+        className={`flex min-h-12 items-center rounded-2xl border px-4 py-3 text-left text-sm text-white transition ${!payWithPass ? "border-[#9B30FF] bg-[#9B30FF]/10" : "border-white/10"}`}
+      >
+        Pay for this session instead
+      </button>
+      {usingPass && passUpgradeCents > 0 && (
+        <p className="text-xs leading-5 text-white/55">
+          Your pass covers the basic ticket. {selectedTier?.name} costs{" "}
+          {formatRupees(passUpgradeCents)} more, paid now.
+        </p>
+      )}
+    </div>
+  ) : null;
 
   // Bookings are paid from the wallet; a shortfall is topped up by card/UPI
   // (Razorpay) first — so the "payment method" is the wallet.
@@ -1092,75 +1201,87 @@ function BookingContent({ eventId }: { eventId: string }) {
             {selectedTier?.name ?? "Ticket"} × {guests}
           </p>
           <p className="font-outfit text-lg font-semibold text-white">
-            {grossPriceCents > 0 ? formatRupees(grossPriceCents) : "Free"}
+            {usingPass
+              ? "With pass"
+              : grossPriceCents > 0
+                ? formatRupees(grossPriceCents)
+                : "Free"}
           </p>
         </div>
+
+        {/* How to pay: the pass or this session on its own. Chosen before
+            the total, since it decides the total. */}
+        {passOption}
 
         {/* Coupon field — passkey and coupon are independent. The coupon is
                 always available on a paid booking; for a private event it
                 appears once the passkey has unlocked it (needsUnlock is false). */}
-        {!needsUnlock && !event.is_free && grossPriceCents > 0 && !isComped && (
-          <div className="mt-5">
-            {appliedCoupon ? (
-              <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-                <span className="text-sm font-medium text-emerald-200">
-                  ✓ {appliedCoupon} applied
-                  {couponComps
-                    ? " — this booking is free"
-                    : couponDiscountPct
-                      ? ` — ${couponDiscountPct}% off`
-                      : " — access unlocked, you’ll still pay"}
-                </span>
-                {/* A code that unlocked the event is sent as the passkey
+        {!needsUnlock &&
+          !usingPass &&
+          !event.is_free &&
+          grossPriceCents > 0 &&
+          !isComped && (
+            <div className="mt-5">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+                  <span className="text-sm font-medium text-emerald-200">
+                    ✓ {appliedCoupon} applied
+                    {couponComps
+                      ? " — this booking is free"
+                      : couponDiscountPct
+                        ? ` — ${couponDiscountPct}% off`
+                        : " — access unlocked, you’ll still pay"}
+                  </span>
+                  {/* A code that unlocked the event is sent as the passkey
                           and applied by the server anyway, so it can't be
                           removed. */}
-                {appliedCoupon.toLowerCase() !==
-                  passkey.trim().toLowerCase() && (
-                  <button
-                    type="button"
-                    onClick={removeCoupon}
-                    className="text-sm font-medium text-white/60 hover:text-white"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div>
-                <label
-                  htmlFor="coupon"
-                  className="mb-2 block text-sm font-medium text-white/80"
-                >
-                  Have a coupon?
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    id="coupon"
-                    type="text"
-                    value={couponInput}
-                    onChange={(e) => {
-                      setCouponInput(e.target.value.toUpperCase());
-                      setCouponError(null);
-                    }}
-                    placeholder="Coupon code"
-                    className={`${INPUT} uppercase`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => void handleApplyCoupon()}
-                    disabled={couponChecking || !couponInput.trim()}
-                    className="rounded-xl border border-[#9B30FF] px-5 py-2.5 text-sm font-semibold text-[#E3CCFF] transition hover:bg-[#9B30FF]/15 disabled:opacity-50"
-                  >
-                    {couponChecking ? "…" : "Apply"}
-                  </button>
+                  {appliedCoupon.toLowerCase() !==
+                    passkey.trim().toLowerCase() && (
+                    <button
+                      type="button"
+                      onClick={removeCoupon}
+                      className="text-sm font-medium text-white/60 hover:text-white"
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
-                {couponError && (
-                  <p className="mt-2 text-sm text-red-400">{couponError}</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+              ) : (
+                <div>
+                  <label
+                    htmlFor="coupon"
+                    className="mb-2 block text-sm font-medium text-white/80"
+                  >
+                    Have a coupon?
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      id="coupon"
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value.toUpperCase());
+                        setCouponError(null);
+                      }}
+                      placeholder="Coupon code"
+                      className={`${INPUT} uppercase`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void handleApplyCoupon()}
+                      disabled={couponChecking || !couponInput.trim()}
+                      className="rounded-xl border border-[#9B30FF] px-5 py-2.5 text-sm font-semibold text-[#E3CCFF] transition hover:bg-[#9B30FF]/15 disabled:opacity-50"
+                    >
+                      {couponChecking ? "…" : "Apply"}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <p className="mt-2 text-sm text-red-400">{couponError}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
         {/* To pay */}
         <div className="mt-5 overflow-hidden rounded-2xl bg-white/[0.07]">

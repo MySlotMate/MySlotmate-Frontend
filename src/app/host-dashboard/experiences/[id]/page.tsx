@@ -109,7 +109,7 @@ interface EventFormData {
   // experiences only.
   monthlyPassEnabled: boolean;
   monthlyPassPriceStr: string;
-  monthlyPassSessionsStr: string; // "" = every session
+  monthlyPassSessionsStr: string; // required when the pass is on
   monthlyPassCapacityStr: string; // "" = unlimited passes
   eventDate: string;
   eventTime: string;
@@ -1102,6 +1102,19 @@ export default function EditEventPage({
       return;
     }
 
+    // A pass is a balance of sessions the guest spends one at a time, so it
+    // must say how many it holds. The server refuses a pass without one.
+    if (
+      form.monthlyPassEnabled &&
+      !form.isFree &&
+      form.scheduleType !== "one_time" &&
+      Number(form.monthlyPassPriceStr) > 0 &&
+      !(Number(form.monthlyPassSessionsStr) >= 1)
+    ) {
+      toast.error("Set how many sessions the monthly pass includes");
+      return;
+    }
+
     // Saving broken windows would wipe custom_dates and leave the event with no
     // bookable sessions at all, so this is enforced on save, not just on publish.
     if (form.sessionType === "one_on_one") {
@@ -2068,7 +2081,7 @@ export default function EditEventPage({
                                       e.target.value,
                                     )
                                   }
-                                  placeholder="All"
+                                  placeholder="e.g. 8"
                                   className={ROW_INPUT}
                                 />
                               </Row>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQueries } from "@tanstack/react-query";
 import { useEventsByHost, useMyHost } from "~/hooks/useApi";
+import { useIdToken } from "~/hooks/useIdToken";
 import * as api from "~/lib/api";
 import type { BookingDTO, AttendeeProfileDTO, EventDTO } from "~/lib/api";
 import { ATTENDEE_FIELDS } from "~/lib/attendeeFields";
@@ -23,18 +24,25 @@ import { downloadTicketPdf, sendTicketPdfNotification } from "~/lib/ticket";
 import { exportBookingsToExcel } from "~/lib/excelExport";
 import EventCover from "~/components/EventCover";
 
-const isActive = (b: BookingDTO) =>
+// A guest who cancelled after the refund cutoff keeps a `confirmed` row with
+// cancelled_at set: the seat is released (not a guest any more) but the money
+// stays with the host (still a sale).
+const keepsMoney = (b: BookingDTO) =>
   b.status === "confirmed" || b.status === "pending";
+const isActive = (b: BookingDTO) => keepsMoney(b) && !b.cancelled_at;
 const guestsOf = (list: BookingDTO[]) =>
   list.filter(isActive).reduce((s, b) => s + b.quantity, 0);
 const salesOf = (list: BookingDTO[]) =>
-  list.filter(isActive).reduce((s, b) => s + (b.amount_cents ?? 0), 0);
+  list.filter(keepsMoney).reduce((s, b) => s + (b.amount_cents ?? 0), 0);
 const rupees = (cents: number) =>
   `₹${(cents / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
 interface Group {
   event: EventDTO;
   bookings: BookingDTO[];
+  /** Monthly passes sold on this event (not refunded), and what they took. */
+  passCount: number;
+  passSalesCents: number;
   /** Next upcoming date, or null once every date has passed. */
   next: Date | null;
 }
@@ -69,6 +77,19 @@ export default function HostBookingsPage() {
     })),
   });
 
+  // Monthly passes are paid once, up front, so their money never shows on a
+  // booking row; read them separately so Sales tells the whole story.
+  const idToken = useIdToken();
+  const passQueries = useQueries({
+    queries: events.map((event) => ({
+      queryKey: ["passHolders", event.id, idToken],
+      queryFn: () => api.listPassHolders(event.id, idToken!),
+      enabled: !!idToken,
+      staleTime: 60 * 1000,
+      select: (res: { data: api.PassHolderDTO[] | null }) => res.data ?? [],
+    })),
+  });
+
   const isLoading = eventsLoading || attendeesQueries.some((q) => q.isLoading);
 
   const [tab, setTab] = useState<"upcoming" | "past">("upcoming");
@@ -78,6 +99,11 @@ export default function HostBookingsPage() {
     const groups: Group[] = events.map((event, idx) => ({
       event,
       bookings: attendeesQueries[idx]?.data ?? [],
+      passCount: passQueries[idx]?.data?.length ?? 0,
+      passSalesCents: (passQueries[idx]?.data ?? []).reduce(
+        (s, p) => s + p.price_cents,
+        0,
+      ),
       // Today's session stays under Upcoming until the day is over.
       next:
         nextEventDate(event) ??
@@ -93,14 +119,16 @@ export default function HostBookingsPage() {
           new Date(b.event.time).getTime() - new Date(a.event.time).getTime(),
       );
     return { upcoming: up, past: done };
-  }, [events, attendeesQueries]);
+  }, [events, attendeesQueries, passQueries]);
 
   const stats = useMemo(() => {
     const all = [...upcoming, ...past].flatMap((g) => g.bookings);
     return {
       upcomingGuests: upcoming.reduce((s, g) => s + guestsOf(g.bookings), 0),
       bookings: all.filter(isActive).length,
-      sales: salesOf(all),
+      sales:
+        salesOf(all) +
+        [...upcoming, ...past].reduce((s, g) => s + g.passSalesCents, 0),
     };
   }, [upcoming, past]);
 
@@ -228,7 +256,7 @@ export default function HostBookingsPage() {
 }
 
 function EventGroup({
-  group: { event, bookings, next },
+  group: { event, bookings, next, passCount, passSalesCents },
   defaultOpen,
   forceOpen,
 }: {
@@ -244,7 +272,7 @@ function EventGroup({
   const active = bookings.filter(isActive);
   const cancelled = bookings.filter((b) => !isActive(b));
   const guests = guestsOf(bookings);
-  const sales = salesOf(bookings);
+  const sales = salesOf(bookings) + passSalesCents;
   const capacity = event.capacity || 0;
   // Several dates: show each guest's date on their row.
   const multiDate = new Set(bookings.map((b) => b.occurrence_date)).size > 1;
@@ -311,6 +339,8 @@ function EventGroup({
           <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
             <span className="mr-auto text-xs text-[#777B98]">
               {active.length} booking{active.length === 1 ? "" : "s"}
+              {passCount > 0 &&
+                ` · ${passCount} monthly pass${passCount === 1 ? "" : "es"} sold (${rupees(passSalesCents)})`}
             </span>
             <button
               type="button"
@@ -516,15 +546,25 @@ function BookingRow({
           </span>
         </button>
         <span
-          className={`hidden rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize sm:inline ${STATUS_PILL[booking.status]}`}
+          className={`hidden rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize sm:inline ${STATUS_PILL[booking.cancelled_at ? "cancelled" : booking.status]}`}
         >
-          {booking.status}
+          {booking.cancelled_at && booking.status === "confirmed"
+            ? "cancelled late"
+            : booking.status}
         </span>
-        {booking.amount_cents !== null && (
+        {booking.pass_id ? (
+          // A pass seat; with a pricier ticket the guest also paid the
+          // difference, which is shown so the host's totals add up.
+          <span className="min-w-14 text-right text-xs font-semibold whitespace-nowrap text-[#D8B4FE]">
+            {booking.amount_cents
+              ? `Pass +${rupees(booking.amount_cents)}`
+              : "Pass"}
+          </span>
+        ) : booking.amount_cents !== null ? (
           <span className="w-14 text-right text-xs text-white/80">
             {rupees(booking.amount_cents)}
           </span>
-        )}
+        ) : null}
         <button
           type="button"
           onClick={() => void handleSendWhatsapp()}
@@ -577,7 +617,12 @@ function BookingRow({
         <div className="mx-3 mb-3 rounded-xl bg-white/[0.03] pt-3">
           <dl className="grid gap-x-6 gap-y-2 px-4 pb-3 sm:grid-cols-2">
             {[
-              ["Status", booking.status],
+              [
+                "Status",
+                booking.cancelled_at && booking.status === "confirmed"
+                  ? "Cancelled after the refund cutoff (no refund)"
+                  : booking.status,
+              ],
               ["Email", booking.user_email],
               ["Phone", booking.user_phone],
               [
@@ -587,11 +632,13 @@ function BookingRow({
               ["Booked on", formatIST(booking.created_at, "d MMM yyyy")],
               [
                 "How",
-                booking.source === "walk_in"
-                  ? "On the spot"
-                  : booking.source === "bulk_import"
-                    ? "Excel import"
-                    : "Online",
+                booking.pass_id
+                  ? "Monthly pass"
+                  : booking.source === "walk_in"
+                    ? "On the spot"
+                    : booking.source === "bulk_import"
+                      ? "Excel import"
+                      : "Online",
               ],
             ]
               .filter(([, v]) => !!v)

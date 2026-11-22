@@ -310,7 +310,8 @@ function EarningsContent() {
       pendingCents: 0,
     };
     sales.forEach((s) => {
-      const net = s.NetEarningCents ?? 0;
+      // What reaches the host: after TCS/TDS when the backend sends it.
+      const net = s.HostPayoutCents ?? s.NetEarningCents ?? 0;
       if (s.Status === "confirmed") {
         out.confirmedCount += 1;
         out.confirmedCents += net;
@@ -833,7 +834,10 @@ function EarningsContent() {
                                       : "text-green-300"
                                 }`}
                               >
-                                +{fmtCurrency(s.NetEarningCents ?? 0)}
+                                +
+                                {fmtCurrency(
+                                  s.HostPayoutCents ?? s.NetEarningCents ?? 0,
+                                )}
                               </p>
                               <p className="text-[11px] text-[#777B98]">
                                 {isRefunded

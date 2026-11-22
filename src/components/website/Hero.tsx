@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ArrowDown, ArrowRight } from "lucide-react";
-import { BecomeHostModal } from "~/components/become-host";
-import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { BecomeHostButton } from "~/components/become-host";
 import CitySky from "./CitySky";
 import { GRADIENT } from "./shared";
 
@@ -60,8 +59,6 @@ function usePrefersReducedMotion() {
  * horizon, because the promise is meeting people in real life.
  */
 export default function Hero() {
-  const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
-    useListTimeAction();
   const reduce = usePrefersReducedMotion();
   const [front, setFront] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -109,13 +106,11 @@ export default function Hero() {
           >
             Explore what’s near you <ArrowDown className="h-4 w-4" />
           </a>
-          <button
-            type="button"
-            onClick={handleListTimeClick}
+          <BecomeHostButton
+            label="or become a host, it’s free"
+            icon={<ArrowRight className="h-4 w-4" />}
             className="flex items-center gap-1.5 text-[15px] font-medium text-[#A5A8C3] transition hover:text-white"
-          >
-            or host your own, free <ArrowRight className="h-4 w-4" />
-          </button>
+          />
         </div>
       </div>
 
@@ -166,11 +161,6 @@ export default function Hero() {
           className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[45%] bg-gradient-to-t from-[#080914] via-[#080914]/70 to-transparent"
         />
       </div>
-
-      <BecomeHostModal
-        open={showBecomeHostModal}
-        onClose={closeBecomeHostModal}
-      />
     </section>
   );
 }

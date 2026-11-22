@@ -1482,10 +1482,10 @@ export default function BlogsClient({
                   Find something to show up to
                 </Link>
                 <Link
-                  href="/host-with-us"
+                  href="/become-host"
                   className="font-outfit flex h-12 items-center rounded-full border border-white/15 bg-[#080914]/40 px-6 text-base font-semibold text-white backdrop-blur-md transition hover:bg-white/5"
                 >
-                  Host with us
+                  Become a host
                 </Link>
               </div>
             </Reveal>

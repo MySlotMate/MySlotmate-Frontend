@@ -6,7 +6,7 @@ import Reveal from "../about/Reveal";
 import StarField from "../about/StarField";
 import { GRADIENT } from "../shared";
 import HostTools from "./HostTools";
-import StartHostingButton from "./StartHostingButton";
+import { BecomeHostButton } from "~/components/become-host";
 
 const delay = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
 
@@ -170,7 +170,9 @@ export default function HostWithUsPage() {
                 className="msm-r mt-9 flex flex-wrap items-center gap-3"
                 style={delay(0.3)}
               >
-                <StartHostingButton />
+                <BecomeHostButton
+                  className={`font-outfit flex h-12 items-center gap-1.5 rounded-full px-6 text-base font-semibold text-white shadow-[0_12px_40px_-12px_rgb(160_32_240/0.8)] ${GRADIENT}`}
+                />
                 <a
                   href="#how-it-works"
                   className="font-outfit flex h-12 items-center gap-1.5 rounded-full border border-white/15 px-6 text-base font-semibold transition hover:bg-white/5"
@@ -252,8 +254,7 @@ export default function HostWithUsPage() {
                     <p className="mt-3 max-w-[48ch] text-xs leading-5 text-[#777B98]">
                       Taxes the government requires us to deduct for you (GST
                       TCS, income tax TDS) apply only if you’re GST-registered
-                      or sell over ₹5 lakh a year, and are credited back to
-                      you.
+                      or sell over ₹5 lakh a year, and are credited back to you.
                     </p>
                   </div>
 
@@ -459,7 +460,10 @@ export default function HostWithUsPage() {
                 It’s free to start, and it takes a few minutes.
               </p>
               <div className="msm-r mt-9" style={delay(0.2)}>
-                <StartHostingButton label="Apply to host" />
+                <BecomeHostButton
+                  label="Apply to host"
+                  className={`font-outfit flex h-12 items-center gap-1.5 rounded-full px-6 text-base font-semibold text-white shadow-[0_12px_40px_-12px_rgb(160_32_240/0.8)] ${GRADIENT}`}
+                />
               </div>
             </Reveal>
           </section>

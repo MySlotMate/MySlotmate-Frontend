@@ -1,10 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ArrowUpRight } from "lucide-react";
-import { BecomeHostModal } from "~/components/become-host";
-import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { BecomeHostButton } from "~/components/become-host";
 import Reveal from "./about/Reveal";
 import { GRADIENT } from "./shared";
 
@@ -31,16 +28,6 @@ export default function HostInvite({
   body?: React.ReactNode;
   image?: { src: string; alt: string };
 }) {
-  const {
-    closeBecomeHostModal,
-    handleListTimeClick,
-    hostStatus,
-    showBecomeHostModal,
-  } = useListTimeAction();
-  // Host status comes from localStorage, so wait for mount to match the server.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
   return (
     <div className="relative isolate overflow-hidden rounded-[32px] border border-[#652A91] bg-gradient-to-br from-[#241333] via-[#121426] to-[#080914]">
       <div
@@ -68,16 +55,9 @@ export default function HostInvite({
             </p>
           )}
           <div className="msm-r mt-8 flex flex-wrap gap-3" style={delay(0.3)}>
-            <button
-              type="button"
-              onClick={handleListTimeClick}
+            <BecomeHostButton
               className={`font-outfit flex h-12 items-center gap-1.5 rounded-full px-6 text-base font-semibold text-white ${GRADIENT}`}
-            >
-              {mounted && hostStatus === "approved"
-                ? "Create an event"
-                : "Host with MySlotMate"}{" "}
-              <ArrowUpRight className="h-4 w-4" />
-            </button>
+            />
             <Link
               href="/host-with-us"
               className="font-outfit flex h-12 items-center rounded-full border border-white/15 px-6 text-base font-semibold text-white transition hover:bg-white/5"
@@ -101,10 +81,6 @@ export default function HostInvite({
           </div>
         </Reveal>
       </div>
-      <BecomeHostModal
-        open={showBecomeHostModal}
-        onClose={closeBecomeHostModal}
-      />
     </div>
   );
 }

@@ -44,11 +44,17 @@ export default function SharedEventsCard({
       const res = await listSharedEvents(idToken);
       setRows(res.data ?? []);
     } catch {
-      toast.error("Could not load shared experiences");
+      // Elsewhere (the host application, earnings) this card only appears
+      // when someone has invited you, so a failed load just keeps it hidden.
+      // Only the co-hosting page, which is about this list, says so.
+      if (showWhenEmpty)
+        toast.error(
+          "We couldn't load your co-hosting invitations. Try again in a moment.",
+        );
     } finally {
       setLoading(false);
     }
-  }, [idToken]);
+  }, [idToken, showWhenEmpty]);
 
   useEffect(() => {
     void load();
@@ -107,7 +113,9 @@ export default function SharedEventsCard({
     }
   };
 
-  if (!loading && rows.length === 0 && !showWhenEmpty) return null;
+  // Hidden until there's something to show, so it doesn't flash a loading
+  // box above the page and then vanish.
+  if ((loading || rows.length === 0) && !showWhenEmpty) return null;
 
   return (
     <div className="rounded-2xl border border-white/10 bg-[#121426] p-5">

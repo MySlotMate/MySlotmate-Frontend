@@ -181,8 +181,8 @@ const AUDIENCES = [
     eyebrow: "Hosts, creators and professionals",
     title: "Turn what you love into something people can book.",
     body: "Share a skill, a passion or years of expertise. Build a community and earn from it. Hosting is free.",
-    href: "/host-with-us",
-    cta: "Start hosting",
+    href: "/become-host",
+    cta: "Become a host",
     hl: true,
   },
 ];
@@ -649,10 +649,10 @@ export default function AboutPage() {
                 Find something to do
               </Link>
               <Link
-                href="/host-with-us"
+                href="/become-host"
                 className="font-outfit flex items-center rounded-full border border-white/15 bg-[#080914]/40 px-7 py-3.5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/5"
               >
-                Host with MySlotMate
+                Become a host
               </Link>
             </div>
           </Reveal>

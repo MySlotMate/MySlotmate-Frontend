@@ -19,7 +19,7 @@ import {
   Video,
 } from "lucide-react";
 import { toast } from "sonner";
-import { BecomeHostModal } from "~/components/become-host";
+import { BecomeHostButton, BecomeHostModal } from "~/components/become-host";
 import SlotCard from "~/components/website/SlotCard";
 import { useConnections } from "~/lib/connections";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
@@ -1106,13 +1106,22 @@ export default function HomeFeed({
                   <Ticket className="h-4 w-4" />
                   {isHost ? "Create an event" : "Host an event"}
                 </button>
-                <Link
-                  href="/host-with-us"
-                  className="group flex items-center justify-center gap-1 text-[13px] font-semibold whitespace-nowrap text-white/70 transition hover:text-white sm:text-sm"
-                >
-                  How hosting works
-                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-                </Link>
+                {isHost ? (
+                  <Link
+                    href="/host-with-us"
+                    className="group flex items-center justify-center gap-1 text-[13px] font-semibold whitespace-nowrap text-white/70 transition hover:text-white sm:text-sm"
+                  >
+                    How hosting works
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                  </Link>
+                ) : (
+                  <BecomeHostButton
+                    icon={
+                      <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                    }
+                    className="group flex items-center justify-center gap-1 text-[13px] font-semibold whitespace-nowrap text-white/70 transition hover:text-white sm:text-sm"
+                  />
+                )}
               </div>
             </div>
           </div>

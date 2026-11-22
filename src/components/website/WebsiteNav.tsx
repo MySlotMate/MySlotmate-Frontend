@@ -6,8 +6,7 @@ import { createPortal } from "react-dom";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { Menu, X } from "lucide-react";
 import GoogleLogin from "~/components/GoogleLogin";
-import { BecomeHostModal } from "~/components/become-host";
-import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { BecomeHostButton } from "~/components/become-host";
 import { useHydrated } from "~/hooks/useHydrated";
 
 const LINKS = [
@@ -25,8 +24,6 @@ const LINKS = [
 export default function WebsiteNav() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
-    useListTimeAction();
   const { userId } = useStoredAuth();
   const mounted = useHydrated();
 
@@ -59,13 +56,10 @@ export default function WebsiteNav() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleListTimeClick}
+          <BecomeHostButton
+            icon={null}
             className="font-outfit hidden h-10 items-center rounded-full bg-[#F8F7FF] px-5 text-[15px] font-semibold text-[#080914] transition hover:bg-white sm:flex"
-          >
-            Host an event
-          </button>
+          />
           <button
             type="button"
             onClick={() => setLoginOpen(true)}
@@ -100,16 +94,12 @@ export default function WebsiteNav() {
                 {l.label}
               </Link>
             ))}
-            <button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                handleListTimeClick();
-              }}
-              className="font-outfit mt-1 h-11 rounded-full bg-[#F8F7FF] text-[15px] font-semibold text-[#080914]"
-            >
-              Host an event
-            </button>
+            <div onClick={() => setMenuOpen(false)} className="contents">
+              <BecomeHostButton
+                icon={null}
+                className="font-outfit mt-1 flex h-11 items-center justify-center rounded-full bg-[#F8F7FF] text-[15px] font-semibold text-[#080914]"
+              />
+            </div>
           </div>
         )}
       </nav>
@@ -119,10 +109,6 @@ export default function WebsiteNav() {
         createPortal(
           <>
             <GoogleLogin open={loginOpen} onClose={() => setLoginOpen(false)} />
-            <BecomeHostModal
-              open={showBecomeHostModal}
-              onClose={closeBecomeHostModal}
-            />
           </>,
           document.body,
         )}

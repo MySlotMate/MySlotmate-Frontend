@@ -28,6 +28,7 @@ import { computeBadges, type BadgeState, type Moment } from "~/lib/badges";
 import * as components from "~/components";
 import EventPhotos from "~/components/profile/EventPhotos";
 import Milestones, { BadgeSheet } from "~/components/profile/Milestones";
+import { refundDueOnCancel } from "~/lib/cancellationPolicy";
 import {
   InboxSidebar,
   MyPassesSection,
@@ -638,6 +639,7 @@ export default function ActivitiesPage() {
     .filter(
       ({ booking }) =>
         (booking.status === "confirmed" || booking.status === "pending") &&
+        !booking.cancelled_at &&
         isFuture(booking),
     )
     .sort(
@@ -645,9 +647,13 @@ export default function ActivitiesPage() {
         new Date(a.booking.occurrence_date).getTime() -
         new Date(b.booking.occurrence_date).getTime(),
     );
+  // A no-refund guest cancel stays `confirmed` with cancelled_at set (the host
+  // is still paid), so cancelled_at is what marks it cancelled for the guest.
   const cancelled = bookingsWithEvents.filter(
     ({ booking }) =>
-      booking.status === "cancelled" || booking.status === "refunded",
+      booking.status === "cancelled" ||
+      booking.status === "refunded" ||
+      Boolean(booking.cancelled_at),
   );
 
   const moments: Moment[] = useMemo(
@@ -656,6 +662,7 @@ export default function ActivitiesPage() {
         .filter(
           ({ booking }) =>
             booking.status === "confirmed" &&
+            !booking.cancelled_at &&
             new Date(booking.occurrence_date).getTime() <= Date.now(),
         )
         .map(({ booking, event }) => ({
@@ -703,6 +710,22 @@ export default function ActivitiesPage() {
       Boolean(s.event),
     );
 
+  // Whether cancelling the booking in the dialog returns the guest's money. The
+  // server makes the same call (cancellation_policy.go); this keeps the dialog
+  // from promising a refund the policy does not give.
+  const cancelTarget = bookingsWithEvents.find(
+    ({ booking }) => booking.id === activeCancelBookingId,
+  );
+  const cancelRefunds =
+    !cancelTarget ||
+    !(
+      cancelTarget.booking.amount_cents && cancelTarget.booking.amount_cents > 0
+    ) ||
+    refundDueOnCancel(
+      cancelTarget.event.cancellation_policy,
+      cancelTarget.booking.occurrence_date,
+    );
+
   const handleCancelBooking = async () => {
     if (!activeCancelBookingId || !userId) return;
 
@@ -714,9 +737,11 @@ export default function ActivitiesPage() {
         refundDestination,
       });
       toast.success(
-        refundDestination === "source"
-          ? "Booking cancelled. Refund sent to your card (may take 5–7 working days)."
-          : "Booking cancelled. Refund added to your wallet.",
+        !cancelRefunds
+          ? "Booking cancelled. No refund under this experience's cancellation policy."
+          : refundDestination === "source"
+            ? "Booking cancelled. Refund sent to your card (may take 5–7 working days)."
+            : "Booking cancelled. Refund added to your wallet.",
       );
       setActiveCancelBookingId(null);
       setRefundDestination("wallet");
@@ -1015,52 +1040,62 @@ export default function ActivitiesPage() {
               notify the host and may be subject to cancellation policies.
             </p>
 
+            {!cancelRefunds && (
+              <p className="mb-6 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-200">
+                This experience&apos;s cancellation policy gives no refund if
+                you cancel now. Your seat will be released and you won&apos;t
+                get your money back.
+              </p>
+            )}
+
             {/* Refund destination picker — comment out this block to disable
                 source refund for users (keeping wallet-only as default). */}
-            <fieldset className="mb-6">
-              <legend className="mb-2 text-xs font-semibold tracking-wide text-white/50 uppercase">
-                Refund destination
-              </legend>
-              <label className="mb-2 flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3 transition hover:bg-white/5">
-                <input
-                  type="radio"
-                  name="refund-destination"
-                  value="wallet"
-                  checked={refundDestination === "wallet"}
-                  onChange={() => setRefundDestination("wallet")}
-                  className="mt-0.5 h-4 w-4 accent-[#9B30FF]"
-                  disabled={isCancelling}
-                />
-                <span className="flex-1">
-                  <span className="block text-sm font-medium">
-                    Refund to wallet
+            {cancelRefunds && (
+              <fieldset className="mb-6">
+                <legend className="mb-2 text-xs font-semibold tracking-wide text-white/50 uppercase">
+                  Refund destination
+                </legend>
+                <label className="mb-2 flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3 transition hover:bg-white/5">
+                  <input
+                    type="radio"
+                    name="refund-destination"
+                    value="wallet"
+                    checked={refundDestination === "wallet"}
+                    onChange={() => setRefundDestination("wallet")}
+                    className="mt-0.5 h-4 w-4 accent-[#9B30FF]"
+                    disabled={isCancelling}
+                  />
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium">
+                      Refund to wallet
+                    </span>
+                    <span className="block text-xs text-white/50">
+                      Instant. Use for another booking.
+                    </span>
                   </span>
-                  <span className="block text-xs text-white/50">
-                    Instant. Use for another booking.
+                </label>
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3 transition hover:bg-white/5">
+                  <input
+                    type="radio"
+                    name="refund-destination"
+                    value="source"
+                    checked={refundDestination === "source"}
+                    onChange={() => setRefundDestination("source")}
+                    className="mt-0.5 h-4 w-4 accent-[#9B30FF]"
+                    disabled={isCancelling}
+                  />
+                  <span className="flex-1">
+                    <span className="block text-sm font-medium">
+                      Refund to original card/UPI
+                    </span>
+                    <span className="block text-xs text-white/50">
+                      Takes 5–7 working days. Falls back to wallet if not
+                      available.
+                    </span>
                   </span>
-                </span>
-              </label>
-              <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-white/10 p-3 transition hover:bg-white/5">
-                <input
-                  type="radio"
-                  name="refund-destination"
-                  value="source"
-                  checked={refundDestination === "source"}
-                  onChange={() => setRefundDestination("source")}
-                  className="mt-0.5 h-4 w-4 accent-[#9B30FF]"
-                  disabled={isCancelling}
-                />
-                <span className="flex-1">
-                  <span className="block text-sm font-medium">
-                    Refund to original card/UPI
-                  </span>
-                  <span className="block text-xs text-white/50">
-                    Takes 5–7 working days. Falls back to wallet if not
-                    available.
-                  </span>
-                </span>
-              </label>
-            </fieldset>
+                </label>
+              </fieldset>
+            )}
 
             <div className="flex gap-3">
               <button

@@ -22,6 +22,7 @@ import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { formatIST, sameInstant } from "~/lib/datetime";
 import type { EventDTO, OccurrenceAvailability } from "~/lib/api";
 import { FiAlertTriangle, FiCalendar, FiMinus, FiPlus } from "react-icons/fi";
+import { useHydrated } from "~/hooks/useHydrated";
 
 const rupees = (cents: number) =>
   `₹${(cents / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
@@ -86,8 +87,7 @@ export default function TicketsClient({
 }) {
   const router = useRouter();
   const { userId } = useStoredAuth();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
   const [showLogin, setShowLogin] = useState(false);
 
   const { data: fetchedEvent, isLoading } = useEvent(

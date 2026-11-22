@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import HomeSidebar from "./HomeSidebar";
+import { useHydrated } from "~/hooks/useHydrated";
 
 /**
  * Mounted once in the root layout, so the rail stays put (no remount, no
@@ -13,8 +13,7 @@ import HomeSidebar from "./HomeSidebar";
 export default function AppSidebar() {
   const path = usePathname() ?? "";
   const { userId } = useStoredAuth();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
 
   // Logged-out visitors get the public website at "/", which has its own nav.
   if (path === "/")

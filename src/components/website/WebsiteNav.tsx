@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { Menu, X } from "lucide-react";
 import GoogleLogin from "~/components/GoogleLogin";
 import { BecomeHostModal } from "~/components/become-host";
 import { useListTimeAction } from "~/hooks/useListTimeAction";
+import { useHydrated } from "~/hooks/useHydrated";
 
 const LINKS = [
   { href: "/#discover", label: "Discover" },
@@ -27,8 +28,7 @@ export default function WebsiteNav() {
   const { closeBecomeHostModal, handleListTimeClick, showBecomeHostModal } =
     useListTimeAction();
   const { userId } = useStoredAuth();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
 
   if (mounted && userId) return null;
 

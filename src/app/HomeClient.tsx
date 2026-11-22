@@ -1,12 +1,13 @@
 "use client";
 import * as components from "../components";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { MoodProvider } from "~/context/MoodContext";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import WebsiteHome from "~/components/website/WebsiteHome";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import type { HomepageMarketingConfig } from "~/components/home/ShowcaseSections";
+import { useHydrated } from "~/hooks/useHydrated";
 
 /**
  * Client half of the home page. The server half (`page.tsx`) fetches the
@@ -25,15 +26,17 @@ export default function HomeClient({
 }) {
   const mainRef = useRef<HTMLElement>(null);
   const { userId } = useStoredAuth();
-  // Auth lives in localStorage, so the server (and the first client render)
-  // can't know it: render the public website until mounted, then swap to the
-  // app feed for logged-in users.
-  const [mounted, setMounted] = useState(false);
+  // Auth lives in localStorage, so the server can't know it. Only the first
+  // render after a full page load has to match the server's (public) HTML;
+  // on in-app navigation `hydrated` is already true, so a signed-in user
+  // goes straight to the feed instead of flashing the public site.
+  const hydrated = useHydrated();
+  const showFeed = hydrated && Boolean(userId);
+  // The pre-paint flag (layout.tsx) hides the public site for signed-in
+  // users. Drop it only for a visitor who turns out to be signed out.
   useEffect(() => {
-    setMounted(true);
-    delete document.documentElement.dataset.authed;
-  }, []);
-  const showFeed = mounted && Boolean(userId);
+    if (hydrated && !userId) delete document.documentElement.dataset.authed;
+  }, [hydrated, userId]);
 
   useLayoutEffect(() => {
     if (!showFeed) return;

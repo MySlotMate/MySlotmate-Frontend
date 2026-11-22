@@ -43,6 +43,7 @@ import { toast } from "sonner";
 import { formatIST } from "~/lib/datetime";
 import { getMoodDisplayLabel } from "~/lib/moods";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
+import { useHydrated } from "~/hooks/useHydrated";
 
 export const runtime = "edge";
 
@@ -483,8 +484,7 @@ export default function ExperienceDetailClient({
   const [allDates, setAllDates] = useState(false);
   // Auth lives in localStorage: render the public website chrome until
   // mounted, then the app chrome (sidebar) for signed-in users.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
 
   // Server-rendered event keeps the page content in the initial HTML; the
   // client query takes over once it resolves. The route param is a slug (or a

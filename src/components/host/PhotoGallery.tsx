@@ -81,7 +81,7 @@ export default function PhotoGallery({
             <div
               key={i}
               onClick={() => openModal(i)}
-              className="group relative aspect-4/3 cursor-pointer overflow-hidden rounded-xl bg-gray-100"
+              className="group relative aspect-4/3 cursor-pointer overflow-hidden rounded-xl bg-white/[0.06]"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -93,7 +93,7 @@ export default function PhotoGallery({
               {instagramSet.has(img) && (
                 <span
                   title="From Instagram"
-                  className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-[#E1306C] shadow ring-1 ring-black/5 backdrop-blur"
+                  className="absolute top-2 right-2 flex h-6 w-6 items-center justify-center rounded-full bg-[#121426]/90 text-[#E1306C] shadow ring-1 ring-black/5 backdrop-blur"
                 >
                   <FaInstagram className="h-3.5 w-3.5" />
                 </span>
@@ -107,7 +107,7 @@ export default function PhotoGallery({
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="rounded-full border border-[#bdddf480] bg-white px-5 py-2 text-xs font-extrabold tracking-[0.06em] text-[#0e8ae0] uppercase shadow-sm transition hover:bg-[#0e8ae0] hover:text-white"
+              className="rounded-full border border-white/10 bg-[#121426] px-5 py-2 text-xs font-extrabold tracking-[0.06em] text-[#D8B4FE] uppercase shadow-sm transition hover:bg-[#A020F0] hover:text-white"
             >
               {expanded ? "Show less" : `Show ${hiddenCount} more`}
             </button>
@@ -118,7 +118,7 @@ export default function PhotoGallery({
       {/* Lightbox Preview Modal */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 p-4 backdrop-blur-md sm:p-6"
+          className="msm-modal fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 p-4 backdrop-blur-md sm:p-6"
           onClick={closeModal}
         >
           {/* Top Bar: Counter (Left) and Prominent Cross/Close Button (Right) */}

@@ -92,7 +92,7 @@ function describePayment(p: PaymentDTO): TxnDisplay {
         amountSigned: noMovement ? 0 : p.amount_cents,
         statusLabel,
         statusTone,
-        icon: <FiArrowDownLeft className="text-green-600" size={18} />,
+        icon: <FiArrowDownLeft className="text-green-300" size={18} />,
       };
     }
     case "booking": {
@@ -104,9 +104,9 @@ function describePayment(p: PaymentDTO): TxnDisplay {
         statusLabel,
         statusTone,
         icon: reversed ? (
-          <FiRotateCcw className="text-gray-500" size={18} />
+          <FiRotateCcw className="text-[#A5A8C3]" size={18} />
         ) : (
-          <FiArrowUpRight className="text-rose-600" size={18} />
+          <FiArrowUpRight className="text-rose-300" size={18} />
         ),
       };
     }
@@ -123,7 +123,7 @@ function describePayment(p: PaymentDTO): TxnDisplay {
           amountSigned: noMovement ? 0 : p.amount_cents,
           statusLabel,
           statusTone,
-          icon: <FiArrowDownLeft className="text-green-600" size={18} />,
+          icon: <FiArrowDownLeft className="text-green-300" size={18} />,
         };
       }
 
@@ -136,7 +136,7 @@ function describePayment(p: PaymentDTO): TxnDisplay {
           amountSigned: -p.amount_cents,
           statusLabel,
           statusTone,
-          icon: <FiCreditCard className="text-rose-600" size={18} />,
+          icon: <FiCreditCard className="text-rose-300" size={18} />,
         };
       }
       if (p.status === "failed" || p.status === "reversed") {
@@ -147,7 +147,7 @@ function describePayment(p: PaymentDTO): TxnDisplay {
           amountSigned: 0, // no money actually moved
           statusLabel,
           statusTone,
-          icon: <FiCreditCard className="text-gray-400" size={18} />,
+          icon: <FiCreditCard className="text-[#777B98]" size={18} />,
         };
       }
       // pending / processing
@@ -158,7 +158,7 @@ function describePayment(p: PaymentDTO): TxnDisplay {
         amountSigned: -p.amount_cents,
         statusLabel,
         statusTone,
-        icon: <FiCreditCard className="text-amber-500" size={18} />,
+        icon: <FiCreditCard className="text-amber-400" size={18} />,
       };
     }
     case "withdrawal":
@@ -169,7 +169,7 @@ function describePayment(p: PaymentDTO): TxnDisplay {
         amountSigned: noMovement ? 0 : -p.amount_cents,
         statusLabel,
         statusTone,
-        icon: <FiArrowUpRight className="text-rose-600" size={18} />,
+        icon: <FiArrowUpRight className="text-rose-300" size={18} />,
       };
     default:
       return {
@@ -178,7 +178,7 @@ function describePayment(p: PaymentDTO): TxnDisplay {
         amountSigned: noMovement ? 0 : p.amount_cents,
         statusLabel,
         statusTone,
-        icon: <FiClock className="text-gray-400" size={18} />,
+        icon: <FiClock className="text-[#777B98]" size={18} />,
       };
   }
 }
@@ -192,12 +192,12 @@ function StatusBadge({
 }) {
   const classes =
     tone === "success"
-      ? "bg-green-100 text-green-700"
+      ? "bg-green-500/15 text-green-300"
       : tone === "pending"
-        ? "bg-amber-100 text-amber-700"
+        ? "bg-amber-500/15 text-amber-300"
         : tone === "failed"
-          ? "bg-gray-100 text-gray-500"
-          : "bg-gray-100 text-gray-600";
+          ? "bg-white/[0.06] text-[#A5A8C3]"
+          : "bg-white/[0.06] text-[#A5A8C3]";
   return (
     <span
       className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${classes}`}
@@ -237,18 +237,18 @@ export default function WalletPage() {
 
   if (!userId) {
     return (
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-[#080914]">
         <components.Navbar />
-        <div className="site-x mx-auto w-full max-w-[1120px] py-10">
+        <div className="site-x mx-auto w-full max-w-[1120px] pt-24 pb-10">
           <Breadcrumb
             items={[{ label: "Home", href: "/" }, { label: "Wallet" }]}
             className="mb-6"
           />
-          <div className="rounded-2xl border border-gray-100 bg-gray-50 p-10 text-center">
+          <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-10 text-center">
             <h1 className="mb-2 text-2xl font-bold">Wallet</h1>
-            <p className="text-gray-500">
+            <p className="text-[#A5A8C3]">
               Please{" "}
-              <Link href="/login" className="text-rose-600 underline">
+              <Link href="/login" className="text-rose-300 underline">
                 log in
               </Link>{" "}
               to see your wallet balance and transaction history.
@@ -263,10 +263,10 @@ export default function WalletPage() {
   const txns = txnsForStats;
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#080914]">
       <components.Navbar />
 
-      <div className="site-x mx-auto w-full max-w-[1120px] py-8">
+      <div className="site-x mx-auto w-full max-w-[1120px] pt-24 pb-8">
         <Breadcrumb
           items={[{ label: "Home", href: "/" }, { label: "Wallet" }]}
           className="mb-6"
@@ -275,14 +275,14 @@ export default function WalletPage() {
         {/* Page header */}
         <div className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Wallet</h1>
-            <p className="mt-2 text-gray-600">
+            <h1 className="text-3xl font-bold text-white">Wallet</h1>
+            <p className="mt-2 text-[#A5A8C3]">
               Your balance and every top-up, booking, and refund — in one place.
             </p>
           </div>
           <Link
             href="/activities"
-            className="text-sm font-medium text-rose-600 hover:underline"
+            className="text-sm font-medium text-rose-300 hover:underline"
           >
             View my bookings →
           </Link>
@@ -324,23 +324,23 @@ export default function WalletPage() {
 
           {/* Stats card */}
           <section className="grid grid-cols-2 gap-3 lg:grid-cols-1">
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                <FiTrendingUp className="text-green-500" /> Money in
+            <div className="rounded-2xl border border-white/10 bg-[#121426] p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
+                <FiTrendingUp className="text-green-400" /> Money in
               </div>
-              <p className="mt-2 text-2xl font-bold text-gray-900">
+              <p className="mt-2 text-2xl font-bold text-white">
                 {formatRupees(stats.inCents)}
               </p>
-              <p className="text-[11px] text-gray-400">Top-ups + refunds</p>
+              <p className="text-[11px] text-[#777B98]">Top-ups + refunds</p>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
-                <FiTrendingDown className="text-rose-500" /> Money out
+            <div className="rounded-2xl border border-white/10 bg-[#121426] p-4 shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
+                <FiTrendingDown className="text-rose-400" /> Money out
               </div>
-              <p className="mt-2 text-2xl font-bold text-gray-900">
+              <p className="mt-2 text-2xl font-bold text-white">
                 {formatRupees(stats.outCents)}
               </p>
-              <p className="text-[11px] text-gray-400">
+              <p className="text-[11px] text-[#777B98]">
                 Bookings + refunds to card
               </p>
             </div>
@@ -350,11 +350,11 @@ export default function WalletPage() {
         {/* Transactions */}
         <section className="mt-10">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-semibold tracking-wide text-gray-500 uppercase">
+            <h2 className="text-sm font-semibold tracking-wide text-[#A5A8C3] uppercase">
               Transactions
             </h2>
             {stats.pendingCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-300">
                 <FiClock className="h-3 w-3" />
                 {stats.pendingCount} processing
               </span>
@@ -362,30 +362,30 @@ export default function WalletPage() {
           </div>
 
           {txnsQuery.isLoading && (
-            <p className="rounded-xl border border-gray-100 bg-gray-50 p-8 text-center text-sm text-gray-500">
+            <p className="rounded-xl border border-white/10 bg-white/[0.04] p-8 text-center text-sm text-[#A5A8C3]">
               Loading transactions…
             </p>
           )}
           {!txnsQuery.isLoading && txns.length === 0 && (
-            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-10 text-center">
-              <p className="text-base font-semibold text-gray-700">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-10 text-center">
+              <p className="text-base font-semibold text-white/80">
                 No transactions yet
               </p>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-[#A5A8C3]">
                 Top up your wallet or book an experience to get started.
               </p>
             </div>
           )}
           {!txnsQuery.isLoading && txns.length > 0 && (
-            <ul className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <ul className="divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-[#121426] shadow-sm">
               {txns.map((p) => {
                 const d = describePayment(p);
                 const amountColor =
                   d.amountSigned > 0
-                    ? "text-green-600"
+                    ? "text-green-300"
                     : d.amountSigned < 0
-                      ? "text-rose-600"
-                      : "text-gray-400";
+                      ? "text-rose-300"
+                      : "text-[#777B98]";
                 const amountText =
                   d.amountSigned === 0
                     ? formatRupees(p.amount_cents)
@@ -394,26 +394,26 @@ export default function WalletPage() {
                 return (
                   <li
                     key={p.id}
-                    className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-gray-50 sm:px-5"
+                    className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-white/[0.04] sm:px-5"
                   >
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-50 ring-1 ring-gray-100">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/[0.04] ring-1 ring-white/10">
                       {d.icon}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-gray-900">
+                        <span className="truncate text-sm font-semibold text-white">
                           {d.title}
                         </span>
                         <StatusBadge tone={d.statusTone}>
                           {d.statusLabel}
                         </StatusBadge>
                       </div>
-                      <p className="truncate text-xs text-gray-500">
+                      <p className="truncate text-xs text-[#A5A8C3]">
                         {d.subtitle}
                       </p>
                       {d.note && (
                         <p
-                          className="mt-1 text-xs leading-relaxed text-gray-500"
+                          className="mt-1 text-xs leading-relaxed text-[#A5A8C3]"
                           title={p.last_error ?? undefined}
                         >
                           {d.note}
@@ -426,7 +426,7 @@ export default function WalletPage() {
                       {amountText}
                       {d.amountSigned === 0 && (
                         <FiXCircle
-                          className="ml-1 inline text-gray-300"
+                          className="ml-1 inline text-white/30"
                           size={12}
                         />
                       )}

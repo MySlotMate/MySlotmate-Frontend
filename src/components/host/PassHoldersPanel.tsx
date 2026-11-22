@@ -25,11 +25,11 @@ export default function PassHoldersPanel({ eventId }: { eventId: string }) {
   if (holders.length === 0) return null;
 
   return (
-    <div className="rounded-lg bg-gray-50 p-3">
+    <div className="rounded-lg bg-white/[0.04] p-3">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="text-sm font-medium text-[#0094CA] hover:underline"
+        className="text-sm font-medium text-[#D8B4FE] hover:underline"
       >
         Pass holders ({holders.length})
       </button>
@@ -41,8 +41,8 @@ export default function PassHoldersPanel({ eventId }: { eventId: string }) {
               key={h.id}
               className="flex items-center justify-between gap-3 text-sm"
             >
-              <span className="text-gray-900">{h.user_name || h.user_email}</span>
-              <span className="text-xs text-gray-500">
+              <span className="text-white">{h.user_name || h.user_email}</span>
+              <span className="text-xs text-[#A5A8C3]">
                 {h.sessions_included === null
                   ? `${h.sessions_used} booked`
                   : `${h.sessions_used}/${h.sessions_included} used`}{" "}

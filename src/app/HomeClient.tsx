@@ -1,10 +1,13 @@
 "use client";
 import * as components from "../components";
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import { MoodProvider } from "~/context/MoodContext";
+import { useStoredAuth } from "~/hooks/useStoredAuth";
+import WebsiteHome from "~/components/website/WebsiteHome";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import type { HomepageMarketingConfig } from "~/components/home/ShowcaseSections";
+import { useHydrated } from "~/hooks/useHydrated";
 
 /**
  * Client half of the home page. The server half (`page.tsx`) fetches the
@@ -22,11 +25,21 @@ export default function HomeClient({
   initialMarketingConfig: HomepageMarketingConfig | null;
 }) {
   const mainRef = useRef<HTMLElement>(null);
-  const filterBarRef = useRef<HTMLDivElement>(null);
-
-  // hostId and mounted were unused because of commented out code
+  const { userId } = useStoredAuth();
+  // Auth lives in localStorage, so the server can't know it. Only the first
+  // render after a full page load has to match the server's (public) HTML;
+  // on in-app navigation `hydrated` is already true, so a signed-in user
+  // goes straight to the feed instead of flashing the public site.
+  const hydrated = useHydrated();
+  const showFeed = hydrated && Boolean(userId);
+  // The pre-paint flag (layout.tsx) hides the public site for signed-in
+  // users. Drop it only for a visitor who turns out to be signed out.
+  useEffect(() => {
+    if (hydrated && !userId) delete document.documentElement.dataset.authed;
+  }, [hydrated, userId]);
 
   useLayoutEffect(() => {
+    if (!showFeed) return;
     const ctx = gsap.context(() => {
       const fadeElements = gsap.utils.toArray<HTMLElement>(".scroll-fade");
 
@@ -45,22 +58,29 @@ export default function HomeClient({
     }, mainRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [showFeed]);
+
+  if (!showFeed) {
+    return (
+      <div className="msm-visitor-only">
+        <WebsiteHome
+          initialEvents={initialEvents}
+          initialHosts={initialHosts}
+        />
+      </div>
+    );
+  }
 
   return (
     <MoodProvider>
       <main
         ref={mainRef}
-        className="flex min-h-screen flex-col items-center gap-14 overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(31,167,255,0.10),transparent_30%),linear-gradient(180deg,#fbfeff_0%,#f3faff_100%)] text-[#16304c]"
+        className="flex min-h-screen flex-col items-center overflow-x-clip bg-[#080914] text-white max-md:pb-28"
       >
-        <components.Navbar />
+        <components.Navbar dark />
 
         <div className="scroll-fade w-full">
-          <components.Home.Hero filterBarRef={filterBarRef} />
-        </div>
-
-        <div className="scroll-fade w-full">
-          <components.Home.ShowcaseSections
+          <components.Home.HomeFeed
             initialEvents={initialEvents}
             initialHosts={initialHosts}
             initialMarketingConfig={initialMarketingConfig}
@@ -79,7 +99,7 @@ export default function HomeClient({
         </div>
 
         <div className="scroll-fade flex w-full flex-col gap-14">
-          <components.Home.Footer />
+          <components.Home.Footer dark />
         </div>
       </main>
     </MoodProvider>

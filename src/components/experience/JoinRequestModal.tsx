@@ -52,23 +52,27 @@ export default function JoinRequestModal({
   if (!open) return null;
 
   const handleSubmit = () => {
-    if (attendeeFields.length > 0 && !attendeeFormValid(attendeeFields, values)) {
+    if (
+      attendeeFields.length > 0 &&
+      !attendeeFormValid(attendeeFields, values)
+    ) {
       setShowErrors(true);
       toast.error("Please complete all the requested details");
       return;
     }
-    onSubmit({ message: message.trim(), answers: toAnswers(attendeeFields, values) });
+    onSubmit({
+      message: message.trim(),
+      answers: toAnswers(attendeeFields, values),
+    });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
-      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white sm:rounded-2xl">
-        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-gray-100 bg-white px-5 py-4">
+    <div className="msm-modal fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
+      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-[#121426] sm:rounded-2xl">
+        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-white/10 bg-[#121426] px-5 py-4">
           <div>
-            <h2 className="text-base font-bold text-[#16304c]">
-              Request to join
-            </h2>
-            <p className="mt-0.5 text-xs text-[#6f8daa]">
+            <h2 className="text-base font-bold text-white">Request to join</h2>
+            <p className="mt-0.5 text-xs text-[#A5A8C3]">
               {eventTitle}
               {sessionLabel ? ` · ${sessionLabel}` : ""}
             </p>
@@ -76,7 +80,7 @@ export default function JoinRequestModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-full p-1.5 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#A5A8C3]"
             aria-label="Close"
           >
             <FiX size={18} />
@@ -84,9 +88,9 @@ export default function JoinRequestModal({
         </div>
 
         <div className="space-y-4 px-5 py-4">
-          <p className="rounded-lg bg-[#0094CA]/5 px-3 py-2 text-xs text-[#16304c]">
+          <p className="rounded-lg bg-[#A020F0]/10 px-3 py-2 text-xs text-white">
             The host reviews every request. If they say yes, you&apos;ll be able
-            to book — your spot isn&apos;t held until you do.
+            to book — your slot isn&apos;t held until you do.
             {sessionLabel
               ? " This request covers that session only; other dates need their own request."
               : ""}
@@ -104,9 +108,9 @@ export default function JoinRequestModal({
           )}
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label className="mb-1.5 block text-sm font-medium text-white/80">
               Anything you&apos;d like the host to know?{" "}
-              <span className="font-normal text-gray-400">(optional)</span>
+              <span className="font-normal text-[#777B98]">(optional)</span>
             </label>
             <textarea
               value={message}
@@ -114,17 +118,17 @@ export default function JoinRequestModal({
               rows={3}
               maxLength={500}
               placeholder="Why you'd like to join…"
-              className="w-full resize-none rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+              className="w-full resize-none rounded-lg border border-white/10 px-3 py-2.5 text-sm transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
             />
           </div>
         </div>
 
-        <div className="sticky bottom-0 flex gap-3 border-t border-gray-100 bg-white px-5 py-4">
+        <div className="sticky bottom-0 flex gap-3 border-t border-white/10 bg-[#121426] px-5 py-4">
           <button
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="flex-1 rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+            className="flex-1 rounded-xl border border-white/10 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/[0.04] disabled:opacity-50"
           >
             Cancel
           </button>
@@ -132,7 +136,7 @@ export default function JoinRequestModal({
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-[1.5] rounded-xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-3 text-sm font-bold text-white shadow-md transition hover:shadow-lg disabled:opacity-50"
+            className="flex-[1.5] rounded-xl bg-gradient-to-r from-[#A020F0] to-[#A020F0] py-3 text-sm font-bold text-white shadow-md transition hover:shadow-lg disabled:opacity-50"
           >
             {isSubmitting ? "Sending…" : "Send request"}
           </button>

@@ -77,14 +77,12 @@ function CommonTopicCard({ topic }: { topic: CommonTopic }) {
   const Icon = topic.icon;
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e6f8ff] text-[#0094CA]">
+    <div className="rounded-2xl border border-white/10 bg-[#121426] p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#241333] text-[#D8B4FE]">
         <Icon className="h-5 w-5" />
       </div>
-      <h3 className="mt-4 text-lg font-semibold text-slate-900">
-        {topic.title}
-      </h3>
-      <p className="mt-2 text-sm leading-6 text-slate-500">
+      <h3 className="mt-4 text-lg font-semibold text-white">{topic.title}</h3>
+      <p className="mt-2 text-sm leading-6 text-[#A5A8C3]">
         {topic.description}
       </p>
     </div>
@@ -244,28 +242,28 @@ export default function TechnicalSupportPage() {
       />
 
       <header className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
           How can we help you today?
         </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[#A5A8C3] sm:text-base">
           Find answers, troubleshoot issues, or connect with our specialized
           support team for hosts.
         </p>
       </header>
 
-      <div className="mx-auto mt-8 flex w-full max-w-2xl items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-3 shadow-sm">
-        <FiSearch className="h-4 w-4 text-[#0094CA]" />
+      <div className="mx-auto mt-8 flex w-full max-w-2xl items-center gap-3 rounded-full border border-white/10 bg-[#121426] px-4 py-3 shadow-sm">
+        <FiSearch className="h-4 w-4 text-[#D8B4FE]" />
         <input
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           type="text"
           placeholder="Search for articles, errors, or anything you need..."
-          className="w-full bg-transparent text-sm text-slate-700 outline-none"
+          className="w-full bg-transparent text-sm text-white/80 outline-none"
         />
       </div>
 
       <section className="mt-10">
-        <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
+        <h2 className="text-lg font-semibold text-white sm:text-xl">
           Common Topics
         </h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -276,24 +274,24 @@ export default function TechnicalSupportPage() {
       </section>
 
       <div className="my-10 flex items-center gap-4">
-        <hr className="flex-1 border-t border-gray-200" />
-        <span className="text-xs font-semibold tracking-[0.2em] text-slate-400 uppercase">
+        <hr className="flex-1 border-t border-white/10" />
+        <span className="text-xs font-semibold tracking-[0.2em] text-[#777B98] uppercase">
           Still need help?
         </span>
-        <hr className="flex-1 border-t border-gray-200" />
+        <hr className="flex-1 border-t border-white/10" />
       </div>
 
-      <section className="rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="rounded-[28px] border border-white/10 bg-[#121426] p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold text-slate-900">
+            <h2 className="text-2xl font-semibold text-white">
               Submit a Request
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-[#A5A8C3]">
               Our technical team typically responds within 2 business hours.
             </p>
           </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
+          <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-300">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
             System Operational
           </div>
@@ -302,7 +300,7 @@ export default function TechnicalSupportPage() {
         <form onSubmit={handleContactSubmit} className="mt-8 space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-900">
+              <label className="mb-2 block text-sm font-semibold text-white">
                 Issue Category
               </label>
               <select
@@ -314,7 +312,7 @@ export default function TechnicalSupportPage() {
                     issueCategory: event.target.value,
                   }));
                 }}
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
+                className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white/80 transition outline-none focus:border-[#A020F0]"
               >
                 {Object.entries(issueLabels).map(([value, label]) => (
                   <option key={value} value={value}>
@@ -325,7 +323,7 @@ export default function TechnicalSupportPage() {
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-900">
+              <label className="mb-2 block text-sm font-semibold text-white">
                 Which Experience?
               </label>
               <select
@@ -337,7 +335,7 @@ export default function TechnicalSupportPage() {
                     selectedExperience: event.target.value,
                   }));
                 }}
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
+                className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white/80 transition outline-none focus:border-[#A020F0]"
               >
                 <option value="">General platform issue</option>
                 {experienceOptions.map((item) => (
@@ -347,7 +345,7 @@ export default function TechnicalSupportPage() {
                 ))}
               </select>
               {experienceOptions.length === 0 && (
-                <p className="mt-2 text-xs text-slate-400">
+                <p className="mt-2 text-xs text-[#777B98]">
                   No hosted experiences found yet. You can still submit a
                   general issue.
                 </p>
@@ -356,7 +354,7 @@ export default function TechnicalSupportPage() {
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-semibold text-slate-900">
+            <label className="mb-3 block text-sm font-semibold text-white">
               Priority Level
             </label>
             <div className="grid gap-3 sm:grid-cols-3">
@@ -375,8 +373,8 @@ export default function TechnicalSupportPage() {
                     }}
                     className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
                       active
-                        ? "border-[#0094CA] bg-[#e6f8ff] text-[#007dab]"
-                        : "border-gray-200 bg-[#f8fbfd] text-slate-700 hover:border-[#0094CA]"
+                        ? "border-[#A020F0] bg-[#241333] text-[#D8B4FE]"
+                        : "border-white/10 bg-white/[0.04] text-white/80 hover:border-[#A020F0]"
                     }`}
                   >
                     <span
@@ -390,7 +388,7 @@ export default function TechnicalSupportPage() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-900">
+            <label className="mb-2 block text-sm font-semibold text-white">
               Description
             </label>
             <textarea
@@ -403,15 +401,15 @@ export default function TechnicalSupportPage() {
               }}
               placeholder="Describe your technical issue in detail"
               rows={5}
-              className="w-full rounded-2xl border border-gray-200 bg-[#f8fbfd] px-4 py-3 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/80 transition outline-none focus:border-[#A020F0]"
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-900">
+            <label className="mb-2 block text-sm font-semibold text-white">
               Attachments{" "}
-              <span className="font-normal text-slate-400">(Optional)</span>
+              <span className="font-normal text-[#777B98]">(Optional)</span>
             </label>
             <SupportFileDropzone
               fileName={contactDetails.attachment?.name}
@@ -419,14 +417,14 @@ export default function TechnicalSupportPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-4 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3 text-sm text-slate-500">
-              <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#0094CA]" />
+          <div className="flex flex-col gap-4 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3 text-sm text-[#A5A8C3]">
+              <FiAlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#D8B4FE]" />
               <p>
                 Need urgent help instead? Use the{" "}
                 <Link
                   href="/support/report"
-                  className="font-semibold text-[#0094CA] hover:underline"
+                  className="font-semibold text-[#D8B4FE] hover:underline"
                 >
                   participant report flow
                 </Link>{" "}
@@ -437,14 +435,14 @@ export default function TechnicalSupportPage() {
             <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Link
                 href="/support"
-                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-gray-300"
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/15"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={isSubmitting || !user}
-                className="inline-flex items-center justify-center rounded-xl bg-[#0094CA] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-xl bg-[#A020F0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? "Submitting..." : "Submit Request"}
               </button>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -8,21 +9,40 @@ import {
   signInWithPopup,
   signInWithCustomToken,
 } from "firebase/auth";
+import type { LoginHint } from "~/lib/savedAccounts";
 import { auth } from "~/utils/firebase";
 import { toast } from "sonner";
 import { FcGoogle } from "react-icons/fc";
-import { FiPhone, FiLock, FiArrowRight, FiEdit2, FiUser } from "react-icons/fi";
+import {
+  FiPhone,
+  FiLock,
+  FiArrowRight,
+  FiEdit2,
+  FiUser,
+  FiX,
+} from "react-icons/fi";
 import { clearStoredAuth, setStoredUserId } from "~/lib/auth-storage";
 import { sendLoginOTP, verifyLoginOTP, updateUserProfile } from "~/lib/api";
 
 interface GoogleLoginProps {
   open: boolean;
   onClose: () => void;
+  /** Optional context, e.g. why sign-in is being asked for here. */
+  title?: string;
+  subtitle?: string;
+  /** Switching to a saved account: open its login method, prefilled. */
+  hint?: LoginHint | null;
 }
 
 type LoginType = "google" | "phone";
 
-export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
+export default function GoogleLogin({
+  open,
+  onClose,
+  title = "Log in or sign up",
+  subtitle = "Find events near you and book your slot in a tap.",
+  hint = null,
+}: GoogleLoginProps) {
   const router = useRouter();
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,6 +58,14 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
   const [name, setName] = useState("");
 
   // Reset all states and auto-transition to name setup if current user has a Guest User profile
+  useEffect(() => {
+    if (open && hint) {
+      setLoginType(hint.method);
+      if (hint.method === "phone" && hint.phone)
+        setPhone(hint.phone.replace(/^\+91/, "").replace(/\D/g, ""));
+    }
+  }, [open, hint]);
+
   useEffect(() => {
     if (open) {
       const storedId = localStorage.getItem("msm_user_id");
@@ -89,6 +117,14 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
+      // Always let people pick the Google account (needed to add a second
+      // account); when switching, suggest the one they chose.
+      provider.setCustomParameters({
+        prompt: "select_account",
+        ...(hint?.method === "google" && hint.email
+          ? { login_hint: hint.email }
+          : {}),
+      });
       const result = await signInWithPopup(auth, provider);
       const firebaseUser = result.user;
 
@@ -239,313 +275,275 @@ export default function GoogleLogin({ open, onClose }: GoogleLoginProps) {
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-      <div className="relative max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-2xl ring-1 ring-gray-100 sm:px-8 sm:py-10">
-        {/* Close button */}
-        {step !== "name" && (
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 rounded-full p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Close"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M15 5L5 15M5 5l10 10"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+  const PRIMARY =
+    "flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#7B2FFF] to-[#A020F0] py-3.5 text-base font-semibold text-white shadow-[0_12px_30px_-10px_rgb(160_32_240/0.7)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-none disabled:bg-white/10 disabled:text-white/40 disabled:shadow-none";
+  const INPUT =
+    "w-full rounded-xl border border-white/10 bg-[#080914] py-3 pr-4 text-sm text-white placeholder-[#777B98] transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/25";
+  const LABEL =
+    "mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase";
+
+  // Portal to <body>: a parent with its own stacking context (a hero with
+  // z-index or isolate) would otherwise paint over the dialog.
+  return createPortal(
+    <>
+      <div
+        className="msm-modal fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md"
+        onClick={(e) => {
+          if (e.target === e.currentTarget && step !== "name") onClose();
+        }}
+      >
+        <div className="relative max-h-[90vh] w-full max-w-[400px] overflow-y-auto rounded-[28px] border border-white/10 bg-[#121426] px-6 pt-8 pb-7 font-[family-name:var(--font-inter)] text-white shadow-[0_40px_120px_-20px_rgb(0_0_0/0.9)] sm:px-8">
+          {/* Violet glow behind the logo */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -top-24 left-1/2 h-48 w-72 -translate-x-1/2 rounded-full bg-[#A020F0]/30 blur-3xl"
+          />
+
+          {step !== "name" && (
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 flex h-9 w-9 items-center justify-center rounded-full text-[#A5A8C3] transition hover:bg-white/10 hover:text-white"
+              aria-label="Close"
+            >
+              <FiX className="h-5 w-5" />
+            </button>
+          )}
+
+          {step !== "name" && (
+            <div className="relative">
+              <Image
+                src="/assets/brand/logo-horizontal-white.png"
+                alt="MySlotMate"
+                width={1048}
+                height={209}
+                priority
+                className="mx-auto h-8 w-auto"
               />
-            </svg>
-          </button>
-        )}
+              <h2 className="font-outfit mt-7 text-center text-[26px] leading-tight font-medium tracking-[-0.01em]">
+                {title}
+              </h2>
+              <p className="mx-auto mt-2 mb-7 max-w-[300px] text-center text-sm leading-relaxed text-[#A5A8C3]">
+                {subtitle}
+              </p>
 
-        {/* Logo */}
-        {step !== "name" && (
-          <div className="mb-4 flex justify-center">
-            <Image
-              src="/assets/home/logomyslotmate.png"
-              alt="MySlotMate"
-              width={72}
-              height={72}
-              priority
-              className="h-18 w-18 object-contain"
-            />
-          </div>
-        )}
+              <div className="mb-6 flex rounded-full border border-white/10 bg-[#080914] p-1">
+                {(
+                  [
+                    ["google", "Google"],
+                    ["phone", "Phone & OTP"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      if (!loading) setLoginType(key);
+                    }}
+                    className={`flex-1 rounded-full py-2 text-[13px] font-semibold transition ${
+                      loginType === key
+                        ? "bg-[#241333] text-white ring-1 ring-[#652A91]"
+                        : "text-[#A5A8C3] hover:text-white"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
-        {/* Title */}
-        {step !== "name" && (
-          <>
-            <h2 className="mb-1 text-center text-xl font-bold text-gray-900">
-              Login or sign up
-            </h2>
-            <p className="mb-6 text-center text-sm text-gray-500">
-              Choose your preferred verification method
-            </p>
-          </>
-        )}
-
-        {/* Tab selection */}
-        {step !== "name" && (
-          <div className="mb-6 flex rounded-full bg-gray-100 p-1">
-            <button
-              type="button"
-              onClick={() => {
-                if (!loading) setLoginType("google");
-              }}
-              className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
-                loginType === "google"
-                  ? "bg-white text-[#0094CA] shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              Google Sign-in
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!loading) setLoginType("phone");
-              }}
-              className={`flex-1 rounded-full py-1.5 text-xs font-semibold transition ${
-                loginType === "phone"
-                  ? "bg-white text-[#0094CA] shadow-sm"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              Phone &amp; OTP
-            </button>
-          </div>
-        )}
-
-        {/* Google Authentication Form */}
-        {loginType === "google" && step !== "name" && (
-          <div className="space-y-6">
+          {/* Google */}
+          {loginType === "google" && step !== "name" && (
             <button
               onClick={handleGoogleLogin}
               disabled={!agreed || loading}
-              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-              style={{
-                background: agreed
-                  ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                  : "#b0b0b0",
-              }}
+              className="flex w-full cursor-pointer items-center justify-center gap-3 rounded-full bg-white py-3.5 text-base font-semibold text-[#080914] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40"
             >
-              <FcGoogle className="h-5 w-5 rounded-full bg-white p-0.5" />
+              <FcGoogle className="h-5 w-5" />
               {loading ? "Signing in..." : "Continue with Google"}
             </button>
-          </div>
-        )}
+          )}
 
-        {/* Phone Authentication Form */}
-        {loginType === "phone" && (
-          <div>
-            {step === "phone" && (
-              <form onSubmit={handleSendOTP} className="space-y-4">
-                <div>
-                  <label className="mb-1.5 block text-xs font-bold tracking-wide text-gray-500 uppercase">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute top-1/2 left-3.5 flex -translate-y-1/2 items-center gap-1.5">
-                      <FiPhone className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-semibold text-gray-500">
-                        +91
-                      </span>
-                      <div className="h-4 w-[1px] bg-gray-200" />
+          {/* Phone */}
+          {loginType === "phone" && (
+            <div className="relative">
+              {step === "phone" && (
+                <form onSubmit={handleSendOTP} className="space-y-4">
+                  <div>
+                    <label className={LABEL}>Phone number</label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute top-1/2 left-3.5 flex -translate-y-1/2 items-center gap-1.5">
+                        <FiPhone className="h-4 w-4 text-[#777B98]" />
+                        <span className="text-sm font-semibold text-[#A5A8C3]">
+                          +91
+                        </span>
+                        <div className="h-4 w-px bg-white/15" />
+                      </div>
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          if (val.length <= 10) setPhone(val);
+                        }}
+                        placeholder="98765 43210"
+                        maxLength={10}
+                        className={`${INPUT} pl-[78px]`}
+                      />
                     </div>
-                    <input
-                      type="tel"
-                      value={phone}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "");
-                        if (val.length <= 10) setPhone(val);
-                      }}
-                      placeholder="98765 43210"
-                      maxLength={10}
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-[78px] text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={phone.length !== 10 || loading || !agreed}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-                  style={{
-                    background:
-                      agreed && phone.length === 10
-                        ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                        : "#b0b0b0",
-                  }}
-                >
-                  {loading ? "Sending code..." : "Get Verification Code"}
-                  {!loading && <FiArrowRight className="h-4 w-4" />}
-                </button>
-              </form>
-            )}
-
-            {step === "otp" && (
-              <form onSubmit={handleVerifyOTP} className="space-y-4">
-                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <FiPhone className="h-4 w-4 text-gray-400" />
-                    <span>+91 {phone}</span>
                   </div>
                   <button
-                    type="button"
-                    onClick={() => {
-                      setStep("phone");
-                      setOtp("");
-                    }}
-                    className="flex items-center gap-1 text-xs font-semibold text-[#0094CA] hover:underline"
+                    type="submit"
+                    disabled={phone.length !== 10 || loading || !agreed}
+                    className={PRIMARY}
                   >
-                    <FiEdit2 className="h-3 w-3" /> Edit
+                    {loading ? "Sending code..." : "Get verification code"}
+                    {!loading && <FiArrowRight className="h-4 w-4" />}
                   </button>
-                </div>
+                </form>
+              )}
 
-                <div>
-                  <label className="mb-1.5 block text-xs font-bold tracking-wide text-gray-500 uppercase">
-                    Verification Code
-                  </label>
-                  <div className="relative">
-                    <FiLock className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      pattern="\d{4,6}"
-                      value={otp}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "");
-                        if (val.length <= 6) setOtp(val);
-                      }}
-                      placeholder="0000 or 000000"
-                      maxLength={6}
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-center text-sm font-semibold tracking-[0.5em] text-gray-900 placeholder-gray-300 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  {countdown > 0 ? (
-                    <span>Resend code in {countdown}s</span>
-                  ) : (
+              {step === "otp" && (
+                <form onSubmit={handleVerifyOTP} className="space-y-4">
+                  <div className="flex items-center justify-between rounded-xl border border-white/10 bg-[#080914] px-4 py-3">
+                    <div className="flex items-center gap-2 text-sm text-[#A5A8C3]">
+                      <FiPhone className="h-4 w-4 text-[#777B98]" />
+                      <span>+91 {phone}</span>
+                    </div>
                     <button
                       type="button"
-                      onClick={handleSendOTP}
-                      className="font-semibold text-[#0094CA] hover:underline"
+                      onClick={() => {
+                        setStep("phone");
+                        setOtp("");
+                      }}
+                      className="flex items-center gap-1 text-xs font-semibold text-[#D8B4FE] hover:underline"
                     >
-                      Resend Verification Code
+                      <FiEdit2 className="h-3 w-3" /> Edit
                     </button>
-                  )}
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={!(otp.length === 4 || otp.length === 6) || loading}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-                  style={{
-                    background:
-                      otp.length === 4 || otp.length === 6
-                        ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                        : "#b0b0b0",
-                  }}
-                >
-                  {loading ? "Verifying..." : "Verify & Login"}
-                </button>
-              </form>
-            )}
-
-            {step === "name" && (
-              <form onSubmit={handleFinishSignup} className="space-y-6">
-                <div className="text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#0094CA]/10 text-[#0094CA]">
-                    <FiUser className="h-6 w-6" />
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900">
-                    Almost there!
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Please enter your name to complete registration.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="mb-1.5 block text-xs font-bold tracking-wide text-gray-500 uppercase">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <FiUser className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="John Doe"
-                      className="w-full rounded-xl border border-gray-200 py-3 pr-4 pl-10 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                      required
-                    />
+                  <div>
+                    <label className={LABEL}>Verification code</label>
+                    <div className="relative">
+                      <FiLock className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[#777B98]" />
+                      <input
+                        type="text"
+                        pattern="\d{4,6}"
+                        value={otp}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "");
+                          if (val.length <= 6) setOtp(val);
+                        }}
+                        placeholder="0000 or 000000"
+                        maxLength={6}
+                        className={`${INPUT} pl-10 text-center font-semibold tracking-[0.5em]`}
+                      />
+                    </div>
                   </div>
-                </div>
+                  <div className="text-xs text-[#777B98]">
+                    {countdown > 0 ? (
+                      <span>Resend code in {countdown}s</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSendOTP}
+                        className="font-semibold text-[#D8B4FE] hover:underline"
+                      >
+                        Resend verification code
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={
+                      !(otp.length === 4 || otp.length === 6) || loading
+                    }
+                    className={PRIMARY}
+                  >
+                    {loading ? "Verifying..." : "Verify and log in"}
+                  </button>
+                </form>
+              )}
 
-                <button
-                  type="submit"
-                  disabled={!name.trim() || loading}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition hover:opacity-95 disabled:opacity-50"
-                  style={{
-                    background: name.trim()
-                      ? "linear-gradient(135deg, #0094CA, #00b4ef)"
-                      : "#b0b0b0",
-                  }}
+              {step === "name" && (
+                <form onSubmit={handleFinishSignup} className="space-y-6">
+                  <div className="text-center">
+                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#241333] text-[#D8B4FE] ring-1 ring-[#652A91]">
+                      <FiUser className="h-6 w-6" />
+                    </div>
+                    <h3 className="font-outfit text-xl font-medium text-white">
+                      Almost there!
+                    </h3>
+                    <p className="mt-1 text-sm text-[#A5A8C3]">
+                      Tell us your name to finish signing up.
+                    </p>
+                  </div>
+                  <div>
+                    <label className={LABEL}>Full name</label>
+                    <div className="relative">
+                      <FiUser className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[#777B98]" />
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your name"
+                        className={`${INPUT} pl-10`}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!name.trim() || loading}
+                    className={PRIMARY}
+                  >
+                    {loading ? "Saving..." : "Complete setup"}
+                    {!loading && <FiArrowRight className="h-4 w-4" />}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+
+          {step !== "name" && (
+            <>
+              <label className="mt-6 flex cursor-pointer items-start gap-3 text-xs leading-5 text-[#A5A8C3]">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={() => setAgreed(!agreed)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-white/20 accent-[#A020F0]"
+                />
+                <span>
+                  I agree to the{" "}
+                  <a
+                    href="/support/terms-conditions"
+                    className="font-semibold text-[#D8B4FE] hover:underline"
+                  >
+                    User Agreement
+                  </a>{" "}
+                  and{" "}
+                  <a
+                    href="/support/policies"
+                    className="font-semibold text-[#D8B4FE] hover:underline"
+                  >
+                    Privacy Policy
+                  </a>
+                </span>
+              </label>
+              <p className="mt-6 border-t border-white/10 pt-5 text-center text-sm text-[#777B98]">
+                Having trouble logging in?{" "}
+                <a
+                  href="/support"
+                  className="font-semibold text-white hover:underline"
                 >
-                  {loading ? "Saving..." : "Complete Setup"}
-                  {!loading && <FiArrowRight className="h-4 w-4" />}
-                </button>
-              </form>
-            )}
-          </div>
-        )}
-
-        {/* Agreement checkbox (always visible below fields except on name setup) */}
-        {step !== "name" && (
-          <label className="mt-5 flex cursor-pointer items-start gap-3 text-xs text-gray-600">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={() => setAgreed(!agreed)}
-              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-[#0094CA] accent-[#0094CA]"
-            />
-            <span>
-              I agree to the{" "}
-              <a
-                href="/support/terms-conditions"
-                className="font-semibold text-[#0094CA] hover:underline"
-              >
-                User Agreement
-              </a>{" "}
-              and{" "}
-              <a
-                href="/support/policies"
-                className="font-semibold text-[#0094CA] hover:underline"
-              >
-                Privacy Policy
-              </a>
-            </span>
-          </label>
-        )}
-
-        {/* Help link */}
-        {step !== "name" && (
-          <p className="mt-6 text-center text-sm text-gray-500">
-            Having trouble logging in?{" "}
-            <a
-              href="/support"
-              className="font-semibold text-gray-800 hover:underline"
-            >
-              Get Help
-            </a>
-          </p>
-        )}
+                  Get help
+                </a>
+              </p>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>,
+    document.body,
   );
 }

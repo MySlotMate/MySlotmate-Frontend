@@ -80,6 +80,7 @@ import {
   ExperienceCard,
   type ExperienceCardItem,
 } from "../../components/ExperienceCard";
+import EventCover from "~/components/EventCover";
 
 type CuratedSessionItem = ExperienceCardItem;
 
@@ -383,7 +384,7 @@ const ShowcaseSections = ({
         event.avg_rating !== 0
           ? event.avg_rating.toFixed(1)
           : "NEW",
-      image: event.cover_image_url ?? "/assets/home/hiking.webp",
+      image: event.cover_image_url ?? "",
       overlayTitle: event.title,
       overlaySubtitle: event.location
         ? `In ${event.location}`
@@ -435,7 +436,7 @@ const ShowcaseSections = ({
           "Discover a hosted experience near you.",
         160,
       ),
-      imageUrl: event.cover_image_url ?? "/assets/home/hiking.webp",
+      imageUrl: event.cover_image_url ?? "",
       rating:
         event.avg_rating !== null &&
         event.avg_rating !== undefined &&
@@ -445,6 +446,7 @@ const ShowcaseSections = ({
       price: eventPriceLabel(event),
       time: event.time,
       location: event.location,
+      isOnline: event.is_online,
       isRecurring: event.is_recurring,
       capacity: event.capacity,
       totalBookings: event.total_bookings,
@@ -904,7 +906,7 @@ const ShowcaseSections = ({
             <div className="w-full">
               <div
                 ref={featuredContainerRef}
-                className="group/card relative isolate grid cursor-pointer gap-6 rounded-[28px] border border-[#aeddf840] bg-white p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[1.1fr_0.9fr] md:items-center"
+                className="group/card relative isolate grid cursor-pointer gap-6 rounded-[28px] border border-white/10 bg-[#121426] p-4 shadow-[0_15px_35px_rgba(60,121,175,0.06)] transition-all hover:shadow-[0_20px_45px_rgba(60,121,175,0.1)] md:grid-cols-[1.1fr_0.9fr] md:items-center"
               >
                 {/* Stretched link — makes the whole card (image, title, info)
                     clickable. Interactive controls below sit above it via z-20+. */}
@@ -917,8 +919,7 @@ const ShowcaseSections = ({
                 {/* 16/9 matches the crop the uploader enforces on cover images,
                     so object-cover fits exactly and nothing is shaved off the sides. */}
                 <div className="relative mx-auto aspect-[16/9] w-full overflow-hidden rounded-[20px] shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <EventCover
                     src={featured.image}
                     alt={featured.title}
                     loading="lazy"
@@ -935,7 +936,7 @@ const ShowcaseSections = ({
                       disabled={
                         saveExperience.isPending || unsaveExperience.isPending
                       }
-                      className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#0094CA] shadow-md backdrop-blur-md transition hover:scale-110 hover:bg-white active:scale-95 disabled:opacity-50"
+                      className="absolute top-3 right-3 z-50 flex h-9 w-9 items-center justify-center rounded-full bg-[#121426]/80 text-[#D8B4FE] shadow-md backdrop-blur-md transition hover:scale-110 hover:bg-[#121426] active:scale-95 disabled:opacity-50"
                       aria-label={
                         isFeaturedSaved
                           ? "Remove from saved"
@@ -945,7 +946,7 @@ const ShowcaseSections = ({
                       <Heart
                         className="h-4.5 w-4.5 transition-colors"
                         fill={isFeaturedSaved ? "#ef3838" : "none"}
-                        stroke={isFeaturedSaved ? "#f02f2f" : "#0094CA"}
+                        stroke={isFeaturedSaved ? "#f02f2f" : "#A020F0"}
                         strokeWidth={2.5}
                       />
                     </button>
@@ -958,7 +959,7 @@ const ShowcaseSections = ({
                       <button
                         type="button"
                         onClick={showPrevFeatured}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-[#121426] text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white disabled:opacity-30"
                         disabled={featuredData.length <= 1}
                       >
                         <ChevronLeft className="h-4 w-4" />
@@ -967,7 +968,7 @@ const ShowcaseSections = ({
                       <button
                         type="button"
                         onClick={() => setIsFeaturedPlaying((v) => !v)}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-[#121426] text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white disabled:opacity-30"
                         disabled={featuredData.length <= 1}
                       >
                         {isFeaturedPlaying ? (
@@ -980,7 +981,7 @@ const ShowcaseSections = ({
                       <button
                         type="button"
                         onClick={showNextFeatured}
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-[#121426] text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white disabled:opacity-30"
                         disabled={featuredData.length <= 1}
                       >
                         <ChevronRight className="h-4 w-4" />
@@ -989,7 +990,7 @@ const ShowcaseSections = ({
                   </div>
 
                   <div className="mt-4">
-                    <h3 className="font-[Outfit,sans-serif] text-2xl font-black tracking-tight text-[#16304c] lg:text-3xl">
+                    <h3 className="font-[Outfit,sans-serif] text-2xl font-black tracking-tight text-white lg:text-3xl">
                       {featured.title}
                     </h3>
                     <p className="mt-2 text-sm leading-relaxed text-[#5c84a5]">
@@ -1000,34 +1001,34 @@ const ShowcaseSections = ({
                   <div className="mt-auto pt-6">
                     <div className="flex flex-wrap gap-2">
                       {featured.dateLabel && (
-                        <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
-                          <CalendarDays className="h-3.5 w-3.5 text-[#0e8ae0]" />
-                          <span className="text-xs font-bold text-[#16304c]">
+                        <div className="flex items-center gap-1.5 rounded-xl bg-[#241333] px-3 py-1.5">
+                          <CalendarDays className="h-3.5 w-3.5 text-[#D8B4FE]" />
+                          <span className="text-xs font-bold text-white">
                             {featured.dateLabel}
                           </span>
                         </div>
                       )}
                       {/* Duration is the least important of the four — hidden on
                           phones so the date, price and rating stay on one row. */}
-                      <div className="hidden items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5 sm:flex">
-                        <Clock3 className="h-3.5 w-3.5 text-[#0e8ae0]" />
-                        <span className="text-xs font-bold text-[#16304c]">
+                      <div className="hidden items-center gap-1.5 rounded-xl bg-[#241333] px-3 py-1.5 sm:flex">
+                        <Clock3 className="h-3.5 w-3.5 text-[#D8B4FE]" />
+                        <span className="text-xs font-bold text-white">
                           {featured.duration}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
-                        {/* <span className="text-xs font-bold text-[#0e8ae0]">
+                      <div className="flex items-center gap-1.5 rounded-xl bg-[#241333] px-3 py-1.5">
+                        {/* <span className="text-xs font-bold text-[#D8B4FE]">
                           $
                         </span> */}
-                        <span className="text-xs font-bold text-[#16304c]">
+                        <span className="text-xs font-bold text-white">
                           {featured.price}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 rounded-xl bg-[#f0f9ff] px-3 py-1.5">
+                      <div className="flex items-center gap-1.5 rounded-xl bg-[#241333] px-3 py-1.5">
                         {featured.rating !== "New" && (
                           <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                         )}
-                        <span className="text-xs font-bold text-[#16304c]">
+                        <span className="text-xs font-bold text-white">
                           {featured.rating}
                         </span>
                       </div>
@@ -1035,7 +1036,7 @@ const ShowcaseSections = ({
 
                     <Link
                       href={featuredHref}
-                      className="group/btn relative z-20 mt-6 flex w-full items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-6 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(31,167,255,0.2)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(31,167,255,0.3)]"
+                      className="group/btn relative z-20 mt-6 flex w-full items-center justify-center overflow-hidden rounded-xl bg-[linear-gradient(135deg,#7B2FFF,#A020F0)] px-6 py-3 text-sm font-black text-white shadow-[0_12px_24px_rgba(31,167,255,0.2)] transition-all hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(31,167,255,0.3)]"
                     >
                       <span className="relative z-10">
                         Book This Experience
@@ -1057,7 +1058,7 @@ const ShowcaseSections = ({
             <div className="w-full">
               <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
                 <div className="max-w-[640px]">
-                  <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-black tracking-tight text-[#16304c] sm:text-5xl">
+                  <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-black tracking-tight text-white sm:text-5xl">
                     Discover Experiences
                   </h2>
                   <p className="mt-3 text-base leading-relaxed text-[#5c84a5]">
@@ -1071,7 +1072,7 @@ const ShowcaseSections = ({
                     <button
                       type="button"
                       onClick={() => scrollCuratedSessions("left")}
-                      className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
+                      className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-[#121426] text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white disabled:opacity-30"
                       aria-label="Scroll curated sessions left"
                     >
                       <ChevronLeft className="h-6 w-6" />
@@ -1079,7 +1080,7 @@ const ShowcaseSections = ({
                     {isCuratedAtScrollEnd ? (
                       <Link
                         href="/experiences"
-                        className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#bdddf480] bg-[#eef8ff] px-6 text-sm font-black text-[#0e8ae0] transition-all hover:bg-[#0e8ae0] hover:text-white"
+                        className="flex h-12 items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-6 text-sm font-black text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white"
                         aria-label="See more experiences"
                       >
                         Explore All
@@ -1089,7 +1090,7 @@ const ShowcaseSections = ({
                       <button
                         type="button"
                         onClick={() => scrollCuratedSessions("right")}
-                        className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
+                        className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-[#121426] text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white disabled:opacity-30"
                         aria-label="Scroll curated sessions right"
                       >
                         <ChevronRight className="h-6 w-6" />
@@ -1115,7 +1116,7 @@ const ShowcaseSections = ({
               <div className="mt-5 md:hidden">
                 <Link
                   href="/experiences"
-                  className="text-sm font-extrabold text-[#0e8ae0] hover:text-[#0b6eb1]"
+                  className="text-sm font-extrabold text-[#D8B4FE] hover:text-[#0b6eb1]"
                 >
                   View All
                 </Link>
@@ -1125,13 +1126,13 @@ const ShowcaseSections = ({
         </div>
       </section>
 
-      <section className="site-x w-full border-y border-[#aeddf847] bg-[linear-gradient(180deg,#edf8ff,#f7fcff)]">
+      <section className="site-x w-full border-y border-white/10 bg-[#121426]">
         <div className="mx-auto w-full max-w-[1120px] pt-14 pb-20">
           <div className="mx-auto mb-14 max-w-[760px] text-center">
-            <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
+            <h2 className="mt-1 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-white sm:text-5xl">
               Experiences Built Around Real People
             </h2>
-            <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
+            <p className="mt-7 text-sm text-[#A5A8C3] sm:text-base">
               From deep conversations to creative sessions —discover experiences
               hosted by people around you.
             </p>
@@ -1148,7 +1149,7 @@ const ShowcaseSections = ({
                   onMouseLeave={() => stopCardVideo(idx)}
                   onFocus={() => playCardVideo(idx)}
                   onBlur={() => stopCardVideo(idx)}
-                  className="group relative min-h-[260px] overflow-hidden rounded-3xl border border-[#aeddf89e] bg-[#dff3ff] shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
+                  className="group relative min-h-[260px] overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
                 >
                   {card.video ? (
                     <video
@@ -1172,20 +1173,20 @@ const ShowcaseSections = ({
                       />
                     </video>
                   ) : (
-                    <img
+                    <EventCover
                       src={card.image}
                       alt={card.title}
                       className="absolute inset-0 h-full w-full object-cover transition duration-500"
                     />
                   )}
-                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(31,167,255,0.05)_40%,rgba(31,167,255,0.8)_100%)] transition-opacity duration-500 group-hover:opacity-0" />
+                  <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(160,32,240,0.05)_40%,rgba(160,32,240,0.8)_100%)] transition-opacity duration-500 group-hover:opacity-0" />
 
                   <div className="relative z-10 flex h-full flex-col p-4 transition-all duration-500 group-hover:opacity-0">
-                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/85 text-[#0e8ae0] shadow-[0_10px_18px_rgba(56,116,169,0.12)] transition-transform group-hover:scale-110">
+                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-white/85 text-[#D8B4FE] shadow-[0_10px_18px_rgba(56,116,169,0.12)] transition-transform group-hover:scale-110">
                       <Icon className="h-5 w-5" />
                     </span>
                     <div className="mt-auto">
-                      <span className="inline-flex rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#0e8ae0] uppercase shadow-sm">
+                      <span className="inline-flex rounded-full bg-[#121426]/90 px-2.5 py-1 text-[10px] font-extrabold tracking-[0.08em] text-[#D8B4FE] uppercase shadow-sm">
                         {card.tag}
                       </span>
                       <h3 className="mt-2 text-[15px] font-bold text-white drop-shadow-md">
@@ -1210,10 +1211,10 @@ const ShowcaseSections = ({
       >
         <div className="mx-auto w-full max-w-[1120px] py-14">
           <div className="mx-auto mb-14 max-w-[760px] text-center">
-            <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-5xl">
+            <h2 className="mt-3 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.04em] text-white sm:text-5xl">
               Turn Your Mood Into A Real Experience
             </h2>
-            <p className="mt-7 text-sm text-[#6f8daa] sm:text-base">
+            <p className="mt-7 text-sm text-[#A5A8C3] sm:text-base">
               Discover someone. Book a moment. Experience something real.
             </p>
           </div>
@@ -1222,7 +1223,7 @@ const ShowcaseSections = ({
             <div className="pointer-events-none absolute top-8 right-20 left-20 z-0 hidden h-[2px] lg:block">
               <div
                 ref={howProgressRef}
-                className="h-full w-full origin-left scale-x-0 rounded-full bg-[linear-gradient(90deg,#1fa7ff,#83d9ff)] opacity-0"
+                className="h-full w-full origin-left scale-x-0 rounded-full bg-[linear-gradient(90deg,#7B2FFF,#D8B4FE)] opacity-0"
               />
             </div>
             <div className="relative z-10 md:hidden">
@@ -1245,7 +1246,7 @@ const ShowcaseSections = ({
                       y2="348"
                       gradientUnits="userSpaceOnUse"
                     >
-                      <stop offset="0%" stopColor="#1fa7ff" />
+                      <stop offset="0%" stopColor="#7B2FFF" />
                       <stop offset="55%" stopColor="#69d4ff" />
                       <stop offset="100%" stopColor="#83d9ff" />
                     </linearGradient>
@@ -1295,7 +1296,7 @@ const ShowcaseSections = ({
                     key={`${step.title}-mobile`}
                     className="relative z-10 flex min-h-[146px] w-full max-w-[240px] flex-col items-center text-center"
                   >
-                    <div className="relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#0094CA] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
+                    <div className="relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#A020F0] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
                       <img
                         src={STEPS_ICONS[idx]}
                         alt={step.title}
@@ -1303,10 +1304,10 @@ const ShowcaseSections = ({
                         className="h-5 w-5"
                       />
                     </div>
-                    <h3 className="max-w-[170px] text-base font-bold text-[#16304c]">
+                    <h3 className="max-w-[170px] text-base font-bold text-white">
                       {step.title}
                     </h3>
-                    <p className="mx-auto mt-1 max-w-[190px] text-sm text-[#6f8daa]">
+                    <p className="mx-auto mt-1 max-w-[190px] text-sm text-[#A5A8C3]">
                       {step.desc}
                     </p>
                   </article>
@@ -1323,7 +1324,7 @@ const ShowcaseSections = ({
                   }}
                   className="relative z-10 text-center"
                 >
-                  <div className="step-icon-container relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#0094CA] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
+                  <div className="step-icon-container relative z-20 mx-auto mb-4 grid h-[74px] w-[74px] place-items-center rounded-full border-6 border-[#04b7f8] bg-[#A020F0] font-[Outfit,sans-serif] text-2xl font-bold text-white shadow-[0_16px_28px_rgba(31,167,255,0.2)]">
                     <img
                       src={STEPS_ICONS[idx]}
                       alt={step.title}
@@ -1331,10 +1332,10 @@ const ShowcaseSections = ({
                       className="h-5 w-5"
                     />
                   </div>
-                  <h3 className="text-base font-bold text-[#16304c]">
+                  <h3 className="text-base font-bold text-white">
                     {step.title}
                   </h3>
-                  <p className="mx-auto mt-1 max-w-[260px] text-sm text-[#6f8daa]">
+                  <p className="mx-auto mt-1 max-w-[260px] text-sm text-[#A5A8C3]">
                     {step.desc}
                   </p>
                 </article>
@@ -1350,18 +1351,17 @@ const ShowcaseSections = ({
             href={storyHref}
             className="relative mx-auto mb-12 block w-full max-w-[410px]"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <EventCover
               src={story.image}
               alt={story.title}
               loading="lazy"
               className="aspect-square w-full rounded-[32px] object-cover shadow-[0_18px_42px_rgba(60,123,177,0.1)]"
             />
-            <div className="absolute bottom-[-34px] left-1/2 w-[min(310px,calc(100%-40px))] -translate-x-1/2 rounded-[26px] bg-white px-6 py-5 shadow-[0_26px_44px_rgba(60,123,177,0.18)]">
+            <div className="absolute bottom-[-34px] left-1/2 w-[min(310px,calc(100%-40px))] -translate-x-1/2 rounded-[26px] bg-[#121426] px-6 py-5 shadow-[0_26px_44px_rgba(60,123,177,0.18)]">
               <p className="font-[Outfit,sans-serif] text-[15px] text-[#1f7bb6] italic">
                 &ldquo;{story.quote}&rdquo;
               </p>
-              <span className="mt-3 block text-xs font-extrabold text-[#16304c]">
+              <span className="mt-3 block text-xs font-extrabold text-white">
                 - {story.author}
               </span>
             </div>
@@ -1372,27 +1372,27 @@ const ShowcaseSections = ({
               {/* Auto-rotation active */}
             </div>
 
-            <h3 className="mt-3 font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl">
+            <h3 className="mt-3 font-[Outfit,sans-serif] text-3xl font-bold tracking-[-0.04em] text-white sm:text-4xl">
               {story.title}
             </h3>
-            <p className="mt-2 text-sm leading-7 text-[#6f8daa]">
+            <p className="mt-2 text-sm leading-7 text-[#A5A8C3]">
               {story.copy}
             </p>
 
-            <div className="my-5 flex gap-8 border-y border-[#aeddf88c] py-5">
+            <div className="my-5 flex gap-8 border-y border-white/10 py-5">
               <div>
-                <p className="font-[Outfit,sans-serif] text-3xl font-bold text-[#0e8ae0]">
+                <p className="font-[Outfit,sans-serif] text-3xl font-bold text-[#D8B4FE]">
                   {story.statOne}
                 </p>
-                <span className="text-[11px] font-extrabold tracking-[0.05em] text-[#6f8daa] uppercase">
+                <span className="text-[11px] font-extrabold tracking-[0.05em] text-[#A5A8C3] uppercase">
                   {story.statOneLabel}
                 </span>
               </div>
               <div>
-                <p className="font-[Outfit,sans-serif] text-3xl font-bold text-[#0e8ae0]">
+                <p className="font-[Outfit,sans-serif] text-3xl font-bold text-[#D8B4FE]">
                   {story.statTwo}
                 </p>
-                <span className="text-[11px] font-extrabold tracking-[0.05em] text-[#6f8daa] uppercase">
+                <span className="text-[11px] font-extrabold tracking-[0.05em] text-[#A5A8C3] uppercase">
                   {story.statTwoLabel}
                 </span>
               </div>
@@ -1400,7 +1400,7 @@ const ShowcaseSections = ({
 
             {/* <Link
               href={storyHref}
-              className="mt-5 inline-flex rounded-full bg-[linear-gradient(135deg,#1fa7ff,#63ceff)] px-8 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
+              className="mt-5 inline-flex rounded-full bg-[linear-gradient(135deg,#7B2FFF,#A020F0)] px-8 py-3 text-sm font-extrabold text-white shadow-[0_16px_32px_rgba(31,167,255,0.24)]"
             >
               Explore Experiences
             </Link> */}
@@ -1411,7 +1411,7 @@ const ShowcaseSections = ({
       <section className="site-x w-full">
         <div
           ref={statsRef}
-          className="mx-auto grid w-full max-w-[1120px] grid-cols-2 gap-4 border-y border-[#aeddf880] py-14 lg:grid-cols-4 lg:gap-6"
+          className="mx-auto grid w-full max-w-[1120px] grid-cols-2 gap-4 border-y border-white/10 py-14 lg:grid-cols-4 lg:gap-6"
         >
           {[
             { label: "Booked Sessions", suffix: "+" },
@@ -1421,9 +1421,9 @@ const ShowcaseSections = ({
           ].map((item, idx) => (
             <article
               key={item.label}
-              className="flex flex-col items-center justify-center rounded-[22px] border border-[#aeddf859] bg-white px-4 py-8 text-center shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
+              className="flex flex-col items-center justify-center rounded-[22px] border border-white/10 bg-[#121426] px-4 py-8 text-center shadow-[0_14px_32px_rgba(77,140,190,0.08)]"
             >
-              <strong className="font-outfit relative inline-block text-[clamp(2rem,3.5vw,2.8rem)] leading-none font-extrabold tracking-[-0.05em] text-[#0e8ae0]">
+              <strong className="font-outfit relative inline-block text-[clamp(2rem,3.5vw,2.8rem)] leading-none font-extrabold tracking-[-0.05em] text-[#D8B4FE]">
                 {formatStat(stats[idx] ?? 0, STATS_TARGETS[idx] ?? 0)}
                 {item.suffix && (
                   <span className="absolute top-1 ml-0.5 text-[0.45em] font-medium">
@@ -1444,7 +1444,7 @@ const ShowcaseSections = ({
         className="site-x w-full scroll-mt-[calc(var(--navbar-height)+3rem)]"
       >
         <div className="mx-auto grid w-full max-w-[1120px] gap-[18px] py-14 lg:grid-cols-[0.9fr_1.1fr]">
-          <article className="flex flex-col rounded-[26px] bg-[linear-gradient(135deg,#109ae9,#0d85db)] p-6 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
+          <article className="flex flex-col rounded-[26px] bg-[linear-gradient(135deg,#7B2FFF,#A020F0)] p-6 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
             <span className="inline-flex items-center gap-2 self-start rounded-full border border-white/20 bg-white/20 px-3 py-1.5 text-[10px] font-extrabold tracking-[0.08em] uppercase">
               Host Corner
             </span>
@@ -1471,13 +1471,14 @@ const ShowcaseSections = ({
             </button>
           </article>
 
-          <article className="flex flex-col rounded-3xl border border-[#aeddf89e] bg-white p-6 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
+          <article className="flex flex-col rounded-3xl border border-white/10 bg-[#121426] p-6 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
             <div className="mb-4">
-              <h3 className="text-[15px] font-bold text-[#16304c]">
+              <h3 className="text-[15px] font-bold text-white">
                 Community Moments
               </h3>
-              <p className="mt-1 text-[0.78rem] leading-[1.55] text-[#6f8daa]">
-                Shared experiences, new connections, and moments worth remembering
+              <p className="mt-1 text-[0.78rem] leading-[1.55] text-[#A5A8C3]">
+                Shared experiences, new connections, and moments worth
+                remembering
               </p>
             </div>
 

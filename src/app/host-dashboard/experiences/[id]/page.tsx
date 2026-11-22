@@ -3,11 +3,10 @@
 
 import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { CoHostManager, HostNavbar } from "~/components/host-dashboard";
+import { CoHostManager } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
 import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
 import CouponsManager from "~/components/host/CouponsManager";
-import Breadcrumb from "~/components/Breadcrumb";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
   useMyHost,
@@ -17,6 +16,9 @@ import {
   usePublishEvent,
 } from "~/hooks/useApi";
 import { useDragDrop } from "~/hooks/useDragDrop";
+import { useHostTier } from "~/hooks/useHostTier";
+import { VerifyToEarnSheet } from "~/components/host-dashboard/VerifyToEarn";
+import { FREE_HOST_LIMITS, findOffPlatformPayment } from "~/lib/hostTier";
 import {
   FiArrowLeft,
   FiX,
@@ -28,13 +30,22 @@ import {
   FiCalendar,
   FiUsers,
   FiDownload,
+  FiMap,
+  FiMapPin,
+  FiVideo,
 } from "react-icons/fi";
 import {
   deleteEvent,
   getEvent,
   getEventAttendees,
   type BookingDTO,
+  type PayoutMode,
 } from "~/lib/api";
+import BoostCard from "~/components/host-dashboard/boost/BoostCard";
+import PayoutTimingFields, {
+  refundPayoutSummary,
+} from "~/components/host-dashboard/PayoutTimingFields";
+import { WEEKLY_PAYOUTS_ENABLED } from "~/lib/boost";
 import { istInputToUTCISO, utcToISTInputs } from "~/lib/datetime";
 import {
   generateSessionSlots,
@@ -45,6 +56,26 @@ import {
 } from "~/lib/sessionSlots";
 import type { SessionType } from "~/lib/api";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
+import {
+  AddPill,
+  Chip,
+  CoverPoster,
+  FIELD,
+  GRADIENT,
+  INLINE_FIELD,
+  INLINE_PICKER,
+  MoodSelector,
+  MoreOptions,
+  ROW_INPUT,
+  Row,
+  Rows,
+  Section,
+  Segmented,
+  ToggleRow,
+} from "~/components/host-dashboard/EventFormKit";
+import { DatePill, TimePill } from "~/components/host-dashboard/DateTimePills";
+import { LocationSearchInput, MapPickerModal } from "~/components";
+import { LuGlobe, LuLock } from "react-icons/lu";
 import { toast } from "sonner";
 import PassHoldersPanel from "~/components/host/PassHoldersPanel";
 import { useQueryClient } from "@tanstack/react-query";
@@ -92,6 +123,7 @@ interface EventFormData {
   breakMinutes: number;
   sessionIsWeekly: boolean;
   cancellationPolicy: string;
+  payoutMode: PayoutMode;
   requiresAttendeeDetails: boolean;
   attendeeFields: string[];
   isPrivate: boolean;
@@ -100,17 +132,6 @@ interface EventFormData {
   accessPasskey: string;
   passkeyGrantsFree: boolean;
 }
-
-const MOODS = [
-  "Adventurous",
-  "Relaxing",
-  "Creative",
-  "Social",
-  "Educational",
-  "Wellness",
-  "Culinary",
-  "Cultural",
-];
 
 const DURATION_OPTIONS = [30, 60, 90, 120, 180, 240];
 
@@ -196,17 +217,17 @@ function ImageUpload({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      {helpText && <p className="text-xs text-gray-500">{helpText}</p>}
+      <label className="block text-sm font-medium text-white/80">{label}</label>
+      {helpText && <p className="text-xs text-[#A5A8C3]">{helpText}</p>}
 
       {!multiple && preview && (
-        <div className="relative inline-block w-full max-w-md">
+        <div className="relative inline-block w-full max-w-[280px]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={preview}
             alt="Preview"
             loading="lazy"
-            className="aspect-[16/9] w-full rounded-lg object-cover"
+            className="aspect-[4/5] w-full rounded-lg object-cover"
           />
           <button
             type="button"
@@ -221,15 +242,23 @@ function ImageUpload({
       {multiple && previews.length > 0 && (
         <div className="space-y-4">
           <div className="group relative">
-            {/* Photos are cropped to 16:9 on upload, so this preview matches the
-                fixed 16:9 frame the live experience page renders them in. */}
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-gray-100">
+            {/* Photos are cropped to 4:5 on upload, matching the poster frame
+                used across the site. Older photos in other shapes are shown
+                whole over a blurred fill rather than cropped. */}
+            <div className="relative aspect-[4/5] w-full max-w-sm overflow-hidden rounded-xl bg-white/[0.06]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={previews[currentImageIndex]}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-xl"
+              />
               {/* Main Image */}
               <img
                 src={previews[currentImageIndex]}
                 alt={`Cover photo preview ${currentImageIndex + 1}`}
                 loading="lazy"
-                className="block h-full w-full object-cover transition-opacity duration-300"
+                className="relative block h-full w-full object-contain transition-opacity duration-300"
               />
 
               {/* Navigation Arrows */}
@@ -244,11 +273,11 @@ function ImageUpload({
                         prev === 0 ? previews.length - 1 : prev - 1,
                       );
                     }}
-                    className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
+                    className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full bg-[#121426]/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-[#121426]"
                     aria-label="Previous image"
                   >
                     <svg
-                      className="h-4 w-4 text-gray-800"
+                      className="h-4 w-4 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -271,11 +300,11 @@ function ImageUpload({
                         prev === previews.length - 1 ? 0 : prev + 1,
                       );
                     }}
-                    className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-white/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-white"
+                    className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full bg-[#121426]/80 p-2.5 opacity-0 shadow-md transition group-hover:opacity-100 hover:bg-[#121426]"
                     aria-label="Next image"
                   >
                     <svg
-                      className="h-4 w-4 text-gray-800"
+                      className="h-4 w-4 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -306,7 +335,7 @@ function ImageUpload({
                 onClick={() => setCurrentImageIndex(i)}
                 className={`relative cursor-pointer overflow-hidden rounded-lg border-2 transition ${
                   currentImageIndex === i
-                    ? "border-[#0094CA]"
+                    ? "border-[#A020F0]"
                     : "border-transparent"
                 }`}
               >
@@ -342,22 +371,22 @@ function ImageUpload({
           onClick={() => inputRef.current?.click()}
           className={`cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition ${
             isDragging
-              ? "scale-105 border-[#0094CA] bg-[#0094CA]/5"
-              : "border-gray-300 hover:border-[#0094CA] hover:bg-gray-50"
+              ? "scale-105 border-[#A020F0] bg-[#A020F0]/10"
+              : "border-white/15 hover:border-[#A020F0] hover:bg-white/[0.04]"
           }`}
         >
           <FiUpload
-            className={`mx-auto mb-2 transition ${isDragging ? "text-[#0094CA]" : "text-gray-400"}`}
+            className={`mx-auto mb-2 transition ${isDragging ? "text-[#D8B4FE]" : "text-[#777B98]"}`}
             size={24}
           />
           <p
-            className={`text-sm transition ${isDragging ? "font-semibold text-[#0094CA]" : "text-gray-500"}`}
+            className={`text-sm transition ${isDragging ? "font-semibold text-[#D8B4FE]" : "text-[#A5A8C3]"}`}
           >
             {isDragging
               ? `Drop ${multiple ? "images" : "image"} here`
               : `Click to upload or drag ${multiple ? "images" : "image"}`}
           </p>
-          <p className="mt-1 text-xs text-gray-400">PNG, JPG up to 5MB</p>
+          <p className="mt-1 text-xs text-[#777B98]">PNG, JPG up to 5MB</p>
         </div>
       )}
 
@@ -383,7 +412,7 @@ function AttendeeRow({
   const [downloadingTicket, setDownloadingTicket] = useState(false);
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-100 px-4 py-3 first:border-t-0">
+    <div className="flex items-center justify-between border-t border-white/10 px-4 py-3 first:border-t-0">
       <div className="flex min-w-0 items-center gap-3">
         {attendee.user_avatar_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -393,23 +422,23 @@ function AttendeeRow({
             className="h-9 w-9 shrink-0 rounded-full object-cover"
           />
         ) : (
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0094CA]/10 text-sm font-semibold text-[#0094CA]">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#A020F0]/10 text-sm font-semibold text-[#D8B4FE]">
             {(attendee.user_name ?? "?").charAt(0).toUpperCase()}
           </div>
         )}
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-gray-900">
+          <p className="truncate text-sm font-semibold text-white">
             {attendee.user_name ?? "Unknown user"}
           </p>
           {attendee.user_email && (
-            <p className="truncate text-xs text-gray-500">
+            <p className="truncate text-xs text-[#A5A8C3]">
               {attendee.user_email}
             </p>
           )}
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-[#A5A8C3]">
             Qty: {attendee.quantity}
             {attendee.amount_cents !== null && (
-              <span className="ml-2 text-gray-400">
+              <span className="ml-2 text-[#777B98]">
                 ₹{(attendee.amount_cents / 100).toFixed(2)}
               </span>
             )}
@@ -420,14 +449,14 @@ function AttendeeRow({
         <span
           className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-semibold ${
             attendee.status === "pending"
-              ? "bg-yellow-100 text-yellow-800"
+              ? "bg-yellow-500/15 text-yellow-300"
               : attendee.status === "confirmed"
-                ? "bg-green-100 text-green-800"
+                ? "bg-green-500/15 text-green-300"
                 : attendee.status === "cancelled"
-                  ? "bg-red-100 text-red-800"
+                  ? "bg-red-500/15 text-red-300"
                   : attendee.status === "refunded"
-                    ? "bg-orange-100 text-orange-800"
-                    : "bg-gray-100 text-gray-800"
+                    ? "bg-orange-500/15 text-orange-300"
+                    : "bg-white/[0.06] text-white"
           }`}
         >
           {attendee.status.charAt(0).toUpperCase() + attendee.status.slice(1)}
@@ -443,13 +472,13 @@ function AttendeeRow({
             );
           }}
           disabled={downloadingTicket}
-          className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 transition hover:border-[#0094CA] hover:text-[#0094CA] disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md border border-white/10 bg-[#121426] px-2 py-1 text-xs font-medium text-white/80 transition hover:border-[#A020F0] hover:text-[#D8B4FE] disabled:opacity-50"
           title="Download Ticket PDF"
         >
           {downloadingTicket ? (
-            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#0094CA] border-t-transparent" />
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-[#A020F0] border-t-transparent" />
           ) : (
-            <FiDownload className="h-3 w-3 text-gray-500" />
+            <FiDownload className="h-3 w-3 text-[#A5A8C3]" />
           )}
           Ticket
         </button>
@@ -496,7 +525,7 @@ function SessionGroup({
   // For non-recurring events with a single session, skip the collapsible chrome.
   if (!isRecurring) {
     return (
-      <div className="divide-y divide-gray-100 rounded-lg border border-gray-200">
+      <div className="divide-y divide-white/10 rounded-lg border border-white/10">
         {bookings.map((b) => (
           <AttendeeRow key={b.id} attendee={b} event={event} />
         ))}
@@ -505,40 +534,40 @@ function SessionGroup({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200">
+    <div className="overflow-hidden rounded-lg border border-white/10">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 bg-gray-50 px-4 py-3 text-left transition hover:bg-gray-100"
+        className="flex w-full items-center gap-3 bg-white/[0.04] px-4 py-3 text-left transition hover:bg-white/[0.06]"
       >
         {open ? (
-          <FiChevronDown className="h-4 w-4 text-gray-400" />
+          <FiChevronDown className="h-4 w-4 text-[#777B98]" />
         ) : (
-          <FiChevronRight className="h-4 w-4 text-gray-400" />
+          <FiChevronRight className="h-4 w-4 text-[#777B98]" />
         )}
-        <FiCalendar className="h-4 w-4 text-[#0094CA]" />
-        <span className="text-sm font-semibold text-gray-900">{dateLabel}</span>
+        <FiCalendar className="h-4 w-4 text-[#D8B4FE]" />
+        <span className="text-sm font-semibold text-white">{dateLabel}</span>
         {isPast && (
-          <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600">
+          <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-[#A5A8C3]">
             past
           </span>
         )}
-        <span className="ml-auto flex items-center gap-3 text-xs text-gray-500">
+        <span className="ml-auto flex items-center gap-3 text-xs text-[#A5A8C3]">
           <span className="inline-flex items-center gap-1">
             <FiUsers className="h-3.5 w-3.5" />
             {totalGuests} guest{totalGuests === 1 ? "" : "s"}
           </span>
           {revenueCents > 0 && (
-            <span className="font-medium text-gray-700">
+            <span className="font-medium text-white/80">
               ₹{(revenueCents / 100).toFixed(2)}
             </span>
           )}
-          <span className="text-gray-400">
+          <span className="text-[#777B98]">
             {bookings.length} booking{bookings.length === 1 ? "" : "s"}
           </span>
         </span>
       </button>
       {open && (
-        <div className="bg-white">
+        <div className="bg-[#121426]">
           {bookings.map((b) => (
             <AttendeeRow key={b.id} attendee={b} event={event} />
           ))}
@@ -578,13 +607,13 @@ function AttendeesList({
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#0094CA]" />
+        <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-[#A020F0]" />
       </div>
     );
   }
 
   if (!attendees || attendees.length === 0) {
-    return <p className="py-8 text-center text-gray-500">No bookings yet</p>;
+    return <p className="py-8 text-center text-[#A5A8C3]">No bookings yet</p>;
   }
 
   // Group bookings by occurrence date (date+time keyed string)
@@ -606,10 +635,10 @@ function AttendeesList({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
-        <span className="text-xs text-gray-500">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+        <span className="text-xs text-[#A5A8C3]">
           Total Bookings:{" "}
-          <strong className="text-gray-900">{attendees.length}</strong>
+          <strong className="text-white">{attendees.length}</strong>
         </span>
         <button
           type="button"
@@ -621,7 +650,7 @@ function AttendeesList({
             )
           }
           disabled={exporting || attendees.length === 0}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-600 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:bg-emerald-500/15 disabled:opacity-50"
           title="Download Excel Sheet of all bookings for this experience"
         >
           {exporting ? (
@@ -662,6 +691,7 @@ export default function EditEventPage({
   const [isHydrated, setIsHydrated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showMapPicker, setShowMapPicker] = useState(false);
 
   // Image Crop states
   const [cropQueue, setCropQueue] = useState<File[]>([]);
@@ -703,6 +733,7 @@ export default function EditEventPage({
     breakMinutes: 0,
     sessionIsWeekly: true,
     cancellationPolicy: "flexible",
+    payoutMode: "after_event",
     requiresAttendeeDetails: false,
     attendeeFields: [],
     isPrivate: false,
@@ -745,6 +776,16 @@ export default function EditEventPage({
   }, []);
 
   const { data: host, isLoading: hostLoading } = useMyHost(userId);
+  // Unverified hosts can only run free events, within the free-host limits.
+  const {
+    isVerified: verifiedHost,
+    isLoading: tierLoading,
+    applicationStatus,
+  } = useHostTier();
+  // Optimistic while loading: verified hosts never see the free-host locks
+  // flash, and the backend still enforces the rule.
+  const isVerified = tierLoading || verifiedHost;
+  const [verifyOpen, setVerifyOpen] = useState(false);
   const { data: event, isLoading: eventLoading } = useEvent(id);
   const updateEvent = useUpdateEvent();
   const publishEvent = usePublishEvent();
@@ -835,10 +876,12 @@ export default function EditEventPage({
           (w) => w.weekday !== undefined && w.weekday !== null,
         ),
         cancellationPolicy: event.cancellation_policy ?? "flexible",
+        payoutMode: event.payout_mode ?? "after_event",
         requiresAttendeeDetails: event.requires_attendee_details ?? false,
         attendeeFields: event.attendee_fields ?? [],
         isPrivate: event.is_private ?? false,
-        privateAccessMode: event.private_access_mode === "rsvp" ? "rsvp" : "passkey",
+        privateAccessMode:
+          event.private_access_mode === "rsvp" ? "rsvp" : "passkey",
         // Corrected by the passkey refetch below (shared if a passkey exists,
         // otherwise unique — access via per-guest codes).
         accessMode: "shared",
@@ -888,6 +931,18 @@ export default function EditEventPage({
   ) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  // With an end time, the length is just end minus start.
+  useEffect(() => {
+    if (form.sessionType !== "group" || !form.eventTime || !form.endTime)
+      return;
+    const [sh = 0, sm = 0] = form.eventTime.split(":").map(Number);
+    const [eh = 0, em = 0] = form.endTime.split(":").map(Number);
+    let mins = eh * 60 + em - (sh * 60 + sm);
+    if (mins <= 0) mins += 24 * 60; // ends after midnight
+    if (mins >= 15 && mins !== form.durationMinutes)
+      setForm((prev) => ({ ...prev, durationMinutes: mins }));
+  }, [form.sessionType, form.eventTime, form.endTime, form.durationMinutes]);
 
   const addPriceTier = () => {
     updateForm("priceTiers", [...form.priceTiers, { name: "", priceStr: "" }]);
@@ -994,12 +1049,28 @@ export default function EditEventPage({
       return "Set a valid group size before publishing";
     if (!form.cancellationPolicy)
       return "Pick a cancellation policy before publishing";
+    if (!isVerified) {
+      if (!form.isFree) return "Only verified hosts can sell tickets";
+      if (
+        form.sessionType !== "one_on_one" &&
+        form.maxGroupSize > FREE_HOST_LIMITS.maxGuests
+      )
+        return `Free events can have up to ${FREE_HOST_LIMITS.maxGuests} guests`;
+      const payment = findOffPlatformPayment(
+        `${form.title} ${form.hookLine} ${form.description}`,
+      );
+      if (payment) return payment;
+    }
     return null;
   };
 
   const handleUpdate = async (publishAfter = false) => {
     if (!host?.id || !event?.id) {
       toast.error("Unable to update event");
+      return;
+    }
+    if (!isVerified && !form.isFree) {
+      setVerifyOpen(true);
       return;
     }
 
@@ -1242,6 +1313,9 @@ export default function EditEventPage({
           session_windows:
             form.sessionType === "one_on_one" ? form.sessionWindows : undefined,
           cancellation_policy: form.cancellationPolicy,
+          ...(WEEKLY_PAYOUTS_ENABLED && !form.isFree
+            ? { payout_mode: form.payoutMode }
+            : {}),
           requires_attendee_details: form.requiresAttendeeDetails,
           attendee_fields: form.requiresAttendeeDetails
             ? form.attendeeFields
@@ -1311,10 +1385,9 @@ export default function EditEventPage({
 
   if (hostLoading || eventLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <HostNavbar />
+      <div className="min-h-screen bg-[#080914]">
         <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#A020F0] border-t-transparent" />
         </div>
       </div>
     );
@@ -1322,364 +1395,311 @@ export default function EditEventPage({
 
   return (
     <>
-      <HostNavbar />
+      <main className="msm-dark-form relative min-h-screen overflow-x-clip bg-[#080914] pb-24 text-white">
+        {/* Soft colour from the poster behind everything, like the event page */}
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-0 overflow-hidden"
+        >
+          {form.coverImagePreview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={form.coverImagePreview}
+              alt=""
+              className="h-full w-full scale-125 object-cover opacity-40 blur-[90px]"
+            />
+          ) : (
+            <div className="absolute -top-40 left-1/3 h-[560px] w-[560px] rounded-full bg-[#7B2FFF]/20 blur-[140px]" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#080914]/30 via-[#080914]/70 to-[#080914]" />
+        </div>
 
-      <main className="min-h-screen bg-gray-50 pb-24">
-        <div className="site-x mx-auto max-w-4xl py-8">
-          <Breadcrumb
-            items={[
-              { label: "Home", href: "/" },
-              { label: "Dashboard", href: "/host-dashboard" },
-              { label: "Experiences", href: "/host-dashboard/experiences" },
-              { label: "Edit" },
-            ]}
-            className="mb-6"
-          />
-
-          <div className="mb-6 flex items-center gap-4">
+        <div className="relative mx-auto max-w-[1120px] px-5 py-8 md:px-10">
+          {/* Header */}
+          <div className="mb-6 flex items-center gap-3">
             <button
               onClick={() => router.push("/host-dashboard/experiences")}
-              className="rounded-lg p-2 transition hover:bg-gray-100"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white transition hover:bg-white/10"
+              aria-label="Back to my experiences"
             >
-              <FiArrowLeft size={20} />
+              <FiArrowLeft size={18} />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Edit Experience
+            <div className="min-w-0 flex-1">
+              <h1 className="font-outfit text-2xl font-bold text-white">
+                Edit experience
               </h1>
-              <p className="text-sm text-gray-500">
-                Update your experience details
+              <p className="text-sm text-white/50">
+                Changes go live as soon as you save.
               </p>
             </div>
+            {event?.status && (
+              <span
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                  event.status === "live"
+                    ? "bg-emerald-400/15 text-emerald-300"
+                    : "bg-white/10 text-white/70"
+                }`}
+              >
+                {event.status}
+              </span>
+            )}
           </div>
 
           {/* Tabs */}
-          <div className="mb-6 flex gap-4 border-b border-gray-200">
-            <button
-              onClick={() => router.push(`/host-dashboard/experiences/${id}`)}
-              className={`px-1 pb-3 font-medium transition ${
-                !showBookings
-                  ? "border-b-2 border-[#0094CA] text-[#0094CA]"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Details
-            </button>
-            <button
-              onClick={() =>
-                router.push(`/host-dashboard/experiences/${id}?tab=bookings`)
-              }
-              className={`px-1 pb-3 font-medium transition ${
-                showBookings
-                  ? "border-b-2 border-[#0094CA] text-[#0094CA]"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Bookings
-            </button>
+          <div className="mb-8 flex gap-1 border-b border-white/[0.08]">
+            {(
+              [
+                ["details", "Details", `/host-dashboard/experiences/${id}`],
+                [
+                  "bookings",
+                  "Bookings",
+                  `/host-dashboard/experiences/${id}?tab=bookings`,
+                ],
+              ] as const
+            ).map(([key, label, href]) => {
+              const on = (key === "bookings") === showBookings;
+              return (
+                <button
+                  key={key}
+                  onClick={() => router.push(href)}
+                  className={`-mb-px border-b-2 px-3 pb-3 text-sm font-semibold transition outline-none ${
+                    on
+                      ? "border-[#B724EA] text-white"
+                      : "border-transparent text-white/55 hover:text-white"
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Details Tab */}
+          {/* Details: laid out like the event page, typed into directly */}
           {!showBookings && (
-            <div className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Experience Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.title}
-                  onChange={(e) => updateForm("title", e.target.value)}
-                  placeholder="e.g., Morning Yoga by the Beach"
-                  className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                  maxLength={100}
+            <div className="grid gap-8 lg:grid-cols-[420px_minmax(0,1fr)] lg:gap-12">
+              {/* Left — poster, host and co-hosts */}
+              <aside className="min-w-0 space-y-5 lg:sticky lg:top-6 lg:self-start">
+                <CoverPoster
+                  preview={form.coverImagePreview}
+                  title={form.title}
+                  mood={form.mood}
+                  isPrivate={form.isPrivate}
+                  onUpload={handleCoverUpload}
+                  onRemove={() => {
+                    updateForm("coverImage", null);
+                    updateForm("coverImagePreview", null);
+                  }}
                 />
-                <p className="text-xs text-gray-400">
-                  {form.title.length}/100 characters
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Hook Line
-                </label>
-                <input
-                  type="text"
-                  value={form.hookLine}
-                  onChange={(e) => updateForm("hookLine", e.target.value)}
-                  placeholder="A short catchy phrase to attract guests"
-                  className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                  maxLength={150}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Mood
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {MOODS.map((mood) => (
-                    <button
-                      key={mood}
-                      type="button"
-                      onClick={() => updateForm("mood", mood.toLowerCase())}
-                      className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                        form.mood === mood.toLowerCase()
-                          ? "bg-[#0094CA] text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
+                {event && (
+                  <BoostCard
+                    event={event}
+                    hostId={host?.id ?? null}
+                    autoOpen={searchParams.get("boost") === "1"}
+                  />
+                )}
+                <div className="space-y-3">
+                  <div className="border-b border-white/[0.08] pb-2">
+                    <h2 className="font-outfit text-base font-semibold text-white">
+                      Hosted by
+                    </h2>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-full text-base font-semibold text-white ${GRADIENT}`}
                     >
-                      {mood}
-                    </button>
-                  ))}
+                      {(host?.first_name?.[0] ?? "H").toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-white">
+                        {`${host?.first_name ?? ""} ${host?.last_name ?? ""}`.trim() ||
+                          "You"}
+                      </p>
+                      {host?.city && (
+                        <p className="truncate text-xs text-white/40">
+                          {host.city}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {event?.id && <CoHostManager eventId={event.id} />}
                 </div>
-              </div>
+              </aside>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Description
-                </label>
-                <RichTextEditor
-                  value={form.description}
-                  onChange={(html) => updateForm("description", html)}
-                  placeholder="Describe your experience..."
-                  maxLength={2000}
-                />
-              </div>
+              {/* Right — the event, editable */}
+              <div className="min-w-0 space-y-7">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateForm("isPrivate", !form.isPrivate)}
+                    title="Tap to switch"
+                    className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-3.5 py-1.5 text-[13px] font-medium text-white transition hover:border-white/30"
+                  >
+                    {form.isPrivate ? (
+                      <LuLock className="h-3.5 w-3.5 text-[#D8B4FE]" />
+                    ) : (
+                      <LuGlobe className="h-3.5 w-3.5 text-[#D8B4FE]" />
+                    )}
+                    {form.isPrivate ? "Private event" : "Public event"}
+                  </button>
+                  {form.sessionType === "one_on_one" && (
+                    <span className="rounded-full border border-white/15 px-3.5 py-1.5 text-[13px] font-medium text-white/75">
+                      1:1 session
+                    </span>
+                  )}
+                </div>
 
-              {/* Schedule & Pricing Section */}
-              <div className="border-t border-gray-100 pt-6">
-                <h3 className="mb-4 text-base font-semibold text-gray-900">
-                  Schedule & Pricing
-                </h3>
-
-                {/* Schedule Type Selection Tabs */}
-                <div className="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateForm("scheduleType", "one_time");
-                      updateForm("isRecurring", false);
-                      updateForm("sessionType", "group");
-                    }}
-                    className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" &&
-                      form.scheduleType === "one_time"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">One-Time Event</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      Single specific date & time
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateForm("scheduleType", "recurring");
-                      updateForm("isRecurring", true);
-                      updateForm("sessionType", "group");
-                    }}
-                    className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" &&
-                      form.scheduleType === "recurring"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">Recurring</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      Repeats daily, weekly, or monthly
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateForm("scheduleType", "custom_dates");
-                      updateForm("isRecurring", false);
-                      updateForm("sessionType", "group");
-                    }}
-                    className={`rounded-xl border p-3.5 text-left transition ${
-                      form.sessionType === "group" &&
-                      form.scheduleType === "custom_dates"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">Custom Dates</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      Pick dynamic dates (e.g. Aug 15, 22, Sept 5)
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      updateForm("sessionType", "one_on_one");
-                      updateForm("scheduleType", "custom_dates");
-                      updateForm("isRecurring", false);
-                    }}
-                    className={`rounded-xl border p-3.5 text-left transition ${
+                {/* What */}
+                <section className="space-y-4">
+                  <MoodSelector
+                    kind={
                       form.sessionType === "one_on_one"
-                        ? "border-[#0094CA] bg-[#0094CA]/5 font-semibold text-[#0094CA]"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-gray-300"
-                    }`}
-                  >
-                    <div className="text-sm font-medium">One-on-One</div>
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      Set your hours, we split them into 1:1 slots
-                    </div>
-                  </button>
-                </div>
+                        ? "session"
+                        : "experience"
+                    }
+                    value={form.mood}
+                    onChange={(v) => updateForm("mood", v)}
+                  />
+                  <input
+                    type="text"
+                    value={form.title}
+                    onChange={(e) => updateForm("title", e.target.value)}
+                    placeholder="Event name"
+                    aria-label="Event name"
+                    maxLength={100}
+                    className="font-outfit w-full rounded-2xl border border-transparent bg-transparent px-2 py-2 text-[28px] leading-tight font-bold text-white transition outline-none placeholder:text-white/30 hover:bg-white/[0.03] focus:border-white/10 focus:bg-white/[0.05] md:text-[32px]"
+                  />
+                  <input
+                    type="text"
+                    value={form.hookLine}
+                    onChange={(e) => updateForm("hookLine", e.target.value)}
+                    placeholder="A short tagline (optional)"
+                    aria-label="Short tagline"
+                    maxLength={150}
+                    className={INLINE_FIELD}
+                  />
+                </section>
 
-                {/* Standard One-Time & Recurring Inputs */}
-                {form.sessionType === "group" &&
-                  (form.scheduleType === "one_time" ||
-                    form.scheduleType === "recurring") && (
-                    <>
-                      {/* Date */}
-                      <div className="mb-4 space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Event Date <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="date"
+                {/* When */}
+                <section className="space-y-3">
+                  {form.sessionType === "group" &&
+                    (form.scheduleType === "one_time" ||
+                      form.scheduleType === "recurring") && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <DatePill
                           value={form.eventDate}
-                          onChange={(e) =>
-                            updateForm("eventDate", e.target.value)
-                          }
-                          className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                          onChange={(v) => updateForm("eventDate", v)}
+                        />
+                        <TimePill
+                          value={form.eventTime}
+                          onChange={(v) => updateForm("eventTime", v)}
+                          placeholder="Start time"
+                          ariaLabel="Start time"
+                        />
+                        <span className="text-white/35">to</span>
+                        <TimePill
+                          value={form.endTime}
+                          onChange={(v) => updateForm("endTime", v)}
+                          placeholder="End time"
+                          start={form.eventTime || undefined}
+                          ariaLabel="End time"
                         />
                       </div>
+                    )}
 
-                      {/* Time */}
-                      <div className="mb-4 grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Start Time <span className="text-red-500">*</span>
-                          </label>
-                          <input
-                            type="time"
-                            value={form.eventTime}
-                            onChange={(e) =>
-                              updateForm("eventTime", e.target.value)
-                            }
-                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="block text-sm font-medium text-gray-700">
-                            End Time
-                          </label>
-                          <input
-                            type="time"
-                            value={form.endTime}
-                            onChange={(e) =>
-                              updateForm("endTime", e.target.value)
-                            }
-                            placeholder="Optional - auto-calculated from duration if not set"
-                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                          />
-                        </div>
-                      </div>
-
-                      {form.scheduleType === "recurring" && (
-                        <div className="mb-4 space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                          <label className="block text-sm font-medium text-gray-700">
-                            Recurrence Frequency{" "}
-                            <span className="text-red-500">*</span>
-                          </label>
-                          <select
-                            value={form.recurrenceRule}
-                            onChange={(e) =>
-                              updateForm("recurrenceRule", e.target.value)
-                            }
-                            className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                          >
-                            <option value="">Select frequency</option>
-                            <option value="FREQ=DAILY">Daily</option>
-                            <option value="FREQ=WEEKLY">Weekly</option>
-                            <option value="FREQ=WEEKLY;INTERVAL=2">
-                              Every 2 weeks
-                            </option>
-                            <option value="FREQ=MONTHLY">Monthly</option>
-                          </select>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                {/* Dynamic Custom Selected Dates Inputs */}
-                {form.sessionType === "group" &&
-                  form.scheduleType === "custom_dates" && (
-                    <div className="mb-6 space-y-4 rounded-xl border border-[#0094CA]/30 bg-[#0094CA]/5 p-5">
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900">
-                          Selected Specific Dates & Times
-                        </h4>
-                        <p className="text-xs text-gray-500">
-                          Add the specific dates and times when this experience
-                          will take place.
-                        </p>
-                      </div>
-
-                      {form.customDatesList.map((slot, idx) => (
-                        <div
-                          key={idx}
-                          className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm"
+                  {form.sessionType === "group" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      {(
+                        [
+                          ["one_time", "Just once"],
+                          ["recurring", "Repeats"],
+                          ["custom_dates", "Several dates"],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <Chip
+                          key={key}
+                          active={form.scheduleType === key}
+                          onClick={() => {
+                            updateForm("scheduleType", key);
+                            updateForm("isRecurring", key === "recurring");
+                          }}
                         >
-                          <div className="min-w-[150px] flex-1">
-                            <label className="mb-1 block text-xs font-medium text-gray-600">
-                              Date
-                            </label>
-                            <input
-                              type="date"
-                              value={slot.date}
-                              onChange={(e) =>
-                                updateCustomSlot(idx, "date", e.target.value)
-                              }
-                              min={new Date().toISOString().split("T")[0]}
-                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
-                            />
-                          </div>
-                          <div className="w-36 min-w-[120px]">
-                            <label className="mb-1 block text-xs font-medium text-gray-600">
-                              Start Time
-                            </label>
-                            <input
-                              type="time"
-                              value={slot.time}
-                              onChange={(e) =>
-                                updateCustomSlot(idx, "time", e.target.value)
-                              }
-                              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
-                            />
-                          </div>
-                          {form.customDatesList.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeCustomSlot(idx)}
-                              className="mt-5 p-2 text-gray-400 transition hover:text-red-500"
-                              title="Remove slot"
-                            >
-                              <FiX size={18} />
-                            </button>
-                          )}
-                        </div>
+                          {label}
+                        </Chip>
                       ))}
-
-                      <button
-                        type="button"
-                        onClick={addCustomSlot}
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#0094CA] hover:underline"
-                      >
-                        + Add Another Date
-                      </button>
+                      {form.scheduleType === "recurring" && (
+                        <select
+                          value={form.recurrenceRule}
+                          onChange={(e) =>
+                            updateForm("recurrenceRule", e.target.value)
+                          }
+                          className={INLINE_PICKER}
+                          aria-label="How often it repeats"
+                        >
+                          <option value="">How often?</option>
+                          <option value="FREQ=DAILY">Daily</option>
+                          <option value="FREQ=WEEKLY">Weekly</option>
+                          <option value="FREQ=WEEKLY;INTERVAL=2">
+                            Every 2 weeks
+                          </option>
+                          <option value="FREQ=MONTHLY">Monthly</option>
+                          {form.recurrenceRule &&
+                            ![
+                              "FREQ=DAILY",
+                              "FREQ=WEEKLY",
+                              "FREQ=WEEKLY;INTERVAL=2",
+                              "FREQ=MONTHLY",
+                            ].includes(form.recurrenceRule) && (
+                              <option value={form.recurrenceRule}>
+                                Custom ({form.recurrenceRule})
+                              </option>
+                            )}
+                        </select>
+                      )}
                     </div>
                   )}
 
-                {form.sessionType === "one_on_one" && (
-                  <div className="mb-6">
+                  {form.sessionType === "group" &&
+                    form.scheduleType === "custom_dates" && (
+                      <div className="space-y-2">
+                        {form.customDatesList.map((slot, idx) => (
+                          <div
+                            key={idx}
+                            className="flex flex-wrap items-center gap-2"
+                          >
+                            <DatePill
+                              value={slot.date}
+                              onChange={(v) => updateCustomSlot(idx, "date", v)}
+                              placeholder={`Date ${idx + 1}`}
+                            />
+                            <TimePill
+                              value={slot.time}
+                              onChange={(v) => updateCustomSlot(idx, "time", v)}
+                              placeholder="Start time"
+                              ariaLabel={`Start time ${idx + 1}`}
+                            />
+                            {form.customDatesList.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeCustomSlot(idx)}
+                                className="p-1.5 text-white/40 transition hover:text-red-400"
+                                aria-label="Remove this date"
+                              >
+                                <FiX size={16} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addCustomSlot}
+                          className="px-2 text-sm font-medium text-[#D8B4FE] transition hover:text-white"
+                        >
+                          + Add another date
+                        </button>
+                      </div>
+                    )}
+
+                  {form.sessionType === "one_on_one" && (
                     <SessionWindowsEditor
                       windows={form.sessionWindows}
                       onWindowsChange={(windows) =>
@@ -1695,557 +1715,511 @@ export default function EditEventPage({
                         updateForm("sessionIsWeekly", weekly)
                       }
                     />
-                  </div>
-                )}
+                  )}
 
-                {/* Duration */}
-                <div className="mb-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Duration (minutes) <span className="text-red-500">*</span>
-                  </label>
-                  <div className="space-y-3">
-                    {/* Quick Select Buttons */}
-                    <div className="flex flex-wrap gap-2">
+                  {(form.sessionType === "one_on_one" ||
+                    form.scheduleType === "custom_dates") && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="mr-1 text-sm text-white/55">
+                        {form.sessionType === "one_on_one"
+                          ? "Each session"
+                          : "Each date lasts"}
+                      </span>
                       {DURATION_OPTIONS.map((mins) => (
-                        <button
+                        <Chip
                           key={mins}
-                          type="button"
+                          active={form.durationMinutes === mins}
                           onClick={() => updateForm("durationMinutes", mins)}
-                          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                            form.durationMinutes === mins
-                              ? "bg-[#0094CA] text-white"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                          }`}
                         >
                           {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                        </button>
+                        </Chip>
                       ))}
                     </div>
-                    {/* Custom Input */}
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min={15}
-                        step={5}
-                        value={form.durationMinutes}
-                        onChange={(e) =>
-                          updateForm(
-                            "durationMinutes",
-                            Math.max(15, parseInt(e.target.value) || 30),
-                          )
-                        }
-                        className="flex-1 rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                        placeholder="Enter custom duration"
-                      />
-                      <span className="text-sm font-medium text-gray-600">
-                        min
+                  )}
+                </section>
+
+                {/* Location */}
+                <Section title="Location">
+                  {form.isOnline ? (
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.07]">
+                        <FiVideo className="h-5 w-5 text-[#D8B4FE]" />
                       </span>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                      Click quick options or enter custom duration (minimum 15
-                      min)
-                    </p>
-                  </div>
-                </div>
-
-                {/* Pricing */}
-                <div className="mb-4 space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={form.isFree}
-                      onChange={(e) => updateForm("isFree", e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Free Experience
-                    </span>
-                  </label>
-                </div>
-
-                {!form.isFree && (
-                  <div className="mb-4 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => updateForm("useTiers", false)}
-                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${!form.useTiers ? "bg-[#0094CA] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-                    >
-                      Single price
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => updateForm("useTiers", true)}
-                      className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium transition ${form.useTiers ? "bg-[#0094CA] text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}`}
-                    >
-                      Multiple ticket types
-                    </button>
-                  </div>
-                )}
-
-                {!form.isFree && !form.useTiers && (
-                  <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Price (₹)
-                    </label>
-                    <input
-                      type="number"
-                      value={form.priceCents / 100}
-                      onChange={(e) =>
-                        updateForm(
-                          "priceCents",
-                          Math.round(parseFloat(e.target.value) * 100) || 0,
-                        )
-                      }
-                      placeholder="e.g., 500"
-                      min="0"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                  </div>
-                )}
-
-                {!form.isFree && form.useTiers && (
-                  <div className="mb-4 space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Ticket types
-                    </label>
-                    {form.priceTiers.map((tier, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={tier.name}
-                          onChange={(e) =>
-                            updatePriceTier(index, "name", e.target.value)
-                          }
-                          placeholder="e.g. General, VIP"
-                          className="flex-1 rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                        />
-                        <input
-                          type="number"
-                          value={tier.priceStr}
-                          onChange={(e) =>
-                            updatePriceTier(index, "priceStr", e.target.value)
-                          }
-                          placeholder="₹ Price"
-                          min="0"
-                          className="w-32 rounded-lg border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                        />
-                        {form.priceTiers.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => removePriceTier(index)}
-                            className="text-gray-400 transition hover:text-red-500"
-                            aria-label="Remove ticket type"
-                          >
-                            <FiX className="h-5 w-5" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={addPriceTier}
-                      className="text-sm font-semibold text-[#0094CA] hover:underline"
-                    >
-                      + Add ticket type
-                    </button>
-                  </div>
-                )}
-
-
-                {/* Monthly Pass — one payment covers a month of sessions. */}
-                {!form.isFree && (
-                  <div className="space-y-4 rounded-xl border border-gray-200 p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-900">
-                          Monthly Pass
-                        </h4>
-                        <p className="mt-0.5 text-xs text-gray-500">
-                          Guests pay once and attend for 30 days. Recurring
-                          experiences only.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        disabled={form.scheduleType === "one_time"}
-                        onClick={() =>
-                          updateForm(
-                            "monthlyPassEnabled",
-                            !form.monthlyPassEnabled,
-                          )
-                        }
-                        className={`shrink-0 rounded-lg border px-4 py-2 text-sm font-medium transition disabled:opacity-40 ${
-                          form.monthlyPassEnabled
-                            ? "border-[#0094CA] bg-[#0094CA]/5 text-[#0094CA]"
-                            : "border-gray-200 bg-white text-gray-700"
-                        }`}
-                      >
-                        {form.monthlyPassEnabled ? "On" : "Off"}
-                      </button>
-                    </div>
-
-                    {form.monthlyPassEnabled && <PassHoldersPanel eventId={id} />}
-
-                    {form.monthlyPassEnabled &&
-                      form.scheduleType !== "one_time" && (
-                        <div className="grid gap-3 sm:grid-cols-3">
-                          <div>
-                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
-                              Pass price (₹)
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={form.monthlyPassPriceStr}
-                              onChange={(e) =>
-                                updateForm(
-                                  "monthlyPassPriceStr",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="2500"
-                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
-                            />
-                          </div>
-                          <div>
-                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
-                              Sessions included
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={form.monthlyPassSessionsStr}
-                              onChange={(e) =>
-                                updateForm(
-                                  "monthlyPassSessionsStr",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="All"
-                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
-                            />
-                          </div>
-                          <div>
-                            <label className="mb-1.5 block text-xs font-medium text-gray-700">
-                              Passes available
-                            </label>
-                            <input
-                              type="number"
-                              min="1"
-                              value={form.monthlyPassCapacityStr}
-                              onChange={(e) =>
-                                updateForm(
-                                  "monthlyPassCapacityStr",
-                                  e.target.value,
-                                )
-                              }
-                              placeholder="Unlimited"
-                              className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-[#0094CA]"
-                            />
-                          </div>
-                        </div>
-                      )}
-                  </div>
-                )}
-
-                {/* Group Size */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Min Group Size
-                    </label>
-                    <input
-                      type="number"
-                      value={form.minGroupSize}
-                      onChange={(e) =>
-                        updateForm(
-                          "minGroupSize",
-                          parseInt(e.target.value) || 1,
-                        )
-                      }
-                      min="1"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Max Group Size
-                    </label>
-                    <input
-                      type="number"
-                      value={form.maxGroupSize}
-                      onChange={(e) =>
-                        updateForm(
-                          "maxGroupSize",
-                          parseInt(e.target.value) || 10,
-                        )
-                      }
-                      min="1"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                  </div>
-                </div>
-                <p className="mt-2 mb-4 text-xs text-gray-500">
-                  <span className="font-medium">Max group size</span> = total
-                  spots that can book this session (the event capacity).
-                </p>
-
-                {/* Location Type */}
-                <div className="mb-4 space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={form.isOnline}
-                      onChange={(e) => updateForm("isOnline", e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Online Experience
-                    </span>
-                  </label>
-                </div>
-
-                {form.isOnline ? (
-                  <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Meeting Link
-                    </label>
-                    <input
-                      type="url"
-                      value={form.meetingLink}
-                      onChange={(e) =>
-                        updateForm("meetingLink", e.target.value)
-                      }
-                      placeholder="e.g., https://zoom.us/j/... or https://meet.google.com/..."
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <div className="mb-4 space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Location <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={form.location}
-                        onChange={(e) => updateForm("location", e.target.value)}
-                        placeholder="e.g., Central Park, New York"
-                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                      />
-                    </div>
-                    <div className="mb-4 space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Google Maps URL
-                      </label>
                       <input
                         type="url"
-                        value={form.googleMapsUrl}
+                        value={form.meetingLink}
                         onChange={(e) =>
-                          updateForm("googleMapsUrl", e.target.value)
+                          updateForm("meetingLink", e.target.value)
                         }
-                        placeholder="https://maps.google.com/..."
-                        className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
+                        placeholder="Meeting link (Zoom, Google Meet…)"
+                        aria-label="Meeting link"
+                        className={INLINE_FIELD}
                       />
                     </div>
-                  </>
-                )}
-
-                {/* Cancellation Policy */}
-                <div className="mb-4 space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Cancellation Policy
-                  </label>
-                  <select
-                    value={form.cancellationPolicy}
-                    onChange={(e) =>
-                      updateForm("cancellationPolicy", e.target.value)
-                    }
-                    className="w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                  >
-                    <option value="flexible">
-                      Flexible - Full refund up to 24 hours before
-                    </option>
-                    <option value="moderate">
-                      Moderate - Full refund up to 5 days before
-                    </option>
-                    <option value="strict">
-                      Strict - 50% refund up to 1 week before
-                    </option>
-                    <option value="no_refund">
-                      No Refund - Non-refundable once booked
-                    </option>
-                  </select>
-                </div>
-
-                {/* Attendee Details */}
-                <div className="mb-4">
-                  <AttendeeDetailsConfig
-                    enabled={form.requiresAttendeeDetails}
-                    fields={form.attendeeFields}
-                    onToggle={(next) =>
-                      updateForm("requiresAttendeeDetails", next)
-                    }
-                    onFieldsChange={(next) =>
-                      updateForm("attendeeFields", next)
-                    }
-                  />
-                </div>
-
-                {/* Privacy & Access */}
-                <div className="mb-4">
-                  <PrivacyAccessSection
-                    isPrivate={form.isPrivate}
-                    privateAccessMode={form.privateAccessMode}
-                    accessMode={form.accessMode}
-                    accessPasskey={form.accessPasskey}
-                    canGenerateCodes
-                    onChange={(patch) =>
-                      setForm((prev) => ({ ...prev, ...patch }))
-                    }
-                  />
-                </div>
-
-                {/* Passkey codes — per-guest access (private events) */}
-                {host?.id && event?.id && form.isPrivate && (
-                  <div className="mb-4 border-t border-gray-100 pt-6">
-                    <CouponsManager
-                      eventId={event.id}
-                      hostId={host.id}
-                      kind="access"
-                    />
-                  </div>
-                )}
-
-                {/* Co-hosts — share this event's earnings with another host */}
-                {event?.id && (
-                  <div className="mb-4 border-t border-gray-100 pt-6">
-                    <CoHostManager eventId={event.id} />
-                  </div>
-                )}
-
-                {/* Free-booking codes — comp specific guests (paid events) */}
-                {host?.id && event?.id && !form.isFree && (
-                  <div className="mb-4 border-t border-gray-100 pt-6">
-                    <CouponsManager
-                      eventId={event.id}
-                      hostId={host.id}
-                      kind="free"
-                    />
-                  </div>
-                )}
-
-                {/* Percentage discount codes (paid events) */}
-                {host?.id && event?.id && !form.isFree && (
-                  <div className="mb-4 border-t border-gray-100 pt-6">
-                    <CouponsManager
-                      eventId={event.id}
-                      hostId={host.id}
-                      kind="discount"
-                    />
-                  </div>
-                )}
-
-                {/* Recurring */}
-                <div className="mb-4 space-y-2">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={form.isRecurring}
-                      onChange={(e) =>
-                        updateForm("isRecurring", e.target.checked)
-                      }
-                      className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Recurring Experience
-                    </span>
-                  </label>
-                </div>
-
-                {form.isRecurring && (
-                  <div className="mb-4 space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Recurrence Rule
-                    </label>
-                    <input
-                      type="text"
-                      value={form.recurrenceRule}
-                      onChange={(e) =>
-                        updateForm("recurrenceRule", e.target.value)
-                      }
-                      placeholder="e.g., FREQ=WEEKLY;BYDAY=MO,WE,FR"
-                      className="w-full rounded-lg border border-gray-200 px-4 py-3 text-xs outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA]"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Use iCalendar format for recurrence rules
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid gap-6 md:grid-cols-2">
-                <ImageUpload
-                  label="Profile Image"
-                  helpText="This will be the main profile image shown on cards"
-                  preview={form.coverImagePreview}
-                  onUpload={handleCoverUpload}
-                  onRemove={() => {
-                    updateForm("coverImage", null);
-                    updateForm("coverImagePreview", null);
-                  }}
-                />
-                <ImageUpload
-                  label="Cover Image"
-                  helpText="Add cover and gallery photos for the experience"
-                  multiple
-                  previews={form.galleryPreviews}
-                  onUpload={handleGalleryUpload}
-                  onRemoveMultiple={removeGalleryImage}
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-4 border-t border-gray-100 pt-6">
-                <button
-                  onClick={() => void handleUpdate(false)}
-                  disabled={isSubmitting}
-                  className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-3 font-semibold transition disabled:opacity-50 ${
-                    event?.status === "draft"
-                      ? "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                      : "bg-[#0094CA] text-white hover:bg-[#007ba8]"
-                  }`}
-                >
-                  <FiCheck size={18} />
-                  {event?.status === "draft" ? "Save Draft" : "Save Changes"}
-                </button>
-
-                {event?.status === "draft" && (
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.07]">
+                        <FiMapPin className="h-5 w-5 text-[#D8B4FE]" />
+                      </span>
+                      <LocationSearchInput
+                        value={form.location}
+                        onChange={(val) => updateForm("location", val)}
+                        onSelect={(addr, lat, lng) => {
+                          updateForm("location", addr);
+                          updateForm(
+                            "googleMapsUrl",
+                            `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+                          );
+                        }}
+                        placeholder="Search a place or area"
+                        className="!rounded-xl !border-transparent !bg-transparent !px-2 !text-[15px] !ring-0 hover:!bg-white/[0.04] focus:!bg-white/[0.06]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowMapPicker(true)}
+                        aria-label="Pick on map"
+                        title="Pick on map"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-white transition hover:bg-white/15"
+                      >
+                        <FiMap size={18} />
+                      </button>
+                    </div>
+                  )}
                   <button
-                    onClick={() => void handleUpdate(true)}
-                    disabled={isSubmitting}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-3 font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+                    type="button"
+                    onClick={() => updateForm("isOnline", !form.isOnline)}
+                    className="px-2 text-sm font-medium text-white/50 transition hover:text-white"
                   >
-                    <FiCheck size={18} />
-                    Publish Now
+                    {form.isOnline
+                      ? "Meeting in person instead?"
+                      : "Hosting it online instead?"}
                   </button>
-                )}
+                </Section>
 
-                <button
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-red-50 px-6 py-3 font-semibold text-red-600 transition hover:bg-red-100"
+                {/* About */}
+                <Section title="About the event">
+                  <RichTextEditor
+                    value={form.description}
+                    onChange={(html) => updateForm("description", html)}
+                    placeholder="Describe what guests will experience..."
+                    maxLength={2000}
+                  />
+                </Section>
+
+                {/* Tickets */}
+                <Section
+                  title={
+                    form.sessionType === "one_on_one" ? "Price" : "Tickets"
+                  }
                 >
-                  <FiTrash2 size={18} />
-                  Delete
-                </button>
+                  {form.sessionType === "group" && (
+                    <Rows>
+                      <Row label="Slots">
+                        <input
+                          type="number"
+                          min={1}
+                          value={form.maxGroupSize}
+                          onChange={(e) =>
+                            updateForm(
+                              "maxGroupSize",
+                              Math.max(1, parseInt(e.target.value) || 1),
+                            )
+                          }
+                          className={ROW_INPUT}
+                        />
+                      </Row>
+                    </Rows>
+                  )}
+                  <Segmented<"paid" | "free">
+                    value={form.isFree ? "free" : "paid"}
+                    onChange={(v) => {
+                      if (v === "paid" && !isVerified) {
+                        setVerifyOpen(true);
+                        return;
+                      }
+                      updateForm("isFree", v === "free");
+                    }}
+                    options={[
+                      {
+                        value: "paid",
+                        label: isVerified ? (
+                          "Paid"
+                        ) : (
+                          <>
+                            <LuLock className="h-3.5 w-3.5" /> Paid
+                          </>
+                        ),
+                      },
+                      { value: "free", label: "Free" },
+                    ]}
+                  />
+                  {!isVerified && (
+                    <p className="px-1 text-xs leading-5 text-white/50">
+                      Free hosts can run free events for up to{" "}
+                      {FREE_HOST_LIMITS.maxGuests} guests.{" "}
+                      <button
+                        type="button"
+                        onClick={() => setVerifyOpen(true)}
+                        className="font-semibold text-[#D8B4FE] hover:text-white"
+                      >
+                        Get verified to sell tickets
+                      </button>
+                    </p>
+                  )}
+                  {!form.isFree && !form.useTiers && (
+                    <Rows>
+                      <Row label="Price per person (₹)">
+                        <input
+                          type="number"
+                          min={0}
+                          value={form.priceCents / 100}
+                          onChange={(e) =>
+                            updateForm(
+                              "priceCents",
+                              Math.round(parseFloat(e.target.value) * 100) || 0,
+                            )
+                          }
+                          className={ROW_INPUT}
+                        />
+                      </Row>
+                    </Rows>
+                  )}
+                </Section>
+
+                {/* Everything optional, folded away */}
+                <Section
+                  title="More options"
+                  hint="All optional. Open one to change it."
+                >
+                  <div>
+                    <MoreOptions
+                      title="Who can see it"
+                      summary={form.isPrivate ? "Private" : "Public"}
+                      defaultOpen={form.isPrivate}
+                    >
+                      <Segmented<"public" | "private">
+                        value={form.isPrivate ? "private" : "public"}
+                        onChange={(v) =>
+                          updateForm("isPrivate", v === "private")
+                        }
+                        options={[
+                          { value: "public", label: "Public" },
+                          { value: "private", label: "Private" },
+                        ]}
+                      />
+                      {form.isPrivate && (
+                        <PrivacyAccessSection
+                          isPrivate={form.isPrivate}
+                          privateAccessMode={form.privateAccessMode}
+                          accessMode={form.accessMode}
+                          accessPasskey={form.accessPasskey}
+                          canGenerateCodes
+                          onChange={(patch) =>
+                            setForm((prev) => ({ ...prev, ...patch }))
+                          }
+                        />
+                      )}
+                      {host?.id && event?.id && form.isPrivate && (
+                        <CouponsManager
+                          eventId={event.id}
+                          hostId={host.id}
+                          kind="access"
+                        />
+                      )}
+                    </MoreOptions>
+
+                    <MoreOptions
+                      title="Refunds & payout"
+                      summary={refundPayoutSummary(
+                        form.cancellationPolicy,
+                        form.payoutMode,
+                      )}
+                    >
+                      <PayoutTimingFields
+                        hostId={host?.id ?? null}
+                        isFree={form.isFree}
+                        policy={form.cancellationPolicy}
+                        mode={form.payoutMode}
+                        onChange={(patch) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            ...(patch.policy !== undefined && {
+                              cancellationPolicy: patch.policy,
+                            }),
+                            ...(patch.mode !== undefined && {
+                              payoutMode: patch.mode,
+                            }),
+                          }))
+                        }
+                      />
+                    </MoreOptions>
+
+                    {!form.isFree && (
+                      <MoreOptions
+                        title="Ticket types & monthly pass"
+                        summary={
+                          form.useTiers
+                            ? `${form.priceTiers.length} ticket types`
+                            : form.monthlyPassEnabled
+                              ? "One price · pass on"
+                              : "One price"
+                        }
+                      >
+                        <Segmented<"single" | "tiers">
+                          value={form.useTiers ? "tiers" : "single"}
+                          onChange={(v) =>
+                            updateForm("useTiers", v === "tiers")
+                          }
+                          options={[
+                            { value: "single", label: "Single price" },
+                            { value: "tiers", label: "Multiple ticket types" },
+                          ]}
+                        />
+                        {form.useTiers && (
+                          <div className="space-y-2">
+                            {form.priceTiers.map((tier, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-2"
+                              >
+                                <input
+                                  type="text"
+                                  value={tier.name}
+                                  onChange={(e) =>
+                                    updatePriceTier(
+                                      index,
+                                      "name",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Ticket name, e.g. VIP"
+                                  className={`${FIELD} !py-2.5`}
+                                />
+                                <input
+                                  type="number"
+                                  min={0}
+                                  value={tier.priceStr}
+                                  onChange={(e) =>
+                                    updatePriceTier(
+                                      index,
+                                      "priceStr",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="₹ Price"
+                                  className={`${FIELD} !w-32 !py-2.5`}
+                                />
+                                {form.priceTiers.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removePriceTier(index)}
+                                    className="p-1.5 text-white/40 transition hover:text-red-400"
+                                    aria-label="Remove ticket type"
+                                  >
+                                    <FiX className="h-5 w-5" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                            <AddPill onClick={addPriceTier}>
+                              Add another ticket type
+                            </AddPill>
+                          </div>
+                        )}
+                        <ToggleRow
+                          label="Monthly pass"
+                          hint={
+                            form.scheduleType === "one_time"
+                              ? "Repeating or several-dates events only."
+                              : "Guests pay once and attend for 30 days."
+                          }
+                          checked={form.monthlyPassEnabled}
+                          disabled={form.scheduleType === "one_time"}
+                          onChange={(next) =>
+                            updateForm("monthlyPassEnabled", next)
+                          }
+                        />
+                        {form.monthlyPassEnabled &&
+                          form.scheduleType !== "one_time" && (
+                            <Rows>
+                              <Row label="Pass price (₹)">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={form.monthlyPassPriceStr}
+                                  onChange={(e) =>
+                                    updateForm(
+                                      "monthlyPassPriceStr",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="2500"
+                                  className={ROW_INPUT}
+                                />
+                              </Row>
+                              <Row label="Sessions included">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={form.monthlyPassSessionsStr}
+                                  onChange={(e) =>
+                                    updateForm(
+                                      "monthlyPassSessionsStr",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="All"
+                                  className={ROW_INPUT}
+                                />
+                              </Row>
+                              <Row label="Passes available">
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={form.monthlyPassCapacityStr}
+                                  onChange={(e) =>
+                                    updateForm(
+                                      "monthlyPassCapacityStr",
+                                      e.target.value,
+                                    )
+                                  }
+                                  placeholder="Unlimited"
+                                  className={ROW_INPUT}
+                                />
+                              </Row>
+                            </Rows>
+                          )}
+                        {form.monthlyPassEnabled && (
+                          <PassHoldersPanel eventId={id} />
+                        )}
+                      </MoreOptions>
+                    )}
+
+                    {host?.id && event?.id && !form.isFree && (
+                      <MoreOptions
+                        title="Coupons & free codes"
+                        summary="Discounts and comps"
+                      >
+                        <CouponsManager
+                          eventId={event.id}
+                          hostId={host.id}
+                          kind="discount"
+                        />
+                        <CouponsManager
+                          eventId={event.id}
+                          hostId={host.id}
+                          kind="free"
+                        />
+                      </MoreOptions>
+                    )}
+
+                    <MoreOptions
+                      title="More photos"
+                      summary={
+                        form.galleryPreviews.length
+                          ? `${form.galleryPreviews.length} added`
+                          : "None"
+                      }
+                    >
+                      <ImageUpload
+                        label=""
+                        multiple
+                        previews={form.galleryPreviews}
+                        onUpload={handleGalleryUpload}
+                        onRemoveMultiple={removeGalleryImage}
+                      />
+                    </MoreOptions>
+
+                    <MoreOptions
+                      title="Guest details at booking"
+                      summary={
+                        form.requiresAttendeeDetails
+                          ? `${form.attendeeFields.length} field${form.attendeeFields.length === 1 ? "" : "s"} required`
+                          : "Off"
+                      }
+                    >
+                      <AttendeeDetailsConfig
+                        enabled={form.requiresAttendeeDetails}
+                        fields={form.attendeeFields}
+                        onToggle={(next) =>
+                          updateForm("requiresAttendeeDetails", next)
+                        }
+                        onFieldsChange={(next) =>
+                          updateForm("attendeeFields", next)
+                        }
+                      />
+                    </MoreOptions>
+
+                    <MoreOptions title="Delete experience" summary="">
+                      <p className="text-sm text-white/55">
+                        Removes this experience for good. Confirmed bookings are
+                        refunded.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="flex items-center gap-2 rounded-full border border-rose-400/25 bg-rose-500/[0.08] px-5 py-2.5 text-sm font-semibold text-rose-300 transition hover:bg-rose-500/[0.14]"
+                      >
+                        <FiTrash2 size={16} /> Delete experience
+                      </button>
+                    </MoreOptions>
+                  </div>
+                </Section>
+
+                {/* Save: one floating pill under the form */}
+                <div className="msm-publish-bar sticky bottom-[max(16px,env(safe-area-inset-bottom))] z-30 mt-10">
+                  <div className="flex w-full gap-2 rounded-[28px] border border-white/10 bg-[#121426]/90 p-2 shadow-[0_18px_50px_-12px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+                    {event?.status === "draft" ? (
+                      <>
+                        <button
+                          onClick={() => void handleUpdate(false)}
+                          disabled={isSubmitting}
+                          className="shrink-0 rounded-full px-4 py-3 text-sm font-semibold text-white/75 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-50"
+                        >
+                          Save draft
+                        </button>
+                        <button
+                          onClick={() => void handleUpdate(true)}
+                          disabled={isSubmitting}
+                          className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50 ${GRADIENT}`}
+                        >
+                          <FiCheck size={18} />
+                          {isSubmitting ? "Saving..." : "Publish event"}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {event?.slug && (
+                          <a
+                            href={`/experience/${event.slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="shrink-0 rounded-full px-4 py-3 text-sm font-semibold text-white/75 transition hover:bg-white/[0.06] hover:text-white"
+                          >
+                            View event
+                          </a>
+                        )}
+                        <button
+                          onClick={() => void handleUpdate(false)}
+                          disabled={isSubmitting}
+                          className={`flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50 ${GRADIENT}`}
+                        >
+                          <FiCheck size={18} />
+                          {isSubmitting ? "Saving..." : "Save changes"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Bookings Tab */}
+          {/* Bookings */}
           {showBookings && (
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-lg font-semibold text-gray-900">
-                Event Bookings
+            <div className="rounded-3xl border border-white/[0.08] bg-[#121426]/80 p-6">
+              <h2 className="font-outfit mb-4 text-lg font-semibold text-white">
+                Bookings
               </h2>
               <AttendeesList
                 eventId={id}
@@ -2257,24 +2231,36 @@ export default function EditEventPage({
         </div>
       </main>
 
+      <MapPickerModal
+        isOpen={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        onSelect={(lat, lng, addr) => {
+          updateForm("location", addr);
+          updateForm(
+            "googleMapsUrl",
+            `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`,
+          );
+        }}
+      />
+
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-8">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-              <FiTrash2 className="text-red-600" size={24} />
+        <div className="msm-modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-[#121426] p-8">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/15">
+              <FiTrash2 className="text-red-300" size={24} />
             </div>
-            <h2 className="mb-2 text-xl font-bold text-gray-900">
+            <h2 className="mb-2 text-xl font-bold text-white">
               Delete Experience?
             </h2>
-            <p className="mb-6 text-gray-500">
+            <p className="mb-6 text-[#A5A8C3]">
               This will permanently delete your experience. All confirmed
               bookings will be refunded.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 rounded-lg bg-gray-100 py-3 font-semibold text-gray-900 transition hover:bg-gray-200"
+                className="flex-1 rounded-lg bg-white/[0.06] py-3 font-semibold text-white transition hover:bg-white/10"
               >
                 Cancel
               </button>
@@ -2290,9 +2276,14 @@ export default function EditEventPage({
         </div>
       )}
 
+      <VerifyToEarnSheet
+        open={verifyOpen}
+        onClose={() => setVerifyOpen(false)}
+        applicationStatus={applicationStatus}
+      />
       <ImageCropModal
         file={cropQueue.length > 0 ? cropQueue[0]! : null}
-        aspect={16 / 9}
+        aspect={4 / 5}
         onClose={() => setCropQueue([])}
         onConfirm={handleCropConfirm}
       />

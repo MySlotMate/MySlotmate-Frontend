@@ -39,10 +39,10 @@ export const PeopleCard = ({
   return (
     <Link
       href={`/host/${slug ?? id}`}
-      className={`group overflow-hidden rounded-[28px] border border-[#d6ebf7cc] bg-white shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1 ${className}`}
+      className={`group overflow-hidden rounded-[28px] border border-white/10 bg-[#121426] shadow-[0_16px_34px_rgba(72,128,173,0.08)] transition hover:-translate-y-1 ${className}`}
     >
       {/* Changed h-[272px] w-[272px] to aspect-square w-full */}
-      <div className="relative aspect-square w-full overflow-hidden rounded-[28px] bg-[#f8fbff]">
+      <div className="relative aspect-square w-full overflow-hidden rounded-[28px] bg-white/[0.04]">
         {imageUrl && !imageUrl.includes("people1.") ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -52,7 +52,7 @@ export const PeopleCard = ({
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="relative flex h-full w-full items-center justify-center bg-[#E9EDF0]">
+          <div className="relative flex h-full w-full items-center justify-center bg-white/[0.04]">
             {/* WhatsApp Style Silhouette */}
             <div className="relative flex h-full w-full items-center justify-center opacity-40">
               <svg
@@ -71,9 +71,9 @@ export const PeopleCard = ({
         {isVerified ? (
           <span className="absolute right-3 bottom-3 z-10">
             <div className="relative">
-              <div className="absolute inset-0 scale-150 animate-ping rounded-full bg-white opacity-20" />
+              <div className="absolute inset-0 scale-150 animate-ping rounded-full bg-[#121426] opacity-20" />
               {/* White background to fill the transparent tick, inset slightly to avoid outer border */}
-              <div className="absolute inset-[2px] rounded-full bg-white" />
+              <div className="absolute inset-[2px] rounded-full bg-[#121426]" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/assets/home/verified.svg"
@@ -90,14 +90,14 @@ export const PeopleCard = ({
         <p className="line-clamp-1 text-[10px] font-extrabold tracking-[0.09em] text-[#3f89c3] uppercase">
           {headline}
         </p>
-        <p className="line-clamp-1 text-2xl leading-tight font-bold tracking-[-0.03em] text-[#16304c]">
+        <p className="line-clamp-1 text-2xl leading-tight font-bold tracking-[-0.03em] text-white">
           {name}
         </p>
-        <p className="line-clamp-2 min-h-[40px] text-xs leading-relaxed text-[#6f8daa]">
+        <p className="line-clamp-2 min-h-[40px] text-xs leading-relaxed text-[#A5A8C3]">
           {description}
         </p>
         <div className="flex items-center justify-between pt-1">
-          <span className="text-[11px] font-bold text-[#5e88ab]">
+          <span className="text-[11px] font-bold text-[#A5A8C3]">
             {rating === "0" ? "New Host" : `Rating ${rating}`}
           </span>
         </div>
@@ -212,18 +212,18 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
   };
 
   return (
-    <section className="w-full border-y border-[#aeddf847]">
+    <section className="w-full border-y border-white/10">
       <div className="mx-auto w-full max-w-[1120px] py-14">
         <div className="mb-14 flex items-end justify-between gap-4">
           <div>
-            {/* <span className="inline-flex items-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
+            {/* <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#121426]/90 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#4a8ab8]">
               <span className="inline-block h-2 w-2 rounded-full bg-current" />
               Local Hosts
             </span> */}
-            <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-[#16304c] sm:text-6xl">
+            <h2 className="mt-4 font-[Outfit,sans-serif] text-4xl font-bold tracking-[-0.045em] text-white sm:text-6xl">
               Find Your Kind of People
             </h2>
-            <p className="mt-5 text-sm text-[#6f8daa] sm:text-base">
+            <p className="mt-5 text-sm text-[#A5A8C3] sm:text-base">
               From creators to thinkers — find people for real-world experiences
             </p>
           </div>
@@ -233,7 +233,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
               <button
                 type="button"
                 onClick={() => scrollCards("left")}
-                className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
+                className="flex h-12 w-12 items-center justify-center rounded-full border border-[#652A91]/60 bg-[#121426] text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white disabled:opacity-30"
                 aria-label="Scroll hosts left"
               >
                 <ChevronLeft className="h-6 w-6" />
@@ -241,7 +241,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
               {isAtScrollEnd ? (
                 <Link
                   href="/hosts"
-                  className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#bdddf480] bg-[#eef8ff] px-6 text-sm font-black text-[#0e8ae0] transition-all hover:bg-[#0e8ae0] hover:text-white"
+                  className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#652A91]/60 bg-white/[0.04] px-6 text-sm font-black text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white"
                   aria-label="See more hosts"
                 >
                   Explore All
@@ -251,7 +251,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
                 <button
                   type="button"
                   onClick={() => scrollCards("right")}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[#bdddf480] bg-white text-[#2f7eb5] transition-all hover:bg-[#0e8ae0] hover:text-white disabled:opacity-30"
+                  className="flex h-12 w-12 items-center justify-center rounded-full border border-[#652A91]/60 bg-[#121426] text-[#D8B4FE] transition-all hover:bg-[#A020F0] hover:text-white disabled:opacity-30"
                   aria-label="Scroll hosts right"
                 >
                   <ChevronRight className="h-6 w-6" />
@@ -267,10 +267,10 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
         >
           {isLoading ? (
             <div className="flex w-full items-center justify-center py-12">
-              <LuLoader2 className="h-8 w-8 animate-spin text-[#0094CA]" />
+              <LuLoader2 className="h-8 w-8 animate-spin text-[#D8B4FE]" />
             </div>
           ) : filteredHosts.length === 0 ? (
-            <div className="flex w-full items-center justify-center rounded-3xl border border-dashed border-sky-200 bg-white/80 py-12 text-sm text-[#6f8daa]">
+            <div className="flex w-full items-center justify-center rounded-3xl border border-dashed border-[#652A91]/60 bg-[#121426]/80 py-12 text-sm text-[#A5A8C3]">
               No hosts found in your area.
             </div>
           ) : (
@@ -302,7 +302,7 @@ const People = ({ currentHostId }: { currentHostId?: string | null }) => {
         <div className="mt-5 md:hidden">
           <Link
             href="/hosts"
-            className="text-sm font-extrabold text-[#0e8ae0] hover:text-[#0b6eb1]"
+            className="text-sm font-extrabold text-[#D8B4FE] hover:text-[#0b6eb1]"
           >
             View All
           </Link>

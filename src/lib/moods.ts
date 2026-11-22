@@ -14,7 +14,6 @@ const moodAliasMap: Record<string, string> = {
   cultural: "cultural",
   foodie: "foodie",
   food: "foodie",
-  romantic: "romantic",
   intellectual: "intellectual",
   nightlife: "nightlife",
   fashion: "fashion",
@@ -22,6 +21,21 @@ const moodAliasMap: Record<string, string> = {
   fitness: "fitness",
   family: "family",
   kids: "family",
+  // 1:1 session categories
+  career: "career",
+  mentorship: "career",
+  tutoring: "tutoring",
+  languages: "languages",
+  language: "languages",
+  music: "music",
+  coaching: "coaching",
+  mindfulness: "mindfulness",
+  design: "design",
+  tech: "tech",
+  coding: "tech",
+  business: "business",
+  finance: "business",
+  cooking: "cooking",
 };
 
 const moodDisplayMap: Record<string, string> = {
@@ -35,12 +49,21 @@ const moodDisplayMap: Record<string, string> = {
   culinary: "Culinary",
   cultural: "Cultural",
   foodie: "Foodie",
-  romantic: "Romantic",
   intellectual: "Intellectual",
   nightlife: "Nightlife",
   fashion: "Fashion",
   fitness: "Fitness",
   family: "Family",
+  career: "Career",
+  tutoring: "Tutoring",
+  languages: "Languages",
+  music: "Music",
+  coaching: "Coaching",
+  mindfulness: "Mindfulness",
+  design: "Design",
+  tech: "Tech",
+  business: "Business",
+  cooking: "Cooking",
 };
 
 const moodSortOrder = [
@@ -57,7 +80,6 @@ const moodSortOrder = [
   "fitness",
   "family",
   "foodie",
-  "romantic",
   "intellectual",
   "nightlife",
 ] as const;

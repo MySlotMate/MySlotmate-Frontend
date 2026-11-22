@@ -93,27 +93,27 @@ export function OTPVerificationModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all">
-      <div className="animate-in fade-in zoom-in relative w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl duration-300">
+    <div className="msm-modal fixed inset-0 z-[300] flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all">
+      <div className="animate-in fade-in zoom-in relative w-full max-w-md rounded-[24px] border border-white/10 bg-[#131328] p-8 text-white shadow-2xl duration-300">
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+          className="absolute top-6 right-6 rounded-full p-2 text-white/45 transition hover:bg-white/10 hover:text-white/70"
         >
           <FiX className="h-5 w-5" />
         </button>
 
         <div className="mb-6 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e6f8ff] text-[#0094CA]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#9B30FF]/15 text-[#D8B4FE]">
             <FiShield className="h-8 w-8" />
           </div>
         </div>
 
-        <h3 className="text-center text-2xl font-bold text-gray-900">
+        <h3 className="text-center text-2xl font-bold text-white">
           Verify Phone Number
         </h3>
-        <p className="mt-2 text-center text-sm text-gray-500">
+        <p className="mt-2 text-center text-sm text-white/55">
           We&apos;ve sent a 6-digit code to <br />
-          <span className="font-bold text-gray-900">
+          <span className="font-bold text-white">
             {phoneNumber.startsWith("+91")
               ? `+91 ${phoneNumber.slice(3, 5)}XXXXX${phoneNumber.slice(-3)}`
               : phoneNumber.length >= 10
@@ -137,15 +137,15 @@ export function OTPVerificationModal({
               onKeyDown={(e) => handleKeyDown(i, e)}
               className={`h-14 w-full rounded-xl border-2 text-center text-xl font-bold transition outline-none ${
                 error
-                  ? "border-red-200 bg-red-50 text-red-600 focus:border-red-500"
-                  : "border-gray-200 focus:border-[#0094CA] focus:ring-4 focus:ring-[#0094CA]/10"
+                  ? "border-red-400 bg-red-500/10 text-red-300 focus:border-red-400"
+                  : "border-white/10 bg-[#121426] text-white focus:border-[#9B30FF] focus:ring-4 focus:ring-[#9B30FF]/15"
               }`}
             />
           ))}
         </div>
 
         {error && (
-          <p className="mt-4 text-center text-sm font-medium text-red-500">
+          <p className="mt-4 text-center text-sm font-medium text-red-400">
             {error}
           </p>
         )}
@@ -153,7 +153,7 @@ export function OTPVerificationModal({
         <button
           onClick={handleVerify}
           disabled={verifying}
-          className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-[#0094CA] py-4 text-base font-bold text-white transition hover:bg-[#007dab] disabled:opacity-50"
+          className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#7038F5] to-[#B724EA] py-4 text-base font-bold text-white transition hover:brightness-110 disabled:opacity-50"
         >
           {verifying ? (
             <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
@@ -167,15 +167,15 @@ export function OTPVerificationModal({
 
         <div className="mt-6 text-center">
           {timer > 0 ? (
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-white/45">
               Resend code in{" "}
-              <span className="font-bold text-gray-600">{timer}s</span>
+              <span className="font-bold text-white/70">{timer}s</span>
             </p>
           ) : (
             <button
               onClick={onResend}
               disabled={resending}
-              className="text-sm font-bold text-[#0094CA] hover:underline disabled:opacity-50"
+              className="text-sm font-bold text-[#D8B4FE] hover:underline disabled:opacity-50"
             >
               {resending ? "Resending..." : "Resend Code"}
             </button>

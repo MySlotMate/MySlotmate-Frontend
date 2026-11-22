@@ -138,8 +138,8 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
 
   return (
     <div>
-      <h3 className="mb-1 text-sm font-semibold text-gray-900">Co-hosts</h3>
-      <p className="mb-4 text-xs text-gray-500">
+      <h3 className="mb-1 text-sm font-semibold text-white">Co-hosts</h3>
+      <p className="mb-4 text-xs text-[#A5A8C3]">
         Share this experience with another host. They can manage it with you,
         and — if you turn on withdrawals — take this event&apos;s earnings to
         their own bank account. Each event&apos;s earnings can only be withdrawn
@@ -152,51 +152,53 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="co-host's account email"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+          className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm focus:border-white/15 focus:outline-none"
         />
         <button
           type="button"
           onClick={() => void handleInvite()}
           disabled={inviting || !idToken}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#A020F0] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           <FiUserPlus className="h-4 w-4" />
           {inviting ? "Inviting…" : "Invite"}
         </button>
       </div>
 
-      <label className="mb-4 flex items-center gap-2 text-xs text-gray-700">
+      <label className="mb-4 flex items-center gap-2 text-xs text-white/80">
         <input
           type="checkbox"
           checked={grantWithdraw}
           onChange={(e) => setGrantWithdraw(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300"
+          className="h-4 w-4 rounded border-white/15"
         />
         Let them withdraw this experience&apos;s earnings to their own bank
         account
       </label>
 
       {loading ? (
-        <p className="text-xs text-gray-400">Loading…</p>
+        <p className="text-xs text-[#777B98]">Loading…</p>
       ) : live.length === 0 ? (
-        <p className="text-xs text-gray-400">No co-hosts on this experience.</p>
+        <p className="text-xs text-[#777B98]">
+          No co-hosts on this experience.
+        </p>
       ) : (
-        <ul className="divide-y divide-gray-100 rounded-lg border border-gray-100">
+        <ul className="divide-y divide-white/10 rounded-lg border border-white/10">
           {live.map((row) => (
             <li
               key={row.id}
               className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-gray-900">
+                <p className="truncate text-sm font-medium text-white">
                   {row.host_name || row.host_email}
                 </p>
-                <p className="truncate text-xs text-gray-500">
+                <p className="truncate text-xs text-[#A5A8C3]">
                   {row.host_email} · {STATUS_LABEL[row.status]}
                   {row.claimed_cents > 0 &&
                     ` · withdrew ${rupees(row.claimed_cents)}`}
                 </p>
-                <p className="truncate text-xs text-gray-400">
+                <p className="truncate text-xs text-[#777B98]">
                   Invited {format(new Date(row.created_at), "d MMM yyyy")}
                   {row.responded_at
                     ? ` · ${row.status === "accepted" ? "accepted" : "answered"} ${format(
@@ -214,13 +216,13 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
               <div className="flex items-center gap-4">
                 {/* The withdraw toggle gates future withdrawals only — money
                     already sent out stays sent. */}
-                <label className="flex items-center gap-2 text-xs text-gray-700">
+                <label className="flex items-center gap-2 text-xs text-white/80">
                   <input
                     type="checkbox"
                     checked={row.can_withdraw}
                     disabled={busyId === row.id || !idToken}
                     onChange={() => void handleToggle(row)}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-white/15"
                   />
                   Can withdraw
                 </label>
@@ -231,7 +233,7 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
                     disabled={busyId === row.id}
                     aria-label="Resend invitation"
                     title="Resend invitation email"
-                    className="rounded p-1.5 text-gray-400 hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50"
+                    className="rounded p-1.5 text-[#777B98] hover:bg-white/[0.04] hover:text-white/80 disabled:opacity-50"
                   >
                     <FiSend className="h-4 w-4" />
                   </button>
@@ -241,7 +243,7 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
                   onClick={() => void handleRevoke(row)}
                   disabled={busyId === row.id}
                   aria-label="Remove co-host"
-                  className="rounded p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  className="rounded p-1.5 text-[#777B98] hover:bg-red-500/10 hover:text-red-300 disabled:opacity-50"
                 >
                   <FiTrash2 className="h-4 w-4" />
                 </button>

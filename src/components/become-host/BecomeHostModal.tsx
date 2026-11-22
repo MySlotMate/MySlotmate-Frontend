@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { FiX } from "react-icons/fi";
 
@@ -14,15 +16,35 @@ export default function BecomeHostModal({
 }: BecomeHostModalProps) {
   const router = useRouter();
 
+  // Keep the page behind still while the dialog is up.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white px-6 py-8 shadow-xl sm:px-8 sm:py-10">
+  // Portalled to <body>: callers render this inside animated/transformed
+  // wrappers, and a transformed ancestor makes `fixed` scroll with the page.
+  return createPortal(
+    <div
+      className="msm-modal fixed inset-0 z-[300] flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+        className="relative max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[20px] border border-white/10 bg-[#131328] px-6 py-8 text-white shadow-2xl sm:px-8 sm:py-10"
+      >
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 transition hover:text-gray-600"
+          className="absolute top-4 right-4 text-white/50 transition hover:text-white"
           aria-label="Close"
         >
           <FiX className="h-5 w-5" />
@@ -30,9 +52,9 @@ export default function BecomeHostModal({
 
         {/* Icon */}
         <div className="mb-5 flex justify-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e6f8ff]">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#9B30FF]/15">
             <svg
-              className="h-8 w-8 text-[#0094CA]"
+              className="h-8 w-8 text-[#D8B4FE]"
               viewBox="0 0 24 24"
               fill="currentColor"
             >
@@ -42,12 +64,12 @@ export default function BecomeHostModal({
         </div>
 
         {/* Title */}
-        <h2 className="text-center text-xl font-bold text-gray-900">
+        <h2 className="font-outfit text-center text-xl font-bold text-white">
           Become a Host on Myslotmate
         </h2>
 
         {/* Subtitle */}
-        <p className="mt-2 text-center text-sm text-gray-500">
+        <p className="mt-2 text-center text-sm text-white/60">
           Host activities that bring people together. Meet new faces while
           earning money.
         </p>
@@ -56,9 +78,9 @@ export default function BecomeHostModal({
         <div className="mt-6 space-y-5">
           {/* Benefit 1 */}
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#e6f8ff]">
+            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#9B30FF]/15">
               <svg
-                className="h-4 w-4 text-[#0094CA]"
+                className="h-4 w-4 text-[#D8B4FE]"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -66,10 +88,10 @@ export default function BecomeHostModal({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-white">
                 Host meaningful experiences
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-white/55">
                 Design activities that reflect your unique personality and
                 expertise.
               </p>
@@ -78,9 +100,9 @@ export default function BecomeHostModal({
 
           {/* Benefit 2 */}
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#e6f8ff]">
+            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#9B30FF]/15">
               <svg
-                className="h-4 w-4 text-[#0094CA]"
+                className="h-4 w-4 text-[#D8B4FE]"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -92,10 +114,8 @@ export default function BecomeHostModal({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">
-                Earn per slot
-              </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-sm font-semibold text-white">Earn per slot</p>
+              <p className="text-xs text-white/55">
                 Get paid for every participant who joins your curated sessions.
               </p>
             </div>
@@ -103,9 +123,9 @@ export default function BecomeHostModal({
 
           {/* Benefit 3 */}
           <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#e6f8ff]">
+            <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#9B30FF]/15">
               <svg
-                className="h-4 w-4 text-[#0094CA]"
+                className="h-4 w-4 text-[#D8B4FE]"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -113,10 +133,10 @@ export default function BecomeHostModal({
               </svg>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-900">
+              <p className="text-sm font-semibold text-white">
                 Build your local community
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-white/55">
                 Connect with locals and foster new friendships in your area.
               </p>
             </div>
@@ -129,7 +149,7 @@ export default function BecomeHostModal({
             onClose();
             router.push("/become-host");
           }}
-          className="mt-8 w-full rounded-full bg-[#0094CA] py-3.5 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+          className="mt-8 w-full rounded-full bg-gradient-to-r from-[#7038F5] to-[#B724EA] py-3.5 text-sm font-semibold text-white transition hover:brightness-110"
         >
           Open Host Apply Form
         </button>
@@ -137,11 +157,12 @@ export default function BecomeHostModal({
         {/* Not now */}
         <button
           onClick={onClose}
-          className="mt-3 w-full text-center text-sm text-gray-500 transition hover:text-gray-700"
+          className="mt-3 w-full text-center text-sm text-white/55 transition hover:text-white"
         >
           Not now
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

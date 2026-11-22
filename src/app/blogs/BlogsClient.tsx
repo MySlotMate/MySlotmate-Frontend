@@ -2,7 +2,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import {
   FiEdit2,
@@ -14,7 +13,6 @@ import {
 } from "react-icons/fi";
 import { LuLoader2 } from "react-icons/lu";
 import { toast } from "sonner";
-import * as components from "~/components";
 import {
   useAdminBlogs,
   useCreateBlog,
@@ -27,12 +25,38 @@ import {
   useUploadFiles,
 } from "~/hooks/useApi";
 import type { BlogCreatePayload, BlogDTO } from "~/lib/api";
-import { getStoredUserId, setStoredUserId } from "~/lib/auth-storage";
+import {
+  getLoggedOutAt,
+  getStoredUserId,
+  setStoredUserId,
+} from "~/lib/auth-storage";
+import { isSigningOut } from "~/lib/signOut";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import { RichTextView } from "~/components/RichTextView";
 import { ImageCropModal } from "~/components/ImageCropModal";
 import { auth } from "~/utils/firebase";
 import { env } from "~/env";
+import CitySky from "~/components/website/CitySky";
+import WebsiteFooter from "~/components/website/WebsiteFooter";
+import WebsiteNav from "~/components/website/WebsiteNav";
+import Reveal from "~/components/website/about/Reveal";
+import StarField from "~/components/website/about/StarField";
+import { GRADIENT } from "~/components/website/shared";
+import {
+  FeaturedStory,
+  StoryCard,
+  StoryCardSkeleton,
+} from "~/components/website/stories/StoryCard";
+
+const delay = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
+
+/** Real MySlotMate events, one photo each. */
+const MOMENTS = [
+  ["/Event Photos/sip-and-paint/sip-and-paint.webp", "Sip & Paint"],
+  ["/Event Photos/open-mic/openmic.webp", "Open Mic"],
+  ["/Event Photos/Chrochet event/IMG_1141.webp", "Crochet Circle"],
+  ["/Event Photos/plate-to-fame/IMG-20260621-WA0023.webp", "Plate to Fame"],
+] as const;
 
 // Block types for rich content editor
 export type TextBlock = { id: string; type: "text"; content: string };
@@ -74,8 +98,6 @@ export function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
-
-export const FALLBACK_BLOG_IMAGE = "/assets/home/hiking.webp";
 
 // Helper functions for block management
 function generateBlockId() {
@@ -190,12 +212,12 @@ export function BlockRenderer({
   showHeadings?: boolean;
 }) {
   const headingSizes: Record<number, string> = {
-    1: "text-3xl font-bold tracking-[-0.04em] text-[#16304c] sm:text-4xl",
-    2: "text-2xl font-bold tracking-[-0.03em] text-[#16304c] sm:text-[2rem]",
-    3: "text-xl font-bold text-[#1d3f60] sm:text-2xl",
-    4: "text-lg font-bold text-[#1d3f60]",
-    5: "text-base font-bold text-[#1d3f60]",
-    6: "text-sm font-bold uppercase tracking-[0.08em] text-[#4a6a86]",
+    1: "font-outfit text-3xl font-bold tracking-tight text-white sm:text-4xl",
+    2: "font-outfit text-2xl font-bold tracking-tight text-white sm:text-[2rem]",
+    3: "font-outfit text-xl font-bold text-white sm:text-2xl",
+    4: "font-outfit text-lg font-bold text-white",
+    5: "text-base font-bold text-white",
+    6: "text-sm font-bold uppercase tracking-[0.12em] text-[#D8B4FE]",
   };
 
   const headingTags = ["h1", "h2", "h3", "h4", "h5", "h6"] as const;
@@ -213,7 +235,7 @@ export function BlockRenderer({
               <RichTextView
                 key={block.id}
                 html={block.content}
-                className="text-[17px] leading-8 text-[#29465f] sm:text-[18px]"
+                className="text-[17px] leading-8 text-[#C9CBE0] sm:text-[18px]"
               />
             );
           }
@@ -255,7 +277,7 @@ export function BlockRenderer({
                 return normalizedText ? (
                   <p
                     key={`${block.id}-${sectionIndex}`}
-                    className="text-[17px] leading-8 text-[#29465f] sm:text-[18px]"
+                    className="text-[17px] leading-8 text-[#C9CBE0] sm:text-[18px]"
                   >
                     {normalizedText}
                   </p>
@@ -270,10 +292,10 @@ export function BlockRenderer({
               <img
                 src={block.url}
                 alt={block.caption || "Blog image"}
-                className="w-full rounded-[28px] object-cover shadow-[0_24px_50px_rgba(26,77,116,0.16)]"
+                className="w-full rounded-[24px] border border-white/10 object-cover"
               />
               {block.caption && (
-                <figcaption className="text-center text-sm leading-6 text-[#6f8daa] italic">
+                <figcaption className="text-center text-sm leading-6 text-[#777B98] italic">
                   {block.caption}
                 </figcaption>
               )}
@@ -386,7 +408,7 @@ function BlockEditor({
       {blocks.map((block) => (
         <div
           key={block.id}
-          className="rounded-lg border border-gray-200 bg-gray-50 p-4 transition"
+          className="rounded-lg border border-white/10 bg-white/[0.04] p-4 transition"
         >
           {block.type === "text" ? (
             <div className="space-y-3">
@@ -399,7 +421,7 @@ function BlockEditor({
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="rounded-lg bg-white p-3">
+              <div className="rounded-lg bg-[#121426] p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={block.url}
@@ -418,14 +440,14 @@ function BlockEditor({
                     onBlocksChange(updated);
                   }}
                   placeholder="Image caption (optional)"
-                  className="w-full rounded border border-gray-200 px-3 py-2 text-sm outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                  className="w-full rounded border border-white/10 px-3 py-2 text-sm outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
                 />
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => handleBlockDelete(block.id)}
-                  className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100"
+                  className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-300 transition hover:bg-red-500/15"
                 >
                   Delete Image
                 </button>
@@ -452,125 +474,11 @@ function BlockEditor({
   );
 }
 
-function BlogLoadingSkeleton() {
-  return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div
-          key={index}
-          className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
-        >
-          <div className="h-52 animate-pulse bg-gray-200" />
-          <div className="space-y-3 p-5">
-            <div className="h-4 w-24 animate-pulse rounded-full bg-gray-200" />
-            <div className="h-6 w-5/6 animate-pulse rounded bg-gray-200" />
-            <div className="h-4 w-full animate-pulse rounded bg-gray-200" />
-            <div className="h-4 w-2/3 animate-pulse rounded bg-gray-200" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function BlogCard({
-  blog,
-  isAdmin,
-  onDelete,
-  onEdit,
-  onOpen,
-}: {
-  blog: BlogDTO;
-  isAdmin: boolean;
-  onDelete: (blog: BlogDTO) => void;
-  onEdit: (blog: BlogDTO) => void;
-  onOpen: (blogId: string) => void;
-}) {
-  const displayDate = formatBlogDate(blog.published_at ?? blog.created_at);
-  const title = getBlogValue(blog.title, "Untitled blog");
-  const excerpt = getBlogExcerpt(blog);
-
-  return (
-    <article className="flex h-full flex-col justify-between rounded-[28px] border border-[#aeddf899] bg-white/82 p-5 shadow-[0_20px_42px_rgba(60,121,175,0.1)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_28px_56px_rgba(60,121,175,0.16)]">
-      <div className="space-y-4">
-        <div
-          className="group relative min-h-[220px] w-full cursor-pointer overflow-hidden rounded-[28px] border border-[#addbf699] bg-[linear-gradient(145deg,#e5f7ff,#f9fdff)]"
-          onClick={() => onOpen(blog.slug)}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={blog.cover_image_url ?? FALLBACK_BLOG_IMAGE}
-            alt={title}
-            className="absolute inset-0 h-full w-full rounded-[28px] object-cover transition duration-500 group-hover:scale-105"
-          />
-          <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-[linear-gradient(180deg,rgba(22,48,76,0.02)_0%,rgba(22,48,76,0.18)_100%)]" />
-          {!blog.published_at && (
-            <span className="absolute top-3 left-3 z-10 rounded-full bg-amber-500 px-2.5 py-1 text-[0.66rem] font-extrabold tracking-wide text-white uppercase shadow">
-              Draft
-            </span>
-          )}
-        </div>
-
-        <div className="grid content-start gap-2.5 pt-2">
-          <div>
-            <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase before:h-1.5 before:w-1.5 before:rounded-full before:bg-[#4a8ab8] before:content-['']">
-              {getBlogValue(blog.category, "General")}
-            </span>
-          </div>
-          <h3 className="font-outfit m-0 text-[1.08rem] leading-[1.24] font-semibold tracking-[-0.04em] text-[#16304c]">
-            <Link
-              href={`/blogs/${blog.slug}`}
-              className="cursor-pointer transition hover:text-[#0e8ae0]"
-            >
-              {title}
-            </Link>
-          </h3>
-          <p className="m-0 line-clamp-3 text-[0.88rem] leading-[1.68] text-[#6f8daa]">
-            {excerpt}
-          </p>
-        </div>
-      </div>
-
-      <div className="mt-6 flex items-center justify-between border-t border-[#f0f6fb] pt-4">
-        <div className="flex flex-wrap items-center gap-2.5 text-[0.76rem] font-semibold text-[#5a88ac]">
-          <span>{displayDate}</span>
-          <span className="text-[#a9daf5]">•</span>
-          <span>{blog.read_time_minutes ?? 5} Min Read</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <>
-              <button
-                type="button"
-                onClick={() => onEdit(blog)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#b8e4ff] bg-[#ebf8ff] text-[#0094CA] transition hover:bg-[#dcf2ff]"
-                aria-label={`Edit ${title}`}
-              >
-                <FiEdit2 className="h-3.5 w-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete(blog)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
-                aria-label={`Delete ${title}`}
-              >
-                <FiTrash2 className="h-3.5 w-3.5" />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
-
 export default function BlogsClient({
   initialBlogs,
 }: {
   initialBlogs: BlogDTO[];
 }) {
-  const router = useRouter();
   const [user] = useAuthState(auth);
   const coverImageInputRef = useRef<HTMLInputElement>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
@@ -650,7 +558,9 @@ export default function BlogsClient({
           return;
         }
 
-        setStoredUserId(resolvedUserId);
+        // Don't restore an id while (or after) the user is logging out.
+        if (!isSigningOut() && auth.currentUser && !getLoggedOutAt())
+          setStoredUserId(resolvedUserId);
         if (active) setBackendUserId(resolvedUserId);
       } catch {
         if (active) setBackendUserId(null);
@@ -1038,491 +948,552 @@ export default function BlogsClient({
     }
   };
 
-  return (
-    <div className="blog-bg flex min-h-screen flex-col">
-      <components.Navbar />
+  const showFeatured =
+    selectedCategory === "All" &&
+    !searchTerm.trim() &&
+    filteredBlogs.length > 0;
+  const featured = showFeatured ? filteredBlogs[0]! : null;
+  const rest = showFeatured ? filteredBlogs.slice(1) : filteredBlogs;
+  const adminActions = (blog: BlogDTO) =>
+    isAdmin ? (
+      <>
+        <button
+          type="button"
+          onClick={() => handleEdit(blog)}
+          className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-[#080914]/70 text-white backdrop-blur-md transition hover:bg-[#A020F0]"
+          aria-label={`Edit ${blog.title ?? "story"}`}
+        >
+          <FiEdit2 className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDelete(blog)}
+          className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-[#080914]/70 text-red-300 backdrop-blur-md transition hover:bg-red-500 hover:text-white"
+          aria-label={`Delete ${blog.title ?? "story"}`}
+        >
+          <FiTrash2 className="h-3.5 w-3.5" />
+        </button>
+      </>
+    ) : undefined;
+  const chip = (active: boolean) =>
+    `h-9 shrink-0 rounded-full border px-4 text-[13px] font-medium whitespace-nowrap transition ${active ? "border-[#A020F0] bg-[#241333] text-[#D8B4FE]" : "border-white/10 text-[#A5A8C3] hover:text-white"}`;
 
-      <div className="flex-1">
-        <main className="mx-auto max-w-[1120px] px-4 pt-24 pb-16">
-          <section className="mb-2 grid gap-1.5 py-0.5">
-            <h1 className="font-outfit m-0 text-[clamp(1.9rem,3.3vw,2.8rem)] font-semibold tracking-[-0.06em] text-[#16304c]">
-              The Myslotmate Blog
-            </h1>
-            <p className="m-0 mt-0.5 max-w-[620px] text-[0.88rem] leading-[1.7] text-[#6f8daa]">
-              Practical stories, host insights, and local experience ideas from
-              the Myslotmate world.
-            </p>
+  return (
+    <div className="relative isolate flex min-h-screen w-full flex-col bg-[#080914] font-[family-name:var(--font-inter)] text-white">
+      <StarField />
+      <div className="relative z-10 flex flex-1 flex-col">
+        <WebsiteNav />
+
+        <main className="flex-1">
+          {/* Hero */}
+          <section className="mx-auto w-full max-w-[1280px] px-5 pt-16 pb-12 text-center md:px-10 md:pt-24 md:pb-16">
+            <Reveal className="flex flex-col items-center">
+              <p className="msm-r flex items-center gap-3 text-xs font-bold tracking-[0.18em] text-[#D8B4FE] uppercase">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#D8B4FE] shadow-[0_0_10px_#D8B4FE]" />
+                MySlotMate Stories
+              </p>
+              <h1
+                className="font-outfit msm-r mt-6 max-w-[15ch] text-[clamp(40px,6.4vw,84px)] leading-[1.02] font-light tracking-[-0.03em] text-balance"
+                style={delay(0.1)}
+              >
+                Every star has{" "}
+                <span
+                  className={`${GRADIENT} bg-clip-text font-medium text-transparent`}
+                >
+                  a story.
+                </span>
+              </h1>
+              <p
+                className="msm-r mt-6 max-w-[540px] text-[17px] leading-relaxed text-[#A5A8C3]"
+                style={delay(0.2)}
+              >
+                Notes from hosts and explorers across the Northeast, on what
+                happens when people step outside and show up.
+              </p>
+              <label
+                className="msm-r mt-9 flex h-12 w-full max-w-[440px] items-center gap-2.5 rounded-full border border-white/10 bg-[#121426]/80 px-4 backdrop-blur-md focus-within:border-[#A020F0]"
+                style={delay(0.3)}
+              >
+                <FiSearch className="h-4 w-4 shrink-0 text-[#777B98]" />
+                <span className="sr-only">Search stories</span>
+                <input
+                  type="search"
+                  placeholder="Search stories"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  className="h-full w-full bg-transparent text-[15px] text-white outline-none placeholder:text-[#777B98]"
+                />
+              </label>
+            </Reveal>
           </section>
 
-          {isAdmin && (
-            <div className="mb-10 rounded-2xl border border-[#cceeff] bg-[#f0faff] px-4 py-3 text-sm text-[#1f628b]">
-              <p className="font-semibold text-[#16304c]">
-                Admin tools enabled
-              </p>
-              <p className="mt-1">
-                You can create, edit, and delete blog posts from this page.
-              </p>
-            </div>
-          )}
-
-          {isAdmin && (
-            <section className="mb-12 rounded-[28px] border border-[#dbeaf5] bg-white p-6 shadow-[0_18px_40px_rgba(60,121,175,0.08)]">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-[-0.03em] text-[#16304c]">
-                    {editingBlog ? "Edit Blog" : "Create Blog"}
-                  </h2>
-                  <p className="mt-1 text-sm text-[#6f8daa]">
-                    {editingBlog
-                      ? "Update the selected article and save your changes."
-                      : "Write a new article for the MySlotmate community."}
-                  </p>
-                </div>
-
-                {editingBlog && (
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                  >
-                    Cancel edit
-                  </button>
-                )}
-              </div>
-
-              <form onSubmit={handleSubmit} className="grid gap-4">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Title
-                    </span>
-                    <input
-                      type="text"
-                      value={formState.title}
-                      onChange={(event) => {
-                        const nextTitle = event.target.value;
-                        setFormState((current) => ({
-                          ...current,
-                          title: nextTitle,
-                          // Auto-fill the slug from the title for a new,
-                          // untouched blog; never silently change an existing
-                          // blog's slug or one the admin has edited.
-                          slug:
-                            !editingBlog && !slugTouched
-                              ? slugify(nextTitle)
-                              : current.slug,
-                        }));
-                      }}
-                      placeholder="How to Plan the Perfect Experience"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-medium text-gray-700">
-                      URL slug
-                    </span>
-                    <input
-                      type="text"
-                      value={formState.slug}
-                      onChange={(event) => {
-                        setSlugTouched(true);
-                        // Lenient while typing (keep a trailing hyphen so word
-                        // boundaries work); the server slugifies again on save.
-                        handleFormChange(
-                          "slug",
-                          event.target.value
-                            .toLowerCase()
-                            .replace(/[^a-z0-9]+/g, "-")
-                            .replace(/^-+/, ""),
-                        );
-                      }}
-                      placeholder="how-to-plan-the-perfect-experience"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                    />
-                    <span className="mt-1 block text-xs text-gray-400">
-                      /blogs/{formState.slug || "your-blog-slug"}
+          <div className="mx-auto w-full max-w-[1280px] px-5 md:px-10">
+            {isAdmin && (
+              <section className="mb-12 rounded-[28px] border border-white/10 bg-[#121426] p-6 text-white shadow-[0_18px_40px_rgba(60,121,175,0.08)]">
+                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-[-0.03em] text-white">
+                      {editingBlog ? "Edit Blog" : "Create Blog"}
+                    </h2>
+                    <p className="mt-1 text-sm text-[#A5A8C3]">
                       {editingBlog
-                        ? " — changing this changes the blog's public URL."
-                        : ""}
-                    </span>
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Category
-                    </span>
-                    <input
-                      type="text"
-                      list="blog-category-options"
-                      value={formState.category}
-                      onChange={(event) =>
-                        handleFormChange("category", event.target.value)
-                      }
-                      placeholder="Hosting"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                    />
-                    <datalist id="blog-category-options">
-                      {categories.map((category) => (
-                        <option key={category} value={category} />
-                      ))}
-                      {["Hosting", "Wellness", "Adventure", "Community"].map(
-                        (category) => (
-                          <option key={category} value={category} />
-                        ),
-                      )}
-                    </datalist>
-                  </label>
-                </div>
-
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Short Description
-                  </span>
-                  <textarea
-                    value={formState.description}
-                    onChange={(event) =>
-                      handleFormChange("description", event.target.value)
-                    }
-                    placeholder="Learn the key tips and tricks for hosting an unforgettable experience."
-                    rows={3}
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                  />
-                </label>
-
-                <div className="grid gap-4 md:grid-cols-[1fr_180px]">
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Cover Image
-                    </span>
-                    <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
-                      {formState.cover_image_url ? (
-                        <div className="space-y-3">
-                          <div className="overflow-hidden rounded-xl bg-slate-100">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={formState.cover_image_url}
-                              alt="Blog cover preview"
-                              className="h-44 w-full object-cover"
-                            />
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                coverImageInputRef.current?.click()
-                              }
-                              className="inline-flex items-center gap-2 rounded-lg border border-[#cceeff] bg-white px-3 py-2 text-sm font-medium text-[#0094CA] transition hover:bg-[#f0faff]"
-                            >
-                              <FiUpload className="h-4 w-4" />
-                              Replace image
-                            </button>
-                            <button
-                              type="button"
-                              onClick={clearCoverImage}
-                              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100"
-                            >
-                              Remove image
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => coverImageInputRef.current?.click()}
-                          className="flex w-full flex-col items-center justify-center gap-2 rounded-xl px-4 py-8 text-center text-sm text-gray-600 transition hover:bg-white"
-                        >
-                          <FiImage className="h-8 w-8 text-[#0094CA]" />
-                          <span className="font-medium text-gray-800">
-                            Upload a blog cover image
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            JPG, PNG, WEBP up to 5 MB
-                          </span>
-                        </button>
-                      )}
-                      <input
-                        ref={coverImageInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handleCoverImageSelection}
-                        className="hidden"
-                      />
-                    </div>
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-medium text-gray-700">
-                      Read Time
-                    </span>
-                    <input
-                      type="number"
-                      min={1}
-                      value={formState.read_time_minutes}
-                      onChange={(event) =>
-                        handleFormChange(
-                          "read_time_minutes",
-                          event.target.value,
-                        )
-                      }
-                      placeholder="5"
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                    />
-                  </label>
-                </div>
-
-                <div className="block">
-                  <span className="mb-3 block text-sm font-medium text-gray-700">
-                    Blog Content (With Images)
-                  </span>
-                  <p className="mb-4 text-sm text-gray-600">
-                    Create rich content with text and images. Use the buttons to
-                    add new blocks, reorder them, and add captions to images.
-                  </p>
-                  <BlockEditor
-                    blocks={formState.blocks}
-                    onBlocksChange={(blocks) =>
-                      handleFormChange("blocks", blocks)
-                    }
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 pt-1">
-                  <button
-                    type="submit"
-                    onClick={() => {
-                      submitModeRef.current = "publish";
-                    }}
-                    disabled={isSaving || !idToken}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#0094CA] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isSaving ? (
-                      <LuLoader2 className="h-4 w-4 animate-spin" />
-                    ) : editingBlog ? (
-                      <FiEdit2 className="h-4 w-4" />
-                    ) : (
-                      <FiPlus className="h-4 w-4" />
-                    )}
-                    {editingBlog
-                      ? editingBlog.published_at
-                        ? "Save Changes"
-                        : "Publish Blog"
-                      : "Publish Blog"}
-                  </button>
-
-                  <button
-                    type="submit"
-                    onClick={() => {
-                      submitModeRef.current = "draft";
-                    }}
-                    disabled={isSaving || !idToken}
-                    className="inline-flex items-center gap-2 rounded-xl border border-[#cceeff] bg-[#f0faff] px-5 py-3 text-sm font-semibold text-[#0094CA] transition hover:bg-[#e6f6ff] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {editingBlog?.published_at
-                      ? "Move to Draft"
-                      : "Save as Draft"}
-                  </button>
-
-                  {!idToken && (
-                    <p className="text-sm text-amber-700">
-                      Admin token is not available yet. Please wait a moment.
+                        ? "Update the selected article and save your changes."
+                        : "Write a new article for the MySlotmate community."}
                     </p>
+                  </div>
+
+                  {editingBlog && (
+                    <button
+                      type="button"
+                      onClick={resetForm}
+                      className="rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-white/80 transition hover:bg-white/[0.04]"
+                    >
+                      Cancel edit
+                    </button>
                   )}
                 </div>
-              </form>
-            </section>
-          )}
 
-          {isLoading ? (
-            <BlogLoadingSkeleton />
-          ) : error ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
-              {listErrorMessage}
-            </div>
-          ) : filteredBlogs.length > 0 ? (
-            <div className="space-y-12">
-              {/* Featured Blog */}
-              {(() => {
-                const featuredBlog = filteredBlogs[0]!;
-                const authorName = getBlogValue(
-                  featuredBlog.author_name,
-                  "MySlotmate Team",
-                );
-                const displayDate = formatBlogDate(
-                  featuredBlog.published_at ?? featuredBlog.created_at,
-                );
-                const excerpt = getBlogExcerpt(featuredBlog);
-
-                return (
-                  <section className="grid items-stretch gap-6.5 rounded-[32px] border border-[#aeddf8a6] bg-white/72 p-7 shadow-[0_24px_60px_rgba(58,119,172,0.12)] lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
-                    <div className="grid content-start gap-5">
-                      <div className="w-full">
-                        <span className="flex w-full items-center justify-center gap-2 rounded-full border border-[#a9daf5a6] bg-white/90 px-3.5 py-2 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4a8ab8] uppercase before:h-1.5 before:w-1.5 before:rounded-full before:bg-[#4a8ab8] before:content-['']">
-                          Featured Story
-                        </span>
-                      </div>
-                      <h2 className="font-outfit m-0 text-[clamp(1.5rem,2.45vw,2.1rem)] leading-[1.16] font-semibold tracking-[-0.04em] text-[#16304c]">
-                        <Link
-                          href={`/blogs/${featuredBlog.slug}`}
-                          className="cursor-pointer transition hover:text-[#0e8ae0]"
-                        >
-                          {getBlogValue(featuredBlog.title, "Untitled blog")}
-                        </Link>
-                      </h2>
-                      <div className="mt-0.5 flex flex-wrap gap-2.5">
-                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#78bce759] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
-                          {getBlogValue(featuredBlog.category, "Host Strategy")}
-                        </span>
-                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#78bce759] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
-                          {authorName}
-                        </span>
-                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#78bce759] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
-                          {displayDate}
-                        </span>
-                        <span className="inline-flex items-center justify-center gap-2 rounded-full border border-[#78bce759] bg-white/90 px-3.5 py-1.5 text-[0.74rem] font-extrabold tracking-[0.08em] text-[#4c84ab] uppercase">
-                          {featuredBlog.read_time_minutes ?? 5} Min Read
-                        </span>
-                      </div>
-                      <p className="m-0 line-clamp-4 text-[0.88rem] leading-[1.68] text-[#6f8daa]">
-                        {excerpt}
-                      </p>
-                      <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
-                        <Link
-                          href={`/blogs/${featuredBlog.slug}`}
-                          className="font-outfit inline-flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-[0.92rem] font-bold text-[#0e8ae0] after:text-base after:content-['>'] hover:underline"
-                        >
-                          Read article
-                        </Link>
-
-                        {isAdmin && (
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(featuredBlog)}
-                              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#b8e4ff] bg-[#ebf8ff] text-[#0094CA] transition hover:bg-[#dcf2ff]"
-                              aria-label="Edit featured story"
-                            >
-                              <FiEdit2 className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(featuredBlog)}
-                              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-600 transition hover:bg-red-100"
-                              aria-label="Delete featured story"
-                            >
-                              <FiTrash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div
-                      className="group relative min-h-[320px] w-full cursor-pointer overflow-hidden rounded-[28px] border border-[#addbf699] bg-[linear-gradient(145deg,#e5f7ff,#f9fdff)]"
-                      onClick={() => router.push(`/blogs/${featuredBlog.slug}`)}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={
-                          featuredBlog.cover_image_url ?? FALLBACK_BLOG_IMAGE
-                        }
-                        alt={getBlogValue(featuredBlog.title, "Featured story")}
-                        className="absolute inset-0 h-full w-full rounded-[28px] object-cover transition duration-500 group-hover:scale-105"
+                <form onSubmit={handleSubmit} className="grid gap-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-1.5 block text-sm font-medium text-white/80">
+                        Title
+                      </span>
+                      <input
+                        type="text"
+                        value={formState.title}
+                        onChange={(event) => {
+                          const nextTitle = event.target.value;
+                          setFormState((current) => ({
+                            ...current,
+                            title: nextTitle,
+                            // Auto-fill the slug from the title for a new,
+                            // untouched blog; never silently change an existing
+                            // blog's slug or one the admin has edited.
+                            slug:
+                              !editingBlog && !slugTouched
+                                ? slugify(nextTitle)
+                                : current.slug,
+                          }));
+                        }}
+                        placeholder="How to Plan the Perfect Experience"
+                        className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
                       />
-                      {!featuredBlog.published_at && (
-                        <span className="absolute top-4 left-4 z-10 rounded-full bg-amber-500 px-3 py-1 text-[0.7rem] font-extrabold tracking-wide text-white uppercase shadow">
-                          Draft
-                        </span>
-                      )}
-                    </div>
-                  </section>
-                );
-              })()}
+                    </label>
 
-              <section className="mt-12 mb-8">
-                <div className="mt-13 mb-5.5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                  <div>
-                    <h2 className="font-outfit m-0 text-[clamp(1.5rem,2.3vw,2rem)] leading-[1.16] font-semibold tracking-[-0.04em] text-[#16304c]">
-                      Browse the latest from Myslotmate
-                    </h2>
-                    <p className="m-0 mt-3 text-[0.9rem] leading-[1.68] text-[#6f8daa]">
-                      Editorial inspiration with the same bright, local-first
-                      energy as the main brand.
+                    <label className="block">
+                      <span className="mb-1.5 block text-sm font-medium text-white/80">
+                        URL slug
+                      </span>
+                      <input
+                        type="text"
+                        value={formState.slug}
+                        onChange={(event) => {
+                          setSlugTouched(true);
+                          // Lenient while typing (keep a trailing hyphen so word
+                          // boundaries work); the server slugifies again on save.
+                          handleFormChange(
+                            "slug",
+                            event.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9]+/g, "-")
+                              .replace(/^-+/, ""),
+                          );
+                        }}
+                        placeholder="how-to-plan-the-perfect-experience"
+                        className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
+                      />
+                      <span className="mt-1 block text-xs text-[#777B98]">
+                        /blogs/{formState.slug || "your-blog-slug"}
+                        {editingBlog
+                          ? " — changing this changes the blog's public URL."
+                          : ""}
+                      </span>
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1.5 block text-sm font-medium text-white/80">
+                        Category
+                      </span>
+                      <input
+                        type="text"
+                        list="blog-category-options"
+                        value={formState.category}
+                        onChange={(event) =>
+                          handleFormChange("category", event.target.value)
+                        }
+                        placeholder="Hosting"
+                        className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
+                      />
+                      <datalist id="blog-category-options">
+                        {categories.map((category) => (
+                          <option key={category} value={category} />
+                        ))}
+                        {["Hosting", "Wellness", "Adventure", "Community"].map(
+                          (category) => (
+                            <option key={category} value={category} />
+                          ),
+                        )}
+                      </datalist>
+                    </label>
+                  </div>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-medium text-white/80">
+                      Short Description
+                    </span>
+                    <textarea
+                      value={formState.description}
+                      onChange={(event) =>
+                        handleFormChange("description", event.target.value)
+                      }
+                      placeholder="Learn the key tips and tricks for hosting an unforgettable experience."
+                      rows={3}
+                      className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
+                    />
+                  </label>
+
+                  <div className="grid gap-4 md:grid-cols-[1fr_180px]">
+                    <label className="block">
+                      <span className="mb-1.5 block text-sm font-medium text-white/80">
+                        Cover Image
+                      </span>
+                      <div className="rounded-xl border border-dashed border-white/15 bg-white/[0.04] p-4">
+                        {formState.cover_image_url ? (
+                          <div className="space-y-3">
+                            <div className="overflow-hidden rounded-xl bg-white/[0.06]">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={formState.cover_image_url}
+                                alt="Blog cover preview"
+                                className="h-44 w-full object-cover"
+                              />
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  coverImageInputRef.current?.click()
+                                }
+                                className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-[#121426] px-3 py-2 text-sm font-medium text-[#D8B4FE] transition hover:bg-white/[0.04]"
+                              >
+                                <FiUpload className="h-4 w-4" />
+                                Replace image
+                              </button>
+                              <button
+                                type="button"
+                                onClick={clearCoverImage}
+                                className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-300 transition hover:bg-red-500/15"
+                              >
+                                Remove image
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => coverImageInputRef.current?.click()}
+                            className="flex w-full flex-col items-center justify-center gap-2 rounded-xl px-4 py-8 text-center text-sm text-[#A5A8C3] transition hover:bg-[#121426]"
+                          >
+                            <FiImage className="h-8 w-8 text-[#D8B4FE]" />
+                            <span className="font-medium text-white">
+                              Upload a blog cover image
+                            </span>
+                            <span className="text-xs text-[#A5A8C3]">
+                              JPG, PNG, WEBP up to 5 MB
+                            </span>
+                          </button>
+                        )}
+                        <input
+                          ref={coverImageInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCoverImageSelection}
+                          className="hidden"
+                        />
+                      </div>
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-1.5 block text-sm font-medium text-white/80">
+                        Read Time
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={formState.read_time_minutes}
+                        onChange={(event) =>
+                          handleFormChange(
+                            "read_time_minutes",
+                            event.target.value,
+                          )
+                        }
+                        placeholder="5"
+                        className="w-full rounded-xl border border-white/10 px-4 py-3 text-sm transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="block">
+                    <span className="mb-3 block text-sm font-medium text-white/80">
+                      Blog Content (With Images)
+                    </span>
+                    <p className="mb-4 text-sm text-[#A5A8C3]">
+                      Create rich content with text and images. Use the buttons
+                      to add new blocks, reorder them, and add captions to
+                      images.
+                    </p>
+                    <BlockEditor
+                      blocks={formState.blocks}
+                      onBlocksChange={(blocks) =>
+                        handleFormChange("blocks", blocks)
+                      }
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-1">
+                    <button
+                      type="submit"
+                      onClick={() => {
+                        submitModeRef.current = "publish";
+                      }}
+                      disabled={isSaving || !idToken}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#A020F0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSaving ? (
+                        <LuLoader2 className="h-4 w-4 animate-spin" />
+                      ) : editingBlog ? (
+                        <FiEdit2 className="h-4 w-4" />
+                      ) : (
+                        <FiPlus className="h-4 w-4" />
+                      )}
+                      {editingBlog
+                        ? editingBlog.published_at
+                          ? "Save Changes"
+                          : "Publish Blog"
+                        : "Publish Blog"}
+                    </button>
+
+                    <button
+                      type="submit"
+                      onClick={() => {
+                        submitModeRef.current = "draft";
+                      }}
+                      disabled={isSaving || !idToken}
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-[#D8B4FE] transition hover:bg-white/[0.04] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {editingBlog?.published_at
+                        ? "Move to Draft"
+                        : "Save as Draft"}
+                    </button>
+
+                    {!idToken && (
+                      <p className="text-sm text-amber-300">
+                        Admin token is not available yet. Please wait a moment.
+                      </p>
+                    )}
+                  </div>
+                </form>
+              </section>
+            )}
+
+            {isLoading ? (
+              <div className="grid gap-6 pb-24 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <StoryCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : error ? (
+              <div className="mb-24 rounded-[24px] border border-red-400/30 bg-red-500/10 px-6 py-5 text-sm text-red-200">
+                {listErrorMessage}
+              </div>
+            ) : (
+              <>
+                {featured && (
+                  <Reveal className="mb-16">
+                    <div className="msm-r">
+                      <FeaturedStory
+                        blog={featured}
+                        actions={adminActions(featured)}
+                      />
+                    </div>
+                  </Reveal>
+                )}
+
+                {/* Filters */}
+                <div className="sticky top-0 z-20 -mx-5 mb-8 flex flex-col gap-4 bg-[#080914]/80 px-5 py-4 backdrop-blur-xl md:-mx-10 md:flex-row md:items-center md:justify-between md:px-10">
+                  <h2 className="font-outfit text-2xl font-bold">
+                    {showFeatured ? "More stories" : "Stories"}
+                    <span className="ml-2 text-base font-medium text-[#777B98]">
+                      {rest.length}
+                    </span>
+                  </h2>
+                  {categories.length > 0 && (
+                    <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 md:mx-0 md:px-0">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCategory("All")}
+                        className={chip(selectedCategory === "All")}
+                      >
+                        All
+                      </button>
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          type="button"
+                          onClick={() => setSelectedCategory(category)}
+                          className={chip(selectedCategory === category)}
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {rest.length > 0 ? (
+                  <Reveal
+                    className="grid gap-6 pb-24 md:grid-cols-2 lg:grid-cols-3"
+                    threshold={0.1}
+                  >
+                    {rest.map((blog, i) => (
+                      <div
+                        key={blog.id}
+                        className="msm-r"
+                        style={delay((i % 3) * 0.12)}
+                      >
+                        <StoryCard
+                          blog={blog}
+                          i={i + 1}
+                          className="h-full"
+                          actions={adminActions(blog)}
+                        />
+                      </div>
+                    ))}
+                    {/* Fills an uneven last row with an invitation. */}
+                    {rest.length % 3 !== 0 && (
+                      <div
+                        className={`msm-r ${rest.length % 2 === 0 ? "md:col-span-2 lg:col-span-1" : ""}`}
+                        style={delay((rest.length % 3) * 0.12)}
+                      >
+                        <div className="relative flex h-full min-h-[320px] flex-col justify-end overflow-hidden rounded-[28px] border border-[#652A91] bg-gradient-to-br from-[#241333] via-[#121426] to-[#080914] p-8">
+                          <div
+                            aria-hidden
+                            className="msm-drift absolute -top-16 -right-16 h-56 w-56 rounded-full bg-[#A020F0]/40 blur-[80px]"
+                          />
+                          <span className="absolute top-8 left-8 h-2 w-2 rounded-full bg-[#121426] shadow-[0_0_14px_4px_rgb(216_180_254/0.7)]" />
+                          <p className="font-outfit relative text-[clamp(26px,2.4vw,32px)] leading-tight font-normal text-balance">
+                            The best stories start with showing up.
+                          </p>
+                          <p className="relative mt-3 text-[15px] leading-relaxed text-[#A5A8C3]">
+                            Find an event near you this week and write your own.
+                          </p>
+                          <Link
+                            href="/#discover"
+                            className={`font-outfit relative mt-6 flex h-11 w-fit items-center rounded-full px-5 text-[15px] font-semibold text-white ${GRADIENT}`}
+                          >
+                            Explore events
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </Reveal>
+                ) : (
+                  <div className="mb-24 flex flex-col items-center rounded-[28px] border border-dashed border-white/10 px-6 py-16 text-center">
+                    <span className="h-2 w-2 rounded-full bg-[#121426] shadow-[0_0_14px_4px_rgb(216_180_254/0.7)]" />
+                    <p className="font-outfit mt-6 text-xl font-semibold">
+                      {searchTerm || selectedCategory !== "All"
+                        ? "No stories match that yet."
+                        : showFeatured
+                          ? "More stories are on their way."
+                          : "No stories yet."}
+                    </p>
+                    <p className="mt-2 max-w-md text-sm text-[#A5A8C3]">
+                      {searchTerm || selectedCategory !== "All"
+                        ? "Try another word, or go back to all stories."
+                        : "New stories from hosts and explorers will appear here."}
                     </p>
                   </div>
-                  <div className="relative w-full md:max-w-sm">
-                    <FiSearch className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search blogs..."
-                      value={searchTerm}
-                      onChange={(event) => setSearchTerm(event.target.value)}
-                      className="w-full rounded-full border border-[rgba(120,188,231,0.35)] bg-white/90 py-2.5 pr-4 pl-11 text-sm text-[#16304c] placeholder-[#6f8daa] shadow-[0_10px_24px_rgba(74,141,194,0.08)] transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
-                    />
-                  </div>
-                </div>
-                <div className="mt-2.5 flex flex-wrap gap-3">
-                  <span
-                    onClick={() => setSelectedCategory("All")}
-                    className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[0.74rem] font-extrabold tracking-[0.08em] uppercase transition-all duration-200 ${
-                      selectedCategory === "All"
-                        ? "border border-transparent bg-[linear-gradient(135deg,#1fa7ff,#66d1ff)] text-white shadow-[0_14px_26px_rgba(31,167,255,0.24)]"
-                        : "border border-[#78bce759] bg-white/90 text-[#4c84ab] hover:bg-[#ebf6ff] hover:text-[#0e8ae0]"
-                    }`}
-                  >
-                    All Posts
-                  </span>
-                  {categories.map((category) => (
-                    <span
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-5 py-2.5 text-[0.74rem] font-extrabold tracking-[0.08em] uppercase transition-all duration-200 ${
-                        selectedCategory === category
-                          ? "border border-transparent bg-[linear-gradient(135deg,#1fa7ff,#66d1ff)] text-white shadow-[0_14px_26px_rgba(31,167,255,0.24)]"
-                          : "border border-[#78bce759] bg-white/90 text-[#4c84ab] hover:bg-[#ebf6ff] hover:text-[#0e8ae0]"
-                      }`}
-                    >
-                      {category}
-                    </span>
-                  ))}
-                </div>
-              </section>
+                )}
+              </>
+            )}
+          </div>
 
-              {/* Story Grid for remaining blogs */}
-              {filteredBlogs.length > 1 && (
-                <section className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredBlogs.slice(1).map((blog) => (
-                    <BlogCard
-                      key={blog.id}
-                      blog={blog}
-                      isAdmin={isAdmin}
-                      onDelete={handleDelete}
-                      onEdit={handleEdit}
-                      onOpen={(id) => router.push(`/blogs/${id}`)}
-                    />
-                  ))}
-                </section>
-              )}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 py-16 text-center">
-              <LuLoader2 className="mb-4 h-12 w-12 text-gray-300" />
-              <p className="text-lg font-medium text-gray-700">
-                {searchTerm || selectedCategory !== "All"
-                  ? "No blogs match your current filters."
-                  : "No blog posts are available right now."}
+          {/* Moments: stories told in photos */}
+          <section className="mx-auto w-full max-w-[1280px] px-5 pb-24 md:px-10">
+            <Reveal className="max-w-[560px]">
+              <p className="msm-r flex items-center gap-3 text-xs font-bold tracking-[0.18em] text-[#D8B4FE] uppercase">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#D8B4FE] shadow-[0_0_10px_#D8B4FE]" />
+                Moments
               </p>
-              <p className="mt-2 max-w-md text-sm text-gray-500">
-                {searchTerm || selectedCategory !== "All"
-                  ? "Try a different search term or switch back to all categories."
-                  : "Published stories will appear here once they are available."}
-              </p>
-            </div>
-          )}
+              <h2
+                className="font-outfit msm-r mt-4 text-[clamp(28px,3.4vw,44px)] leading-[1.08] font-normal tracking-tight text-balance"
+                style={delay(0.1)}
+              >
+                Some stories don&rsquo;t need words.
+              </h2>
+            </Reveal>
+            <Reveal
+              className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5"
+              threshold={0.15}
+            >
+              {MOMENTS.map(([src, caption], i) => (
+                <figure
+                  key={src}
+                  className="msm-r group relative overflow-hidden rounded-[24px] border border-white/10"
+                  style={delay(i * 0.12)}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={src}
+                    alt={`People at a MySlotMate ${caption} event`}
+                    loading="lazy"
+                    className="aspect-[3/4] w-full object-cover transition duration-700 group-hover:scale-105"
+                  />
+                  <figcaption className="absolute inset-x-0 bottom-0 flex items-center gap-2 bg-gradient-to-t from-[#080914]/90 to-transparent px-4 pt-12 pb-4 text-sm font-semibold">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#121426] shadow-[0_0_10px_2px_rgb(216_180_254/0.7)]" />
+                    {caption}
+                  </figcaption>
+                </figure>
+              ))}
+            </Reveal>
+          </section>
+
+          {/* Closing: back down to the city */}
+          <section className="relative isolate flex min-h-[70svh] flex-col items-center overflow-hidden px-5 pt-20 pb-52 text-center">
+            <CitySky skylineClass="h-[42%]" />
+            <Reveal className="flex flex-col items-center">
+              <h2 className="font-outfit msm-r max-w-[16ch] text-[clamp(34px,5vw,68px)] leading-[1.04] font-light tracking-[-0.03em] text-balance">
+                The next story could be{" "}
+                <span
+                  className={`${GRADIENT} bg-clip-text font-medium text-transparent`}
+                >
+                  yours.
+                </span>
+              </h2>
+              <div
+                className="msm-r mt-9 flex flex-wrap justify-center gap-3"
+                style={delay(0.15)}
+              >
+                <Link
+                  href="/#discover"
+                  className={`font-outfit flex h-12 items-center gap-1.5 rounded-full px-6 text-base font-semibold text-white ${GRADIENT}`}
+                >
+                  Find something to show up to
+                </Link>
+                <Link
+                  href="/become-host"
+                  className="font-outfit flex h-12 items-center rounded-full border border-white/15 bg-[#080914]/40 px-6 text-base font-semibold text-white backdrop-blur-md transition hover:bg-white/5"
+                >
+                  Become a host
+                </Link>
+              </div>
+            </Reveal>
+          </section>
         </main>
-      </div>
 
-      <components.Home.Footer />
+        <WebsiteFooter />
+      </div>
     </div>
   );
 }

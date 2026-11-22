@@ -35,7 +35,7 @@ const assistCards: AssistCard[] = [
     href: "/support/report",
     actionLabel: "Report issue",
     icon: <LuAlertCircle className="h-5 w-5" />,
-    accentClassName: "bg-[#eef4ff] text-[#4F7CFF]",
+    accentClassName: "bg-white/[0.04] text-[#4F7CFF]",
   },
   {
     title: "Technical Support",
@@ -44,7 +44,7 @@ const assistCards: AssistCard[] = [
     href: "/support/technical",
     actionLabel: "Get tech help",
     icon: <LuLifeBuoy className="h-5 w-5" />,
-    accentClassName: "bg-[#edfff6] text-[#16A34A]",
+    accentClassName: "bg-white/[0.04] text-[#16A34A]",
   },
   {
     title: "Policy Help",
@@ -53,7 +53,7 @@ const assistCards: AssistCard[] = [
     href: "/support/policies",
     actionLabel: "View policies",
     icon: <LuFileCheck2 className="h-5 w-5" />,
-    accentClassName: "bg-[#f6efff] text-[#A855F7]",
+    accentClassName: "bg-white/[0.04] text-[#A855F7]",
   },
   {
     title: "Terms & Conditions",
@@ -62,7 +62,7 @@ const assistCards: AssistCard[] = [
     href: "/support/terms-conditions",
     actionLabel: "View terms",
     icon: <LuFileText className="h-5 w-5" />,
-    accentClassName: "bg-[#f0f0f0] text-[#6B7280]",
+    accentClassName: "bg-white/[0.04] text-[#6B7280]",
   },
 ];
 
@@ -75,19 +75,19 @@ function AssistCardComponent({
   accentClassName,
 }: AssistCard) {
   return (
-    <div className="flex h-full flex-col rounded-3xl border border-gray-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <div className="flex h-full flex-col rounded-3xl border border-white/10 bg-[#121426] p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       <div
         className={`mb-5 flex h-11 w-11 items-center justify-center rounded-xl ${accentClassName}`}
       >
         {icon}
       </div>
-      <h2 className="text-xl font-semibold text-slate-900">{title}</h2>
-      <p className="mt-3 grow text-sm leading-6 text-slate-500">
+      <h2 className="text-xl font-semibold text-white">{title}</h2>
+      <p className="mt-3 grow text-sm leading-6 text-[#A5A8C3]">
         {description}
       </p>
       <Link
         href={href}
-        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#0094CA] transition hover:text-[#007dab]"
+        className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#D8B4FE] transition hover:text-[#D8B4FE]"
       >
         {actionLabel}
         <FiArrowRight className="h-4 w-4" />
@@ -113,22 +113,22 @@ export default function SupportPage() {
     switch (status) {
       case "open":
         return {
-          bgColor: "bg-blue-50",
-          textColor: "text-blue-700",
+          bgColor: "bg-[#241333]",
+          textColor: "text-[#D8B4FE]",
           icon: <LuClock className="h-4 w-4" />,
           label: "Open",
         };
       case "resolved":
         return {
-          bgColor: "bg-green-50",
-          textColor: "text-green-700",
+          bgColor: "bg-green-500/10",
+          textColor: "text-green-300",
           icon: <LuCheckCircle2 className="h-4 w-4" />,
           label: "Resolved",
         };
       default:
         return {
-          bgColor: "bg-gray-50",
-          textColor: "text-gray-700",
+          bgColor: "bg-white/[0.04]",
+          textColor: "text-white/80",
           icon: <LuClock className="h-4 w-4" />,
           label: status,
         };
@@ -137,13 +137,13 @@ export default function SupportPage() {
 
   const getCategoryColor = (category: string) => {
     const categoryMap: Record<string, string> = {
-      report_participant: "bg-red-100 text-red-700",
-      technical_support: "bg-green-100 text-green-700",
-      policy_help: "bg-purple-100 text-purple-700",
-      payment_issue: "bg-orange-100 text-orange-700",
-      other: "bg-gray-100 text-gray-700",
+      report_participant: "bg-red-500/15 text-red-300",
+      technical_support: "bg-green-500/15 text-green-300",
+      policy_help: "bg-purple-500/15 text-purple-300",
+      payment_issue: "bg-orange-500/15 text-orange-300",
+      other: "bg-white/[0.06] text-white/80",
     };
-    return categoryMap[category] ?? "bg-gray-100 text-gray-700";
+    return categoryMap[category] ?? "bg-white/[0.06] text-white/80";
   };
 
   const formatDate = (dateString: string) => {
@@ -163,34 +163,34 @@ export default function SupportPage() {
       />
       <section className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
             Support &amp; Safety
           </h1>
-          <p className="mt-2 text-sm text-slate-500 sm:text-base">
+          <p className="mt-2 text-sm text-[#A5A8C3] sm:text-base">
             We’re here to help you host with confidence.
           </p>
         </div>
 
         <button
           onClick={() => setIsTicketsOpen(true)}
-          className="inline-flex items-center rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:border-[#0094CA] hover:text-[#0094CA]"
+          className="inline-flex items-center rounded-full border border-white/10 bg-[#121426] px-4 py-2 text-sm font-medium text-white/80 shadow-sm transition hover:border-[#A020F0] hover:text-[#D8B4FE]"
         >
           All tickets raised
         </button>
       </section>
 
-      <section className="mt-8 overflow-hidden rounded-[28px] border border-orange-100 bg-white p-6 shadow-[0_18px_48px_rgba(15,23,42,0.08)] sm:p-8">
+      <section className="mt-8 overflow-hidden rounded-[28px] border border-orange-500/30 bg-[#121426] p-6 shadow-[0_18px_48px_rgba(15,23,42,0.08)] sm:p-8">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
           <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-orange-500 uppercase">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-orange-500/10 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-orange-400 uppercase">
               <LuShieldAlert className="h-4 w-4" />
               Emergency SOS
             </div>
 
-            <h2 className="max-w-xl text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+            <h2 className="max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Need immediate help during a live session?
             </h2>
-            <p className="mt-4 max-w-xl text-sm leading-7 text-slate-500 sm:text-base">
+            <p className="mt-4 max-w-xl text-sm leading-7 text-[#A5A8C3] sm:text-base">
               Our Trust &amp; Safety team prioritizes urgent incidents so you
               can get help quickly when something feels unsafe.
             </p>
@@ -198,14 +198,14 @@ export default function SupportPage() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/support/report?urgent=1"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0094CA] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#A020F0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
               >
                 <FiPhoneCall className="h-4 w-4" />
                 Call Trust &amp; Safety
               </Link>
               <a
                 href="tel:112"
-                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-[#0094CA] hover:text-[#0094CA]"
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-[#A020F0] hover:text-[#D8B4FE]"
               >
                 Local Emergency Services
               </a>
@@ -213,7 +213,7 @@ export default function SupportPage() {
           </div>
 
           <div className="hidden justify-end lg:flex">
-            <div className="flex h-52 w-52 items-center justify-center rounded-full bg-orange-50/80 text-orange-200">
+            <div className="flex h-52 w-52 items-center justify-center rounded-full bg-orange-500/10 text-orange-200">
               <LuShieldAlert className="h-28 w-28" />
             </div>
           </div>
@@ -221,7 +221,7 @@ export default function SupportPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+        <h2 className="text-xl font-semibold text-white sm:text-2xl">
           How can we assist you?
         </h2>
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
@@ -233,22 +233,22 @@ export default function SupportPage() {
 
       {/* Tickets Modal */}
       {isTicketsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[28px] bg-white shadow-xl">
+        <div className="msm-modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[28px] bg-[#121426] shadow-xl">
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100 p-6">
+            <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-[#241333] to-[#241333] p-6">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">
+                <h2 className="text-2xl font-bold text-white">
                   Support Tickets
                 </h2>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-[#A5A8C3]">
                   {userTickets?.length ?? 0} ticket
                   {(userTickets?.length ?? 0) !== 1 ? "s" : ""} raised
                 </p>
               </div>
               <button
                 onClick={() => setIsTicketsOpen(false)}
-                className="rounded-full p-2 text-slate-500 transition hover:bg-white hover:text-slate-900"
+                className="rounded-full p-2 text-[#A5A8C3] transition hover:bg-[#121426] hover:text-white"
               >
                 <FiX className="h-6 w-6" />
               </button>
@@ -258,7 +258,7 @@ export default function SupportPage() {
             <div className="max-h-[calc(90vh-140px)] overflow-y-auto p-6">
               {ticketsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-200 border-t-[#0094CA]" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#652A91]/60 border-t-[#A020F0]" />
                 </div>
               ) : userTickets && userTickets.length > 0 ? (
                 <div className="space-y-4">
@@ -267,13 +267,13 @@ export default function SupportPage() {
                     return (
                       <div
                         key={ticket.id}
-                        className="overflow-hidden rounded-xl border border-gray-200 bg-white transition hover:border-[#0094CA] hover:shadow-md"
+                        className="overflow-hidden rounded-xl border border-white/10 bg-[#121426] transition hover:border-[#A020F0] hover:shadow-md"
                       >
                         <div className="p-4">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <h3 className="text-base font-semibold text-slate-900">
+                                <h3 className="text-base font-semibold text-white">
                                   {ticket.subject}
                                 </h3>
                                 <span
@@ -283,7 +283,7 @@ export default function SupportPage() {
                                   {statusBadge.label}
                                 </span>
                               </div>
-                              <p className="mt-1 text-sm text-slate-600">
+                              <p className="mt-1 text-sm text-[#A5A8C3]">
                                 {ticket.report_reason ?? "Support inquiry"}
                               </p>
                               <div className="mt-3 flex flex-wrap gap-2">
@@ -295,7 +295,7 @@ export default function SupportPage() {
                                   {ticket.category?.replace(/_/g, " ") ||
                                     "Other"}
                                 </span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-[#A5A8C3]">
                                   {ticket.messages?.length || 0} message
                                   {(ticket.messages?.length || 0) !== 1
                                     ? "s"
@@ -304,12 +304,12 @@ export default function SupportPage() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-xs text-slate-500">
+                              <p className="text-xs text-[#A5A8C3]">
                                 {formatDate(ticket.created_at)}
                               </p>
                               <Link
                                 href={`/support/tickets/${ticket.id}`}
-                                className="mt-2 inline-flex items-center gap-1 rounded-lg bg-[#0094CA] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#007dab]"
+                                className="mt-2 inline-flex items-center gap-1 rounded-lg bg-[#A020F0] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#8A1AD0]"
                               >
                                 View
                                 <FiArrowRight className="h-3 w-3" />
@@ -323,13 +323,13 @@ export default function SupportPage() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
-                    <LuBadgeHelp className="h-6 w-6 text-[#0094CA]" />
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#241333]">
+                    <LuBadgeHelp className="h-6 w-6 text-[#D8B4FE]" />
                   </div>
-                  <p className="text-sm font-medium text-slate-900">
+                  <p className="text-sm font-medium text-white">
                     No tickets yet
                   </p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-[#A5A8C3]">
                     You haven&apos;t raised any support tickets. Feel free to
                     reach out if you need help!
                   </p>
@@ -338,10 +338,10 @@ export default function SupportPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t border-gray-200 bg-gray-50 p-4">
+            <div className="border-t border-white/10 bg-white/[0.04] p-4">
               <button
                 onClick={() => setIsTicketsOpen(false)}
-                className="w-full rounded-lg border border-gray-300 py-2 text-sm font-medium text-slate-700 transition hover:bg-white"
+                className="w-full rounded-lg border border-white/15 py-2 text-sm font-medium text-white/80 transition hover:bg-[#121426]"
               >
                 Close
               </button>

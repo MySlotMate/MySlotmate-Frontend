@@ -254,14 +254,14 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
     <div className="space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">
+          <h3 className="text-base font-semibold text-white">
             {isDiscount
               ? "Percentage discount codes"
               : isFree
                 ? "Free-booking codes"
                 : "Passkey codes (access)"}
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#A5A8C3]">
             {isDiscount
               ? "Each code takes a percentage off one booking — the guest pays the rest."
               : isFree
@@ -273,7 +273,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
           <button
             type="button"
             onClick={() => download(coupons, `${filePrefix}-${eventId}.csv`)}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/[0.04]"
           >
             <FiDownload size={15} /> All CSV
           </button>
@@ -281,7 +281,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
             <button
               type="button"
               onClick={() => void removeAll()}
-              className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              className="flex items-center gap-1.5 rounded-lg border border-red-500/30 px-3 py-2 text-sm font-medium text-red-300 hover:bg-red-500/10"
             >
               <FiTrash2 size={15} /> Clear all
             </button>
@@ -290,12 +290,12 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
       </div>
 
       {/* Bulk generate — unique single-use codes, one per guest */}
-      <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-        <p className="text-sm font-medium text-gray-700">
+      <div className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+        <p className="text-sm font-medium text-white/80">
           Generate unique codes
         </p>
         <p
-          className={`mb-2 text-xs ${isFree ? "text-amber-600" : "text-gray-500"}`}
+          className={`mb-2 text-xs ${isFree ? "text-amber-300" : "text-[#A5A8C3]"}`}
         >
           {isDiscount
             ? `Each code takes ${pctValid ? pct : "?"}% off — you absorb the discount.`
@@ -304,7 +304,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
               : "Each code unlocks booking; guests still pay the normal price."}
         </p>
         {isDiscount && (
-          <label className="mb-2 flex items-center gap-2 text-sm text-gray-700">
+          <label className="mb-2 flex items-center gap-2 text-sm text-white/80">
             Discount
             <input
               type="number"
@@ -312,7 +312,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
               max={99}
               value={discountPercent}
               onChange={(e) => setDiscountPercent(e.target.value)}
-              className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-20 rounded-lg border border-white/15 px-3 py-2 text-sm"
               aria-label="Discount percent"
             />
             % off (applies to new codes)
@@ -325,25 +325,25 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
             max={500}
             value={batchCount}
             onChange={(e) => setBatchCount(e.target.value)}
-            className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+            className="w-24 rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
             placeholder="How many"
           />
           <input
             type="text"
             value={batchPrefix}
             onChange={(e) => setBatchPrefix(e.target.value.toUpperCase())}
-            className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-none focus:ring-2 focus:ring-[#0094CA]"
+            className="w-32 rounded-lg border border-white/15 px-3 py-2 text-sm uppercase outline-none focus:ring-2 focus:ring-[#A020F0]"
             placeholder="Prefix (opt)"
           />
           <button
             type="button"
             onClick={() => void handleGenerate()}
             disabled={generating}
-            className="rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+            className="rounded-lg bg-[#A020F0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
           >
             {generating ? "Generating…" : "Generate"}
           </button>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-[#777B98]">
             Single-use, one booking each. Generate again anytime to add more.
           </span>
         </div>
@@ -368,19 +368,19 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="Custom code (e.g. VIP)"
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase outline-none focus:ring-2 focus:ring-[#0094CA]"
+          className="flex-1 rounded-lg border border-white/15 px-3 py-2 text-sm uppercase outline-none focus:ring-2 focus:ring-[#A020F0]"
         />
         <button
           type="button"
           onClick={() => void handleCreate()}
           disabled={creating}
-          className="flex items-center justify-center gap-1.5 rounded-lg bg-[#0094CA] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+          className="flex items-center justify-center gap-1.5 rounded-lg bg-[#A020F0] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
         >
           <FiPlus size={15} /> Add
         </button>
       </div>
       {isDiscount && (
-        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-700">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -396,35 +396,35 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
               value={maxUses}
               onChange={(e) => setMaxUses(e.target.value)}
               placeholder="Max uses (blank = unlimited)"
-              className="w-56 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="w-56 rounded-lg border border-white/15 px-3 py-2 text-sm"
               aria-label="Max uses"
             />
           )}
         </div>
       )}
       <div>
-        <label className="mb-1 block text-xs font-medium text-gray-500">
+        <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
           Expires (optional)
         </label>
         <input
           type="date"
           value={validUntil}
           onChange={(e) => setValidUntil(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0094CA]"
+          className="rounded-lg border border-white/15 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
         />
       </div>
 
       {/* List — collapsed by default; a batch of codes stays out of the way. */}
       {loading ? (
-        <p className="text-sm text-gray-400">Loading…</p>
+        <p className="text-sm text-[#777B98]">Loading…</p>
       ) : coupons.length === 0 ? (
-        <p className="text-sm text-gray-400">No codes yet.</p>
+        <p className="text-sm text-[#777B98]">No codes yet.</p>
       ) : (
         <div>
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="flex w-full items-center justify-between rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="flex w-full items-center justify-between rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/[0.04]"
           >
             <span>
               {coupons.length} code{coupons.length > 1 ? "s" : ""}
@@ -436,10 +436,10 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
           </button>
 
           {expanded && (
-            <div className="mt-2 max-h-64 overflow-auto rounded-lg border border-gray-100">
+            <div className="mt-2 max-h-64 overflow-auto rounded-lg border border-white/10">
               <table className="w-full text-left text-sm">
-                <thead className="sticky top-0 bg-white shadow-[0_1px_0_rgba(0,0,0,0.06)]">
-                  <tr className="text-xs tracking-wide text-gray-400 uppercase">
+                <thead className="sticky top-0 bg-[#121426] shadow-[0_1px_0_rgba(0,0,0,0.06)]">
+                  <tr className="text-xs tracking-wide text-[#777B98] uppercase">
                     <th className="px-3 py-2 font-medium">Code</th>
                     <th className="px-3 py-2 font-medium">Used</th>
                     <th className="px-3 py-2 font-medium">Status</th>
@@ -448,16 +448,16 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
                 </thead>
                 <tbody>
                   {coupons.map((c) => (
-                    <tr key={c.id} className="border-t border-gray-50">
-                      <td className="px-3 py-2 font-semibold text-gray-800">
+                    <tr key={c.id} className="border-t border-white/10">
+                      <td className="px-3 py-2 font-semibold text-white">
                         {c.code}
                         {c.discount_percent != null && (
-                          <span className="ml-2 text-xs font-medium text-[#0094CA]">
+                          <span className="ml-2 text-xs font-medium text-[#D8B4FE]">
                             {c.discount_percent}% off
                           </span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-gray-600">
+                      <td className="px-3 py-2 text-[#A5A8C3]">
                         {c.max_redemptions === 1
                           ? c.times_redeemed > 0
                             ? "Used"
@@ -470,8 +470,8 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
                           onClick={() => void toggleActive(c)}
                           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                             c.is_active
-                              ? "bg-green-100 text-green-700"
-                              : "bg-gray-100 text-gray-500"
+                              ? "bg-green-500/15 text-green-300"
+                              : "bg-white/[0.06] text-[#A5A8C3]"
                           }`}
                         >
                           {c.is_active ? "Active" : "Paused"}
@@ -481,7 +481,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
                         <button
                           type="button"
                           onClick={() => void remove(c)}
-                          className="text-gray-400 hover:text-red-500"
+                          className="text-[#777B98] hover:text-red-400"
                           aria-label="Delete code"
                         >
                           <FiTrash2 size={15} />

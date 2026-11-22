@@ -6,7 +6,7 @@
 /*  and lists, so we use !important to override inside this scope.    */
 /* ------------------------------------------------------------------ */
 .rich-text-content {
-  color: #374151;
+  color: #c9cbe0;
   font-size: 14px;
   line-height: 1.55;
 }
@@ -16,7 +16,7 @@
 .rich-text-content h3 {
   /* color is intentionally NOT !important so an inline TextStyle color
      mark (a child <span style="color:…">) can still override it. */
-  color: #16304c;
+  color: #ffffff;
   font-weight: 700 !important;
   line-height: 1.25 !important;
   margin: 0.6em 0 0.3em !important;
@@ -58,7 +58,7 @@
 }
 
 .rich-text-content li::marker {
-  color: #16304c;
+  color: #d8b4fe;
 }
 
 .rich-text-content strong {
@@ -76,7 +76,7 @@
 }
 
 .rich-text-content a {
-  color: #0e8ae0;
+  color: #d8b4fe;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -127,7 +127,7 @@
 }
 
 .rt-image-wrapper[data-selected="true"] img {
-  outline: 2px solid #0094ca;
+  outline: 2px solid #a020f0;
   outline-offset: 2px;
 }
 
@@ -138,7 +138,7 @@
   width: 14px;
   height: 14px;
   border-radius: 9999px;
-  background: #0094ca;
+  background: #a020f0;
   border: 2px solid #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
   cursor: nwse-resize;
@@ -153,7 +153,6 @@
   height: 0;
   pointer-events: none;
 }
-
 
 @theme {
   --font-sans:
@@ -227,18 +226,22 @@
   left: 2px;
   border-top-left-radius: 999px;
   border-bottom-left-radius: 999px;
-  background: linear-gradient(90deg,
-      rgba(241, 250, 255, 0.98) 5%,
-      rgba(241, 250, 255, 0) 100%);
+  background: linear-gradient(
+    90deg,
+    rgba(241, 250, 255, 0.98) 5%,
+    rgba(241, 250, 255, 0) 100%
+  );
 }
 
 .filterbar-fade-mask::after {
   right: 2px;
   border-top-right-radius: 999px;
   border-bottom-right-radius: 999px;
-  background: linear-gradient(270deg,
-      rgba(241, 250, 255, 0.98) 5%,
-      rgba(241, 250, 255, 0) 100%);
+  background: linear-gradient(
+    270deg,
+    rgba(241, 250, 255, 0.98) 5%,
+    rgba(241, 250, 255, 0) 100%
+  );
 }
 
 /* All buttons get pointer cursor */
@@ -320,7 +323,6 @@ button,
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .hero-stack-in,
   .hero-stack-in-2,
   .hero-stack-in-3,
@@ -341,11 +343,19 @@ button,
 /* ------------------------------------------------------------------ */
 .blog-bg {
   background:
-    radial-gradient(circle at top left, rgba(31, 167, 255, 0.12), transparent 26%),
-    radial-gradient(circle at top right, rgba(127, 213, 255, 0.16), transparent 22%),
-    linear-gradient(180deg, #fbfeff 0%, #f2faff 100%);
+    radial-gradient(
+      circle at top left,
+      rgba(160, 32, 240, 0.14),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at top right,
+      rgba(123, 47, 255, 0.12),
+      transparent 22%
+    ),
+    #080914;
   font-family: var(--font-manrope), "Manrope", sans-serif;
-  color: #16304c;
+  color: #ffffff;
 }
 
 /* Bottom Sheet Animations & Safe Area Layout Helpers */
@@ -366,3 +376,431 @@ button,
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
+/* ------------------------------------------------------------------ */
+/*  Public website (logged-out home): hero entrance + floating photos. */
+/* ------------------------------------------------------------------ */
+@keyframes msm-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes msm-drift {
+  to {
+    transform: translate(-120px, 80px) scale(1.15);
+  }
+}
+@keyframes msm-float {
+  50% {
+    transform: translateY(-14px);
+  }
+}
+@keyframes msm-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0.6;
+  }
+}
+@keyframes msm-star {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+@keyframes msm-window {
+  0%,
+  88%,
+  100% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 0.35;
+  }
+}
+/* Points down-left (155deg) and streaks along its own x axis. */
+@keyframes msm-shooting {
+  0% {
+    opacity: 0;
+    transform: rotate(155deg) translateX(0);
+  }
+  1.5% {
+    opacity: 1;
+  }
+  9% {
+    opacity: 0;
+    transform: rotate(155deg) translateX(720px);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(155deg) translateX(720px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .msm-rise {
+    opacity: 0;
+    animation: msm-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+  .msm-drift {
+    animation: msm-drift 16s ease-in-out infinite alternate;
+  }
+  .msm-float-a {
+    animation: msm-float 7s ease-in-out infinite;
+  }
+  .msm-float-b {
+    animation: msm-float 8.5s ease-in-out -2s infinite;
+  }
+  .msm-float-c {
+    animation: msm-float 6.5s ease-in-out -4s infinite;
+  }
+  .msm-star {
+    animation: msm-star 4s ease-in-out infinite;
+  }
+  .msm-pulse {
+    animation: msm-pulse 3.2s ease-in-out infinite;
+  }
+
+  /* About page: scroll reveal (see website/about/Reveal.tsx). Content
+     is only hidden while its Reveal waits below the fold. */
+  .msm-r {
+    transition:
+      opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+      transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: var(--d, 0s);
+  }
+  [data-reveal="waiting"] .msm-r {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  .msm-focus {
+    transition: filter 1.4s ease-out var(--d, 0s);
+  }
+  [data-reveal="waiting"] .msm-focus {
+    filter: blur(14px) grayscale(1) brightness(0.55);
+  }
+  .msm-draw {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1.1s ease-in-out var(--d, 0s);
+  }
+  [data-reveal="waiting"] .msm-draw {
+    stroke-dashoffset: 1;
+  }
+  .msm-line {
+    transform-origin: top;
+    transition: transform 2s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s;
+  }
+  [data-reveal="waiting"] .msm-line {
+    transform: scaleY(0);
+  }
+  .msm-window {
+    animation: msm-window 9s steps(1, end) infinite;
+  }
+  .msm-shooting {
+    animation: msm-shooting 10s ease-out infinite;
+  }
+}
+.msm-star {
+  opacity: 0.6;
+}
+.msm-shooting {
+  opacity: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(216 180 254 / 0.6) 70%,
+    #fff
+  );
+  filter: drop-shadow(0 0 6px rgb(216 180 254 / 0.9));
+}
+.msm-window {
+  filter: drop-shadow(0 0 2px rgb(216 180 254 / 0.4));
+}
+
+/* ------------------------------------------------------------------ */
+/*  Dark form scope (host create-experience). Shared children such as  */
+/*  RichTextEditor and PrivacyAccessSection are still light-themed, so */
+/*  remap their utilities here instead of forking them.                */
+/* ------------------------------------------------------------------ */
+.msm-dark-form {
+  color-scheme: dark;
+}
+@layer base {
+  .msm-dark-form
+    :where(
+      input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+      select,
+      textarea
+    ) {
+    background-color: #121426;
+    color: #fff;
+    border-color: rgb(255 255 255 / 0.1);
+  }
+  .msm-dark-form :where(input, textarea)::placeholder {
+    color: rgb(255 255 255 / 0.3);
+  }
+  .msm-dark-form :where(.row-input) {
+    background-color: transparent;
+    border-width: 0;
+  }
+  .msm-dark-form :where(select option) {
+    background-color: #131328;
+  }
+}
+.msm-dark-form .bg-white {
+  background-color: #131328;
+}
+.msm-dark-form .bg-gray-50 {
+  background-color: rgb(255 255 255 / 0.04);
+}
+.msm-dark-form .bg-gray-100 {
+  background-color: rgb(255 255 255 / 0.06);
+}
+.msm-dark-form .hover\:bg-gray-50:hover,
+.msm-dark-form .hover\:bg-gray-100:hover {
+  background-color: rgb(255 255 255 / 0.08);
+}
+.msm-dark-form .border-gray-100 {
+  border-color: rgb(255 255 255 / 0.06);
+}
+.msm-dark-form .border-gray-200,
+.msm-dark-form .border-gray-300 {
+  border-color: rgb(255 255 255 / 0.12);
+}
+.msm-dark-form .text-gray-900,
+.msm-dark-form .text-gray-800 {
+  color: #fff;
+}
+.msm-dark-form .text-gray-700,
+.msm-dark-form .text-gray-600 {
+  color: rgb(255 255 255 / 0.8);
+}
+.msm-dark-form .text-gray-500 {
+  color: rgb(255 255 255 / 0.5);
+}
+.msm-dark-form .text-gray-400 {
+  color: rgb(255 255 255 / 0.4);
+}
+.msm-dark-form .bg-\[\#0094CA\] {
+  background-image: linear-gradient(to right, #7038f5, #b724ea);
+  background-color: transparent;
+}
+.msm-dark-form .text-\[\#0094CA\] {
+  color: #d8b4fe;
+}
+.msm-dark-form .border-\[\#0094CA\] {
+  border-color: #b57bfd;
+}
+.msm-dark-form .bg-\[\#0094CA\]\/5,
+.msm-dark-form .bg-\[\#0094CA\]\/10 {
+  background-color: rgb(112 56 245 / 0.15);
+}
+.msm-dark-form .rich-text-content {
+  color: rgb(255 255 255 / 0.85);
+}
+.msm-dark-form .rich-text-content h1,
+.msm-dark-form .rich-text-content h2,
+.msm-dark-form .rich-text-content h3 {
+  color: #fff;
+}
+
+/* Story pages: rich text on the dark night-sky background. */
+.msm-article .rich-text-content {
+  color: #c9cbe0;
+  font-size: 18px;
+  line-height: 1.8;
+}
+.msm-article .rich-text-content h1,
+.msm-article .rich-text-content h2,
+.msm-article .rich-text-content h3 {
+  color: #fff;
+  font-family: var(--font-outfit), sans-serif;
+  margin: 1.6em 0 0.5em !important;
+}
+.msm-article .rich-text-content p {
+  margin: 0 0 1.1em !important;
+}
+.msm-article .rich-text-content li::marker {
+  color: #d8b4fe;
+}
+.msm-article .rich-text-content strong {
+  color: #fff;
+}
+.msm-article .rich-text-content a {
+  color: #d8b4fe;
+}
+.msm-article .rich-text-content img {
+  border-radius: 24px;
+  margin: 1.6em 0;
+}
+/* Stories were written on a white page: black body text and old-brand blue
+   headings. On the dark page those colours are unreadable, so inline colours
+   give way to the theme here. */
+.msm-article .rich-text-content [style*="color"] {
+  color: inherit !important;
+}
+
+/* Host page feature rows: glide sideways, pause on hover. */
+@keyframes msm-marquee {
+  to {
+    transform: translateX(calc(-50% - 8px));
+  }
+}
+.msm-marquee-wrap {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.msm-marquee-wrap::-webkit-scrollbar {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .msm-marquee-wrap {
+    overflow-x: hidden;
+  }
+  .msm-marquee {
+    animation: msm-marquee 48s linear infinite;
+  }
+  .msm-marquee-rev {
+    animation-direction: reverse;
+  }
+  .msm-marquee-wrap:hover .msm-marquee {
+    animation-play-state: paused;
+  }
+}
+
+/* Fills the active dot of the home banner carousel over one slide's time. */
+@keyframes msm-progress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* Hidden for signed-in users until the app feed mounts (see layout.tsx). */
+html[data-authed] .msm-visitor-only {
+  visibility: hidden;
+}
+
+/* Popups: while any overlay tagged .msm-modal is on screen, the page behind
+   it stays put. The page scrolls on <html> (it has its own overflow-x), so
+   locking <body> alone isn't enough. A fading-out overlay is
+   pointer-events-none and no longer counts. */
+html:has(.msm-modal:not(.pointer-events-none)) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+.msm-modal,
+.msm-modal * {
+  overscroll-behavior: contain;
+}
+
+/* Toasts: dark glass cards in the brand palette (sonner). */
+[data-sonner-toaster] [data-sonner-toast].msm-toast {
+  background: #14152a;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  color: #fff;
+  padding: 14px 16px;
+  gap: 12px;
+  font-family: var(--font-manrope), "Manrope", sans-serif;
+  font-size: 14px;
+  box-shadow:
+    0 18px 40px -14px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(160, 32, 240, 0.06);
+}
+[data-sonner-toast].msm-toast [data-title] {
+  font-weight: 600;
+  line-height: 1.4;
+}
+[data-sonner-toast].msm-toast [data-description] {
+  color: rgba(255, 255, 255, 0.6);
+}
+[data-sonner-toast].msm-toast [data-icon] {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  flex-shrink: 0;
+}
+.msm-toast-icon {
+  display: flex;
+  width: 26px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+}
+.msm-toast-icon--success {
+  background: linear-gradient(135deg, #7038f5, #b724ea);
+  color: #fff;
+  box-shadow: 0 0 14px rgba(183, 36, 234, 0.45);
+}
+.msm-toast-icon--error {
+  background: rgba(244, 63, 94, 0.16);
+  color: #fb7185;
+}
+.msm-toast-icon--warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+}
+.msm-toast-icon--info {
+  background: rgba(160, 32, 240, 0.18);
+  color: #d8b4fe;
+}
+[data-sonner-toast].msm-toast [data-close-button] {
+  background: #1a1b33;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.6);
+}
+[data-sonner-toast].msm-toast [data-close-button]:hover {
+  background: #26274a;
+  color: #fff;
+}
+
+/* Account sheet: slides up on phones, in from the right on desktop. */
+@keyframes msm-sheet-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.msm-account-sheet {
+  animation: slide-up 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (min-width: 1024px) {
+  .msm-account-sheet {
+    animation: msm-sheet-in-right 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+/* Create event: the floating Publish pill steps aside while a date or time
+   picker is open, so the picker never sits on top of it. */
+.msm-publish-bar {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+body:has([data-msm-picker]) .msm-publish-bar {
+  opacity: 0;
+  transform: translateY(16px);
+  pointer-events: none;
+}

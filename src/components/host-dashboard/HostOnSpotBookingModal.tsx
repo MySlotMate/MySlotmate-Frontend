@@ -423,7 +423,7 @@ export default function HostOnSpotBookingModal({
     }
     if (notEnoughRoom) {
       setError(
-        `Only ${selectedOcc?.remaining} spot(s) left for this slot. Reduce the quantity.`,
+        `Only ${selectedOcc?.remaining} slot(s) left for this session. Reduce the quantity.`,
       );
       return;
     }
@@ -487,7 +487,7 @@ export default function HostOnSpotBookingModal({
         name: "MySlotMate",
         description: `On-spot booking — ${eventTitle}`,
         prefill: { name: name.trim(), contact: fullPhone },
-        theme: { color: "#0094CA" },
+        theme: { color: "#A020F0" },
         modal: {
           ondismiss: () => {
             setLoading(false);
@@ -533,26 +533,24 @@ export default function HostOnSpotBookingModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
+      className="msm-modal fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
       onClick={handleClose}
     >
       <div className="flex min-h-full items-start justify-center p-4 pt-10 sm:pt-16">
         <div
           onClick={(e) => e.stopPropagation()}
-          className="relative z-50 w-full max-w-lg overflow-hidden rounded-2xl bg-white p-5 text-left shadow-2xl sm:p-6"
+          className="relative z-50 w-full max-w-lg overflow-hidden rounded-2xl bg-[#121426] p-5 text-left shadow-2xl sm:p-6"
         >
           {/* Header */}
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-gray-900">
-                On-spot booking
-              </h2>
-              <p className="text-sm text-gray-500">{eventTitle}</p>
+              <h2 className="text-lg font-bold text-white">On-spot booking</h2>
+              <p className="text-sm text-[#A5A8C3]">{eventTitle}</p>
             </div>
             <button
               onClick={handleClose}
               disabled={loading}
-              className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
+              className="rounded-lg p-2 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#A5A8C3] disabled:opacity-50"
             >
               <LuX className="h-5 w-5" />
             </button>
@@ -560,25 +558,25 @@ export default function HostOnSpotBookingModal({
 
           {done ? (
             <div className="flex flex-col items-center gap-3 py-6 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
-                <LuCheck className="h-7 w-7 text-emerald-600" />
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15">
+                <LuCheck className="h-7 w-7 text-emerald-300" />
               </div>
-              <p className="text-lg font-semibold text-gray-900">
+              <p className="text-lg font-semibold text-white">
                 Booking confirmed
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-[#A5A8C3]">
                 {guest
                   ? `Booked for ${guest.name} · +91 ${phone}`
                   : "The guest's booking has been created and confirmed."}
               </p>
               {guest?.existing && (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-[#777B98]">
                   This number already had an account — the booking and ticket
                   went to {guest.name}.
                 </p>
               )}
               {error && (
-                <div className="w-full rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-700">
+                <div className="w-full rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-300">
                   {error}
                 </div>
               )}
@@ -586,14 +584,14 @@ export default function HostOnSpotBookingModal({
                 <button
                   onClick={() => void handleDownloadTicket()}
                   disabled={downloading || !booking}
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/[0.04] disabled:opacity-50"
                 >
                   <LuDownload className="h-4 w-4" />
                   {downloading ? "Preparing…" : "Download ticket"}
                 </button>
                 <button
                   onClick={handleClose}
-                  className="rounded-xl bg-[#0094CA] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#007dab]"
+                  className="rounded-xl bg-[#A020F0] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#8A1AD0]"
                 >
                   Done
                 </button>
@@ -602,22 +600,22 @@ export default function HostOnSpotBookingModal({
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Price banner */}
-              <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+              <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-[#A5A8C3]">
                 {isFree ? (
-                  <span className="font-semibold text-emerald-600">
+                  <span className="font-semibold text-emerald-300">
                     Free experience
                   </span>
                 ) : verifiedCoupon ? (
-                  <span className="font-semibold text-emerald-600">
+                  <span className="font-semibold text-emerald-300">
                     Free with coupon{" "}
-                    <span className="text-gray-400 line-through">
+                    <span className="text-[#777B98] line-through">
                       ₹{priceRupees.toLocaleString("en-IN")}
                     </span>
                   </span>
                 ) : (
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-white">
                     ₹{priceRupees.toLocaleString("en-IN")}{" "}
-                    <span className="font-normal text-gray-500">/ guest</span>
+                    <span className="font-normal text-[#A5A8C3]">/ guest</span>
                   </span>
                 )}
               </div>
@@ -625,12 +623,12 @@ export default function HostOnSpotBookingModal({
               {/* Coupon — a verified free-booking code comps this walk-in to ₹0. */}
               {!isFree && (
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-gray-600">
+                  <label className="mb-1 block text-xs font-semibold text-[#A5A8C3]">
                     Coupon (optional)
                   </label>
                   {verifiedCoupon ? (
-                    <div className="flex items-center justify-between rounded-lg border-2 border-emerald-200 bg-emerald-50 px-3 py-2.5">
-                      <span className="text-sm font-medium text-emerald-700">
+                    <div className="flex items-center justify-between rounded-lg border-2 border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5">
+                      <span className="text-sm font-medium text-emerald-300">
                         ✓ {verifiedCoupon} — this booking is free
                       </span>
                       <button
@@ -640,7 +638,7 @@ export default function HostOnSpotBookingModal({
                           setCouponCode("");
                           setCouponError(null);
                         }}
-                        className="text-sm font-medium text-gray-500 hover:text-gray-700"
+                        className="text-sm font-medium text-[#A5A8C3] hover:text-white/80"
                       >
                         Remove
                       </button>
@@ -655,26 +653,26 @@ export default function HostOnSpotBookingModal({
                           setCouponError(null);
                         }}
                         placeholder="Free-booking code"
-                        className="w-full flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm uppercase transition outline-none focus:border-[#0094CA]"
+                        className="w-full flex-1 rounded-lg border border-white/10 bg-[#121426] px-3 py-2.5 text-sm uppercase transition outline-none focus:border-[#A020F0]"
                         disabled={loading || verifyingCoupon}
                       />
                       <button
                         type="button"
                         onClick={() => void handleVerifyCoupon()}
                         disabled={verifyingCoupon || !couponCode.trim()}
-                        className="shrink-0 rounded-lg border border-[#0094CA] px-4 py-2.5 text-sm font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/5 disabled:opacity-50"
+                        className="shrink-0 rounded-lg border border-[#A020F0] px-4 py-2.5 text-sm font-semibold text-[#D8B4FE] transition hover:bg-[#A020F0]/10 disabled:opacity-50"
                       >
                         {verifyingCoupon ? "…" : "Verify"}
                       </button>
                     </div>
                   )}
                   {couponError ? (
-                    <p className="mt-1 text-[11px] text-red-500">
+                    <p className="mt-1 text-[11px] text-red-400">
                       {couponError}
                     </p>
                   ) : (
                     !verifiedCoupon && (
-                      <p className="mt-1 text-[11px] text-gray-400">
+                      <p className="mt-1 text-[11px] text-[#777B98]">
                         Enter a free-booking code and verify to comp this guest.
                       </p>
                     )
@@ -684,11 +682,11 @@ export default function HostOnSpotBookingModal({
 
               {/* Phone */}
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">
+                <label className="mb-1 block text-xs font-semibold text-[#A5A8C3]">
                   Phone number
                 </label>
-                <div className="flex items-center rounded-lg border border-gray-200 bg-white transition focus-within:border-[#0094CA]">
-                  <span className="border-r border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-500 select-none">
+                <div className="flex items-center rounded-lg border border-white/10 bg-[#121426] transition focus-within:border-[#A020F0]">
+                  <span className="border-r border-white/10 px-3 py-2.5 text-sm font-semibold text-[#A5A8C3] select-none">
                     +91
                   </span>
                   <input
@@ -708,19 +706,19 @@ export default function HostOnSpotBookingModal({
 
               {/* Name */}
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">
+                <label className="mb-1 block text-xs font-semibold text-[#A5A8C3]">
                   Guest name
                 </label>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA] disabled:bg-gray-50 disabled:text-gray-500"
+                  className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm transition outline-none focus:border-[#A020F0] disabled:bg-white/[0.04] disabled:text-[#A5A8C3]"
                   placeholder="Full name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={loading || knownGuest}
                 />
                 {knownGuest && (
-                  <p className="mt-1 text-xs text-emerald-600">
+                  <p className="mt-1 text-xs text-emerald-300">
                     This number is already registered — booking under the
                     existing account.
                   </p>
@@ -730,13 +728,13 @@ export default function HostOnSpotBookingModal({
               {/* Quantity + Date */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-gray-600">
+                  <label className="mb-1 block text-xs font-semibold text-[#A5A8C3]">
                     Quantity
                   </label>
                   <input
                     type="number"
                     min={1}
-                    className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA]"
+                    className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm transition outline-none focus:border-[#A020F0]"
                     value={quantity}
                     onChange={(e) =>
                       setQuantity(
@@ -747,11 +745,11 @@ export default function HostOnSpotBookingModal({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-gray-600">
+                  <label className="mb-1 block text-xs font-semibold text-[#A5A8C3]">
                     Date &amp; time
                   </label>
                   <select
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA] disabled:opacity-60"
+                    className="w-full rounded-lg border border-white/10 bg-[#121426] px-3 py-2.5 text-sm transition outline-none focus:border-[#A020F0] disabled:opacity-60"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                     disabled={loading || occLoading || occurrences.length === 0}
@@ -776,7 +774,7 @@ export default function HostOnSpotBookingModal({
                   </select>
                 </div>
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-[#777B98]">
                 Showing the next {occurrences.length || 3} upcoming slot
                 {occurrences.length === 1 ? "" : "s"} (times in IST).
               </p>
@@ -792,19 +790,19 @@ export default function HostOnSpotBookingModal({
               )}
 
               {!occLoading && slotBlocked && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-300">
                   {noSlots
                     ? "No upcoming slots available."
                     : allSlotsFull
                       ? "All upcoming slots are fully booked."
                       : selectedOcc?.is_fully_booked
                         ? "This slot is fully booked. Pick another date."
-                        : `Only ${selectedOcc?.remaining} spot(s) left for this slot.`}
+                        : `Only ${selectedOcc?.remaining} slot(s) left for this session.`}
                 </div>
               )}
 
               {error && (
-                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-300">
                   {error}
                 </div>
               )}
@@ -814,14 +812,14 @@ export default function HostOnSpotBookingModal({
                   type="button"
                   onClick={handleClose}
                   disabled={loading}
-                  className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                  className="rounded-xl border border-white/10 px-5 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/[0.04] disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || occLoading || slotBlocked}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[#0094CA] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#007dab] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#A020F0] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#8A1AD0] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {loading && <LuLoader2 className="h-4 w-4 animate-spin" />}
                   {loading

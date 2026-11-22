@@ -44,11 +44,17 @@ export default function SharedEventsCard({
       const res = await listSharedEvents(idToken);
       setRows(res.data ?? []);
     } catch {
-      toast.error("Could not load shared experiences");
+      // Elsewhere (the host application, earnings) this card only appears
+      // when someone has invited you, so a failed load just keeps it hidden.
+      // Only the co-hosting page, which is about this list, says so.
+      if (showWhenEmpty)
+        toast.error(
+          "We couldn't load your co-hosting invitations. Try again in a moment.",
+        );
     } finally {
       setLoading(false);
     }
-  }, [idToken]);
+  }, [idToken, showWhenEmpty]);
 
   useEffect(() => {
     void load();
@@ -107,38 +113,38 @@ export default function SharedEventsCard({
     }
   };
 
-  if (!loading && rows.length === 0 && !showWhenEmpty) return null;
+  // Hidden until there's something to show, so it doesn't flash a loading
+  // box above the page and then vanish.
+  if ((loading || rows.length === 0) && !showWhenEmpty) return null;
 
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5">
-      <h3 className="mb-1 text-sm font-semibold text-gray-900">
-        Shared with you
-      </h3>
-      <p className="mb-4 text-xs text-gray-500">
+    <div className="rounded-2xl border border-white/10 bg-[#121426] p-5">
+      <h3 className="mb-1 text-sm font-semibold text-white">Shared with you</h3>
+      <p className="mb-4 text-xs text-[#A5A8C3]">
         Experiences another host co-hosts with you. Earnings unlock after a
         session has happened, and each event&apos;s earnings can be withdrawn
         once — by you or by the owner, whoever goes first.
       </p>
 
       {loading ? (
-        <p className="text-xs text-gray-400">Loading…</p>
+        <p className="text-xs text-[#777B98]">Loading…</p>
       ) : rows.length === 0 ? (
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-[#777B98]">
           Nobody has shared an experience with you yet.
         </p>
       ) : (
-        <ul className="divide-y divide-gray-100">
+        <ul className="divide-y divide-white/10">
           {rows.map((row) => (
             <li key={row.cohost_id} className="py-3">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <Link
                     href={`/host-dashboard/experiences/${row.event_id}`}
-                    className="truncate text-sm font-medium text-gray-900 hover:underline"
+                    className="truncate text-sm font-medium text-white hover:underline"
                   >
                     {row.event_title}
                   </Link>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-[#A5A8C3]">
                     by {row.owner_name || "host"} ·{" "}
                     {row.status === "pending"
                       ? "invitation pending"
@@ -148,7 +154,7 @@ export default function SharedEventsCard({
                     {row.my_claimed_cents > 0 &&
                       ` · you withdrew ${rupees(row.my_claimed_cents)}`}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-[#777B98]">
                     Invited {format(new Date(row.invited_at), "d MMM yyyy")} ·
                     runs{" "}
                     {format(new Date(row.event_time), "d MMM yyyy, h:mm a")}
@@ -165,7 +171,7 @@ export default function SharedEventsCard({
                       type="button"
                       onClick={() => void handleRespond(row, true)}
                       disabled={busyId === row.cohost_id}
-                      className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                      className="rounded-lg bg-[#A020F0] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                     >
                       Accept
                     </button>
@@ -173,7 +179,7 @@ export default function SharedEventsCard({
                       type="button"
                       onClick={() => void handleRespond(row, false)}
                       disabled={busyId === row.cohost_id}
-                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 disabled:opacity-50"
+                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-white/80 disabled:opacity-50"
                     >
                       Decline
                     </button>
@@ -193,13 +199,13 @@ export default function SharedEventsCard({
                       }
                       placeholder="all"
                       aria-label="Amount in rupees"
-                      className="w-24 rounded-lg border border-gray-200 px-2 py-1.5 text-xs focus:border-gray-400 focus:outline-none"
+                      className="w-24 rounded-lg border border-white/10 px-2 py-1.5 text-xs focus:border-white/15 focus:outline-none"
                     />
                     <button
                       type="button"
                       onClick={() => void handleWithdraw(row)}
                       disabled={busyId === row.cohost_id}
-                      className="rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                      className="rounded-lg bg-[#A020F0] px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                     >
                       {busyId === row.cohost_id ? "Sending…" : "Withdraw"}
                     </button>

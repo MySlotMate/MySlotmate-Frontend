@@ -149,23 +149,23 @@ export default function EarningsChart({ points }: { points: ChartPoint[] }) {
   const ready = width > 0;
 
   return (
-    <div className="rounded-2xl border border-[#e7f1fa] bg-white p-4 shadow-[0_10px_30px_-14px_rgba(58,119,172,0.22)] sm:px-5">
+    <div className="rounded-2xl border border-white/10 bg-[#121426] p-4 shadow-[0_10px_30px_-14px_rgba(58,119,172,0.22)] sm:px-5">
       {/* Header — kept to a single tight row */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-sm font-bold text-[#16304c]">
+          <h2 className="text-sm font-bold text-white">
             {metric === "earnings" ? "Earnings overview" : "Bookings overview"}
           </h2>
           <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <p className="text-xl font-extrabold text-[#16304c]">
+            <p className="text-xl font-extrabold text-white">
               {metric === "earnings" ? fullINR(total) : total}
             </p>
             {hasData && delta !== null && (
               <span
                 className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
                   delta >= 0
-                    ? "bg-[#e6f7ee] text-[#1a9d63]"
-                    : "bg-[#fdeaea] text-[#d2554a]"
+                    ? "bg-white/[0.04] text-[#1a9d63]"
+                    : "bg-white/[0.04] text-[#d2554a]"
                 }`}
               >
                 {delta >= 0 ? (
@@ -183,7 +183,7 @@ export default function EarningsChart({ points }: { points: ChartPoint[] }) {
         </div>
 
         {/* Metric toggle */}
-        <div className="inline-flex shrink-0 rounded-lg bg-[#eef5fb] p-0.5 text-[11px] font-semibold">
+        <div className="inline-flex shrink-0 rounded-lg bg-white/[0.04] p-0.5 text-[11px] font-semibold">
           {(["earnings", "bookings"] as const).map((m) => (
             <button
               key={m}
@@ -194,8 +194,8 @@ export default function EarningsChart({ points }: { points: ChartPoint[] }) {
               }}
               className={`rounded-md px-2.5 py-1 capitalize transition ${
                 metric === m
-                  ? "bg-white text-[#0e8ae0] shadow-sm"
-                  : "text-[#6f8daa] hover:text-[#16304c]"
+                  ? "bg-[#121426] text-[#D8B4FE] shadow-sm"
+                  : "text-[#A5A8C3] hover:text-white"
               }`}
             >
               {m}
@@ -221,11 +221,11 @@ export default function EarningsChart({ points }: { points: ChartPoint[] }) {
           >
             <defs>
               <linearGradient id="msm-area" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#1fa7ff" stopOpacity="0.32" />
-                <stop offset="100%" stopColor="#63ceff" stopOpacity="0" />
+                <stop offset="0%" stopColor="#7B2FFF" stopOpacity="0.32" />
+                <stop offset="100%" stopColor="#A020F0" stopOpacity="0" />
               </linearGradient>
               <linearGradient id="msm-line" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#0e8ae0" />
+                <stop offset="0%" stopColor="#A020F0" />
                 <stop offset="100%" stopColor="#42b8ff" />
               </linearGradient>
             </defs>
@@ -279,7 +279,7 @@ export default function EarningsChart({ points }: { points: ChartPoint[] }) {
                   y1={PAD_T}
                   x2={activePt.x}
                   y2={PAD_T + plotH}
-                  stroke="#1fa7ff"
+                  stroke="#7B2FFF"
                   strokeWidth={1}
                   strokeDasharray="4 4"
                   opacity={0.5}
@@ -289,7 +289,7 @@ export default function EarningsChart({ points }: { points: ChartPoint[] }) {
                   cy={activePt.y}
                   r={5.5}
                   fill="#ffffff"
-                  stroke="#1fa7ff"
+                  stroke="#7B2FFF"
                   strokeWidth={3}
                 />
               </>
@@ -302,7 +302,7 @@ export default function EarningsChart({ points }: { points: ChartPoint[] }) {
                 x={coords[i]!.x}
                 y={HEIGHT - 8}
                 textAnchor="middle"
-                fill={active === i ? "#16304c" : "#9fb3c8"}
+                fill={active === i ? "#FFFFFF" : "#9fb3c8"}
                 style={{ fontSize: 11, fontWeight: active === i ? 700 : 500 }}
               >
                 {p.label}
@@ -332,7 +332,7 @@ export default function EarningsChart({ points }: { points: ChartPoint[] }) {
         {/* Floating tooltip (HTML overlay, positioned in px to match the SVG). */}
         {active !== null && activePt && (
           <div
-            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-[#16304c] px-2.5 py-1.5 text-center whitespace-nowrap text-white shadow-lg"
+            className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-white/[0.04] px-2.5 py-1.5 text-center whitespace-nowrap text-white shadow-lg"
             style={{ left: activePt.x, top: activePt.y - 10 }}
           >
             <p className="text-[10px] font-medium text-white/65">

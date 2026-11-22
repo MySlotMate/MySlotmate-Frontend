@@ -47,7 +47,9 @@ export default function SignUpPage() {
         const body = (await res.json()) as {
           data?: { name?: string; phn_number?: string };
         };
-        const digits = (body.data?.phn_number ?? "").replace(/\D/g, "").slice(-10);
+        const digits = (body.data?.phn_number ?? "")
+          .replace(/\D/g, "")
+          .slice(-10);
         if (cancelled || digits.length !== 10) return;
         setPhone(digits);
         setPrefilled(true);
@@ -149,8 +151,8 @@ export default function SignUpPage() {
     return (
       <>
         <Navbar />
-        <main className="flex min-h-[calc(100vh-var(--navbar-height))] items-center justify-center bg-gray-50">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+        <main className="flex min-h-[calc(100vh-var(--navbar-height))] items-center justify-center bg-white/[0.04]">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#A020F0] border-t-transparent" />
         </main>
       </>
     );
@@ -159,7 +161,7 @@ export default function SignUpPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-[calc(100vh-var(--navbar-height))] bg-gradient-to-br from-[#e4f8ff] via-white to-[#d5f4ff]">
+      <main className="min-h-[calc(100vh-var(--navbar-height))] bg-[#080914]">
         <div className="site-x mx-auto w-full max-w-[1120px] py-6">
           <Breadcrumb
             items={[{ label: "Home", href: "/" }, { label: "Sign Up" }]}
@@ -170,40 +172,43 @@ export default function SignUpPage() {
         <div className="site-x flex items-center justify-center pb-10">
           <div className="w-full max-w-md">
             {/* Card */}
-            <div className="rounded-2xl bg-white p-8 shadow-xl ring-1 ring-gray-100">
+            <div className="rounded-2xl bg-[#121426] p-8 shadow-xl ring-1 ring-white/10">
               {/* Logo */}
               <div className="mb-6 flex justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/assets/home/logomyslotmate.png"
+                  src="/assets/brand/logo-horizontal-white.png"
                   alt="MySlotMate"
-                  loading="lazy"
-                  className="h-16 w-16 object-contain"
+                  width={1048}
+                  height={209}
+                  className="h-8 w-auto"
                 />
               </div>
 
-              <h1 className="text-center text-2xl font-bold text-gray-900">
+              <h1 className="text-center text-2xl font-bold text-white">
                 Complete Your Profile
               </h1>
-              <p className="mt-1 text-center text-sm text-gray-500">
+              <p className="mt-1 text-center text-sm text-[#A5A8C3]">
                 Just a few more details and you&apos;re all set!
               </p>
 
               {/* Google info preview */}
-              <div className="mt-6 flex items-center gap-3 rounded-xl bg-[#e6f8ff] px-4 py-3">
+              <div className="mt-6 flex items-center gap-3 rounded-xl bg-[#241333] px-4 py-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={user.photoURL ?? "/assets/home/avatar-placeholder.png"}
+                  src={user.photoURL ?? "/assets/home/avatar-placeholder.svg"}
                   alt=""
                   loading="lazy"
                   className="h-10 w-10 rounded-full object-cover"
                   referrerPolicy="no-referrer"
                 />
                 <div className="overflow-hidden">
-                  <p className="truncate text-sm font-semibold text-gray-900">
+                  <p className="truncate text-sm font-semibold text-white">
                     {user.displayName}
                   </p>
-                  <p className="truncate text-xs text-gray-500">{user.email}</p>
+                  <p className="truncate text-xs text-[#A5A8C3]">
+                    {user.email}
+                  </p>
                 </div>
               </div>
 
@@ -211,47 +216,47 @@ export default function SignUpPage() {
               <form onSubmit={handleSubmit} className="mt-6 space-y-5">
                 {/* Name */}
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                     Full Name
                   </label>
                   <div className="relative">
-                    <FiUser className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <FiUser className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[#777B98]" />
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Ankit Sharma"
-                      className="w-full rounded-lg border border-gray-300 py-3 pr-4 pl-10 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                      className="w-full rounded-lg border border-white/15 py-3 pr-4 pl-10 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
                     />
                   </div>
                 </div>
 
                 {/* Email (read-only) */}
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                     Email
                   </label>
                   <div className="relative">
-                    <FiMail className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <FiMail className="pointer-events-none absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-[#777B98]" />
                     <input
                       value={user.email ?? ""}
                       readOnly
-                      className="w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 py-3 pr-4 pl-10 text-sm text-gray-500 outline-none"
+                      className="w-full cursor-not-allowed rounded-lg border border-white/10 bg-white/[0.04] py-3 pr-4 pl-10 text-sm text-[#A5A8C3] outline-none"
                     />
                   </div>
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                  <label className="mb-1.5 block text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                     Phone Number
                   </label>
                   <div className="relative">
                     <div className="pointer-events-none absolute top-1/2 left-3.5 flex -translate-y-1/2 items-center gap-1.5">
-                      <FiPhone className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-500">
+                      <FiPhone className="h-4 w-4 text-[#777B98]" />
+                      <span className="text-sm font-medium text-[#A5A8C3]">
                         +91
                       </span>
-                      <div className="h-4 w-[1px] bg-gray-200" />
+                      <div className="h-4 w-[1px] bg-white/10" />
                     </div>
                     <input
                       value={phone}
@@ -266,14 +271,14 @@ export default function SignUpPage() {
                       placeholder="98765 43210"
                       type="tel"
                       maxLength={10}
-                      className={`w-full rounded-lg border py-3 pr-4 pl-[78px] text-sm outline-none transition ${
+                      className={`w-full rounded-lg border py-3 pr-4 pl-[78px] text-sm transition outline-none ${
                         prefilled
-                          ? "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500"
-                          : "border-gray-300 text-gray-900 focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                          ? "cursor-not-allowed border-white/10 bg-white/[0.04] text-[#A5A8C3]"
+                          : "border-white/15 text-white focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
                       }`}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-gray-400">
+                  <p className="mt-1 text-xs text-[#777B98]">
                     {prefilled
                       ? "This is the number already on your record. Ask support to change it."
                       : "We'll use this to send you booking updates."}
@@ -282,7 +287,7 @@ export default function SignUpPage() {
 
                 {/* Error */}
                 {error && (
-                  <p className="rounded-lg bg-red-50 px-4 py-2 text-sm text-red-600">
+                  <p className="rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-300">
                     {error}
                   </p>
                 )}
@@ -293,12 +298,12 @@ export default function SignUpPage() {
                   disabled={submitting}
                   className="flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-base font-semibold text-white transition disabled:opacity-50"
                   style={{
-                    background: "linear-gradient(135deg, #0094CA, #00b4ef)",
+                    background: "linear-gradient(135deg, #7B2FFF, #A020F0)",
                   }}
                 >
                   {submitting ? (
                     <>
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#121426] border-t-transparent" />
                       Creating account…
                     </>
                   ) : (
@@ -310,13 +315,13 @@ export default function SignUpPage() {
                 </button>
               </form>
 
-              <p className="mt-5 text-center text-xs text-gray-400">
+              <p className="mt-5 text-center text-xs text-[#777B98]">
                 By signing up you agree to our{" "}
-                <a href="#" className="text-[#0094CA] hover:underline">
+                <a href="#" className="text-[#D8B4FE] hover:underline">
                   Terms
                 </a>{" "}
                 and{" "}
-                <a href="#" className="text-[#0094CA] hover:underline">
+                <a href="#" className="text-[#D8B4FE] hover:underline">
                   Privacy Policy
                 </a>
                 .

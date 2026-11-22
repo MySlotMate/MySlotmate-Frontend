@@ -40,7 +40,7 @@ export default function ExperiencesList({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-gray-900">{title}</h2>
+        <h2 className="text-xl font-bold text-white">{title}</h2>
       </div>
       <div className="mt-4 flex flex-col gap-4 overflow-x-scroll [scrollbar-width:none] sm:flex-row [&::-webkit-scrollbar]:hidden">
         {events.map((event) => (
@@ -56,7 +56,7 @@ export default function ExperiencesList({
               event.description ??
               "Discover a hosted experience near you."
             }
-            imageUrl={event.cover_image_url ?? "/assets/home/hiking.webp"}
+            imageUrl={event.cover_image_url ?? ""}
             rating={
               event.avg_rating !== null &&
               event.avg_rating !== undefined &&
@@ -67,6 +67,7 @@ export default function ExperiencesList({
             price={eventPriceLabel(event)}
             time={event.time}
             location={event.location}
+            isOnline={event.is_online}
             isRecurring={event.is_recurring}
             capacity={event.capacity}
             totalBookings={event.total_bookings}

@@ -62,46 +62,46 @@ export default function HostCodesPickerModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
+      className="msm-modal fixed inset-0 z-[9999] overflow-y-auto bg-black/50 backdrop-blur-sm"
       onClick={handleClose}
     >
       <div className="flex min-h-full items-start justify-center p-4 pt-10 sm:pt-16">
         <div
           onClick={(e) => e.stopPropagation()}
-          className="relative z-50 w-full max-w-lg overflow-hidden rounded-2xl bg-white p-5 text-left shadow-2xl sm:p-6"
+          className="relative z-50 w-full max-w-lg overflow-hidden rounded-2xl bg-[#121426] p-5 text-left shadow-2xl sm:p-6"
         >
           {/* Header */}
           <div className="mb-4 flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e6f8ff]">
-                <LuKeyRound className="h-5 w-5 text-[#0094CA]" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#241333]">
+                <LuKeyRound className="h-5 w-5 text-[#D8B4FE]" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="text-lg font-bold text-white">
                   Codes &amp; passkey
                 </h2>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#A5A8C3]">
                   Pick an experience to manage its passkey and coupons.
                 </p>
               </div>
             </div>
             <button
               onClick={handleClose}
-              className="rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              className="rounded-lg p-2 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#A5A8C3]"
             >
               <LuX className="h-5 w-5" />
             </button>
           </div>
 
           {(events ?? []).length === 0 ? (
-            <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-8 text-center text-sm text-[#A5A8C3]">
               Create an experience first, then you can add passkeys and coupons.
             </div>
           ) : (
             <>
               {/* Search */}
-              <div className="mb-3 flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 focus-within:border-[#0094CA]">
-                <LuSearch className="h-4 w-4 shrink-0 text-gray-400" />
+              <div className="mb-3 flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2.5 focus-within:border-[#A020F0]">
+                <LuSearch className="h-4 w-4 shrink-0 text-[#777B98]" />
                 <input
                   type="text"
                   value={query}
@@ -114,7 +114,7 @@ export default function HostCodesPickerModal({
               {/* Experience list */}
               <div className="max-h-80 space-y-2 overflow-y-auto">
                 {filtered.length === 0 ? (
-                  <p className="px-1 py-6 text-center text-sm text-gray-400">
+                  <p className="px-1 py-6 text-center text-sm text-[#777B98]">
                     No experiences match &ldquo;{query}&rdquo;.
                   </p>
                 ) : (
@@ -122,7 +122,7 @@ export default function HostCodesPickerModal({
                     <button
                       key={e.id}
                       onClick={() => setSelected({ id: e.id, title: e.title })}
-                      className="flex w-full items-center gap-3 rounded-xl border border-gray-100 px-3 py-3 text-left transition hover:border-[#0094CA] hover:bg-[#e6f8ff]/40"
+                      className="flex w-full items-center gap-3 rounded-xl border border-white/10 px-3 py-3 text-left transition hover:border-[#A020F0] hover:bg-[#241333]/40"
                     >
                       {e.cover_image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -132,18 +132,18 @@ export default function HostCodesPickerModal({
                           className="h-10 w-10 shrink-0 rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-100" />
+                        <div className="h-10 w-10 shrink-0 rounded-lg bg-white/[0.06]" />
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-semibold text-gray-900">
+                        <p className="truncate text-sm font-semibold text-white">
                           {e.title}
                         </p>
-                        <p className="text-xs text-gray-400 capitalize">
+                        <p className="text-xs text-[#777B98] capitalize">
                           {e.status}
                           {e.is_private ? " · private" : ""}
                         </p>
                       </div>
-                      <LuChevronRight className="h-4 w-4 shrink-0 text-gray-300" />
+                      <LuChevronRight className="h-4 w-4 shrink-0 text-white/30" />
                     </button>
                   ))
                 )}

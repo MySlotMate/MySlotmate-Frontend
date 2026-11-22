@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
-import { HostNavbar } from "~/components/host-dashboard";
-import Breadcrumb from "~/components/Breadcrumb";
 import { useEventsByHost, useMyHost } from "~/hooks/useApi";
 import * as api from "~/lib/api";
 import type { ScanResultDTO, ScanSession } from "~/lib/api";
@@ -16,7 +14,10 @@ import {
   FiAlertTriangle,
   FiUsers,
   FiRefreshCw,
+  FiList,
+  FiSearch,
 } from "react-icons/fi";
+import { nextEventDate } from "~/lib/boost";
 import { LuLoader2, LuScanLine } from "react-icons/lu";
 
 // The camera reader touches browser-only APIs — keep it out of the server bundle.
@@ -25,8 +26,8 @@ const QrScanner = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-gray-100">
-        <LuLoader2 className="h-6 w-6 animate-spin text-gray-400" />
+      <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-white/[0.06]">
+        <LuLoader2 className="h-6 w-6 animate-spin text-[#777B98]" />
       </div>
     ),
   },
@@ -46,20 +47,44 @@ const isAdmit = (v: ScanResultDTO["verdict"]) => v === "valid";
  */
 export default function HostScanPage() {
   const [userId, setUserId] = useState<string | null>(null);
+  // Deep link from the calendar: ?event=<id>&date=<iso>
+  const [wanted, setWanted] = useState<{ event: string; date: string } | null>(
+    null,
+  );
   useEffect(() => {
     setUserId(localStorage.getItem("msm_user_id"));
+    const q = new URLSearchParams(window.location.search);
+    const ev = q.get("event");
+    if (ev) {
+      setEventId(ev);
+      setWanted({ event: ev, date: q.get("date") ?? "" });
+    }
   }, []);
 
   const { data: host } = useMyHost(userId);
-  const { data: events, isLoading: eventsLoading } = useEventsByHost(
+  const { data: allEvents, isLoading: eventsLoading } = useEventsByHost(
     host?.id ?? null,
+  );
+  // Drafts can't have guests. Soonest first.
+  const events = useMemo(
+    () =>
+      (allEvents ?? [])
+        .filter((e) => e.status !== "draft")
+        .sort(
+          (a, b) =>
+            (nextEventDate(a)?.getTime() ?? Infinity) -
+            (nextEventDate(b)?.getTime() ?? Infinity),
+        ),
+    [allEvents],
   );
 
   const [eventId, setEventId] = useState("");
   const [occurrence, setOccurrence] = useState("");
+  const [mode, setMode] = useState<"scan" | "list">("scan");
   const [result, setResult] = useState<ScanResultDTO | null>(null);
   const [busy, setBusy] = useState(false);
   const [count, setCount] = useState(1);
+  const [search, setSearch] = useState("");
 
   // Occurrence options come from the event's own bookings rather than being
   // recomputed from a recurrence rule: the backend matches the occurrence
@@ -76,10 +101,18 @@ export default function HostScanPage() {
     return Array.from(seen).sort();
   }, [attendees]);
 
-  // With a single date there's nothing to choose — select it automatically.
+  // Pick the date the calendar asked for, or the only date there is.
   useEffect(() => {
-    setOccurrence(occurrences.length === 1 ? occurrences[0]! : "");
-  }, [occurrences]);
+    const target =
+      wanted?.event === eventId && wanted.date
+        ? new Date(wanted.date).getTime()
+        : null;
+    const match =
+      target !== null
+        ? occurrences.find((o) => new Date(o).getTime() === target)
+        : undefined;
+    setOccurrence(match ?? (occurrences.length === 1 ? occurrences[0]! : ""));
+  }, [occurrences, wanted, eventId]);
 
   // Memoised so the scan handler keeps a stable identity between renders.
   const session: ScanSession | null = useMemo(
@@ -92,28 +125,39 @@ export default function HostScanPage() {
 
   const ready = !!session;
 
-  const handleScan = useCallback(
-    async (raw: string) => {
+  // Who's booked for the chosen date.
+  const guestsForDate = useMemo(
+    () =>
+      (attendees ?? []).filter(
+        (b) =>
+          b.occurrence_date === occurrence &&
+          (b.status === "confirmed" || b.status === "pending"),
+      ),
+    [attendees, occurrence],
+  );
+  const guestCount = guestsForDate.reduce((s, b) => s + b.quantity, 0);
+  const filteredGuests = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const list = [...guestsForDate].sort((a, b) =>
+      (a.user_name ?? "").localeCompare(b.user_name ?? ""),
+    );
+    if (!q) return list;
+    return list.filter((b) =>
+      [b.user_name, b.user_email, b.user_phone].some((v) =>
+        v?.toLowerCase().includes(q),
+      ),
+    );
+  }, [guestsForDate, search]);
+
+  /** Look a booking up, from a scanned QR or a tap on the guest list. */
+  const verify = useCallback(
+    async (bookingId: string) => {
       if (!session || busy) return;
-
-      const bookingId = api.parseTicketQr(raw);
-      if (!bookingId) {
-        // Venues are full of unrelated QR codes — say so instead of erroring.
-        setResult({
-          verdict: "not_found",
-          message: "That's not a MySlotMate ticket.",
-          checked_in_count: 0,
-          remaining: 0,
-          just_checked_in: 0,
-        });
-        return;
-      }
-
       setBusy(true);
       try {
         const res = await api.verifyScannedTicket(session, bookingId);
         setResult(res.data);
-        // Default to admitting everyone still outstanding — the common case.
+        // Default to admitting everyone still outstanding: the common case.
         setCount(res.data.remaining > 0 ? res.data.remaining : 1);
       } catch (err) {
         toast.error(
@@ -124,6 +168,26 @@ export default function HostScanPage() {
       }
     },
     [session, busy],
+  );
+
+  const handleScan = useCallback(
+    async (raw: string) => {
+      if (!session || busy) return;
+      const bookingId = api.parseTicketQr(raw);
+      if (!bookingId) {
+        // Venues are full of unrelated QR codes: say so instead of erroring.
+        setResult({
+          verdict: "not_found",
+          message: "That's not a MySlotMate ticket.",
+          checked_in_count: 0,
+          remaining: 0,
+          just_checked_in: 0,
+        });
+        return;
+      }
+      await verify(bookingId);
+    },
+    [session, busy, verify],
   );
 
   const handleCheckIn = async () => {
@@ -145,120 +209,199 @@ export default function HostScanPage() {
     }
   };
 
-  const selectedEvent = events?.find((e) => e.id === eventId);
+  const selectedEvent = events.find((e) => e.id === eventId);
+  const selectCls =
+    "w-full rounded-xl border border-white/10 bg-[#0D0F1E] px-3 py-2.5 text-sm text-white outline-none focus:border-[#A020F0] disabled:opacity-50";
 
   return (
-    <>
-      <HostNavbar />
-      <main className="site-x mx-auto min-h-screen w-full max-w-[900px] py-8 pt-24">
-        <Breadcrumb
-          items={[
-            { label: "Host Dashboard", href: "/host-dashboard" },
-            { label: "Check-in Scanner" },
-          ]}
-          className="mb-6"
-        />
+    <main className="mx-auto w-full max-w-[640px] px-4 py-6 sm:px-6 md:py-10">
+      <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
+        Check-in
+      </h1>
+      <p className="mt-1 text-sm text-[#A5A8C3]">
+        Let guests in at the door: scan their ticket or find them by name.
+      </p>
 
-        <h1 className="text-3xl font-bold text-gray-900">Check-in Scanner</h1>
-        <p className="mt-1 text-sm font-medium text-[#0094CA]">
-          Scan guest tickets at the door
-        </p>
+      {/* 1. Which session */}
+      <section className="mt-5 rounded-2xl border border-white/10 bg-[#121426] p-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5 text-xs font-medium text-[#A5A8C3]">
+            Event
+            <select
+              value={eventId}
+              disabled={eventsLoading}
+              onChange={(e) => {
+                setEventId(e.target.value);
+                setResult(null);
+                setSearch("");
+              }}
+              className={selectCls}
+            >
+              <option value="">
+                {eventsLoading ? "Loading…" : "Choose an event"}
+              </option>
+              {events.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 text-xs font-medium text-[#A5A8C3]">
+            Date
+            <select
+              value={occurrence}
+              disabled={!eventId || attendeesLoading}
+              onChange={(e) => {
+                setOccurrence(e.target.value);
+                setResult(null);
+              }}
+              className={selectCls}
+            >
+              <option value="">
+                {!eventId
+                  ? "Choose an event first"
+                  : attendeesLoading
+                    ? "Loading…"
+                    : occurrences.length === 0
+                      ? "No bookings yet"
+                      : "Choose a date"}
+              </option>
+              {occurrences.map((o) => (
+                <option key={o} value={o}>
+                  {formatIST(o, "EEE, d MMM · h:mm a")}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-        {/* Session picker — what this scanner is checking people in for. */}
-        <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
-          <h2 className="text-sm font-bold text-gray-900">
-            You&apos;re checking in for
-          </h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-gray-600">
-              Experience
-              <select
-                value={eventId}
-                disabled={eventsLoading}
-                onChange={(e) => {
-                  setEventId(e.target.value);
+        {ready && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#A020F0]/10 px-3 py-2.5 text-xs text-[#E9D5FF]">
+            <FiUsers className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="min-w-0 truncate">
+              <b className="font-semibold">{guestCount} guests</b> booked for{" "}
+              {selectedEvent?.title}
+            </span>
+          </div>
+        )}
+      </section>
+
+      {/* 2. Scan or pick from the list */}
+      {ready ? (
+        <>
+          <div className="mt-4 flex rounded-full border border-white/10 bg-[#121426] p-1">
+            {(
+              [
+                ["scan", "Scan ticket", LuScanLine],
+                ["list", "Guest list", FiList],
+              ] as const
+            ).map(([key, label, Icon]) => (
+              <button
+                key={key}
+                onClick={() => {
+                  setMode(key);
                   setResult(null);
                 }}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#0094CA]"
+                className={`flex flex-1 items-center justify-center gap-2 rounded-full py-2 text-sm font-medium transition ${
+                  mode === key
+                    ? "bg-[#A020F0] text-white"
+                    : "text-[#A5A8C3] hover:text-white"
+                }`}
               >
-                <option value="">
-                  {eventsLoading ? "Loading…" : "Select an experience"}
-                </option>
-                {(events ?? []).map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.title}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1.5 text-xs font-semibold text-gray-600">
-              Date
-              <select
-                value={occurrence}
-                disabled={!eventId || attendeesLoading}
-                onChange={(e) => {
-                  setOccurrence(e.target.value);
-                  setResult(null);
-                }}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-[#0094CA] disabled:bg-gray-50"
-              >
-                <option value="">
-                  {!eventId
-                    ? "Pick an experience first"
-                    : attendeesLoading
-                      ? "Loading…"
-                      : occurrences.length === 0
-                        ? "No bookings yet"
-                        : "Select a date"}
-                </option>
-                {occurrences.map((o) => (
-                  <option key={o} value={o}>
-                    {formatIST(o, "EEE, d MMM yyyy · hh:mm a")}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <Icon className="h-4 w-4" aria-hidden />
+                {label}
+              </button>
+            ))}
           </div>
 
-          {ready && (
-            <p className="mt-4 rounded-xl bg-[#f0faff] px-4 py-3 text-xs font-semibold text-[#0094CA]">
-              Scanning for {selectedEvent?.title} ·{" "}
-              {formatIST(occurrence, "EEE, d MMM yyyy · hh:mm a")}
-            </p>
-          )}
-        </section>
-
-        {/* Camera */}
-        <section className="mt-6">
-          {ready ? (
-            <QrScanner
-              onScan={(raw) => void handleScan(raw)}
-              paused={busy || !!result}
+          {/* Verdict sits right under the switch so it's seen at once */}
+          {result && (
+            <ScanVerdictCard
+              result={result}
+              count={count}
+              busy={busy}
+              nextLabel={mode === "scan" ? "Scan next ticket" : "Done"}
+              onCountChange={setCount}
+              onCheckIn={() => void handleCheckIn()}
+              onNext={() => setResult(null)}
             />
-          ) : (
-            <div className="flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center">
-              <LuScanLine className="h-8 w-8 text-gray-300" />
-              <p className="max-w-xs text-sm font-medium text-gray-500">
-                Choose the experience and date above to start scanning.
-              </p>
-            </div>
           )}
-        </section>
 
-        {/* Verdict */}
-        {result && (
-          <ScanVerdictCard
-            result={result}
-            count={count}
-            busy={busy}
-            onCountChange={setCount}
-            onCheckIn={() => void handleCheckIn()}
-            onNext={() => setResult(null)}
-          />
-        )}
-      </main>
-    </>
+          {mode === "scan" ? (
+            <section className="mx-auto mt-4 w-full max-w-sm">
+              <QrScanner
+                onScan={(raw) => void handleScan(raw)}
+                paused={busy || !!result}
+              />
+              <p className="mt-2 text-center text-xs text-[#777B98]">
+                Point the camera at the QR code on the guest&apos;s ticket.
+              </p>
+            </section>
+          ) : (
+            <section className="mt-4">
+              <div className="relative">
+                <FiSearch className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#777B98]" />
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search name, email or phone"
+                  className="w-full rounded-full border border-white/10 bg-[#121426] py-2.5 pr-4 pl-10 text-sm text-white placeholder-[#777B98] focus:border-[#A020F0] focus:outline-none"
+                />
+              </div>
+              {filteredGuests.length === 0 ? (
+                <p className="mt-4 text-center text-sm text-[#777B98]">
+                  {search
+                    ? "No guest matches that."
+                    : "No guests for this date."}
+                </p>
+              ) : (
+                <ul className="mt-3 divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/10 bg-[#121426]">
+                  {filteredGuests.map((b) => {
+                    const name = b.user_name ?? "Guest";
+                    return (
+                      <li
+                        key={b.id}
+                        className="flex items-center gap-3 px-3 py-2.5"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#A020F0]/15 text-xs font-semibold text-[#D8B4FE]">
+                          {name.charAt(0).toUpperCase()}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-white">
+                            {name}
+                          </span>
+                          <span className="block truncate text-xs text-[#777B98]">
+                            {b.quantity} ticket{b.quantity === 1 ? "" : "s"}
+                            {b.user_phone ? ` · ${b.user_phone}` : ""}
+                          </span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void verify(b.id)}
+                          disabled={busy}
+                          className="shrink-0 rounded-full bg-[#A020F0] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
+                        >
+                          Check in
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          )}
+        </>
+      ) : (
+        <div className="mt-4 flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-6 py-10 text-center">
+          <LuScanLine className="h-7 w-7 text-white/30" aria-hidden />
+          <p className="max-w-xs text-sm text-[#A5A8C3]">
+            Choose the event and date you&apos;re letting people in for.
+          </p>
+        </div>
+      )}
+    </main>
   );
 }
 
@@ -268,6 +411,7 @@ function ScanVerdictCard({
   result,
   count,
   busy,
+  nextLabel,
   onCountChange,
   onCheckIn,
   onNext,
@@ -275,6 +419,7 @@ function ScanVerdictCard({
   result: ScanResultDTO;
   count: number;
   busy: boolean;
+  nextLabel: string;
   onCountChange: (n: number) => void;
   onCheckIn: () => void;
   onNext: () => void;
@@ -287,33 +432,33 @@ function ScanVerdictCard({
 
   const tone = admit
     ? {
-        bg: "bg-green-50",
-        border: "border-green-200",
-        text: "text-green-800",
+        bg: "bg-green-500/10",
+        border: "border-green-500/30",
+        text: "text-green-300",
         Icon: FiCheckCircle,
-        iconColor: "text-green-500",
+        iconColor: "text-green-400",
       }
     : spent
       ? {
-          bg: "bg-amber-50",
-          border: "border-amber-200",
-          text: "text-amber-800",
+          bg: "bg-amber-500/10",
+          border: "border-amber-500/30",
+          text: "text-amber-300",
           Icon: FiAlertTriangle,
-          iconColor: "text-amber-500",
+          iconColor: "text-amber-400",
         }
       : {
-          bg: "bg-red-50",
-          border: "border-red-200",
-          text: "text-red-800",
+          bg: "bg-red-500/10",
+          border: "border-red-500/30",
+          text: "text-red-300",
           Icon: FiXCircle,
-          iconColor: "text-red-500",
+          iconColor: "text-red-400",
         };
 
   const canCheckIn = admit && result.remaining > 0;
 
   return (
     <section
-      className={`mt-6 rounded-2xl border p-5 ${tone.bg} ${tone.border}`}
+      className={`mt-4 rounded-2xl border p-4 ${tone.bg} ${tone.border}`}
     >
       <div className="flex items-start gap-3">
         <tone.Icon className={`mt-0.5 h-6 w-6 shrink-0 ${tone.iconColor}`} />
@@ -321,15 +466,15 @@ function ScanVerdictCard({
           <p className={`text-sm font-bold ${tone.text}`}>{result.message}</p>
 
           {result.guest_name && (
-            <div className="mt-3 space-y-1 text-sm text-gray-700">
-              <p className="font-bold text-gray-900">{result.guest_name}</p>
+            <div className="mt-3 space-y-1 text-sm text-white/80">
+              <p className="font-bold text-white">{result.guest_name}</p>
               {result.event_title && (
-                <p className="text-xs font-medium text-gray-500">
+                <p className="text-xs font-medium text-[#A5A8C3]">
                   {result.event_title}
                 </p>
               )}
               {result.occurrence_date && (
-                <p className="text-xs font-medium text-gray-500">
+                <p className="text-xs font-medium text-[#A5A8C3]">
                   {formatIST(
                     result.occurrence_date,
                     "EEE, d MMM yyyy · hh:mm a",
@@ -337,7 +482,7 @@ function ScanVerdictCard({
                 </p>
               )}
               {result.quantity != null && (
-                <p className="flex items-center gap-1.5 pt-1 text-xs font-bold text-gray-700">
+                <p className="flex items-center gap-1.5 pt-1 text-xs font-bold text-white/80">
                   <FiUsers className="h-3.5 w-3.5" />
                   {result.checked_in_count} of {result.quantity} checked in
                   {result.remaining > 0 && ` · ${result.remaining} to go`}
@@ -349,7 +494,7 @@ function ScanVerdictCard({
           {/* How many of the group are actually at the door right now. */}
           {canCheckIn && (
             <div className="mt-4 flex flex-wrap items-end gap-3">
-              <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
+              <label className="flex flex-col gap-1 text-xs font-semibold text-[#A5A8C3]">
                 Guests entering now
                 <input
                   type="number"
@@ -365,14 +510,14 @@ function ScanVerdictCard({
                       ),
                     )
                   }
-                  className="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm font-bold text-gray-900 outline-none focus:border-[#0094CA]"
+                  className="w-24 rounded-lg border border-white/15 bg-[#0D0F1E] px-3 py-2 text-sm font-bold text-white outline-none focus:border-[#A020F0]"
                 />
               </label>
               <button
                 type="button"
                 onClick={onCheckIn}
                 disabled={busy}
-                className="rounded-full bg-[#0094CA] px-6 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#007dab] disabled:opacity-50"
+                className="rounded-full bg-[#A020F0] px-6 py-2.5 text-sm font-extrabold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
               >
                 {busy ? "Checking in…" : `Check in ${count}`}
               </button>
@@ -385,10 +530,10 @@ function ScanVerdictCard({
         type="button"
         onClick={onNext}
         disabled={busy}
-        className="mt-5 flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white py-3 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-[#121426] py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/[0.04] disabled:opacity-50"
       >
         <FiRefreshCw className="h-4 w-4" />
-        Scan next ticket
+        {nextLabel}
       </button>
     </section>
   );

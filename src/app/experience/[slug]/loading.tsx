@@ -7,70 +7,31 @@
  *
  * Everything here is static markup on purpose. This file is a Suspense
  * fallback rendered inside `layout.tsx`, so any client component either file
- * references has to download before the skeleton can paint. Rendering the real
- * <Navbar /> (it calls useAuthState, which pulls Firebase) took the paint cost
- * from 6 chunks / 343 KB to 21 chunks / 799 KB and defeated the whole point.
- * So the header below is a static replica of the real navbar — same 4.5rem
- * height, same accent bar, same logo — rather than the real component or the
- * blank grey bar this used to draw.
- *
- * Block colours are gray-200/300 rather than gray-100/200: the lighter pair on
- * white read as a blank screen, especially with `animate-pulse` dropping them
- * to 50% opacity.
+ * references has to download before the skeleton can paint (the real Navbar
+ * pulls Firebase: 6 chunks / 343 KB became 21 chunks / 799 KB). The real sidebar
+ * lives in the root layout, so it stays visible while this paints.
  */
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-white">
-      {/* Static replica of the real navbar — no JS, paints immediately */}
-      <div className="h-[4.5rem] w-full bg-white shadow-sm">
-        <div className="h-[3px] w-full bg-[#0094CA]" />
-        <div className="site-x mx-auto flex h-16 w-full max-w-[77rem] items-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/assets/home/logo.png"
-            alt="Myslotmate"
-            className="h-10 w-auto flex-shrink-0"
-          />
-          <div className="hidden flex-1 items-center justify-center gap-[22px] lg:flex">
-            <div className="h-3 w-14 rounded bg-gray-200" />
-            <div className="h-3 w-20 rounded bg-gray-200" />
-            <div className="h-3 w-16 rounded bg-gray-200" />
-          </div>
-          <div className="ml-auto flex items-center gap-3 lg:ml-0">
-            <div className="h-9 w-24 rounded-full bg-gray-200" />
-            <div className="h-9 w-9 rounded-full bg-gray-300" />
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen bg-[#080914]">
+      <div className="mx-auto max-w-[1216px] animate-pulse md:px-10 md:pt-10">
+        <div className="mb-5 hidden h-4 w-20 rounded bg-white/10 md:block" />
+        <div className="h-[260px] w-full bg-white/[0.06] md:h-[300px] md:rounded-[20px] lg:h-[380px]" />
 
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Title */}
-        <div className="mb-4 h-8 w-2/3 animate-pulse rounded-lg bg-gray-300" />
-        <div className="mb-6 h-4 w-1/3 animate-pulse rounded bg-gray-200" />
+        <div className="px-6 md:px-0">
+          <div className="mt-5 h-5 w-16 rounded-full bg-white/10" />
+          <div className="mt-3 h-7 w-2/3 rounded-lg bg-white/10" />
+          <div className="mt-2 h-4 w-1/3 rounded bg-white/[0.06]" />
 
-        {/* Hero image — same 16:9 frame the real page uses */}
-        <div className="aspect-[16/9] w-full animate-pulse rounded-xl bg-gray-300" />
-
-        <div className="mt-8 flex flex-col gap-8 lg:flex-row">
-          {/* Content column */}
-          <div className="flex-1 space-y-4">
-            <div className="h-6 w-1/3 animate-pulse rounded bg-gray-300" />
-            <div className="h-4 w-full animate-pulse rounded bg-gray-200" />
-            <div className="h-4 w-11/12 animate-pulse rounded bg-gray-200" />
-            <div className="h-4 w-4/5 animate-pulse rounded bg-gray-200" />
-            <div className="mt-8 h-6 w-1/4 animate-pulse rounded bg-gray-300" />
-            <div className="h-4 w-full animate-pulse rounded bg-gray-200" />
-            <div className="h-4 w-3/4 animate-pulse rounded bg-gray-200" />
-          </div>
-
-          {/* Sticky booking card */}
-          <div className="w-full lg:w-[380px]">
-            <div className="space-y-4 rounded-2xl border border-gray-300 p-6">
-              <div className="h-7 w-1/2 animate-pulse rounded bg-gray-300" />
-              <div className="h-11 w-full animate-pulse rounded-lg bg-gray-200" />
-              <div className="h-11 w-full animate-pulse rounded-lg bg-gray-200" />
-              <div className="h-12 w-full animate-pulse rounded-lg bg-gray-300" />
+          <div className="mt-10 flex flex-col gap-8 lg:flex-row">
+            <div className="flex-1 space-y-3">
+              <div className="h-10 w-1/2 rounded-full bg-white/[0.06]" />
+              <div className="mt-6 h-5 w-1/3 rounded bg-white/10" />
+              <div className="h-4 w-full rounded bg-white/[0.06]" />
+              <div className="h-4 w-11/12 rounded bg-white/[0.06]" />
+              <div className="h-4 w-4/5 rounded bg-white/[0.06]" />
             </div>
+            <div className="hidden h-[320px] w-[320px] rounded-[20px] bg-white/[0.06] lg:block" />
           </div>
         </div>
       </div>

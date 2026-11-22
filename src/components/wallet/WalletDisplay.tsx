@@ -12,6 +12,8 @@ interface WalletDisplayProps {
   userEmail?: string;
   userPhone?: string;
   variant?: "navbar" | "sidebar" | "compact";
+  /** Dark palette for the sidebar variant (redesigned pages). */
+  dark?: boolean;
 }
 
 export default function WalletDisplay({
@@ -20,6 +22,7 @@ export default function WalletDisplay({
   userEmail,
   userPhone,
   variant = "navbar",
+  dark = false,
 }: WalletDisplayProps) {
   const [showTopUp, setShowTopUp] = useState(false);
 
@@ -42,7 +45,7 @@ export default function WalletDisplay({
       <>
         <button
           onClick={() => setShowTopUp(true)}
-          className="flex items-center gap-2 rounded-full bg-[#e6f8ff] px-3 py-1.5 text-sm font-semibold text-[#0094CA] transition hover:bg-[#d1f1ff]"
+          className="flex items-center gap-2 rounded-full bg-[#241333] px-3 py-1.5 text-sm font-semibold text-[#D8B4FE] transition hover:bg-[#2E1745]"
         >
           <LuWallet className="h-4 w-4" />
           {isLoading ? (
@@ -73,15 +76,15 @@ export default function WalletDisplay({
         <div className="flex items-center gap-1">
           <button
             onClick={() => setShowTopUp(true)}
-            className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 transition hover:border-[#0094CA] hover:bg-[#e6f8ff]"
+            className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 transition hover:border-[#A020F0] hover:bg-[#241333]"
           >
-            <LuWallet className="h-5 w-5 text-[#0094CA]" />
+            <LuWallet className="h-5 w-5 text-[#D8B4FE]" />
             <div className="text-left">
-              <p className="text-xs text-gray-500">Balance</p>
+              <p className="text-xs text-[#A5A8C3]">Balance</p>
               {isLoading ? (
-                <LuLoader2 className="h-4 w-4 animate-spin text-gray-400" />
+                <LuLoader2 className="h-4 w-4 animate-spin text-[#777B98]" />
               ) : (
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-sm font-bold text-white">
                   {formatCurrency(balance)}
                 </p>
               )}
@@ -89,7 +92,7 @@ export default function WalletDisplay({
           </button>
           <button
             onClick={() => setShowTopUp(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0094CA] text-white transition hover:bg-[#007dab]"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#A020F0] text-white transition hover:bg-[#8A1AD0]"
             title="Add Money"
           >
             <LuPlus className="h-5 w-5" />
@@ -112,13 +115,21 @@ export default function WalletDisplay({
   // Sidebar variant (for profile panel)
   return (
     <>
-      <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <div
+        className={`${dark ? "rounded-2xl border border-white/[0.08] bg-[#131328] p-4" : "rounded-xl border border-white/10 bg-[#121426] p-4"}`}
+      >
         <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e6f8ff]">
-              <LuWallet className="h-4 w-4 text-[#0094CA]" />
+            <div
+              className={`flex h-8 w-8 items-center justify-center rounded-full ${dark ? "bg-[#9B30FF]/15" : "bg-[#241333]"}`}
+            >
+              <LuWallet
+                className={`h-4 w-4 ${dark ? "text-[#D8B4FE]" : "text-[#D8B4FE]"}`}
+              />
             </div>
-            <span className="text-sm font-medium text-gray-700">
+            <span
+              className={`text-sm font-medium ${dark ? "text-white/80" : "text-white/80"}`}
+            >
               Wallet Balance
             </span>
           </div>
@@ -127,13 +138,25 @@ export default function WalletDisplay({
         <div className="mb-3">
           {isLoading ? (
             <div className="flex items-center gap-2">
-              <LuLoader2 className="h-5 w-5 animate-spin text-gray-400" />
-              <span className="text-sm text-gray-400">Loading...</span>
+              <LuLoader2
+                className={`h-5 w-5 animate-spin ${dark ? "text-white/45" : "text-[#777B98]"}`}
+              />
+              <span
+                className={`text-sm ${dark ? "text-white/45" : "text-[#777B98]"}`}
+              >
+                Loading...
+              </span>
             </div>
           ) : error ? (
-            <p className="text-sm text-gray-500">Unable to load</p>
+            <p
+              className={`text-sm ${dark ? "text-white/55" : "text-[#A5A8C3]"}`}
+            >
+              Unable to load
+            </p>
           ) : (
-            <p className="text-2xl font-bold text-gray-900">
+            <p
+              className={`text-2xl font-bold ${dark ? "text-white" : "text-white"}`}
+            >
               {formatCurrency(balance)}
             </p>
           )}
@@ -141,7 +164,7 @@ export default function WalletDisplay({
 
         <button
           onClick={() => setShowTopUp(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#0094CA] py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+          className={`flex w-full items-center justify-center gap-2 rounded-lg ${dark ? "bg-gradient-to-r from-[#7038F5] to-[#B724EA] py-2.5 text-sm font-semibold text-white transition hover:brightness-110" : "bg-[#A020F0] py-2.5 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"}`}
         >
           <LuPlus className="h-4 w-4" />
           Add Money
@@ -149,7 +172,7 @@ export default function WalletDisplay({
 
         <Link
           href="/wallet"
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 py-2 text-xs font-medium text-gray-600 transition hover:bg-gray-50"
+          className={`mt-2 flex w-full items-center justify-center gap-2 ${dark ? "rounded-lg border border-white/10 py-2 text-xs font-medium text-white/70 transition hover:bg-white/5" : "rounded-lg border border-white/10 py-2 text-xs font-medium text-[#A5A8C3] transition hover:bg-white/[0.04]"}`}
         >
           <LuHistory className="h-3.5 w-3.5" />
           View transactions

@@ -19,13 +19,13 @@ export default function AttendeeDetailsConfig({
   onFieldsChange: (next: string[]) => void;
 }) {
   return (
-    <div className="space-y-4 border-t border-gray-100 pt-6">
+    <div className="space-y-4 border-t border-white/10 pt-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-gray-900">
+          <h3 className="text-base font-semibold text-white">
             Require attendee details
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-[#A5A8C3]">
             Collect extra details from each guest at booking. Selected fields
             are required.
           </p>
@@ -36,11 +36,11 @@ export default function AttendeeDetailsConfig({
           aria-checked={enabled}
           onClick={() => onToggle(!enabled)}
           className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-            enabled ? "bg-[#0094CA]" : "bg-gray-200"
+            enabled ? "bg-[#A020F0]" : "bg-white/10"
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-[#121426] shadow-sm transition-transform ${
               enabled ? "translate-x-6" : "translate-x-1"
             }`}
           />
@@ -54,7 +54,7 @@ export default function AttendeeDetailsConfig({
             return (
               <label
                 key={f.key}
-                className="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700"
+                className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-white/80"
               >
                 <input
                   type="checkbox"
@@ -66,7 +66,7 @@ export default function AttendeeDetailsConfig({
                         : fields.filter((k) => k !== f.key),
                     )
                   }
-                  className="h-4 w-4 shrink-0 rounded border-gray-300 text-[#0094CA] focus:ring-[#0094CA]"
+                  className="h-4 w-4 shrink-0 rounded border-white/15 text-[#D8B4FE] focus:ring-[#A020F0]"
                 />
                 <span className="min-w-0 break-words">{f.label}</span>
               </label>

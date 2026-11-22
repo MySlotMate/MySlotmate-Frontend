@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { HostSegments } from "~/components/host-dashboard";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "~/utils/firebase";
-import { HostNavbar } from "~/components/host-dashboard";
-import Breadcrumb from "~/components/Breadcrumb";
-import { useHostJoinRequests, useReviewJoinRequest } from "~/hooks/useApi";
+import { formatDistanceToNowStrict } from "date-fns";
+import { useIdToken } from "~/hooks/useIdToken";
+import {
+  useHostJoinRequests,
+  useHostPendingJoinRequestCount,
+  useReviewJoinRequest,
+} from "~/hooks/useApi";
 import { ATTENDEE_FIELDS } from "~/lib/attendeeFields";
 import { formatIST } from "~/lib/datetime";
 import type { JoinRequestDTO, JoinRequestStatus } from "~/lib/api";
@@ -16,24 +19,15 @@ import {
   FiExternalLink,
   FiInbox,
   FiCalendar,
+  FiChevronDown,
 } from "react-icons/fi";
 import { LuLoader2 } from "react-icons/lu";
 import { toast } from "sonner";
 
-/**
- * Join requests queue — guests asking to join the host's RSVP-gated private
- * experiences.
- *
- * Approving UNLOCKS booking for that guest; it does not book or charge
- * anything. The guest is emailed and has to come back and book, so a seat is
- * only really taken once they do.
- */
-
-const TABS: { key: JoinRequestStatus | "all"; label: string }[] = [
-  { key: "pending", label: "Pending" },
+const TABS: { key: JoinRequestStatus; label: string }[] = [
+  { key: "pending", label: "Waiting" },
   { key: "approved", label: "Approved" },
   { key: "rejected", label: "Declined" },
-  { key: "all", label: "All" },
 ];
 
 const fieldLabel = (key: string) =>
@@ -49,22 +43,20 @@ const answerText = (value: unknown) => {
   return JSON.stringify(value);
 };
 
-export default function HostJoinRequestsPage() {
-  const [authUser] = useAuthState(auth);
-  const [idToken, setIdToken] = useState<string | null>(null);
-  useEffect(() => {
-    if (authUser) {
-      void authUser.getIdToken().then(setIdToken);
-    } else {
-      setIdToken(localStorage.getItem("msm_auth_token"));
-    }
-  }, [authUser]);
+const ago = (iso: string) =>
+  formatDistanceToNowStrict(new Date(iso), { addSuffix: true });
 
-  const [tab, setTab] = useState<JoinRequestStatus | "all">("pending");
-  const { data: requests, isLoading } = useHostJoinRequests(
-    idToken,
-    tab === "all" ? undefined : tab,
-  );
+/**
+ * Join requests for request-only (RSVP) events. Requests are grouped by the
+ * session they're for, since approval covers that one date. Approving lets
+ * the guest book; once they book they're in the event's group chat.
+ */
+export default function HostJoinRequestsPage() {
+  const idToken = useIdToken();
+  const [tab, setTab] = useState<JoinRequestStatus>("pending");
+  const [eventFilter, setEventFilter] = useState<string>("all");
+  const { data: requests, isLoading } = useHostJoinRequests(idToken, tab);
+  const { data: pendingCount = 0 } = useHostPendingJoinRequestCount(idToken);
   const review = useReviewJoinRequest(idToken);
 
   // Track which row is mid-decision so only that row's buttons spin.
@@ -78,7 +70,7 @@ export default function HostJoinRequestsPage() {
         onSuccess: () =>
           toast.success(
             approve
-              ? `${req.user_name ?? "Guest"} can now book that session`
+              ? `${req.user_name ?? "Guest"} can now book this session`
               : "Request declined",
           ),
         onError: (err: Error) =>
@@ -88,205 +80,306 @@ export default function HostJoinRequestsPage() {
     );
   };
 
+  // Events that have requests in this tab, for the filter chips.
+  const eventsInTab = useMemo(() => {
+    const m = new Map<string, { title: string; n: number }>();
+    for (const r of requests ?? []) {
+      const cur = m.get(r.event_id);
+      m.set(r.event_id, {
+        title: r.event_title ?? "Event",
+        n: (cur?.n ?? 0) + 1,
+      });
+    }
+    return [...m.entries()];
+  }, [requests]);
+
+  useEffect(() => {
+    if (
+      eventFilter !== "all" &&
+      !eventsInTab.some(([id]) => id === eventFilter)
+    )
+      setEventFilter("all");
+  }, [eventsInTab, eventFilter]);
+
+  // One group per event + date, soonest session first.
+  const groups = useMemo(() => {
+    const m = new Map<string, JoinRequestDTO[]>();
+    for (const r of requests ?? []) {
+      if (eventFilter !== "all" && r.event_id !== eventFilter) continue;
+      const k = `${r.event_id}|${r.occurrence_date}`;
+      m.set(k, [...(m.get(k) ?? []), r]);
+    }
+    return [...m.values()].sort(
+      (a, b) =>
+        new Date(a[0]!.occurrence_date).getTime() -
+        new Date(b[0]!.occurrence_date).getTime(),
+    );
+  }, [requests, eventFilter]);
+
   return (
-    <>
-      <HostNavbar />
-      <main className="min-h-screen bg-gray-50 pb-16">
-        <div className="site-x mx-auto max-w-4xl pt-6">
-          <Breadcrumb
-            items={[
-              { label: "Dashboard", href: "/host-dashboard" },
-              { label: "Join requests" },
-            ]}
-            className="mb-6"
-          />
+    <main className="min-h-screen bg-[#080914] pb-16">
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:py-8">
+        <HostSegments
+          items={[
+            { label: "Messages", href: "/host-dashboard/messages" },
+            { label: "Requests", href: "/host-dashboard/requests" },
+          ]}
+        />
+        <header className="mb-5">
+          <h1 className="font-outfit text-[26px] leading-tight font-semibold tracking-[-0.01em] text-white sm:text-[32px]">
+            Requests
+          </h1>
+          <p className="mt-1 text-sm text-[#A5A8C3]">
+            Guests asking to join your request-only events. Approving lets them
+            book that date; once they book, they join the event&apos;s group.
+          </p>
+        </header>
 
-          <header className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">Join requests</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Guests asking to join your request-only experiences. Each request
-              is for one session — approving lets them book that date only, and
-              doesn&apos;t hold a spot or take payment.
-            </p>
-          </header>
+        <div className="flex rounded-full border border-white/10 bg-[#121426] p-1">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`flex flex-1 items-center justify-center gap-1.5 rounded-full py-2 text-sm font-medium transition ${
+                tab === t.key
+                  ? "bg-[#A020F0] text-white"
+                  : "text-[#A5A8C3] hover:text-white"
+              }`}
+            >
+              {t.label}
+              {t.key === "pending" && pendingCount > 0 && (
+                <span
+                  className={`rounded-full px-1.5 text-[11px] font-bold ${tab === t.key ? "bg-white/25" : "bg-[#A020F0] text-white"}`}
+                >
+                  {pendingCount}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
 
-          <div className="mb-5 flex gap-2 overflow-x-auto">
-            {TABS.map((t) => (
+        {eventsInTab.length > 1 && (
+          <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+            {[
+              [
+                "all",
+                { title: "All events", n: requests?.length ?? 0 },
+              ] as const,
+              ...eventsInTab,
+            ].map(([id, { title, n }]) => (
               <button
-                key={t.key}
+                key={id}
                 type="button"
-                onClick={() => setTab(t.key)}
-                className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition ${
-                  tab === t.key
-                    ? "bg-[#0094CA] text-white"
-                    : "border border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                onClick={() => setEventFilter(id)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition ${
+                  eventFilter === id
+                    ? "border-[#A020F0] bg-[#A020F0]/15 text-white"
+                    : "border-white/10 text-[#A5A8C3] hover:text-white"
                 }`}
               >
-                {t.label}
+                {title} <span className="opacity-60">{n}</span>
               </button>
             ))}
           </div>
+        )}
 
+        <div className="mt-4">
           {isLoading ? (
             <div className="flex justify-center py-16">
-              <LuLoader2 className="h-6 w-6 animate-spin text-[#0094CA]" />
+              <LuLoader2 className="h-6 w-6 animate-spin text-[#D8B4FE]" />
             </div>
-          ) : !requests || requests.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-white px-6 py-16 text-center">
-              <FiInbox className="mx-auto mb-3 h-8 w-8 text-gray-300" />
-              <p className="text-sm font-medium text-gray-700">
+          ) : groups.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-[#121426] px-6 py-14 text-center">
+              <FiInbox className="mx-auto mb-3 h-7 w-7 text-white/30" />
+              <p className="text-sm font-medium text-white/80">
                 {tab === "pending"
-                  ? "No requests waiting on you"
-                  : "Nothing here yet"}
+                  ? "You're all caught up"
+                  : tab === "approved"
+                    ? "No approved requests yet"
+                    : "No declined requests"}
               </p>
-              <p className="mt-1 text-sm text-gray-500">
-                Requests appear when a guest applies to a private experience set
-                to &ldquo;Request to join&rdquo;.
+              <p className="mx-auto mt-1 max-w-sm text-xs text-[#777B98]">
+                Requests come in when a guest applies to an event set to
+                &ldquo;Request to join&rdquo;.
               </p>
             </div>
           ) : (
-            <ul className="space-y-3">
-              {requests.map((req) => {
-                const answers = Object.entries(req.answers_snapshot ?? {});
-                const isBusy = busyId === req.id;
+            <div className="space-y-4">
+              {groups.map((list) => {
+                const first = list[0]!;
                 return (
-                  <li
-                    key={req.id}
-                    className="rounded-2xl border border-gray-200 bg-white p-5"
+                  <section
+                    key={`${first.event_id}|${first.occurrence_date}`}
+                    className="overflow-hidden rounded-2xl border border-white/10 bg-[#121426]"
                   >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-semibold text-gray-900">
-                          {req.user_name ?? "Guest"}
+                    <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-white">
+                          {first.event_title ?? "Event"}
                         </p>
-                        <p className="truncate text-sm text-gray-500">
-                          {req.user_email}
-                          {req.user_phone ? ` · ${req.user_phone}` : ""}
-                        </p>
-                        {req.event_slug && (
-                          <Link
-                            href={`/experience/${req.event_slug}`}
-                            className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-[#0094CA] hover:underline"
-                          >
-                            {req.event_title}
-                            <FiExternalLink size={12} />
-                          </Link>
-                        )}
-                        {/* The session being asked about. Approval covers this
-                            date only, so it has to be on the card the host
-                            decides from. */}
-                        {req.occurrence_date && (
-                          <p className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-[#0094CA]/5 px-2 py-1 text-xs font-semibold text-[#16304c]">
-                            <FiCalendar size={12} className="text-[#0094CA]" />
-                            {formatIST(req.occurrence_date, "eee d MMM, h:mm a")}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <StatusPill status={req.status} />
-                        <p className="mt-1 text-xs text-gray-400">
-                          {formatIST(req.created_at, "d MMM, h:mm a")}
-                        </p>
-                      </div>
-                    </div>
-
-                    {answers.length > 0 && (
-                      <dl className="mt-4 grid gap-x-6 gap-y-2 border-t border-gray-100 pt-4 sm:grid-cols-2">
-                        {answers.map(([key, value]) => (
-                          <div key={key} className="min-w-0">
-                            <dt className="text-xs text-gray-400">
-                              {fieldLabel(key)}
-                            </dt>
-                            <dd className="truncate text-sm text-gray-800">
-                              {key === "govt_id_url" && value ? (
-                                <a
-                                  href={answerText(value)}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-[#0094CA] hover:underline"
-                                >
-                                  View ID
-                                </a>
-                              ) : (
-                                answerText(value)
-                              )}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                    )}
-
-                    {req.message && (
-                      <p className="mt-4 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-700 italic">
-                        &ldquo;{req.message}&rdquo;
-                      </p>
-                    )}
-
-                    {req.status === "pending" ? (
-                      <div className="mt-4 flex gap-3">
-                        <button
-                          type="button"
-                          disabled={isBusy}
-                          onClick={() => decide(req, true)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-2.5 text-sm font-bold text-white transition hover:shadow-md disabled:opacity-50 sm:flex-none sm:px-6"
-                        >
-                          {isBusy ? (
-                            <LuLoader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <FiCheck size={16} />
+                        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-[#A5A8C3]">
+                          <FiCalendar className="h-3 w-3" aria-hidden />
+                          {formatIST(
+                            first.occurrence_date,
+                            "EEE d MMM, h:mm a",
                           )}
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          disabled={isBusy}
-                          onClick={() => decide(req, false)}
-                          className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-gray-200 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 sm:flex-none sm:px-6"
-                        >
-                          <FiX size={16} />
-                          Decline
-                        </button>
-                      </div>
-                    ) : (
-                      req.reviewed_at && (
-                        <p className="mt-4 text-xs text-gray-400">
-                          Decided {formatIST(req.reviewed_at, "d MMM, h:mm a")}
-                          {req.reviewed_by_kind === "admin" &&
-                            " by MySlotMate support"}
                         </p>
-                      )
-                    )}
-                  </li>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-[#A5A8C3]">
+                        {list.length}
+                      </span>
+                      {first.event_slug && (
+                        <Link
+                          href={`/experience/${first.event_slug}`}
+                          aria-label="Open event page"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[#A5A8C3] hover:bg-white/[0.06]"
+                        >
+                          <FiExternalLink className="h-4 w-4" />
+                        </Link>
+                      )}
+                    </div>
+                    <ul className="divide-y divide-white/[0.06]">
+                      {list.map((req) => (
+                        <RequestRow
+                          key={req.id}
+                          req={req}
+                          busy={busyId === req.id}
+                          onDecide={(approve) => decide(req, approve)}
+                        />
+                      ))}
+                    </ul>
+                  </section>
                 );
               })}
-            </ul>
+            </div>
           )}
         </div>
-      </main>
-    </>
+      </div>
+    </main>
   );
 }
 
-function StatusPill({ status }: { status: JoinRequestStatus }) {
-  const style =
-    status === "approved"
-      ? "bg-green-50 text-green-700 border-green-200"
-      : status === "pending"
-        ? "bg-amber-50 text-amber-700 border-amber-200"
-        : "bg-gray-100 text-gray-500 border-gray-200";
-  const label =
-    status === "approved"
-      ? "Approved"
-      : status === "pending"
-        ? "Pending"
-        : status === "rejected"
-          ? "Declined"
-          : "Withdrawn";
+function RequestRow({
+  req,
+  busy,
+  onDecide,
+}: {
+  req: JoinRequestDTO;
+  busy: boolean;
+  onDecide: (approve: boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const answers = Object.entries(req.answers_snapshot ?? {}).filter(
+    ([, v]) => v !== null && v !== undefined && v !== "",
+  );
+  const name = req.user_name ?? "Guest";
+  const pending = req.status === "pending";
+
   return (
-    <span
-      className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${style}`}
-    >
-      {label}
-    </span>
+    <li className="px-4 py-3">
+      <div className="flex flex-wrap items-center gap-3">
+        {req.user_avatar_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={req.user_avatar_url}
+            alt=""
+            className="h-9 w-9 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#A020F0]/15 text-sm font-semibold text-[#D8B4FE]">
+            {name.charAt(0).toUpperCase()}
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-white">{name}</p>
+          <p className="truncate text-xs text-[#777B98]">
+            {pending
+              ? `Asked ${ago(req.created_at)}`
+              : `${req.status === "approved" ? "Approved" : req.status === "rejected" ? "Declined" : "Withdrawn"} ${req.reviewed_at ? ago(req.reviewed_at) : ""}${req.reviewed_by_kind === "admin" ? " by support" : ""}`}
+            {req.user_phone ? ` · ${req.user_phone}` : ""}
+          </p>
+        </div>
+        {pending && (
+          <div className="flex w-full gap-2 sm:w-auto">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onDecide(false)}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full border border-white/10 px-4 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/[0.06] disabled:opacity-50 sm:flex-none"
+            >
+              <FiX className="h-3.5 w-3.5" />
+              Decline
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => onDecide(true)}
+              className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-[#A020F0] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50 sm:flex-none"
+            >
+              {busy ? (
+                <LuLoader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FiCheck className="h-3.5 w-3.5" />
+              )}
+              Approve
+            </button>
+          </div>
+        )}
+      </div>
+
+      {req.message && (
+        <p className="mt-2 ml-12 line-clamp-3 rounded-xl bg-white/[0.04] px-3 py-2 text-sm text-white/80">
+          &ldquo;{req.message}&rdquo;
+        </p>
+      )}
+
+      {answers.length > 0 && (
+        <div className="mt-2 ml-12">
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-[#D8B4FE] hover:underline"
+          >
+            {open ? "Hide" : "View"} their answers ({answers.length})
+            <FiChevronDown
+              className={`h-3.5 w-3.5 transition ${open ? "rotate-180" : ""}`}
+            />
+          </button>
+          {open && (
+            <dl className="mt-2 grid gap-x-6 gap-y-2 rounded-xl bg-white/[0.03] p-3 sm:grid-cols-2">
+              {req.user_email && (
+                <div className="min-w-0">
+                  <dt className="text-xs text-[#777B98]">Email</dt>
+                  <dd className="truncate text-sm text-white">
+                    {req.user_email}
+                  </dd>
+                </div>
+              )}
+              {answers.map(([key, value]) => (
+                <div key={key} className="min-w-0">
+                  <dt className="text-xs text-[#777B98]">{fieldLabel(key)}</dt>
+                  <dd className="truncate text-sm text-white">
+                    {key === "govt_id_url" ? (
+                      <a
+                        href={answerText(value)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[#D8B4FE] hover:underline"
+                      >
+                        View ID
+                      </a>
+                    ) : (
+                      answerText(value)
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
+      )}
+    </li>
   );
 }

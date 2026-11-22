@@ -8,6 +8,8 @@ import { useStoredAuth } from "./useStoredAuth";
 
 export function useListTimeAction() {
   const router = useRouter();
+  // Kept so callers that still render <BecomeHostModal> compile; the click
+  // no longer opens it.
   const [showBecomeHost, setShowBecomeHost] = useState(false);
   const { userId } = useStoredAuth();
 
@@ -22,12 +24,9 @@ export function useListTimeAction() {
   }, [hostData?.status?.id]);
 
   const handleListTimeClick = () => {
-    if (hostStatus === "approved") {
-      router.push("/host-dashboard/experiences/new");
-      return;
-    }
-
-    setShowBecomeHost(true);
+    // Everyone goes straight to creating an event. The create page asks for
+    // sign-in only when they publish or save a draft.
+    router.push("/host-dashboard/experiences/new");
   };
 
   return {

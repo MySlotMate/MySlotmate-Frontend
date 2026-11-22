@@ -86,17 +86,17 @@ export default function LocationSearchInput({
             if (suggestions.length > 0) setIsOpen(true);
           }}
           placeholder={placeholder}
-          className={`w-full rounded-lg border border-gray-200 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#0094CA] ${className}`}
+          className={`w-full rounded-lg border border-white/10 px-4 py-3 outline-none focus:border-transparent focus:ring-2 focus:ring-[#A020F0] ${className}`}
         />
         {loading && (
           <div className="absolute top-1/2 right-3 -translate-y-1/2">
-            <FiLoader className="animate-spin text-[#0094CA]" size={16} />
+            <FiLoader className="animate-spin text-[#D8B4FE]" size={16} />
           </div>
         )}
       </div>
 
       {isOpen && suggestions.length > 0 && (
-        <div className="absolute right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-gray-100 bg-white shadow-xl">
+        <div className="absolute right-0 left-0 z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-[#121426] shadow-xl">
           {suggestions.map((item, idx) => (
             <button
               key={idx}
@@ -105,15 +105,15 @@ export default function LocationSearchInput({
                 onSelect(item.display_name, item.lat, item.lon);
                 setIsOpen(false);
               }}
-              className="flex w-full items-start gap-3 border-b border-gray-50 p-3 text-left transition last:border-0 hover:bg-gray-50"
+              className="flex w-full items-start gap-3 border-b border-white/10 p-3 text-left transition last:border-0 hover:bg-white/[0.04]"
             >
-              <FiMapPin className="mt-1 shrink-0 text-gray-400" size={16} />
+              <FiMapPin className="mt-1 shrink-0 text-[#777B98]" size={16} />
               <div>
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-white">
                   {item.display_name}
                 </p>
                 {item.address?.state && (
-                  <p className="text-xs text-gray-500">{item.address.state}</p>
+                  <p className="text-xs text-[#A5A8C3]">{item.address.state}</p>
                 )}
               </div>
             </button>

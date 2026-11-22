@@ -129,31 +129,29 @@ function Section({
 }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <h2 className="text-xl font-bold text-gray-900 sm:text-2xl">{title}</h2>
-      <div className="mt-3 space-y-4 text-gray-700">{children}</div>
+      <h2 className="text-xl font-bold text-white sm:text-2xl">{title}</h2>
+      <div className="mt-3 space-y-4 text-white/80">{children}</div>
     </section>
   );
 }
 
 function DataTable({ rows }: { rows: DataRow[] }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white">
+    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#121426]">
       <table className="w-full min-w-[540px] text-left text-sm">
-        <thead className="bg-gray-50 text-xs tracking-wide text-gray-500 uppercase">
+        <thead className="bg-white/[0.04] text-xs tracking-wide text-[#A5A8C3] uppercase">
           <tr>
             <th className="px-4 py-3 font-semibold">What</th>
             <th className="px-4 py-3 font-semibold">Why we need it</th>
             <th className="px-4 py-3 font-semibold">Required?</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
+        <tbody className="divide-y divide-white/10">
           {rows.map((row) => (
             <tr key={row.data}>
-              <td className="px-4 py-3 font-semibold text-gray-900">
-                {row.data}
-              </td>
-              <td className="px-4 py-3 text-gray-700">{row.why}</td>
-              <td className="px-4 py-3 whitespace-nowrap text-gray-500">
+              <td className="px-4 py-3 font-semibold text-white">{row.data}</td>
+              <td className="px-4 py-3 text-white/80">{row.why}</td>
+              <td className="px-4 py-3 whitespace-nowrap text-[#A5A8C3]">
                 {row.required}
               </td>
             </tr>
@@ -172,15 +170,15 @@ export default function PrivacyPolicyPage() {
       />
 
       <header className="mb-10">
-        <h1 className="text-3xl font-black text-gray-900 sm:text-4xl">
+        <h1 className="text-3xl font-black text-white sm:text-4xl">
           Privacy Policy
         </h1>
-        <p className="mt-3 text-gray-600">
+        <p className="mt-3 text-[#A5A8C3]">
           This policy explains what MySlotMate collects, why, who we share it
           with, and the choices you have. It covers the MySlotMate website and
           the MySlotMate Android app.
         </p>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-2 text-sm text-[#A5A8C3]">
           Last updated {LAST_UPDATED}
         </p>
       </header>
@@ -189,14 +187,14 @@ export default function PrivacyPolicyPage() {
         <Section id="who-we-are" title="Who we are">
           <p>
             MySlotMate is a platform for discovering and booking local
-            experiences, run by Myslotmate Private Limited. Where this policy
+            experiences, run by Moodverse Private Limited. Where this policy
             says &quot;we&quot; or &quot;us&quot;, it means that company, which
             is the controller of the personal information described here.
           </p>
           <p>
             Questions about this policy or your data go to{" "}
             <a
-              className="font-semibold text-[#0094CA] hover:underline"
+              className="font-semibold text-[#D8B4FE] hover:underline"
               href={`mailto:${CONTACT_EMAIL}`}
             >
               {CONTACT_EMAIL}
@@ -216,49 +214,49 @@ export default function PrivacyPolicyPage() {
           <DataTable rows={collectedAutomatically} />
           <p>
             We do not sell your personal information, and we do not use it to
-            serve advertising. We do not collect your precise GPS location in the
-            background.
+            serve advertising. We do not collect your precise GPS location in
+            the background.
           </p>
         </Section>
 
         <Section id="payments" title="Payments">
           <p>
             Card, UPI and bank details are entered directly with our payment
-            providers and never reach MySlotMate&apos;s servers. What we store is
-            the outcome: the amount, the status, and a reference number from the
-            provider, which we need for your wallet balance, host payouts,
+            providers and never reach MySlotMate&apos;s servers. What we store
+            is the outcome: the amount, the status, and a reference number from
+            the provider, which we need for your wallet balance, host payouts,
             refunds and our own accounting obligations.
           </p>
         </Section>
 
         <Section id="sharing" title="Who else sees your information">
           <p>
-            <strong>Hosts and other guests.</strong> When you book, the host sees
-            your name, profile photo and the contact details needed to run the
-            experience. Your public profile is visible to other people on the
-            platform.
+            <strong>Hosts and other guests.</strong> When you book, the host
+            sees your name, profile photo and the contact details needed to run
+            the experience. Your public profile is visible to other people on
+            the platform.
           </p>
           <p>
-            <strong>Service providers.</strong> We share only what each one needs
-            to do its job:
+            <strong>Service providers.</strong> We share only what each one
+            needs to do its job:
           </p>
           <ul className="ml-1 space-y-2">
             {processors.map((p) => (
               <li key={p.name} className="flex gap-2">
-                <span aria-hidden="true" className="text-gray-300">
+                <span aria-hidden="true" className="text-white/30">
                   &bull;
                 </span>
                 <span>
-                  <strong className="text-gray-900">{p.name}</strong> &mdash;{" "}
+                  <strong className="text-white">{p.name}</strong> &mdash;{" "}
                   {p.role}
                 </span>
               </li>
             ))}
           </ul>
           <p>
-            <strong>Legal reasons.</strong> We may disclose information where the
-            law requires it, or to investigate fraud, safety incidents or abuse
-            of the platform.
+            <strong>Legal reasons.</strong> We may disclose information where
+            the law requires it, or to investigate fraud, safety incidents or
+            abuse of the platform.
           </p>
         </Section>
 
@@ -266,33 +264,33 @@ export default function PrivacyPolicyPage() {
           <p>
             We keep your account information for as long as your account exists.
             When you delete your account we remove your profile and personal
-            details, but we retain booking and payment records for as long as tax
-            and accounting law requires, and we keep a minimal record where one
-            is needed to resolve a dispute or enforce a safety decision.
+            details, but we retain booking and payment records for as long as
+            tax and accounting law requires, and we keep a minimal record where
+            one is needed to resolve a dispute or enforce a safety decision.
           </p>
         </Section>
 
         <Section id="your-rights" title="Your choices">
           <ul className="ml-1 space-y-2">
             <li className="flex gap-2">
-              <span aria-hidden="true" className="text-gray-300">
+              <span aria-hidden="true" className="text-white/30">
                 &bull;
               </span>
               <span>
-                <strong className="text-gray-900">Access and correction.</strong>{" "}
+                <strong className="text-white">Access and correction.</strong>{" "}
                 Edit your name, photo, bio and city from your profile at any
                 time.
               </span>
             </li>
             <li className="flex gap-2">
-              <span aria-hidden="true" className="text-gray-300">
+              <span aria-hidden="true" className="text-white/30">
                 &bull;
               </span>
               <span>
-                <strong className="text-gray-900">Deletion.</strong> Request
+                <strong className="text-white">Deletion.</strong> Request
                 deletion of your account and data at{" "}
                 <Link
-                  className="font-semibold text-[#0094CA] hover:underline"
+                  className="font-semibold text-[#D8B4FE] hover:underline"
                   href="/delete-account"
                 >
                   myslotmate.com/delete-account
@@ -301,23 +299,23 @@ export default function PrivacyPolicyPage() {
               </span>
             </li>
             <li className="flex gap-2">
-              <span aria-hidden="true" className="text-gray-300">
+              <span aria-hidden="true" className="text-white/30">
                 &bull;
               </span>
               <span>
-                <strong className="text-gray-900">Notifications.</strong> Turn
+                <strong className="text-white">Notifications.</strong> Turn
                 booking, community and new-experience notifications on or off in
                 your profile settings.
               </span>
             </li>
             <li className="flex gap-2">
-              <span aria-hidden="true" className="text-gray-300">
+              <span aria-hidden="true" className="text-white/30">
                 &bull;
               </span>
               <span>
-                <strong className="text-gray-900">Location.</strong> Revoke the
-                app&apos;s location permission in your device settings; only maps
-                stop working.
+                <strong className="text-white">Location.</strong> Revoke the
+                app&apos;s location permission in your device settings; only
+                maps stop working.
               </span>
             </li>
           </ul>
@@ -344,19 +342,19 @@ export default function PrivacyPolicyPage() {
 
         <Section id="changes" title="Changes to this policy">
           <p>
-            If we change how we use your information we will update this page and
-            revise the date above. Material changes will also be announced in the
-            app.
+            If we change how we use your information we will update this page
+            and revise the date above. Material changes will also be announced
+            in the app.
           </p>
         </Section>
       </div>
 
-      <footer className="mt-12 rounded-2xl border border-gray-200 bg-white p-6">
-        <h2 className="text-lg font-bold text-gray-900">Contact us</h2>
-        <p className="mt-2 text-gray-700">
-          Myslotmate Private Limited, Guwahati, Assam, India &middot;{" "}
+      <footer className="mt-12 rounded-2xl border border-white/10 bg-[#121426] p-6">
+        <h2 className="text-lg font-bold text-white">Contact us</h2>
+        <p className="mt-2 text-white/80">
+          Moodverse Private Limited, Guwahati, Assam, India &middot;{" "}
           <a
-            className="font-semibold text-[#0094CA] hover:underline"
+            className="font-semibold text-[#D8B4FE] hover:underline"
             href={`mailto:${CONTACT_EMAIL}`}
           >
             {CONTACT_EMAIL}

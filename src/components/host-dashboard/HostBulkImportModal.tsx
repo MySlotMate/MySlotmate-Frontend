@@ -371,19 +371,17 @@ export default function HostBulkImportModal({
   const uploadBlocked = needsOfflineAck && !offlineAck;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
+    <div className="msm-modal fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-[#121426] shadow-xl">
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex items-start justify-between border-b border-white/10 px-6 py-4">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">
-              Bulk add bookings
-            </h2>
-            <p className="mt-0.5 text-sm text-gray-500">{eventTitle}</p>
+            <h2 className="text-lg font-bold text-white">Bulk add bookings</h2>
+            <p className="mt-0.5 text-sm text-[#A5A8C3]">{eventTitle}</p>
           </div>
           <button
             onClick={handleClose}
-            className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-lg p-1.5 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#A5A8C3]"
             aria-label="Close"
           >
             <LuX className="h-5 w-5" />
@@ -394,27 +392,27 @@ export default function HostBulkImportModal({
           {/* ---------------- Upload phase ---------------- */}
           {!job && (
             <>
-              <ol className="space-y-1 text-sm text-gray-600">
+              <ol className="space-y-1 text-sm text-[#A5A8C3]">
                 <li>
-                  <span className="font-semibold text-gray-900">1.</span>{" "}
-                  Download the template below.
+                  <span className="font-semibold text-white">1.</span> Download
+                  the template below.
                 </li>
                 <li>
-                  <span className="font-semibold text-gray-900">2.</span> Fill
-                  in each guest&apos;s <strong>Name</strong> and{" "}
+                  <span className="font-semibold text-white">2.</span> Fill in
+                  each guest&apos;s <strong>Name</strong> and{" "}
                   <strong>Phone</strong> (Quantity is optional). One row per
                   phone number.
                 </li>
                 <li>
-                  <span className="font-semibold text-gray-900">3.</span> Upload
-                  it here — we&apos;ll book each row and report any that fail.
+                  <span className="font-semibold text-white">3.</span> Upload it
+                  here — we&apos;ll book each row and report any that fail.
                 </li>
               </ol>
 
               <button
                 onClick={handleDownloadTemplate}
                 disabled={downloading || !idToken}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#0094CA] bg-[#0094CA]/5 px-4 py-3 text-sm font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/10 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#A020F0] bg-[#A020F0]/10 px-4 py-3 text-sm font-semibold text-[#D8B4FE] transition hover:bg-[#A020F0]/10 disabled:opacity-60"
               >
                 {downloading ? (
                   <LuLoader2 className="h-4 w-4 animate-spin" />
@@ -425,7 +423,7 @@ export default function HostBulkImportModal({
               </button>
 
               {blocked && (
-                <div className="flex gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <div className="flex gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
                   <LuAlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>{blocked}</span>
                 </div>
@@ -433,11 +431,11 @@ export default function HostBulkImportModal({
 
               {/* Date */}
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">
+                <label className="mb-1 block text-xs font-semibold text-[#A5A8C3]">
                   Date &amp; time
                 </label>
                 <select
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA] disabled:opacity-60"
+                  className="w-full rounded-lg border border-white/10 bg-[#121426] px-3 py-2.5 text-sm transition outline-none focus:border-[#A020F0] disabled:opacity-60"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
                   disabled={uploading || occLoading || occurrences.length === 0}
@@ -456,7 +454,7 @@ export default function HostBulkImportModal({
                       </option>
                     ))}
                 </select>
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-[#777B98]">
                   Every guest in the file is booked onto this slot (times in
                   IST).
                 </p>
@@ -466,20 +464,18 @@ export default function HostBulkImportModal({
               {/* Payment — only shown for a paid experience, where the host has
                   a real choice to make. Free events need nothing here. */}
               {isPaidEvent && (
-                <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+                <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-4">
                   <div className="flex items-baseline justify-between">
-                    <p className="text-sm font-semibold text-gray-900">
-                      Payment
-                    </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-semibold text-white">Payment</p>
+                    <p className="text-xs text-[#A5A8C3]">
                       {formatRupees(eligibility?.unit_price_cents ?? 0)} / guest
                     </p>
                   </div>
 
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-600">
+                    <label className="mb-1 block text-xs font-semibold text-[#A5A8C3]">
                       Free-booking code{" "}
-                      <span className="font-normal text-gray-400">
+                      <span className="font-normal text-[#777B98]">
                         (optional)
                       </span>
                     </label>
@@ -489,16 +485,16 @@ export default function HostBulkImportModal({
                       onChange={(e) => setCouponCode(e.target.value)}
                       onBlur={(e) => checkImportable(e.target.value)}
                       placeholder="e.g. GUESTLIST"
-                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm transition outline-none focus:border-[#0094CA]"
+                      className="w-full rounded-lg border border-white/10 bg-[#121426] px-3 py-2.5 text-sm transition outline-none focus:border-[#A020F0]"
                       disabled={uploading}
                     />
                     {couponError ? (
-                      <p className="mt-1 text-xs font-medium text-red-700">
+                      <p className="mt-1 text-xs font-medium text-red-300">
                         {couponError}
                       </p>
                     ) : (
                       isCouponMode && (
-                        <p className="mt-1 text-xs font-medium text-emerald-700">
+                        <p className="mt-1 text-xs font-medium text-emerald-300">
                           Code accepted — these bookings are comped to free.
                         </p>
                       )
@@ -509,15 +505,15 @@ export default function HostBulkImportModal({
                       so with no comp code the host is stating they collected it
                       themselves. Re-checked server-side. */}
                   {needsOfflineAck && (
-                    <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                    <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
                       <input
                         type="checkbox"
                         checked={offlineAck}
                         onChange={(e) => setOfflineAck(e.target.checked)}
                         disabled={uploading}
-                        className="mt-0.5 h-4 w-4 shrink-0 accent-[#0094CA]"
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-[#A020F0]"
                       />
-                      <span className="text-xs text-amber-900">
+                      <span className="text-xs text-amber-300">
                         <strong className="block">
                           I have collected payment from these guests myself.
                         </strong>
@@ -532,7 +528,7 @@ export default function HostBulkImportModal({
 
               {/* File */}
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">
+                <label className="mb-1 block text-xs font-semibold text-[#A5A8C3]">
                   Filled spreadsheet
                 </label>
                 <input
@@ -545,12 +541,12 @@ export default function HostBulkImportModal({
                     setHeaderError(null);
                   }}
                   disabled={uploading}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-1.5 file:text-sm file:font-medium"
+                  className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-white/[0.06] file:px-3 file:py-1.5 file:text-sm file:font-medium"
                 />
               </div>
 
               {(error ?? headerError) && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {headerError ? (
                     <>
                       <p className="font-semibold">
@@ -588,7 +584,7 @@ export default function HostBulkImportModal({
                   !selectedDate ||
                   uploadBlocked
                 }
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0094CA] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#A020F0] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-60"
               >
                 {uploading ? (
                   <LuLoader2 className="h-4 w-4 animate-spin" />
@@ -603,13 +599,13 @@ export default function HostBulkImportModal({
           {/* ---------------- Progress phase ---------------- */}
           {job && (
             <>
-              <div className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                <LuFileSpreadsheet className="h-5 w-5 shrink-0 text-gray-400" />
+              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+                <LuFileSpreadsheet className="h-5 w-5 shrink-0 text-[#777B98]" />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-gray-900">
+                  <p className="truncate text-sm font-medium text-white">
                     {job.file_name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-[#A5A8C3]">
                     {job.total_rows} guest{job.total_rows === 1 ? "" : "s"}
                   </p>
                 </div>
@@ -617,17 +613,17 @@ export default function HostBulkImportModal({
 
               <div>
                 <div className="mb-1.5 flex items-center justify-between text-sm">
-                  <span className="font-medium text-gray-700">
+                  <span className="font-medium text-white/80">
                     {running ? "Booking guests…" : "Finished"}
                   </span>
-                  <span className="text-gray-500">
+                  <span className="text-[#A5A8C3]">
                     {job.processed_rows} of {job.total_rows}
                   </span>
                 </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100">
+                <div className="h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      finished ? "bg-emerald-500" : "bg-[#0094CA]"
+                      finished ? "bg-emerald-500" : "bg-[#A020F0]"
                     }`}
                     style={{ width: `${percent}%` }}
                   />
@@ -635,22 +631,22 @@ export default function HostBulkImportModal({
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                  <p className="text-2xl font-bold text-emerald-700">
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
+                  <p className="text-2xl font-bold text-emerald-300">
                     {job.success_rows}
                   </p>
-                  <p className="text-xs font-medium text-emerald-700">Booked</p>
+                  <p className="text-xs font-medium text-emerald-300">Booked</p>
                 </div>
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-                  <p className="text-2xl font-bold text-red-700">
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3">
+                  <p className="text-2xl font-bold text-red-300">
                     {job.failed_rows}
                   </p>
-                  <p className="text-xs font-medium text-red-700">Failed</p>
+                  <p className="text-xs font-medium text-red-300">Failed</p>
                 </div>
               </div>
 
               {job.status === "failed" && job.error_message && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                   {job.error_message}
                 </div>
               )}
@@ -659,7 +655,7 @@ export default function HostBulkImportModal({
                   platform holds none of this money and its own earnings screens
                   will (correctly) show nothing for these seats. */}
               {job.payment_mode === "offline" && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
                   {/* The total is withheld until the full row list has loaded:
                       job.success_rows counts ROWS, not seats, so using it while
                       the import runs would show a knowingly-understated rupee
@@ -686,7 +682,7 @@ export default function HostBulkImportModal({
               )}
 
               {finished && job.failed_rows === 0 && (
-                <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-300">
                   <LuCheckCircle className="h-4 w-4" />
                   All {job.success_rows} guests were booked.
                 </div>
@@ -702,8 +698,8 @@ export default function HostBulkImportModal({
                       onClick={() => setReportTab("failed")}
                       className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                         reportTab === "failed"
-                          ? "bg-red-50 text-red-700"
-                          : "text-gray-500 hover:bg-gray-100"
+                          ? "bg-red-500/10 text-red-300"
+                          : "text-[#A5A8C3] hover:bg-white/[0.06]"
                       }`}
                     >
                       Didn&apos;t book ({job.failed_rows})
@@ -713,8 +709,8 @@ export default function HostBulkImportModal({
                       disabled={!finished}
                       className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition disabled:opacity-40 ${
                         reportTab === "success"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "text-gray-500 hover:bg-gray-100"
+                          ? "bg-emerald-500/10 text-emerald-300"
+                          : "text-[#A5A8C3] hover:bg-white/[0.06]"
                       }`}
                       title={
                         finished
@@ -726,9 +722,9 @@ export default function HostBulkImportModal({
                     </button>
                   </div>
 
-                  <div className="max-h-64 overflow-y-auto rounded-xl border border-gray-200">
+                  <div className="max-h-64 overflow-y-auto rounded-xl border border-white/10">
                     <table className="w-full text-left text-sm">
-                      <thead className="sticky top-0 bg-gray-50 text-xs text-gray-500">
+                      <thead className="sticky top-0 bg-white/[0.04] text-xs text-[#A5A8C3]">
                         <tr>
                           <th className="px-3 py-2 font-medium">Row</th>
                           <th className="px-3 py-2 font-medium">Name</th>
@@ -738,12 +734,12 @@ export default function HostBulkImportModal({
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100">
+                      <tbody className="divide-y divide-white/10">
                         {visibleRows.length === 0 ? (
                           <tr>
                             <td
                               colSpan={4}
-                              className="px-3 py-6 text-center text-sm text-gray-400"
+                              className="px-3 py-6 text-center text-sm text-[#777B98]"
                             >
                               {reportTab === "success"
                                 ? "No guests were booked."
@@ -753,21 +749,21 @@ export default function HostBulkImportModal({
                         ) : (
                           visibleRows.map((row) => (
                             <tr key={row.id}>
-                              <td className="px-3 py-2 text-gray-400">
+                              <td className="px-3 py-2 text-[#777B98]">
                                 {row.row_number}
                               </td>
-                              <td className="px-3 py-2 text-gray-900">
+                              <td className="px-3 py-2 text-white">
                                 {row.guest_name || "—"}
                               </td>
-                              <td className="px-3 py-2 text-gray-600">
+                              <td className="px-3 py-2 text-[#A5A8C3]">
                                 {row.guest_phone || "—"}
                               </td>
                               {reportTab === "success" ? (
-                                <td className="px-3 py-2 text-gray-600">
+                                <td className="px-3 py-2 text-[#A5A8C3]">
                                   {row.quantity}
                                 </td>
                               ) : (
-                                <td className="px-3 py-2 text-red-700">
+                                <td className="px-3 py-2 text-red-300">
                                   {row.error_message ?? "Unknown error"}
                                 </td>
                               )}
@@ -778,7 +774,7 @@ export default function HostBulkImportModal({
                     </table>
                   </div>
                   {reportTab === "failed" && failedRows.length > 0 && (
-                    <p className="mt-1.5 text-xs text-gray-400">
+                    <p className="mt-1.5 text-xs text-[#777B98]">
                       Fix these in your sheet and upload just those rows again —
                       guests already booked won&apos;t be duplicated.
                     </p>
@@ -790,7 +786,7 @@ export default function HostBulkImportModal({
                 <button
                   onClick={handleDownloadReport}
                   disabled={downloadingReport}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#0094CA] bg-[#0094CA]/5 px-4 py-3 text-sm font-semibold text-[#0094CA] transition hover:bg-[#0094CA]/10 disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#A020F0] bg-[#A020F0]/10 px-4 py-3 text-sm font-semibold text-[#D8B4FE] transition hover:bg-[#A020F0]/10 disabled:opacity-60"
                 >
                   {downloadingReport ? (
                     <LuLoader2 className="h-4 w-4 animate-spin" />
@@ -802,7 +798,7 @@ export default function HostBulkImportModal({
               )}
 
               {running && (
-                <p className="text-center text-xs text-gray-400">
+                <p className="text-center text-xs text-[#777B98]">
                   You can close this window — booking continues in the
                   background.
                 </p>
@@ -812,14 +808,14 @@ export default function HostBulkImportModal({
                 {finished && (
                   <button
                     onClick={reset}
-                    className="flex-1 rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+                    className="flex-1 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold text-white/80 transition hover:bg-white/[0.04]"
                   >
                     Import another file
                   </button>
                 )}
                 <button
                   onClick={handleClose}
-                  className="flex-1 rounded-xl bg-[#0094CA] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#007ba8]"
+                  className="flex-1 rounded-xl bg-[#A020F0] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
                 >
                   {finished ? "Done" : "Close"}
                 </button>

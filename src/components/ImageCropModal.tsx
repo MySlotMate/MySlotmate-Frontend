@@ -13,7 +13,7 @@ import { FiX, FiCheck, FiRotateCw } from "react-icons/fi";
 interface ImageCropModalProps {
   /** File picked by the user. Null when the modal is closed. */
   file: File | null;
-  /** Optional fixed aspect ratio (e.g. 16/9). Omit for fully freeform crop. */
+  /** Optional fixed aspect ratio (e.g. 4/5). Omit for fully freeform crop. */
   aspect?: number;
   outputType?: "image/jpeg" | "image/png";
   /** Output quality 0-1 (JPEG only). */
@@ -154,28 +154,28 @@ export function ImageCropModal({
   if (!file || !imageSrc) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="flex h-full max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
-        <div className="flex flex-col gap-2 border-b border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="msm-modal fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="flex h-full max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-[#121426] shadow-2xl">
+        <div className="flex flex-col gap-2 border-b border-white/10 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-base font-bold text-gray-900">Crop image</h2>
-            <p className="text-xs text-gray-500">
+            <h2 className="text-base font-bold text-white">Crop image</h2>
+            <p className="text-xs text-[#A5A8C3]">
               Drag the corners or edges to resize the crop area.
             </p>
           </div>
           <div className="flex items-center gap-3">
             {dimensions && (
-              <div className="flex items-center gap-2 rounded-lg border border-sky-100 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-[#0094CA]">
+              <div className="flex items-center gap-2 rounded-lg border border-[#652A91]/60 bg-[#241333] px-2.5 py-1 text-xs font-semibold text-[#D8B4FE]">
                 <span>
                   {dimensions.width} × {dimensions.height} px
                 </span>
-                <span className="text-sky-200">|</span>
+                <span className="text-[#D8B4FE]">|</span>
                 <span>Aspect: {dimensions.ratioLabel}</span>
               </div>
             )}
             <button
               onClick={onClose}
-              className="rounded-full p-2 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+              className="rounded-full p-2 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#A5A8C3]"
               aria-label="Close"
             >
               <FiX size={18} />
@@ -206,25 +206,25 @@ export function ImageCropModal({
           </ReactCrop>
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-gray-100 px-5 py-3 sm:flex-row sm:items-center sm:justify-end">
+        <div className="flex flex-col gap-3 border-t border-white/10 px-5 py-3 sm:flex-row sm:items-center sm:justify-end">
           <button
             type="button"
             onClick={() => setRotation((r) => (r + 90) % 360)}
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-white/80 transition hover:bg-white/[0.04]"
           >
             <FiRotateCw size={14} />
             Rotate
           </button>
           <button
             onClick={onClose}
-            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+            className="rounded-lg border border-white/10 px-4 py-2 text-sm font-semibold text-white/80 transition hover:bg-white/[0.04]"
           >
             Cancel
           </button>
           <button
             onClick={() => void handleConfirm()}
             disabled={busy || !completedCrop}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[#0094CA] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#007ba8] disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#A020F0] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
           >
             <FiCheck size={16} />
             {busy ? "Processing…" : "Apply"}

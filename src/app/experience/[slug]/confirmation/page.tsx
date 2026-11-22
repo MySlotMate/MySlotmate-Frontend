@@ -1,10 +1,10 @@
 "use client";
 
+import Breadcrumbs from "~/components/Breadcrumbs";
 import { use, Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "~/components/Navbar";
 import Link from "next/link";
-import Breadcrumb from "~/components/Breadcrumb";
 import { RecommendationPopup } from "~/components/RecommendationPopup";
 import {
   useEvent,
@@ -652,217 +652,159 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
   if (eventLoading || bookingLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
+      <div className="flex min-h-screen items-center justify-center bg-[#080914]">
+        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#B57BFF]" />
       </div>
     );
   }
 
   if (!event) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50">
-        <p className="mb-4 text-xl text-gray-600">Experience not found</p>
-        <Link href="/" className="text-[#0094CA] hover:underline">
-          Go back home
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[#080914] text-white">
+        <p className="mb-4 text-xl text-white/70">Experience not found</p>
+        <Link href="/explore" className="text-[#B57BFF] hover:underline">
+          Back to Explore
         </Link>
       </div>
     );
   }
 
   const eventDate = new Date(booking?.occurrence_date ?? event.time);
+  const guestCount = booking?.quantity ?? 1;
+  const hostName = host ? `${host.first_name} ${host.last_name}`.trim() : null;
+  const place = event.is_online ? "Online" : (event.location ?? "TBA");
+  const refCode = bookingId
+    ? `#MSM-${bookingId.slice(-6).toUpperCase()}`
+    : null;
+
+  // Google Calendar "add event" link — no ICS file needed.
+  const calStamp = (d: Date) =>
+    d
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .replace(/\.\d{3}/, "");
+  const calEnd = new Date(
+    eventDate.getTime() + (event.duration_minutes ?? 60) * 60_000,
+  );
+  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${calStamp(eventDate)}/${calStamp(calEnd)}&location=${encodeURIComponent(place)}&details=${encodeURIComponent(verifyUrl)}`;
 
   return (
-    <main className="min-h-screen bg-gray-50 py-8">
-      <div className="site-x mx-auto max-w-md text-center">
-        {/* Success Header Block */}
-        <div className="mb-5 text-center">
-          <div className="mb-1.5 inline-flex items-center justify-center gap-2">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500 text-white">
-              <FiCheck size={14} className="stroke-[3]" />
-            </div>
-            <h1 className="text-xl font-black tracking-tight text-gray-900">
-              Booking Confirmed!
-            </h1>
-          </div>
-          <p className="mx-auto max-w-sm px-4 text-xs text-gray-500">
-            Host {host?.first_name ?? "the host"} is notified. You&apos;re all
-            set for {event.title}.
-          </p>
+    <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28">
+      <div className="mx-auto flex w-full max-w-[860px] flex-col items-center px-6 pt-5 pb-16 text-center md:px-10 md:pt-8">
+        <Breadcrumbs className="self-start text-left" />
+        <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#22C55E] text-white">
+          <FiCheck className="h-7 w-7 stroke-[2.5]" />
         </div>
+        <h1 className="font-outfit mt-4 text-2xl font-bold">
+          Booking Confirmed!
+        </h1>
+        <p className="mt-1.5 text-sm text-white/60">
+          You&apos;re all set for an amazing experience
+        </p>
 
-        {/* BookMyShow Style Ticket Card */}
+        {/* Ticket */}
         <div
           id="booking-ticket"
-          className="relative mx-auto mb-5 max-w-md overflow-hidden rounded-[24px] border border-gray-100 bg-white text-left shadow-2xl transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]"
+          className="relative mt-7 flex w-full flex-col overflow-hidden rounded-[20px] border border-white/[0.06] bg-[#131328] text-left md:flex-row"
         >
-          {/* Top Brand Bar */}
-          <div className="bg-[#16304c] px-5 py-2 text-center text-[10px] font-extrabold tracking-[0.2em] text-white uppercase">
-            My Slotmate
+          <div className="flex min-w-0 flex-1 flex-col p-6 md:p-7">
+            <span className="w-fit rounded-md bg-[#9B30FF]/20 px-2 py-1 text-[10px] font-bold tracking-wider text-[#D8B4FE] uppercase">
+              {bookedTierName ?? "Experience Pass"}
+            </span>
+            <h2 className="font-outfit mt-3 text-lg leading-6 font-semibold text-white">
+              {event.title}
+            </h2>
+            <p className="mt-2 text-[13px] text-white/60">
+              {hostName ? `Hosted by ${hostName} • ` : ""}
+              {formatIST(eventDate, "MMM d, yyyy · h:mm a")}
+            </p>
+            <p className="mt-1.5 text-[13px] text-white/60">{place}</p>
+            <div className="mt-auto flex items-center justify-between gap-4 pt-5 text-[13px]">
+              <span className="text-white/60">
+                {bookingUser?.name ?? "Guest"}
+              </span>
+              <span className="font-semibold text-white">
+                {booking?.amount_cents
+                  ? `Paid ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`
+                  : "Free"}
+              </span>
+            </div>
           </div>
 
-          {/* Main Header (Upper Section) */}
-          <div className="relative flex items-start gap-4 bg-white p-4">
-            {/* Event Cover Image (Left) */}
-            <div className="relative h-26 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-50 shadow-sm">
+          {/* Tear line with notches: vertical on desktop, horizontal on mobile */}
+          <div className="relative border-t border-dashed border-white/15 md:border-t-0 md:border-l">
+            <span className="absolute -top-3 -left-3 h-6 w-6 rounded-full bg-[#080914] md:-top-3 md:-left-3" />
+            <span className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-[#080914] md:top-auto md:right-auto md:-bottom-3 md:-left-3" />
+          </div>
+
+          <div className="flex flex-col items-center justify-center p-6 md:w-[260px]">
+            <div className="rounded-xl bg-white p-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={event.cover_image_url ?? "/assets/home/cover.webp"}
-                alt="Event Cover"
-                className="h-full w-full object-cover"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`}
+                alt="Booking QR code"
+                className="h-[100px] w-[100px]"
+                crossOrigin="anonymous"
               />
             </div>
-
-            {/* Event Info (Middle) */}
-            <div className="min-w-0 flex-1">
-              <h2 className="line-clamp-2 text-[15px] leading-snug font-black tracking-tight text-gray-900 uppercase">
-                {event.title}
-              </h2>
-              <p className="mt-1 text-[10px] font-semibold text-gray-500">
-                {event.mood ?? "Experience"} |{" "}
-                {event.languages?.join("/") ?? "English"}
+            {refCode && (
+              <p className="mt-3 text-xs text-white/50 select-all">
+                Ref: {refCode}
               </p>
-              <p className="mt-1.5 flex items-center gap-1 text-[11px] font-extrabold text-gray-900">
-                {formatIST(eventDate, "EEE, d MMM | hh:mm a")}
-              </p>
-              <p className="mt-1 truncate text-[10px] font-semibold text-gray-500 uppercase">
-                {event.is_online
-                  ? "Online Meet Link"
-                  : (event.location ?? "TBD")}
-              </p>
-            </div>
-
-            {/* Vertical M-Ticket Label (Right) */}
-            <div className="flex rotate-180 items-center justify-center self-stretch border-l border-gray-100 pl-3 text-[9px] font-black tracking-[0.2em] text-slate-400 uppercase [writing-mode:vertical-lr]">
-              M-Ticket
-            </div>
-          </div>
-
-          {/* Notch Divider */}
-          <div className="relative flex items-center">
-            <div className="absolute -left-2 h-4 w-4 rounded-full border border-gray-100/50 bg-gray-50 shadow-inner"></div>
-            <div className="absolute -right-2 h-4 w-4 rounded-full border border-gray-100/50 bg-gray-50 shadow-inner"></div>
-            <div className="mx-2 w-full border-t border-dashed border-gray-200/80"></div>
-          </div>
-
-          {/* Instruction Pill */}
-          <div className="mt-3 px-5">
-            <div className="w-full rounded-xl bg-gray-50 py-2 text-center text-[10px] font-bold tracking-wide text-gray-600 uppercase">
-              Show this mobile ticket at check-in
-            </div>
-          </div>
-
-          {/* QR Code & Booking details container */}
-          <div className="mt-3 px-5">
-            <div className="flex items-center gap-4 rounded-2xl border border-gray-200/80 bg-white p-3.5 shadow-xs">
-              {/* QR Image with red line decoration */}
-              <div className="flex shrink-0 flex-col items-center">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`}
-                  alt="Booking QR Code"
-                  className="h-18 w-18"
-                  crossOrigin="anonymous"
-                />
-                <div className="mt-1 h-0.5 w-18 rounded-full bg-red-500" />
-              </div>
-
-              {/* Booking metadata */}
-              <div className="flex flex-1 flex-col items-center justify-center gap-0.5 pr-2 text-center">
-                <span className="block text-[10px] font-semibold text-gray-400">
-                  {booking?.quantity ?? 1} Guest
-                  {(booking?.quantity ?? 1) > 1 ? "s" : ""}
-                  {bookedTierName ? ` · ${bookedTierName}` : ""} · Myslotmate
-                  Pass
-                </span>
-                <span className="block text-xs font-extrabold tracking-wide text-gray-950 uppercase">
-                  {bookingUser?.name ?? "Guest"}
-                </span>
-                <span className="block text-[11px] font-black tracking-tight text-gray-900 select-all">
-                  BOOKING ID:{" "}
-                  {bookingId
-                    ? `XXXX${bookingId.slice(-6).toUpperCase()}`
-                    : "N/A"}
-                </span>
-                <span className="mt-0.5 inline-block rounded-full border border-green-200/50 bg-green-50 px-2 py-0.5 text-[8px] font-extrabold text-green-700">
-                  CONFIRMED
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Cancellation Info Banner */}
-          <div className="mt-3 border-t border-b border-gray-100 bg-gray-50/80 px-5 py-2 text-center text-[9px] font-black tracking-widest text-gray-500 uppercase">
-            Cancellation policy rules apply for bookings
-          </div>
-
-          {/* Total Amount paid */}
-          <div className="flex items-center justify-between bg-white px-5 py-2.5">
-            <span className="text-xs font-bold tracking-wide text-gray-500 uppercase">
-              Total Amount
-            </span>
-            <span className="text-[15px] font-black text-gray-900">
-              ₹{" "}
-              {booking?.amount_cents
-                ? (booking.amount_cents / 100).toFixed(2)
-                : "0.00"}
-            </span>
-          </div>
-
-          {/* Gold footer decoration */}
-          <div className="border-t border-amber-200/50 bg-amber-100/60 px-5 py-2.5 text-center text-[10px] font-bold tracking-wide text-amber-800">
-            Scan QR code at the entrance to gain entry.
+            )}
+            <p className="mt-0.5 text-sm font-semibold text-white">
+              {guestCount} Guest{guestCount > 1 ? "s" : ""}
+            </p>
           </div>
         </div>
 
-        {/* Per-experience Terms & Conditions (mirrors the ticket PDF) */}
-        {event.terms_and_conditions?.trim() && (
-          <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-5">
-            <h3 className="text-xs font-black tracking-wide text-[#16304c] uppercase">
-              Terms &amp; Conditions
-            </h3>
-            <p className="mt-2 text-xs leading-relaxed whitespace-pre-wrap text-gray-600">
-              {event.terms_and_conditions.trim()}
-            </p>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="mt-5 flex gap-3">
+        {/* Actions */}
+        <div className="mt-6 flex w-full max-w-[420px] flex-col gap-3 sm:flex-row">
+          <a
+            href={calendarUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#131328] text-sm font-medium text-white/80 transition hover:border-white/20 hover:text-white"
+          >
+            <FiCalendar className="h-4 w-4" /> Add to Calendar
+          </a>
           <button
             type="button"
             onClick={downloadPDF}
             disabled={isDownloading}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-gradient-to-r from-[#1fa7ff] to-[#0094CA] py-3 text-xs font-black text-white shadow-[0_4px_12px_rgba(0,148,202,0.15)] transition duration-100 hover:shadow-[0_6px_16px_rgba(0,148,202,0.22)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#131328] text-sm font-medium text-white/80 transition hover:border-white/20 hover:text-white disabled:opacity-50"
           >
             <FiDownload
-              size={14}
-              className={isDownloading ? "animate-bounce" : ""}
+              className={`h-4 w-4 ${isDownloading ? "animate-bounce" : ""}`}
             />
-            {isDownloading ? "PDF..." : "Download PDF"}
-          </button>
-
-          <button
-            onClick={() => router.push("/activities")}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-[#0094CA] py-3 text-xs font-black text-white shadow-[0_4px_12px_rgba(0,148,202,0.05)] transition hover:bg-[#007ba8] active:scale-95"
-          >
-            <FiCalendar size={14} />
-            My Bookings
+            {isDownloading ? "Preparing…" : "Download Ticket"}
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => router.push("/activities")}
+          className="mt-4 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
+        >
+          View Journey
+        </button>
 
-        {/* Chat Unlocked Notice */}
-        <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-[#0094CA]/15 bg-[#0094CA]/5 px-3 py-2.5 text-left text-[11px] leading-normal text-gray-600">
-          <FiMessageCircle className="shrink-0 text-[#0094CA]" size={15} />
-          <span>
-            <strong className="text-gray-900">Chat Unlocked:</strong> Reach out
-            to {host?.first_name ?? "the host"} anytime to coordinate details.
-          </span>
-        </div>
-
-        {/* Back to Browse */}
-        <p className="mt-4 text-xs text-gray-500">
-          <Link href="/" className="text-[#0094CA] hover:underline">
-            Browse more experiences
-          </Link>
+        <p className="mt-6 flex items-center gap-2 text-xs text-white/50">
+          <FiMessageCircle className="h-3.5 w-3.5 shrink-0" />
+          Chat with {host?.first_name ?? "the host"} is now unlocked to
+          coordinate details.
         </p>
+
+        {/* Per-experience Terms & Conditions (mirrors the ticket PDF) */}
+        {event.terms_and_conditions?.trim() && (
+          <details className="mt-6 w-full rounded-2xl border border-white/[0.06] bg-[#131328] p-5 text-left">
+            <summary className="cursor-pointer text-xs font-semibold tracking-wide text-white/80 uppercase">
+              Terms &amp; Conditions
+            </summary>
+            <p className="mt-3 text-xs leading-relaxed whitespace-pre-wrap text-white/60">
+              {event.terms_and_conditions.trim()}
+            </p>
+          </details>
+        )}
       </div>
 
       {/* Recommendation Popup */}
@@ -888,21 +830,11 @@ export default function ConfirmationPage({
 
   return (
     <>
-      <Navbar />
-      <div className="site-x mx-auto max-w-xl py-6">
-        <Breadcrumb
-          items={[
-            { label: "Home", href: "/" },
-            { label: "Experiences", href: "/experiences" },
-            { label: "Confirmation" },
-          ]}
-          className="mb-6"
-        />
-      </div>
+      <Navbar dark />
       <Suspense
         fallback={
-          <div className="flex min-h-screen items-center justify-center bg-gray-50">
-            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#0094CA]" />
+          <div className="flex min-h-screen items-center justify-center bg-[#080914]">
+            <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#B57BFF]" />
           </div>
         }
       >

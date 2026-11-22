@@ -1,7 +1,12 @@
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import { fetchPublic, fetchPublicList } from "~/lib/server-api";
 import type { HomepageMarketingConfig } from "~/components/home/ShowcaseSections";
+import { type Metadata } from "next";
 import HomeClient from "./HomeClient";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export const revalidate = 300;
 

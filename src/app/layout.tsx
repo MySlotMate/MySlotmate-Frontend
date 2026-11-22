@@ -1,36 +1,37 @@
 import "../styles/globals.css";
 
 import { type Metadata, type Viewport } from "next";
-import { Geist, Manrope, Outfit } from "next/font/google";
+import { Geist, Inter, Manrope, Outfit } from "next/font/google";
 import Providers from "~/components/Providers";
+import AppSidebar from "~/components/home/AppSidebar";
+import AuthGate from "~/components/AuthGate";
 import { env } from "~/env";
 import { Toaster } from "sonner";
+import { AlertTriangle, Check, Info, Loader2, X } from "lucide-react";
 
 const appUrl = "https://www.myslotmate.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "MySlotMate - Book People's Time.",
+    default: "MySlotMate | Events & Things to Do in Northeast India",
     template: "%s | MySlotMate",
   },
   description:
-    "Discover and book unique experiences with expert hosts. Learn new skills, meet interesting people, and create unforgettable memories. Join MySlotMate today!",
+    "Workshops, open mics, meetups, treks and one-on-one sessions in Guwahati, Shillong and across Northeast India. Book a slot, or host your own for free.",
   keywords: [
-    "experiences",
-    "book experiences",
-    "unique activities",
-    "host experiences",
-    "learn skills",
-    "meet people",
-    "local experiences",
-    "adventure booking",
-    "skill sharing",
-    "myslotmate",
-    "book people",
-    "slot booking",
-    "host an experience",
-    "learn from experts",
+    "events in Guwahati",
+    "things to do in Guwahati",
+    "things to do in Shillong",
+    "events in Northeast India",
+    "workshops in Guwahati",
+    "open mic Guwahati",
+    "meetups near me",
+    "weekend activities near me",
+    "host an event",
+    "host events for free",
+    "one-on-one sessions",
+    "MySlotMate",
   ],
   applicationName: "MySlotMate",
   creator: "MySlotMate Team",
@@ -41,18 +42,18 @@ export const metadata: Metadata = {
   /* Open Graph Tags */
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "en_IN",
     url: appUrl,
     siteName: "MySlotMate",
-    title: "MySlotMate - Book People's Time.",
+    title: "MySlotMate | Life happens when you show up.",
     description:
-      "From coffee chats to travel experiences — book people for real-life moments, anytime.",
+      "Events, workshops and meetups across Northeast India, hosted by real people. Find one, step outside, and meet them.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "MySlotMate - Book Unique Experiences",
+        alt: "MySlotMate: events and things to do in Northeast India",
         type: "image/jpeg",
       },
       {
@@ -70,9 +71,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@MySlotMate",
     creator: "@MySlotMate",
-    title: "MySlotMate - Book People's Time.",
+    title: "MySlotMate | Life happens when you show up.",
     description:
-      "From coffee chats to travel experiences — book people for real-life moments, anytime.",
+      "Events, workshops and meetups across Northeast India, hosted by real people. Find one, step outside, and meet them.",
     images: ["/og-image.jpg"],
   },
 
@@ -127,7 +128,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#0094CA",
+  themeColor: "#A020F0",
   colorScheme: "light",
 };
 
@@ -146,44 +147,59 @@ const outfit = Outfit({
   variable: "--font-outfit",
 });
 
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   /* JSON-LD Structured Data */
+  // One graph: the organisation, the site, and where it operates. (No
+  // SearchAction: no public page reads a search term from the URL yet.)
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    name: "MySlotMate",
-    description:
-      "A platform to discover and book unique experiences with amazing hosts",
-    url: appUrl,
-    applicationCategory: "Entertainment",
-    offers: {
-      "@type": "AggregateOffer",
-      priceCurrency: "INR",
-      availability: "InStock",
-    },
-    creator: {
-      "@type": "Organization",
-      name: "MySlotMate",
-      url: appUrl,
-      logo: "/assets/home/logomyslotmate.png",
-      sameAs: ["https://www.instagram.com/myslotmate/"],
-    },
-    potentialAction: {
-      "@type": "SearchAction",
-      target: {
-        "@type": "EntryPoint",
-        urlTemplate: `${appUrl}/experiences?q={search_term_string}`,
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${appUrl}/#organization`,
+        name: "MySlotMate",
+        url: appUrl,
+        logo: `${appUrl}/assets/brand/logo-mark.png`,
+        description:
+          "MySlotMate is where people across Northeast India find and host events, workshops, meetups and one-on-one sessions.",
+        areaServed: [
+          "Assam",
+          "Meghalaya",
+          "Sikkim",
+          "Mizoram",
+          "Manipur",
+          "Nagaland",
+          "Arunachal Pradesh",
+          "Tripura",
+        ].map((name) => ({ "@type": "State", name })),
+        sameAs: [
+          "https://www.instagram.com/myslotmate/",
+          "https://www.linkedin.com/company/myslotmate/",
+          "https://x.com/myslotmate",
+        ],
       },
-      "query-input": "required name=search_term_string",
-    },
+      {
+        "@type": "WebSite",
+        "@id": `${appUrl}/#website`,
+        name: "MySlotMate",
+        url: appUrl,
+        inLanguage: "en-IN",
+        publisher: { "@id": `${appUrl}/#organization` },
+      },
+    ],
   };
 
   return (
     <html
       lang="en"
-      className={`${geist.variable} ${manrope.variable} ${outfit.variable} max-w-screen overflow-x-clip`}
+      className={`${geist.variable} ${manrope.variable} ${outfit.variable} ${inter.variable} max-w-screen overflow-x-clip`}
       suppressHydrationWarning
     >
       <head>
@@ -197,6 +213,15 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html:
               "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());",
+          }}
+        />
+        {/* Signed-in visitors to "/" get the app feed, which can only render
+            after hydration. Flag them before first paint so the public site
+            doesn't flash; HomeClient clears the flag once it has mounted. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{if(localStorage.getItem('msm_user_id'))document.documentElement.dataset.authed='1'}catch(e){}",
           }}
         />
         {/* JSON-LD Schema Markup */}
@@ -225,9 +250,49 @@ export default function RootLayout({
         />
         <meta name="apple-mobile-web-app-title" content="MySlotMate" />
       </head>
-      <body className="max-w-screen overflow-x-clip">
-        <Providers>{children}</Providers>
-        <Toaster position="top-right" richColors closeButton />
+      <body className="max-w-screen overflow-x-clip bg-[#080914] text-white">
+        <Providers>
+          <AuthGate />
+          <AppSidebar />
+          {children}
+        </Providers>
+        <Toaster
+          position="top-right"
+          theme="dark"
+          closeButton
+          gap={10}
+          icons={{
+            success: (
+              <span className="msm-toast-icon msm-toast-icon--success">
+                <Check className="h-3.5 w-3.5" strokeWidth={3} />
+              </span>
+            ),
+            error: (
+              <span className="msm-toast-icon msm-toast-icon--error">
+                <X className="h-3.5 w-3.5" strokeWidth={3} />
+              </span>
+            ),
+            warning: (
+              <span className="msm-toast-icon msm-toast-icon--warning">
+                <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </span>
+            ),
+            info: (
+              <span className="msm-toast-icon msm-toast-icon--info">
+                <Info className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </span>
+            ),
+            loading: (
+              <span className="msm-toast-icon msm-toast-icon--info">
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin"
+                  strokeWidth={2.5}
+                />
+              </span>
+            ),
+          }}
+          toastOptions={{ className: "msm-toast" }}
+        />
       </body>
     </html>
   );

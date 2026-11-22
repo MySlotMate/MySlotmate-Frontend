@@ -62,13 +62,13 @@ function Modal({
   children: React.ReactNode;
 }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
+    <div className="msm-modal fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="w-full max-w-md rounded-2xl bg-[#121426] shadow-2xl">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
+          <h2 className="text-base font-semibold text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-lg p-1.5 text-[#777B98] transition hover:bg-white/[0.06] hover:text-[#A5A8C3]"
           >
             <FiX className="h-5 w-5" />
           </button>
@@ -85,12 +85,12 @@ function InputField({
 }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div>
-      <label className="mb-1.5 block text-xs font-medium text-gray-600">
+      <label className="mb-1.5 block text-xs font-medium text-[#A5A8C3]">
         {label}
       </label>
       <input
         {...props}
-        className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+        className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white placeholder-[#777B98] transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
       />
     </div>
   );
@@ -352,15 +352,15 @@ export default function AdminPage() {
       <>
         <Navbar />
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-white">
             Admin Access Required
           </h1>
-          <p className="max-w-md text-gray-500">
+          <p className="max-w-md text-[#A5A8C3]">
             Please log in to access the admin panel.
           </p>
           <Link
             href="/"
-            className="rounded-full bg-[#0094CA] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+            className="rounded-full bg-[#A020F0] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
           >
             Go Home
           </Link>
@@ -374,13 +374,13 @@ export default function AdminPage() {
       <>
         <Navbar />
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
-          <p className="max-w-md text-gray-500">
+          <h1 className="text-2xl font-bold text-white">Access Denied</h1>
+          <p className="max-w-md text-[#A5A8C3]">
             You do not have permission to access this page.
           </p>
           <Link
             href="/"
-            className="rounded-full bg-[#0094CA] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+            className="rounded-full bg-[#A020F0] px-8 py-3 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
           >
             Go Home
           </Link>
@@ -395,7 +395,7 @@ export default function AdminPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-gray-50 py-10">
+      <main className="min-h-screen bg-[#080914] py-10">
         <div className="site-x mx-auto max-w-7xl">
           <Breadcrumb
             items={[{ label: "Home", href: "/" }, { label: "Admin" }]}
@@ -404,24 +404,24 @@ export default function AdminPage() {
 
           {/* Global feedback banners */}
           {actionSuccess && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-300">
               <FiCheck className="h-4 w-4 shrink-0" />
               {actionSuccess}
               <button
                 onClick={() => setActionSuccess(null)}
-                className="ml-auto text-green-500 hover:text-green-700"
+                className="ml-auto text-green-400 hover:text-green-300"
               >
                 <FiX className="h-4 w-4" />
               </button>
             </div>
           )}
           {actionError && !showAddModal && !showPayoutModal && (
-            <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
               <FiAlertCircle className="h-4 w-4 shrink-0" />
               {actionError}
               <button
                 onClick={() => setActionError(null)}
-                className="ml-auto text-red-400 hover:text-red-600"
+                className="ml-auto text-red-400 hover:text-red-300"
               >
                 <FiX className="h-4 w-4" />
               </button>
@@ -429,13 +429,13 @@ export default function AdminPage() {
           )}
 
           {/* Tabs Navigation */}
-          <div className="mb-8 flex border-b border-gray-200">
+          <div className="mb-8 flex border-b border-white/10">
             <button
               onClick={() => setActiveTab("applications")}
               className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${
                 activeTab === "applications"
-                  ? "border-[#0094CA] text-[#0094CA]"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
+                  ? "border-[#A020F0] text-[#D8B4FE]"
+                  : "border-transparent text-[#A5A8C3] hover:text-white"
               }`}
             >
               Host Applications
@@ -444,8 +444,8 @@ export default function AdminPage() {
               onClick={() => setActiveTab("earnings")}
               className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${
                 activeTab === "earnings"
-                  ? "border-[#0094CA] text-[#0094CA]"
-                  : "border-transparent text-gray-600 hover:text-gray-900"
+                  ? "border-[#A020F0] text-[#D8B4FE]"
+                  : "border-transparent text-[#A5A8C3] hover:text-white"
               }`}
             >
               Platform Earnings
@@ -458,16 +458,16 @@ export default function AdminPage() {
               {/* Header */}
               <div className="mb-8 flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
+                  <h1 className="text-3xl font-bold text-white">
                     Host Applications
                   </h1>
-                  <p className="mt-1 text-gray-600">
+                  <p className="mt-1 text-[#A5A8C3]">
                     Review and manage pending host applications
                   </p>
                 </div>
                 <Link
                   href="/"
-                  className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-900 transition hover:bg-gray-50"
+                  className="flex items-center gap-2 rounded-lg border border-white/10 bg-[#121426] px-4 py-2 text-sm font-medium text-white transition hover:bg-white/[0.04]"
                 >
                   <FiArrowLeft size={16} />
                   Back Home
@@ -477,15 +477,15 @@ export default function AdminPage() {
               {/* Applications List */}
               {isLoading ? (
                 <div className="flex items-center justify-center py-20">
-                  <LuLoader2 className="h-8 w-8 animate-spin text-[#0094CA]" />
+                  <LuLoader2 className="h-8 w-8 animate-spin text-[#D8B4FE]" />
                 </div>
               ) : !applications || applications.length === 0 ? (
-                <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-                  <FiCheckCircle className="mx-auto mb-3 h-12 w-12 text-green-500" />
-                  <p className="text-lg font-medium text-gray-900">
+                <div className="rounded-lg border border-white/10 bg-[#121426] p-12 text-center">
+                  <FiCheckCircle className="mx-auto mb-3 h-12 w-12 text-green-400" />
+                  <p className="text-lg font-medium text-white">
                     No Pending Applications
                   </p>
-                  <p className="mt-1 text-gray-600">
+                  <p className="mt-1 text-[#A5A8C3]">
                     All host applications have been reviewed!
                   </p>
                 </div>
@@ -495,14 +495,14 @@ export default function AdminPage() {
                     <button
                       key={app.id}
                       onClick={() => setSelectedApp(app)}
-                      className="rounded-lg border border-gray-200 bg-white p-6 text-left transition hover:border-[#0094CA] hover:shadow-md"
+                      className="rounded-lg border border-white/10 bg-[#121426] p-6 text-left transition hover:border-[#A020F0] hover:shadow-md"
                     >
                       <div className="flex items-start justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-lg font-semibold text-white">
                             {app.first_name} {app.last_name}
                           </h3>
-                          <div className="mt-2 space-y-1 text-sm text-gray-600">
+                          <div className="mt-2 space-y-1 text-sm text-[#A5A8C3]">
                             <p>📍 {app.city}</p>
                             <p>📞 {app.phn_number}</p>
                             <p>✨ Experiences: {app.experience_desc}</p>
@@ -527,8 +527,8 @@ export default function AdminPage() {
                         <span
                           className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${
                             app.application_status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-blue-100 text-blue-800"
+                              ? "bg-yellow-500/15 text-yellow-300"
+                              : "bg-[#241333] text-[#D8B4FE]"
                           }`}
                         >
                           <FiAlertCircle size={12} />
@@ -545,13 +545,13 @@ export default function AdminPage() {
           {/* PLATFORM EARNINGS SECTION */}
           {activeTab === "earnings" && (
             <div className="mt-0">
-              <h2 className="mb-6 text-2xl font-bold text-gray-900">
+              <h2 className="mb-6 text-2xl font-bold text-white">
                 Platform Earnings & Payouts
               </h2>
 
               {isLoadingEarnings ? (
                 <div className="flex min-h-[40vh] items-center justify-center">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#0094CA] border-t-transparent" />
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#A020F0] border-t-transparent" />
                 </div>
               ) : (
                 <>
@@ -569,26 +569,26 @@ export default function AdminPage() {
                   true) && (
                     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
                       {/* Total Fees Collected */}
-                      <div className="rounded-xl border border-gray-200 bg-white p-5">
-                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                      <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
+                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                           <span className="text-base">₹</span>
                           Total Fees Collected
                         </div>
-                        <p className="mt-3 text-3xl font-bold text-gray-900">
+                        <p className="mt-3 text-3xl font-bold text-white">
                           {fmtCurrency(Number(platformFeesCollected))}
                         </p>
-                        <p className="mt-1 flex items-center gap-1 text-xs text-green-600">
+                        <p className="mt-1 flex items-center gap-1 text-xs text-green-300">
                           <span>↑</span> Platform revenue
                         </p>
                       </div>
 
                       {/* Available Balance */}
-                      <div className="relative rounded-xl border-2 border-[#0094CA] bg-white p-5">
-                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#0094CA] uppercase">
+                      <div className="relative rounded-xl border-2 border-[#A020F0] bg-[#121426] p-5">
+                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#D8B4FE] uppercase">
                           <LuWallet className="h-4 w-4" />
                           Available Balance
                         </div>
-                        <p className="mt-3 text-3xl font-bold text-gray-900">
+                        <p className="mt-3 text-3xl font-bold text-white">
                           {fmtCurrency(Number(availableBalance))}
                         </p>
                         <button
@@ -597,22 +597,22 @@ export default function AdminPage() {
                             setShowPayoutModal(true);
                           }}
                           disabled={availableBalance <= 0}
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:cursor-not-allowed disabled:opacity-50"
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#A020F0] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Withdraw <span>→</span>
                         </button>
                       </div>
 
                       {/* Pending Clearance */}
-                      <div className="rounded-xl border border-gray-200 bg-white p-5">
-                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                      <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
+                        <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-[#A5A8C3] uppercase">
                           <FiClock className="h-4 w-4" />
                           Pending Clearance
                         </div>
-                        <p className="mt-3 text-3xl font-bold text-gray-400">
+                        <p className="mt-3 text-3xl font-bold text-[#777B98]">
                           {fmtCurrency(0)}
                         </p>
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-[#A5A8C3]">
                           Instant settlement for platform
                         </p>
                       </div>
@@ -620,9 +620,9 @@ export default function AdminPage() {
                   )}
 
                   {/* ── Payout Methods ── */}
-                  <div className="rounded-xl border border-gray-200 bg-white p-5">
+                  <div className="rounded-xl border border-white/10 bg-[#121426] p-5">
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900">
+                      <h3 className="text-sm font-semibold text-white">
                         Payout Methods
                       </h3>
                     </div>
@@ -634,27 +634,27 @@ export default function AdminPage() {
                             key={method.id}
                             className={`flex items-center gap-3 rounded-lg border p-3 transition ${
                               method.is_primary
-                                ? "border-[#0094CA] bg-[#e6f8ff]"
-                                : "border-gray-200"
+                                ? "border-[#A020F0] bg-[#241333]"
+                                : "border-white/10"
                             }`}
                           >
                             {/* Icon */}
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.06]">
                               {method.type === "bank" ? (
-                                <LuBuilding2 className="h-5 w-5 text-gray-600" />
+                                <LuBuilding2 className="h-5 w-5 text-[#A5A8C3]" />
                               ) : (
-                                <FiCreditCard className="h-5 w-5 text-gray-600" />
+                                <FiCreditCard className="h-5 w-5 text-[#A5A8C3]" />
                               )}
                             </div>
 
                             {/* Info */}
                             <div className="min-w-0 flex-1">
-                              <p className="text-sm font-medium text-gray-900">
+                              <p className="text-sm font-medium text-white">
                                 {method.type === "bank"
                                   ? (method.bank_name ?? "Bank Account")
                                   : "UPI Transfer"}
                               </p>
-                              <p className="truncate text-xs text-gray-500">
+                              <p className="truncate text-xs text-[#A5A8C3]">
                                 {method.type === "bank"
                                   ? `${method.account_type ?? "Savings"} •••• ${method.last_four_digits ?? "****"}`
                                   : (method.upi_id ?? "upiid@bank")}
@@ -668,13 +668,13 @@ export default function AdminPage() {
                                   onClick={() => handleSetPrimary(method.id)}
                                   disabled={actionLoading}
                                   title="Set as primary"
-                                  className="rounded-lg border border-[#0094CA]/30 px-2 py-1 text-xs font-semibold text-[#0094CA] transition hover:bg-[#e6f8ff] disabled:opacity-50"
+                                  className="rounded-lg border border-[#A020F0] px-2 py-1 text-xs font-semibold text-[#D8B4FE] transition hover:bg-[#241333] disabled:opacity-50"
                                 >
                                   Set primary
                                 </button>
                               )}
                               {method.is_primary && (
-                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#0094CA]">
+                                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#A020F0]">
                                   <FiCheck className="h-3.5 w-3.5 text-white" />
                                 </span>
                               )}
@@ -685,7 +685,7 @@ export default function AdminPage() {
                                 }}
                                 disabled={actionLoading}
                                 title="Delete method"
-                                className="rounded-lg p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                                className="rounded-lg p-1.5 text-[#777B98] transition hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
                               >
                                 <FiTrash2 className="h-4 w-4" />
                               </button>
@@ -693,15 +693,15 @@ export default function AdminPage() {
                           </div>
                         ))
                       ) : (
-                        <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                            <LuBuilding2 className="h-5 w-5 text-gray-400" />
+                        <div className="flex items-center gap-3 rounded-lg border border-white/10 p-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06]">
+                            <LuBuilding2 className="h-5 w-5 text-[#777B98]" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-400">
+                            <p className="text-sm font-medium text-[#777B98]">
                               No payout method
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p className="text-xs text-[#777B98]">
                               Add a bank account or UPI ID
                             </p>
                           </div>
@@ -713,13 +713,13 @@ export default function AdminPage() {
                           clearFeedback();
                           setShowAddModal(true);
                         }}
-                        className="w-full rounded-lg border border-dashed border-gray-300 px-4 py-3 text-sm font-medium text-gray-500 transition hover:border-[#0094CA] hover:text-[#0094CA]"
+                        className="w-full rounded-lg border border-dashed border-white/15 px-4 py-3 text-sm font-medium text-[#A5A8C3] transition hover:border-[#A020F0] hover:text-[#D8B4FE]"
                       >
                         + Add new method
                       </button>
                     </div>
 
-                    <p className="mt-4 flex items-center gap-1 text-xs text-gray-400">
+                    <p className="mt-4 flex items-center gap-1 text-xs text-[#777B98]">
                       <span>🔒</span> Your financial data is encrypted and
                       secure.
                     </p>
@@ -732,11 +732,11 @@ export default function AdminPage() {
 
         {/* Application Detail Modal */}
         {selectedApp && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+          <div className="msm-modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-[#121426] shadow-2xl">
               {/* Header */}
-              <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
-                <h2 className="text-xl font-bold text-gray-900">
+              <div className="sticky top-0 flex items-center justify-between border-b border-white/10 bg-[#121426] px-6 py-4">
+                <h2 className="text-xl font-bold text-white">
                   {selectedApp.first_name} {selectedApp.last_name}
                 </h2>
                 <button
@@ -744,7 +744,7 @@ export default function AdminPage() {
                     setSelectedApp(null);
                     setRejectReason("");
                   }}
-                  className="text-gray-400 transition hover:text-gray-600"
+                  className="text-[#777B98] transition hover:text-[#A5A8C3]"
                 >
                   ✕
                 </button>
@@ -754,20 +754,20 @@ export default function AdminPage() {
               <div className="space-y-6 px-6 py-6">
                 {/* Personal Info */}
                 <div>
-                  <h3 className="mb-3 font-semibold text-gray-900">
+                  <h3 className="mb-3 font-semibold text-white">
                     Personal Information
                   </h3>
-                  <div className="grid gap-3 text-sm text-gray-600">
+                  <div className="grid gap-3 text-sm text-[#A5A8C3]">
                     <p>
-                      <span className="font-medium text-gray-900">Name:</span>{" "}
+                      <span className="font-medium text-white">Name:</span>{" "}
                       {selectedApp.first_name} {selectedApp.last_name}
                     </p>
                     <p>
-                      <span className="font-medium text-gray-900">Phone:</span>{" "}
+                      <span className="font-medium text-white">Phone:</span>{" "}
                       {selectedApp.phn_number}
                     </p>
                     <p>
-                      <span className="font-medium text-gray-900">City:</span>{" "}
+                      <span className="font-medium text-white">City:</span>{" "}
                       {selectedApp.city}
                     </p>
                   </div>
@@ -775,21 +775,19 @@ export default function AdminPage() {
 
                 {/* Experience Details */}
                 <div>
-                  <h3 className="mb-3 font-semibold text-gray-900">
+                  <h3 className="mb-3 font-semibold text-white">
                     Experience Details
                   </h3>
-                  <div className="space-y-3 text-sm text-gray-600">
+                  <div className="space-y-3 text-sm text-[#A5A8C3]">
                     <p>
-                      <span className="font-medium text-gray-900">
+                      <span className="font-medium text-white">
                         Description:
                       </span>{" "}
                       {selectedApp.experience_desc}
                     </p>
                     {selectedApp.moods && selectedApp.moods.length > 0 && (
                       <p>
-                        <span className="font-medium text-gray-900">
-                          Moods:
-                        </span>{" "}
+                        <span className="font-medium text-white">Moods:</span>{" "}
                         {selectedApp.moods
                           .map((m) => m.charAt(0).toUpperCase() + m.slice(1))
                           .join(", ")}
@@ -798,7 +796,7 @@ export default function AdminPage() {
                     {selectedApp.preferred_days &&
                       selectedApp.preferred_days.length > 0 && (
                         <p>
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-white">
                             Preferred Days:
                           </span>{" "}
                           {selectedApp.preferred_days
@@ -808,7 +806,7 @@ export default function AdminPage() {
                       )}
                     {selectedApp.group_size && (
                       <p>
-                        <span className="font-medium text-gray-900">
+                        <span className="font-medium text-white">
                           Group Size:
                         </span>{" "}
                         Up to {selectedApp.group_size} people
@@ -820,8 +818,8 @@ export default function AdminPage() {
                 {/* Bio */}
                 {selectedApp.description && (
                   <div>
-                    <h3 className="mb-3 font-semibold text-gray-900">About</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="mb-3 font-semibold text-white">About</h3>
+                    <p className="text-sm text-[#A5A8C3]">
                       {selectedApp.description}
                     </p>
                   </div>
@@ -831,20 +829,20 @@ export default function AdminPage() {
                   selectedApp.social_linkedin ??
                   selectedApp.social_website) && (
                   <div>
-                    <h3 className="mb-3 font-semibold text-gray-900">
+                    <h3 className="mb-3 font-semibold text-white">
                       Social Links
                     </h3>
-                    <div className="space-y-3 text-sm text-gray-600">
+                    <div className="space-y-3 text-sm text-[#A5A8C3]">
                       {selectedApp.social_instagram && (
                         <p>
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-white">
                             Instagram:
                           </span>{" "}
                           <a
                             href={selectedApp.social_instagram}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="break-all text-[#0094CA] hover:underline"
+                            className="break-all text-[#D8B4FE] hover:underline"
                           >
                             {selectedApp.social_instagram}
                           </a>
@@ -852,14 +850,14 @@ export default function AdminPage() {
                       )}
                       {selectedApp.social_linkedin && (
                         <p>
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-white">
                             LinkedIn:
                           </span>{" "}
                           <a
                             href={selectedApp.social_linkedin}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="break-all text-[#0094CA] hover:underline"
+                            className="break-all text-[#D8B4FE] hover:underline"
                           >
                             {selectedApp.social_linkedin}
                           </a>
@@ -867,14 +865,14 @@ export default function AdminPage() {
                       )}
                       {selectedApp.social_website && (
                         <p>
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-white">
                             Website:
                           </span>{" "}
                           <a
                             href={selectedApp.social_website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="break-all text-[#0094CA] hover:underline"
+                            className="break-all text-[#D8B4FE] hover:underline"
                           >
                             {selectedApp.social_website}
                           </a>
@@ -887,14 +885,14 @@ export default function AdminPage() {
                 {/* Government ID */}
                 {selectedApp.government_id_url && (
                   <div>
-                    <h3 className="mb-3 font-semibold text-gray-900">
+                    <h3 className="mb-3 font-semibold text-white">
                       Government ID
                     </h3>
                     <a
                       href={selectedApp.government_id_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#007dab]"
+                      className="inline-flex items-center gap-2 rounded-lg bg-[#A020F0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8A1AD0]"
                     >
                       <FiDownload size={16} />
                       View Document
@@ -904,7 +902,7 @@ export default function AdminPage() {
 
                 {/* Reject Reason */}
                 <div>
-                  <label className="mb-2 block text-sm font-semibold text-gray-900">
+                  <label className="mb-2 block text-sm font-semibold text-white">
                     Rejection Reason (if rejecting)
                   </label>
                   <textarea
@@ -912,16 +910,16 @@ export default function AdminPage() {
                     onChange={(e) => setRejectReason(e.target.value)}
                     placeholder="Enter reason for rejection (optional)"
                     rows={3}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm outline-none focus:border-[#0094CA] focus:ring-1 focus:ring-[#0094CA]"
+                    className="w-full rounded-lg border border-white/15 px-4 py-2 text-sm outline-none focus:border-[#A020F0] focus:ring-1 focus:ring-[#A020F0]"
                   />
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 border-t border-gray-200 pt-6">
+                <div className="flex gap-3 border-t border-white/10 pt-6">
                   <button
                     onClick={() => handleReject(selectedApp)}
                     disabled={isDeciding}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-100 px-4 py-3 font-semibold text-red-700 transition hover:bg-red-200 disabled:opacity-50"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-500/15 px-4 py-3 font-semibold text-red-300 transition hover:bg-red-500/20 disabled:opacity-50"
                   >
                     {isDeciding ? (
                       <>
@@ -938,7 +936,7 @@ export default function AdminPage() {
                   <button
                     onClick={() => handleApprove(selectedApp)}
                     disabled={isDeciding}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-100 px-4 py-3 font-semibold text-green-700 transition hover:bg-green-200 disabled:opacity-50"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500/15 px-4 py-3 font-semibold text-green-300 transition hover:bg-green-500/20 disabled:opacity-50"
                   >
                     {isDeciding ? (
                       <>
@@ -970,19 +968,19 @@ export default function AdminPage() {
             }}
           >
             <div className="space-y-4">
-              <div className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600">
+              <div className="rounded-lg bg-white/[0.04] px-4 py-3 text-sm text-[#A5A8C3]">
                 Available balance:{" "}
-                <span className="font-bold text-gray-900">
+                <span className="font-bold text-white">
                   {fmtCurrency(Number(availableBalance))}
                 </span>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-gray-600">
+                <label className="mb-1.5 block text-xs font-medium text-[#A5A8C3]">
                   Amount (₹)
                 </label>
                 <div className="relative">
-                  <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-gray-500">
+                  <span className="absolute top-1/2 left-3 -translate-y-1/2 text-sm text-[#A5A8C3]">
                     ₹
                   </span>
                   <input
@@ -990,13 +988,13 @@ export default function AdminPage() {
                     placeholder="0.00"
                     value={payoutAmountCents}
                     onChange={(e) => setPayoutAmountCents(e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 py-2.5 pr-3 pl-7 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                    className="w-full rounded-lg border border-white/10 py-2.5 pr-3 pl-7 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
                   />
                 </div>
               </div>
 
               {actionError && (
-                <p className="flex items-center gap-1.5 text-xs text-red-600">
+                <p className="flex items-center gap-1.5 text-xs text-red-300">
                   <FiAlertCircle className="h-3.5 w-3.5" /> {actionError}
                 </p>
               )}
@@ -1007,14 +1005,14 @@ export default function AdminPage() {
                     setShowPayoutModal(false);
                     clearFeedback();
                   }}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  className="flex-1 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/[0.04]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleRequestPayout}
                   disabled={actionLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#007dab] disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#A020F0] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
                 >
                   {actionLoading ? (
                     <>
@@ -1043,16 +1041,16 @@ export default function AdminPage() {
           >
             <div className="space-y-4">
               {/* Method Type Toggle */}
-              <div className="flex rounded-lg border border-gray-200 p-1">
+              <div className="flex rounded-lg border border-white/10 p-1">
                 <button
                   onClick={() => setAddForm((f) => ({ ...f, type: "bank" }))}
-                  className={`flex-1 rounded px-3 py-2 text-sm font-medium transition ${addForm.type === "bank" ? "bg-[#0094CA] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  className={`flex-1 rounded px-3 py-2 text-sm font-medium transition ${addForm.type === "bank" ? "bg-[#A020F0] text-white" : "text-white/80 hover:bg-white/[0.04]"}`}
                 >
                   Bank Account
                 </button>
                 <button
                   onClick={() => setAddForm((f) => ({ ...f, type: "upi" }))}
-                  className={`flex-1 rounded px-3 py-2 text-sm font-medium transition ${addForm.type === "upi" ? "bg-[#0094CA] text-white" : "text-gray-700 hover:bg-gray-50"}`}
+                  className={`flex-1 rounded px-3 py-2 text-sm font-medium transition ${addForm.type === "upi" ? "bg-[#A020F0] text-white" : "text-white/80 hover:bg-white/[0.04]"}`}
                 >
                   UPI
                 </button>
@@ -1083,7 +1081,7 @@ export default function AdminPage() {
                   />
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="mb-1.5 block text-xs font-medium text-gray-600">
+                      <label className="mb-1.5 block text-xs font-medium text-[#A5A8C3]">
                         Account Type
                       </label>
                       <select
@@ -1094,7 +1092,7 @@ export default function AdminPage() {
                             account_type: e.target.value,
                           }))
                         }
-                        className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 transition outline-none focus:border-[#0094CA] focus:ring-2 focus:ring-[#0094CA]/20"
+                        className="w-full rounded-lg border border-white/10 px-3 py-2.5 text-sm text-white transition outline-none focus:border-[#A020F0] focus:ring-2 focus:ring-[#A020F0]/20"
                       >
                         <option value="savings">Savings</option>
                         <option value="current">Current</option>
@@ -1133,7 +1131,7 @@ export default function AdminPage() {
               )}
 
               {actionError && (
-                <p className="flex items-center gap-1.5 text-xs text-red-600">
+                <p className="flex items-center gap-1.5 text-xs text-red-300">
                   <FiAlertCircle className="h-3.5 w-3.5" /> {actionError}
                 </p>
               )}
@@ -1144,14 +1142,14 @@ export default function AdminPage() {
                     setShowAddModal(false);
                     clearFeedback();
                   }}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  className="flex-1 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/[0.04]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddMethod}
                   disabled={actionLoading}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#0094CA] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#007dab] disabled:opacity-50"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-[#A020F0] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#8A1AD0] disabled:opacity-50"
                 >
                   {actionLoading ? (
                     <>
@@ -1176,19 +1174,19 @@ export default function AdminPage() {
             onClose={() => setShowDeleteConfirm(null)}
           >
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-[#A5A8C3]">
                 Are you sure you want to remove this payout method? This action
                 cannot be undone.
               </p>
               {actionError && (
-                <p className="flex items-center gap-1.5 text-xs text-red-600">
+                <p className="flex items-center gap-1.5 text-xs text-red-300">
                   <FiAlertCircle className="h-3.5 w-3.5" /> {actionError}
                 </p>
               )}
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowDeleteConfirm(null)}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  className="flex-1 rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/[0.04]"
                 >
                   Cancel
                 </button>

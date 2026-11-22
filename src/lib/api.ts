@@ -27,8 +27,15 @@ export async function apiFetch<T>(
 ): Promise<Envelope<T>> {
   try {
     // Always send the caller's token when there is one; an explicit header wins.
-    const headers = { ...(await currentAuthHeader()), ...(config?.headers ?? {}) };
-    const res = await api.request<Envelope<T>>({ url: path, ...config, headers });
+    const headers = {
+      ...(await currentAuthHeader()),
+      ...(config?.headers ?? {}),
+    };
+    const res = await api.request<Envelope<T>>({
+      url: path,
+      ...config,
+      headers,
+    });
     return res.data;
   } catch (err) {
     const axErr = err as AxiosError<Envelope<T>>;
@@ -56,7 +63,6 @@ export async function apiFetch<T>(
   }
 }
 
-
 // Only a token the server actively rejects ends the session. A missing or
 // malformed header means this client failed to attach one (e.g. Firebase not
 // restored yet), which must not log the user out. Other 401s (e.g. a wrong
@@ -80,13 +86,10 @@ async function refreshFirebaseToken(): Promise<boolean> {
 /** A signed-in UI whose token the server rejects: log out instead of looping on errors. */
 async function endDeadSession(msg: string): Promise<string> {
   if (typeof window === "undefined" || !getStoredUserId()) return msg;
-  clearStoredAuth();
-  try {
-    const { auth } = await import("~/utils/firebase");
-    await auth.signOut();
-  } catch {
-    // already signed out of firebase
-  }
+  // Firebase first, then our ids: the other order lets useStoredAuth restore
+  // the id from the still-live Firebase session (see lib/signOut.ts).
+  const { signOutEverywhere } = await import("~/lib/signOut");
+  await signOutEverywhere({ redirect: false });
   return "Your session has expired. Please log in again.";
 }
 
@@ -318,6 +321,7 @@ export interface UploadFilesPayload {
 
 export type UploadFolder =
   | "general"
+  | "users/albums"
   | "blogs/covers"
   | "events/covers"
   | "events/gallery"
@@ -545,6 +549,11 @@ export interface PublicHostProfileDTO {
   is_super_host: boolean;
   is_community_champ: boolean;
   is_professional: boolean;
+  /**
+   * Hosting tier, once the backend sends it. "unverified" = a free host who
+   * hasn't been approved; MySlotMate labels their events as community events.
+   */
+  host_tier?: "unverified" | "community" | "professional" | null;
   expertise_tags: string[];
   social_instagram: string | null;
   social_linkedin: string | null;
@@ -560,6 +569,8 @@ export interface PublicHostProfileDTO {
   events_hosted_override: number | null;
   people_met_override: number | null;
   avg_rating_override: number | null;
+  /** How many people have connected with this host. */
+  connections_count?: number;
 }
 
 /** GET /hosts — list all approved hosts (public) */
@@ -570,6 +581,127 @@ export function listHosts() {
 /** GET /hosts/{hostID} — view a host's public profile */
 export function getPublicHostProfile(hostId: string) {
   return apiFetch<PublicHostProfileDTO>(`/hosts/${hostId}`);
+}
+
+/**
+ * GET /hosts/{hostID}/events — a host's published events, past included
+ * (no drafts, private or cancelled ones). Public.
+ * Accepts the host id or slug.
+ */
+export function getPublicHostEvents(hostId: string) {
+  return apiFetch<EventDTO[]>(`/hosts/${hostId}/events`);
+}
+
+/** A photo inside a profile album. */
+export interface AlbumPhotoDTO {
+  id: string;
+  album_id: string;
+  url: string;
+  caption: string | null;
+  /** Pixel size, so the grid can lay out before images load. */
+  width: number | null;
+  height: number | null;
+  /** Lower comes first. */
+  position: number;
+  created_at: string;
+}
+
+/**
+ * A named group of photos on someone's profile: past events, credentials,
+ * behind the scenes — whatever they make it. Owned by a user (hosts are users).
+ */
+export interface ProfileAlbumDTO {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  position: number;
+  /** Optional cover; defaults to the first photo. */
+  cover_photo_id: string | null;
+  photo_count: number;
+  photos: AlbumPhotoDTO[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AlbumPayload {
+  title?: string;
+  description?: string | null;
+  position?: number;
+  cover_photo_id?: string | null;
+}
+
+export interface AlbumPhotoPayload {
+  url: string;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+}
+
+/**
+ * Profile albums (see the backend PRD). Albums belong to users; hosts are
+ * looked up through their user. Limits: 30 albums, 50 photos each.
+ */
+export function getUserAlbums(userId: string) {
+  return apiFetch<ProfileAlbumDTO[]>(`/users/${userId}/albums`);
+}
+/** Same albums, looked up from a host profile (hosts are users too). */
+export function getHostAlbums(hostIdOrSlug: string) {
+  return apiFetch<ProfileAlbumDTO[]>(`/hosts/${hostIdOrSlug}/albums`);
+}
+export function createAlbum(body: AlbumPayload & { title: string }) {
+  return authedFetch<ProfileAlbumDTO>("/users/me/albums", {
+    method: "POST",
+    data: body,
+  });
+}
+export function updateAlbum(albumId: string, body: AlbumPayload) {
+  return authedFetch<ProfileAlbumDTO>(`/users/me/albums/${albumId}`, {
+    method: "PATCH",
+    data: body,
+  });
+}
+export function deleteAlbum(albumId: string) {
+  return authedFetch<null>(`/users/me/albums/${albumId}`, {
+    method: "DELETE",
+  });
+}
+export function addAlbumPhotos(albumId: string, items: AlbumPhotoPayload[]) {
+  return authedFetch<AlbumPhotoDTO[]>(`/users/me/albums/${albumId}/photos`, {
+    method: "POST",
+    data: { items },
+  });
+}
+export function deleteAlbumPhoto(albumId: string, photoId: string) {
+  return authedFetch<null>(`/users/me/albums/${albumId}/photos/${photoId}`, {
+    method: "DELETE",
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Connections (phase 1: people connect with hosts)                   */
+/* ------------------------------------------------------------------ */
+
+export interface ConnectionDTO {
+  host_id: string;
+  created_at: string;
+}
+
+/** GET /users/me/connections — hosts the signed-in user is connected with. */
+export function getMyConnections() {
+  return authedFetch<ConnectionDTO[]>("/users/me/connections");
+}
+/** PUT /users/me/connections/{hostId} — connect (idempotent). */
+export function connectHost(hostId: string) {
+  return authedFetch<unknown>(`/users/me/connections/${hostId}`, {
+    method: "PUT",
+  });
+}
+/** DELETE /users/me/connections/{hostId} — disconnect (idempotent). */
+export function disconnectHost(hostId: string) {
+  return authedFetch<unknown>(`/users/me/connections/${hostId}`, {
+    method: "DELETE",
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -847,6 +979,19 @@ export interface HostEarningsDTO {
 
   estimated_clearance_at: string | null;
   platform_fee?: { host_percentage: number; platform_percentage: number };
+
+  // ── Statutory tax deductions (Payout and tax spec). Optional until the
+  // backend ships them; the UI hides tax figures when they are absent.
+  /** Lifetime TCS + TDS deducted from this host's payouts. */
+  tax_deducted_cents?: number;
+  /** GST TCS (Section 52) deducted this financial year. */
+  tcs_fy_cents?: number;
+  /** Income-tax TDS (Section 194-O) deducted this financial year. */
+  tds_fy_cents?: number;
+  /** Gross ticket sales this financial year (1 Apr – 31 Mar). */
+  fy_gross_cents?: number;
+  /** Gross sales an individual/HUF host can make before TDS starts (₹5 lakh). */
+  tds_threshold_cents?: number;
 }
 
 export interface HostDashboardDTO {
@@ -985,6 +1130,8 @@ export interface EventDTO {
   /** The host's raw availability windows, kept so the edit form can round-trip them. */
   session_windows?: ApiSessionWindow[];
   cancellation_policy: string | null;
+  /** When the host is paid for this event; absent means after the event. */
+  payout_mode?: PayoutMode | null;
   ai_suggestion: string | null;
   meeting_link: string | null;
   google_maps_url: string | null;
@@ -1492,6 +1639,8 @@ export interface EventCreatePayload {
   /** The host's raw availability windows, kept so the edit form can round-trip them. */
   session_windows?: ApiSessionWindow[];
   cancellation_policy?: string;
+  /** Weekly payouts force cancellation_policy to "no_refund". */
+  payout_mode?: PayoutMode;
   ai_suggestion?: string;
   meeting_link?: string;
   google_maps_url?: string;
@@ -1541,6 +1690,8 @@ export interface EventUpdatePayload {
   /** The host's raw availability windows, kept so the edit form can round-trip them. */
   session_windows?: ApiSessionWindow[];
   cancellation_policy?: string;
+  /** Weekly payouts force cancellation_policy to "no_refund". */
+  payout_mode?: PayoutMode;
   meeting_link?: string;
   google_maps_url?: string;
   price_tiers?: PriceTierInput[];
@@ -1807,10 +1958,10 @@ export function validateCoupon(eventId: string, userId: string, code: string) {
     comps_booking: boolean;
     discount_percent?: number | null;
     code: string;
-  }>(
-    "/coupons/validate",
-    { method: "POST", data: { event_id: eventId, user_id: userId, code } },
-  );
+  }>("/coupons/validate", {
+    method: "POST",
+    data: { event_id: eventId, user_id: userId, code },
+  });
 }
 
 /** Verify a coupon without a specific guest (walk-in / on-spot). The per-guest
@@ -1821,10 +1972,10 @@ export function verifyCoupon(eventId: string, code: string) {
     comps_booking: boolean;
     discount_percent?: number | null;
     code: string;
-  }>(
-    "/coupons/validate",
-    { method: "POST", data: { event_id: eventId, code } },
-  );
+  }>("/coupons/validate", {
+    method: "POST",
+    data: { event_id: eventId, code },
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -1994,8 +2145,206 @@ export interface PaymentDTO {
   gateway_payment_id?: string | null; // Razorpay pay_xxxxx
   gateway_refund_id?: string | null; // Razorpay rfnd_xxxxx — set on source refunds
   refund_of_payment_id?: string | null; // the top-up this refund went against (source refund)
+  /** Host payouts only: how the amount paid was arrived at. */
+  breakdown?: PayoutBreakdownDTO | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Line items of one host payout. earnings − boost − tcs − tds = paid. */
+export interface PayoutBreakdownDTO {
+  /** Ticket value earned by the host (excludes the guest's platform fee). */
+  earnings_cents: number;
+  /** Marketing Boost commission, only for events the host opted in. */
+  boost_commission_cents: number;
+  /** GST TCS, Section 52 CGST Act — credited to the host's GSTIN. */
+  tcs_cents: number;
+  /** Income-tax TDS, Section 194-O — credited to the host's PAN. */
+  tds_cents: number;
+  /** Ad spend repaid after the host cancelled a Boosted event (optional). */
+  ad_cost_recovery_cents?: number;
+  /** Earlier guest refunds or recoveries netted from this payout (optional). */
+  recovery_cents?: number;
+  /** Weekly payouts: the share held until the event is over (optional). */
+  held_cents?: number;
+  /** Amount sent to the host's bank. */
+  paid_cents: number;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Payout timing (PRD: Refunds, cancellations and payout timing)      */
+/* ------------------------------------------------------------------ */
+
+/** When a host is paid for one event. Weekly locks the refund policy. */
+export type PayoutMode = "after_event" | "weekly";
+
+/** GET /hosts/{hostID}/payout-eligibility — can this host pick weekly
+ *  payouts, and what is holding them back. */
+export interface PayoutEligibilityDTO {
+  weekly_eligible: boolean;
+  /** Human-readable reasons when not eligible, e.g. "Complete 3 events". */
+  reasons: string[];
+  completed_events: number;
+  /** Host cancellations in the rolling windows (cancellation strikes). */
+  strikes_90d: number;
+  strikes_12m: number;
+  /** Set while Boost and weekly payouts are paused after a 2nd strike. */
+  paused_until: string | null;
+  /** True after a 3rd strike in 12 months, until ops clears it. */
+  boost_blocked: boolean;
+  /** Owed to MySlotmate after a cancellation; blocks Boost and weekly payouts. */
+  recovery_balance_cents: number;
+  /** Paid early across all upcoming events vs the backstop cap. */
+  early_outstanding_cents: number;
+  early_backstop_cents: number;
+}
+
+export function getPayoutEligibility(hostId: string, idToken: string) {
+  return apiFetch<PayoutEligibilityDTO>(`/hosts/${hostId}/payout-eligibility`, {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Marketing Boost                                                    */
+/* ------------------------------------------------------------------ */
+
+export type BoostStatus =
+  | "under_review"
+  | "quote_ready"
+  | "live"
+  | "ended"
+  | "declined"
+  | "cancelled";
+
+export type BoostChannel =
+  | "instagram"
+  | "facebook"
+  | "google"
+  | "whatsapp"
+  | "influencers";
+
+export interface BoostRateDTO {
+  ticket_type_id: string | null;
+  ticket_name: string;
+  price_cents: number;
+  rate_bps: number;
+}
+
+export interface BoostDTO {
+  id: string;
+  event_id: string;
+  status: BoostStatus;
+  rates: BoostRateDTO[];
+  /** Why a ₹5,000+ event was quoted above the base rate. */
+  topup_reason: string | null;
+  decline_reason: string | null;
+  goal_text: string | null;
+  channels: BoostChannel[];
+  requested_at: string;
+  /** Set when the host accepts; status stays quote_ready until ops go live. */
+  accepted_at?: string | null;
+  live_from: string | null;
+  live_until: string | null;
+  reach: number;
+  clicks: number;
+  tickets_sold: number;
+  commission_cents: number;
+}
+
+export interface BoostRequestPayload {
+  goal_text?: string;
+  audience_notes?: string;
+  channels: BoostChannel[];
+}
+
+/** GET /experiences/{id}/boost — the event's current Boost; 404 when none. */
+export function getEventBoost(eventId: string, idToken: string) {
+  return apiFetch<BoostDTO>(`/experiences/${eventId}/boost`, {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+export function requestBoost(
+  eventId: string,
+  body: BoostRequestPayload,
+  idToken: string,
+) {
+  return apiFetch<BoostDTO>(`/experiences/${eventId}/boost`, {
+    method: "POST",
+    data: body,
+    headers: getAuthHeader(idToken),
+  });
+}
+
+export function acceptBoost(boostId: string, idToken: string) {
+  return apiFetch<BoostDTO>(`/boosts/${boostId}/accept`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** Declines a quote, cancels a request under review, or stops a live Boost. */
+export function stopBoost(boostId: string, idToken: string) {
+  return apiFetch<BoostDTO>(`/boosts/${boostId}/stop`, {
+    method: "POST",
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/** GET /host/boosts — every Boost this host has requested. */
+export function getHostBoosts(idToken: string) {
+  return apiFetch<BoostDTO[]>("/host/boosts", {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Host tax profile                                                   */
+/* ------------------------------------------------------------------ */
+
+export type HostEntityType =
+  | "individual"
+  | "huf"
+  | "company"
+  | "firm"
+  | "llp"
+  | "other";
+
+/** GET /hosts/{hostID}/tax-profile. The PAN is returned masked. */
+export interface HostTaxProfileDTO {
+  entity_type: HostEntityType;
+  /** e.g. "ABCxxxx34F"; null until the host adds a PAN. */
+  pan_masked: string | null;
+  pan_name: string | null;
+  gstin: string | null;
+  gst_state_code: string | null;
+  updated_at: string | null;
+}
+
+export interface UpdateHostTaxProfilePayload {
+  entity_type: HostEntityType;
+  pan: string;
+  pan_name: string;
+  gstin?: string | null;
+}
+
+export function getHostTaxProfile(hostId: string, idToken: string) {
+  return apiFetch<HostTaxProfileDTO>(`/hosts/${hostId}/tax-profile`, {
+    headers: getAuthHeader(idToken),
+  });
+}
+
+export function updateHostTaxProfile(
+  hostId: string,
+  body: UpdateHostTaxProfilePayload,
+  idToken: string,
+) {
+  return apiFetch<HostTaxProfileDTO>(`/hosts/${hostId}/tax-profile`, {
+    method: "PUT",
+    data: body,
+    headers: getAuthHeader(idToken),
+  });
 }
 
 /** GET /users/wallet/transactions — user's wallet payment history.
@@ -2093,6 +2442,12 @@ export interface HostSaleDTO {
   AmountCents: number;
   NetEarningCents: number | null;
   ServiceFeeCents: number | null;
+  /** Statutory deductions stamped at confirmation (optional until backend ships). */
+  TcsCents?: number | null;
+  TdsCents?: number | null;
+  BoostCommissionCents?: number | null;
+  /** What actually goes to the host's bank for this booking. */
+  HostPayoutCents?: number | null;
   Status: "pending" | "confirmed" | "cancelled" | "refunded";
   CreatedAt: string;
   CancelledAt: string | null;

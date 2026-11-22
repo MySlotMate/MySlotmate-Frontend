@@ -53,8 +53,8 @@ export default function SupportFileDropzone({
       onClick={() => inputRef.current?.click()}
       className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-6 py-9 text-center transition ${
         dragActive
-          ? "border-[#0094CA] bg-[#e6f8ff]"
-          : "border-gray-200 bg-[#f8fbfd] hover:border-[#0094CA]"
+          ? "border-[#A020F0] bg-[#241333]"
+          : "border-white/10 bg-white/[0.04] hover:border-[#A020F0]"
       }`}
       role="button"
       tabIndex={0}
@@ -73,19 +73,19 @@ export default function SupportFileDropzone({
         onChange={(event) => handleSelect(event.target.files?.[0])}
       />
 
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e6f8ff] text-[#0094CA]">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#241333] text-[#D8B4FE]">
         <FiUploadCloud className="h-6 w-6" />
       </div>
 
       <div>
-        <p className="text-sm font-semibold text-slate-900">
+        <p className="text-sm font-semibold text-white">
           Click to upload or drag and drop
         </p>
-        <p className="mt-1 text-xs text-slate-500">{helperText}</p>
+        <p className="mt-1 text-xs text-[#A5A8C3]">{helperText}</p>
       </div>
 
       {fileName && (
-        <p className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+        <p className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
           {fileName}
         </p>
       )}

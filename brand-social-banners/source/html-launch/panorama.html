@@ -1,0 +1,114 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=JetBrains+Mono:wght@400;600&display=block" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:7560px;height:1350px;overflow:hidden}
+body{position:relative;background:#F6F1E9;color:#1A0933;font-family:"Bricolage Grotesque",sans-serif;-webkit-font-smoothing:antialiased}
+.abs{position:absolute}.mono{font-family:"JetBrains Mono",monospace}
+.grid{position:absolute;inset:0;background-image:linear-gradient(#E9E2D6 2px,transparent 2px),linear-gradient(90deg,#E9E2D6 2px,transparent 2px);background-size:54px 54px;opacity:.55}
+.top{top:84px;font-size:22px;letter-spacing:.2em;color:#8E84A0}
+.when{top:1262px;font-size:22px;letter-spacing:.2em;color:#8E84A0}
+.ruler{position:absolute;left:0;top:1220px;width:7560px;height:2px;background:#D9D0C3}
+.ruler i{position:absolute;top:2px;width:2px;background:#D9D0C3}
+.kick{font-size:26px;letter-spacing:.2em;font-weight:600}
+h1{font-weight:700;letter-spacing:-.045em;line-height:.94;color:#1A0933}
+.grad{background:linear-gradient(90deg,#7B2FFF,#BF00FF);-webkit-background-clip:text;background-clip:text;color:transparent;padding-right:.04em}
+.old{color:#B7AEC2;font-weight:500;letter-spacing:-.045em;line-height:1;text-decoration:line-through;text-decoration-color:#FF5A3C;text-decoration-thickness:.07em}
+.strike{text-decoration:line-through;text-decoration-color:#FF5A3C;text-decoration-thickness:.08em}
+em{font-style:normal;color:#A020F0}
+.blk,.ev{position:absolute;border-radius:24px;display:flex;flex-direction:column;justify-content:flex-start;gap:6px;box-shadow:0 18px 40px rgba(26,9,51,.14)}
+.blk b{font-weight:700;letter-spacing:-.03em;line-height:1}
+.blk span,.ev span{font-family:"JetBrains Mono",monospace;opacity:.85;letter-spacing:.06em}
+.ev{border-radius:18px;padding:16px 18px;gap:4px;box-shadow:0 8px 18px rgba(26,9,51,.08)}
+.ev b{font-size:26px;font-weight:700;letter-spacing:-.02em;line-height:1.05}.ev span{font-size:17px}
+.step{position:absolute;width:920px;height:130px;border-radius:26px;display:flex;align-items:center;gap:34px;padding:0 40px;box-shadow:0 14px 30px rgba(26,9,51,.1)}
+.step span{font-size:28px;opacity:.7;letter-spacing:.1em}.step b{font-size:62px;font-weight:700;letter-spacing:-.035em}
+.stamp{margin-left:auto;border:4px solid #fff;border-radius:16px;padding:10px 18px;font-size:26px;font-weight:600;letter-spacing:.14em;transform:rotate(-6deg)}
+.sub{font-size:34px;line-height:1.3;color:#5B5070;letter-spacing:-.01em}
+.card{position:absolute;width:920px;background:#1A0933;color:#fff;border-radius:28px;padding:30px 40px;box-shadow:0 24px 50px rgba(26,9,51,.25)}
+.f{display:flex;align-items:baseline;gap:30px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.12)}
+.f span{width:120px;font-size:20px;letter-spacing:.18em;color:#A99BC4}.f b{font-size:40px;font-weight:600;letter-spacing:-.02em}
+.pub{display:flex;justify-content:space-between;padding-top:20px;font-size:20px;letter-spacing:.18em;color:#A99BC4}
+.pub .on{color:#D9F26B}
+.pill{position:absolute;padding:.14em .5em .2em;border-radius:999px;font-weight:800;letter-spacing:-.04em;line-height:1;box-shadow:0 14px 30px rgba(26,9,51,.12)}
+.store{position:absolute;top:780px;width:440px;height:190px;border-radius:30px;padding:34px 40px;display:flex;flex-direction:column;justify-content:center;gap:8px;box-shadow:0 18px 40px rgba(26,9,51,.18)}
+.store.wide{width:920px;height:130px;flex-direction:row;align-items:center;justify-content:space-between}
+.store span{font-size:20px;letter-spacing:.18em;opacity:.75}.store b{font-size:56px;font-weight:700;letter-spacing:-.035em;line-height:1}
+</style></head><body>
+<div class="grid"></div><div class="ruler"><i style="left:0px;height:26px"></i><i style="left:45px;height:12px"></i><i style="left:90px;height:12px"></i><i style="left:135px;height:12px"></i><i style="left:180px;height:12px"></i><i style="left:225px;height:12px"></i><i style="left:270px;height:26px"></i><i style="left:315px;height:12px"></i><i style="left:360px;height:12px"></i><i style="left:405px;height:12px"></i><i style="left:450px;height:12px"></i><i style="left:495px;height:12px"></i><i style="left:540px;height:26px"></i><i style="left:585px;height:12px"></i><i style="left:630px;height:12px"></i><i style="left:675px;height:12px"></i><i style="left:720px;height:12px"></i><i style="left:765px;height:12px"></i><i style="left:810px;height:26px"></i><i style="left:855px;height:12px"></i><i style="left:900px;height:12px"></i><i style="left:945px;height:12px"></i><i style="left:990px;height:12px"></i><i style="left:1035px;height:12px"></i><i style="left:1080px;height:26px"></i><i style="left:1125px;height:12px"></i><i style="left:1170px;height:12px"></i><i style="left:1215px;height:12px"></i><i style="left:1260px;height:12px"></i><i style="left:1305px;height:12px"></i><i style="left:1350px;height:26px"></i><i style="left:1395px;height:12px"></i><i style="left:1440px;height:12px"></i><i style="left:1485px;height:12px"></i><i style="left:1530px;height:12px"></i><i style="left:1575px;height:12px"></i><i style="left:1620px;height:26px"></i><i style="left:1665px;height:12px"></i><i style="left:1710px;height:12px"></i><i style="left:1755px;height:12px"></i><i style="left:1800px;height:12px"></i><i style="left:1845px;height:12px"></i><i style="left:1890px;height:26px"></i><i style="left:1935px;height:12px"></i><i style="left:1980px;height:12px"></i><i style="left:2025px;height:12px"></i><i style="left:2070px;height:12px"></i><i style="left:2115px;height:12px"></i><i style="left:2160px;height:26px"></i><i style="left:2205px;height:12px"></i><i style="left:2250px;height:12px"></i><i style="left:2295px;height:12px"></i><i style="left:2340px;height:12px"></i><i style="left:2385px;height:12px"></i><i style="left:2430px;height:26px"></i><i style="left:2475px;height:12px"></i><i style="left:2520px;height:12px"></i><i style="left:2565px;height:12px"></i><i style="left:2610px;height:12px"></i><i style="left:2655px;height:12px"></i><i style="left:2700px;height:26px"></i><i style="left:2745px;height:12px"></i><i style="left:2790px;height:12px"></i><i style="left:2835px;height:12px"></i><i style="left:2880px;height:12px"></i><i style="left:2925px;height:12px"></i><i style="left:2970px;height:26px"></i><i style="left:3015px;height:12px"></i><i style="left:3060px;height:12px"></i><i style="left:3105px;height:12px"></i><i style="left:3150px;height:12px"></i><i style="left:3195px;height:12px"></i><i style="left:3240px;height:26px"></i><i style="left:3285px;height:12px"></i><i style="left:3330px;height:12px"></i><i style="left:3375px;height:12px"></i><i style="left:3420px;height:12px"></i><i style="left:3465px;height:12px"></i><i style="left:3510px;height:26px"></i><i style="left:3555px;height:12px"></i><i style="left:3600px;height:12px"></i><i style="left:3645px;height:12px"></i><i style="left:3690px;height:12px"></i><i style="left:3735px;height:12px"></i><i style="left:3780px;height:26px"></i><i style="left:3825px;height:12px"></i><i style="left:3870px;height:12px"></i><i style="left:3915px;height:12px"></i><i style="left:3960px;height:12px"></i><i style="left:4005px;height:12px"></i><i style="left:4050px;height:26px"></i><i style="left:4095px;height:12px"></i><i style="left:4140px;height:12px"></i><i style="left:4185px;height:12px"></i><i style="left:4230px;height:12px"></i><i style="left:4275px;height:12px"></i><i style="left:4320px;height:26px"></i><i style="left:4365px;height:12px"></i><i style="left:4410px;height:12px"></i><i style="left:4455px;height:12px"></i><i style="left:4500px;height:12px"></i><i style="left:4545px;height:12px"></i><i style="left:4590px;height:26px"></i><i style="left:4635px;height:12px"></i><i style="left:4680px;height:12px"></i><i style="left:4725px;height:12px"></i><i style="left:4770px;height:12px"></i><i style="left:4815px;height:12px"></i><i style="left:4860px;height:26px"></i><i style="left:4905px;height:12px"></i><i style="left:4950px;height:12px"></i><i style="left:4995px;height:12px"></i><i style="left:5040px;height:12px"></i><i style="left:5085px;height:12px"></i><i style="left:5130px;height:26px"></i><i style="left:5175px;height:12px"></i><i style="left:5220px;height:12px"></i><i style="left:5265px;height:12px"></i><i style="left:5310px;height:12px"></i><i style="left:5355px;height:12px"></i><i style="left:5400px;height:26px"></i><i style="left:5445px;height:12px"></i><i style="left:5490px;height:12px"></i><i style="left:5535px;height:12px"></i><i style="left:5580px;height:12px"></i><i style="left:5625px;height:12px"></i><i style="left:5670px;height:26px"></i><i style="left:5715px;height:12px"></i><i style="left:5760px;height:12px"></i><i style="left:5805px;height:12px"></i><i style="left:5850px;height:12px"></i><i style="left:5895px;height:12px"></i><i style="left:5940px;height:26px"></i><i style="left:5985px;height:12px"></i><i style="left:6030px;height:12px"></i><i style="left:6075px;height:12px"></i><i style="left:6120px;height:12px"></i><i style="left:6165px;height:12px"></i><i style="left:6210px;height:26px"></i><i style="left:6255px;height:12px"></i><i style="left:6300px;height:12px"></i><i style="left:6345px;height:12px"></i><i style="left:6390px;height:12px"></i><i style="left:6435px;height:12px"></i><i style="left:6480px;height:26px"></i><i style="left:6525px;height:12px"></i><i style="left:6570px;height:12px"></i><i style="left:6615px;height:12px"></i><i style="left:6660px;height:12px"></i><i style="left:6705px;height:12px"></i><i style="left:6750px;height:26px"></i><i style="left:6795px;height:12px"></i><i style="left:6840px;height:12px"></i><i style="left:6885px;height:12px"></i><i style="left:6930px;height:12px"></i><i style="left:6975px;height:12px"></i><i style="left:7020px;height:26px"></i><i style="left:7065px;height:12px"></i><i style="left:7110px;height:12px"></i><i style="left:7155px;height:12px"></i><i style="left:7200px;height:12px"></i><i style="left:7245px;height:12px"></i><i style="left:7290px;height:26px"></i><i style="left:7335px;height:12px"></i><i style="left:7380px;height:12px"></i><i style="left:7425px;height:12px"></i><i style="left:7470px;height:12px"></i><i style="left:7515px;height:12px"></i><i style="left:7560px;height:26px"></i></div>
+<div class="abs mono top" style="left:80px"><img src="file:///Users/subhojitsaha/Desktop/Claude/Frontend-Designs-Myslotmate/MySlotmate-Frontend/public/assets/brand/logo-horizontal.png" style="height:46px;display:block;margin-top:-10px"></div>
+  <div class="abs mono top" style="left:860px;width:140px;text-align:right">01 / 07</div>
+  <div class="abs mono when" style="left:80px">FRI · 18:00</div>
+  <div class="abs mono when" style="left:700px;width:300px;text-align:right">SWIPE →</div><div class="abs mono top" style="left:1160px">MYSLOTMATE ✦ WE'RE LIVE</div>
+  <div class="abs mono top" style="left:1940px;width:140px;text-align:right">02 / 07</div>
+  <div class="abs mono when" style="left:1160px">FRI · 21:00</div>
+  <div class="abs mono when" style="left:1780px;width:300px;text-align:right">SWIPE →</div><div class="abs mono top" style="left:2240px">MYSLOTMATE ✦ WE'RE LIVE</div>
+  <div class="abs mono top" style="left:3020px;width:140px;text-align:right">03 / 07</div>
+  <div class="abs mono when" style="left:2240px">SAT · 06:00</div>
+  <div class="abs mono when" style="left:2860px;width:300px;text-align:right">SWIPE →</div><div class="abs mono top" style="left:3320px">MYSLOTMATE ✦ WE'RE LIVE</div>
+  <div class="abs mono top" style="left:4100px;width:140px;text-align:right">04 / 07</div>
+  <div class="abs mono when" style="left:3320px">SAT · 13:00</div>
+  <div class="abs mono when" style="left:3940px;width:300px;text-align:right">SWIPE →</div><div class="abs mono top" style="left:4400px">MYSLOTMATE ✦ WE'RE LIVE</div>
+  <div class="abs mono top" style="left:5180px;width:140px;text-align:right">05 / 07</div>
+  <div class="abs mono when" style="left:4400px">SAT · 19:00</div>
+  <div class="abs mono when" style="left:5020px;width:300px;text-align:right">SWIPE →</div><div class="abs mono top" style="left:5480px">MYSLOTMATE ✦ WE'RE LIVE</div>
+  <div class="abs mono top" style="left:6260px;width:140px;text-align:right">06 / 07</div>
+  <div class="abs mono when" style="left:5480px">SUN · 11:00</div>
+  <div class="abs mono when" style="left:6100px;width:300px;text-align:right">SWIPE →</div><div class="abs mono top" style="left:6560px">MYSLOTMATE ✦ WE'RE LIVE</div>
+  <div class="abs mono top" style="left:7340px;width:140px;text-align:right">07 / 07</div>
+  <div class="abs mono when" style="left:6560px">SUN · 20:00</div>
+  <div class="abs mono when" style="left:7180px;width:300px;text-align:right">SEE YOU THERE ✦</div>
+
+  <div class="abs old" style="left:80px;top:300px;font-size:118px">Coming soon.</div>
+  <h1 class="abs" style="left:80px;top:440px;width:920px;font-size:250px">We're<br><span class="grad">live.</span></h1>
+  <div class="abs mono" style="left:84px;top:965px;font-size:30px;letter-spacing:.16em;color:#1A0933">NOW ON iOS <em>✦</em> ANDROID <em>✦</em> WEB</div>
+  <div class="blk" style="left:760px;top:1010px;width:560px;height:150px;background:#1A0933;color:#fff;transform:rotate(-4deg);padding:30px 35px">
+    <b class="" style="font-size:50px">Launch day</b><span style="font-size:21px">TODAY · ALL DAY</span></div>
+
+  <div class="abs mono kick" style="left:1160px;top:200px;color:#A020F0">WHAT IS MYSLOTMATE?</div>
+  <h1 class="abs" style="left:1160px;top:262px;width:920px;font-size:98px">A marketplace for things you do <span class="grad">with people,</span> not screens.</h1>
+  <div class="blk" style="left:1160px;top:840px;width:400px;height:150px;background:#A020F0;color:#fff;transform:rotate(-3deg);padding:24px 28px">
+    <b class="" style="font-size:40px">Pottery night</b><span style="font-size:16.8px">THU · 19:00</span></div>
+  <div class="blk" style="left:1600px;top:815px;width:420px;height:150px;background:#FF7A45;color:#1A0933;transform:rotate(4deg);padding:24px 28px">
+    <b class="" style="font-size:40px">Sunrise trek</b><span style="font-size:16.8px">SAT · 05:30</span></div>
+  <div class="blk" style="left:1370px;top:1025px;width:330px;height:140px;background:#E6399B;color:#fff;transform:rotate(2deg);padding:24px 28px">
+    <b class="" style="font-size:40px">Supper club</b><span style="font-size:16.8px">SAT · 20:00</span></div>
+  <div class="blk" style="left:1730px;top:1005px;width:320px;height:150px;background:#1A0933;color:#fff;transform:rotate(-5deg);padding:24px 28px">
+    <b class="" style="font-size:40px">Open mic</b><span style="font-size:16.8px">FRI · 20:00</span></div>
+
+  <div class="abs mono kick" style="left:2240px;top:200px;color:#A020F0">01 ✦ BOOK</div>
+  <h1 class="abs" style="left:2240px;top:262px;width:920px;font-size:116px">Your weekend, <span class="grad">sorted</span> in three taps.</h1>
+  
+  <div class="step" style="left:2240px;top:700px;background:#D9F26B;color:#1A0933"><span class="mono">01</span><b>Pick your city</b></div>
+  
+  <div class="step" style="left:2240px;top:850px;background:#FF7A45;color:#1A0933"><span class="mono">02</span><b>Pick a slot</b></div>
+  
+  <div class="step" style="left:2240px;top:1000px;background:#7B2FFF;color:#fff"><span class="mono">03</span><b>Show up.</b><div class="stamp mono">✓ BOOKED</div></div>
+
+  <div class="abs mono kick" style="left:3320px;top:200px;color:#A020F0">02 ✦ HOST</div>
+  <h1 class="abs" style="left:3320px;top:262px;width:920px;font-size:104px">Love doing something? <span class="grad">Make it a slot.</span></h1>
+  <p class="abs sub" style="left:3320px;top:700px;width:900px">Teach pottery. Lead the trek you know by heart. Cook your grandmother's recipe for ten strangers. You set the time, the price and the vibe.</p>
+  <div class="card" style="left:3320px;top:880px">
+    <div class="f"><span class="mono">TITLE</span><b>Grandma's Sunday biryani</b></div>
+    <div class="f"><span class="mono">WHEN</span><b>SUN · 13:00</b></div>
+    <div class="f"><span class="mono">SEATS</span><b>10</b></div>
+    <div class="pub mono"><span>NEW SLOT</span><span class="on">● PUBLISHED</span></div>
+  </div>
+
+  <div class="abs mono kick" style="left:4400px;top:200px;color:#A020F0">03 ✦ EXPLORE</div>
+  <h1 class="abs" style="left:4400px;top:262px;width:920px;font-size:116px">Not sure what you want? <span class="grad">Perfect.</span></h1>
+  <div class="pill" style="left:4400px;top:680px;background:#A020F0;color:#fff;transform:rotate(-4deg);font-size:76px">Paint</div><div class="pill" style="left:4720px;top:660px;background:#FF7A45;color:#1A0933;transform:rotate(5deg);font-size:76px">Trek</div><div class="pill" style="left:5020px;top:700px;background:#1A0933;color:#fff;transform:rotate(-6deg);font-size:76px">Jam</div><div class="pill" style="left:4440px;top:820px;background:#E6399B;color:#fff;transform:rotate(3deg);font-size:64px">Cook</div><div class="pill" style="left:4740px;top:810px;background:#D9F26B;color:#1A0933;transform:rotate(-3deg);font-size:70px">Dance</div><div class="pill" style="left:5110px;top:840px;background:#7B2FFF;color:#fff;transform:rotate(6deg);font-size:60px">Read</div><div class="pill" style="left:4390px;top:960px;background:#1A0933;color:#fff;transform:rotate(-5deg);font-size:66px">Climb</div><div class="pill" style="left:4680px;top:950px;background:#FF7A45;color:#1A0933;transform:rotate(4deg);font-size:60px">Brew</div><div class="pill" style="left:4940px;top:975px;background:#A020F0;color:#fff;transform:rotate(-2deg);font-size:64px">Sketch</div><div class="pill" style="left:4500px;top:1080px;background:#D9F26B;color:#1A0933;transform:rotate(6deg);font-size:58px">Bake</div><div class="pill" style="left:4790px;top:1090px;background:#E6399B;color:#fff;transform:rotate(-4deg);font-size:60px">Sing</div><div class="pill" style="left:5080px;top:1090px;background:#7B2FFF;color:#fff;transform:rotate(3deg);font-size:58px">Run</div>
+  <div class="pill" style="left:5060px;top:545px;background:#ECE6DC;color:#9B93A8;transform:rotate(8deg);font-size:64px"><span class="strike">Scroll</span></div>
+
+  <div class="abs old" style="left:5480px;top:250px;font-size:128px">Less meetings.</div>
+  <h1 class="abs" style="left:5480px;top:400px;width:920px;font-size:150px">More <span class="grad">moments.</span></h1>
+  <div class="abs mono" style="left:5486px;top:690px;font-size:22px;letter-spacing:.2em;color:#8E84A0">THU</div><div class="ev" style="left:5480px;top:734px;width:215px;height:101.91176470588236px;background:#ECE6DC;color:#9B93A8"><b class="strike">Sprint review</b><span>10:00</span></div><div class="ev" style="left:5480px;top:851.3529411764706px;width:215px;height:101.91176470588236px;background:#ECE6DC;color:#9B93A8"><b class="strike">Budget sync</b><span>14:00</span></div><div class="ev" style="left:5480px;top:968.7058823529412px;width:215px;height:185.29411764705884px;background:#A020F0;color:#fff"><b class="">Pottery night</b><span>19:00</span></div><div class="abs mono" style="left:5713px;top:690px;font-size:22px;letter-spacing:.2em;color:#8E84A0">FRI</div><div class="ev" style="left:5707px;top:734px;width:215px;height:101.91176470588236px;background:#ECE6DC;color:#9B93A8"><b class="strike">1:1 catch-up</b><span>11:00</span></div><div class="ev" style="left:5707px;top:851.3529411764706px;width:215px;height:302.64705882352945px;background:#1A0933;color:#fff"><b class="">Open mic</b><span>20:00</span></div><div class="abs mono" style="left:5940px;top:690px;font-size:22px;letter-spacing:.2em;color:#8E84A0">SAT</div><div class="ev" style="left:5934px;top:734px;width:215px;height:185.29411764705884px;background:#FF7A45;color:#1A0933"><b class="">Sunrise trek</b><span>05:30</span></div><div class="ev" style="left:5934px;top:934.7352941176471px;width:215px;height:219.26470588235296px;background:#E6399B;color:#fff"><b class="">Supper club</b><span>20:00</span></div><div class="abs mono" style="left:6167px;top:690px;font-size:22px;letter-spacing:.2em;color:#8E84A0">SUN</div><div class="ev" style="left:6161px;top:734px;width:215px;height:132.79411764705884px;background:#D9F26B;color:#1A0933"><b class="">Book club</b><span>11:00</span></div><div class="ev" style="left:6161px;top:882.2352941176471px;width:215px;height:271.7647058823529px;background:#7B2FFF;color:#fff"><b class="">Salsa basics</b><span>17:00</span></div>
+
+  <div class="abs mono kick" style="left:6560px;top:200px;color:#A020F0">YOUR FIRST SLOT IS WAITING</div>
+  <h1 class="abs" style="left:6560px;top:262px;width:920px;font-size:112px">Start booking. Start hosting. <span class="grad">Start showing up.</span></h1>
+  <div class="store" style="left:6560px;background:#1A0933;color:#fff"><span class="mono">DOWNLOAD ON THE</span><b>App Store</b></div>
+  <div class="store" style="left:7040px;background:#1A0933;color:#fff"><span class="mono">GET IT ON</span><b>Google Play</b></div>
+  <div class="store wide" style="left:6560px;top:1010px;background:linear-gradient(90deg,#7B2FFF,#BF00FF);color:#fff"><span class="mono">OR BOOK ON THE WEB</span><b>myslotmate.com</b></div>
+  <div class="abs mono" style="left:6560px;top:1160px;font-size:26px;letter-spacing:.16em;color:#1A0933">LINK IN BIO ↗</div>
+<script>/* #n shows slide n alone (used for slicing) */const n=+location.hash.slice(1);if(n)document.body.style.marginLeft=-(n-1)*1080+'px';</script>
+</body></html>

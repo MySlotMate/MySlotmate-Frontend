@@ -302,6 +302,96 @@ export function usePublicHostProfile(hostId: string | null) {
   });
 }
 
+/**
+ * A host's public events including past ones. `supported` is false while the
+ * backend doesn't have the endpoint, so callers can say so honestly.
+ */
+export function usePublicHostEvents(hostId: string | null) {
+  const q = useQuery({
+    queryKey: ["publicHostEvents", hostId ?? ""],
+    queryFn: async () => {
+      try {
+        return {
+          supported: true,
+          events: (await api.getPublicHostEvents(hostId!)).data ?? [],
+        };
+      } catch {
+        return { supported: false, events: [] as api.EventDTO[] };
+      }
+    },
+    enabled: !!hostId,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  return {
+    events: q.data?.events,
+    supported: q.data?.supported ?? false,
+    isLoading: q.isLoading,
+  };
+}
+
+/** Someone's profile albums; `supported` is false until the backend has them. */
+export function useProfileAlbums(owner: {
+  userId?: string | null;
+  hostId?: string | null;
+}) {
+  const key = owner.userId ? `u:${owner.userId}` : `h:${owner.hostId ?? ""}`;
+  const q = useQuery({
+    queryKey: ["profileAlbums", key],
+    queryFn: async () => {
+      try {
+        const res = owner.userId
+          ? await api.getUserAlbums(owner.userId)
+          : await api.getHostAlbums(owner.hostId!);
+        return { supported: true, items: res.data ?? [] };
+      } catch {
+        return { supported: false, items: [] as api.ProfileAlbumDTO[] };
+      }
+    },
+    enabled: Boolean(owner.userId ?? owner.hostId),
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  });
+  const items = [...(q.data?.items ?? [])]
+    .sort((a, b) => a.position - b.position)
+    .map((a) => ({
+      ...a,
+      photos: [...a.photos].sort((x, y) => x.position - y.position),
+    }));
+  return {
+    items,
+    supported: q.data?.supported ?? false,
+    isLoading: q.isLoading,
+  };
+}
+
+function useAlbumMutation<V, R>(fn: (v: V) => Promise<R>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ["profileAlbums"] }),
+  });
+}
+
+export const useSaveAlbum = () =>
+  useAlbumMutation(({ id, body }: { id?: string; body: api.AlbumPayload }) =>
+    id
+      ? api.updateAlbum(id, body)
+      : api.createAlbum({ ...body, title: body.title ?? "Untitled" }),
+  );
+export const useDeleteAlbum = () =>
+  useAlbumMutation((id: string) => api.deleteAlbum(id));
+export const useAddAlbumPhotos = () =>
+  useAlbumMutation(
+    ({ albumId, items }: { albumId: string; items: api.AlbumPhotoPayload[] }) =>
+      api.addAlbumPhotos(albumId, items),
+  );
+export const useDeleteAlbumPhoto = () =>
+  useAlbumMutation(
+    ({ albumId, photoId }: { albumId: string; photoId: string }) =>
+      api.deleteAlbumPhoto(albumId, photoId),
+  );
+
 export function useHostDashboard(hostId: string | null, userId: string | null) {
   return useQuery({
     queryKey: queryKeys.hostDashboard(hostId ?? ""),
@@ -578,6 +668,120 @@ export function usePayoutHistory(
     select: (res) => res.data,
   });
 }
+
+/** The host's tax profile (PAN, GSTIN). Resolves to null when the host has
+ *  not added one yet (404), so callers can prompt for it. */
+export function useHostTaxProfile(
+  hostId: string | null,
+  idToken?: string | null,
+) {
+  return useQuery({
+    queryKey: ["hostTaxProfile", hostId ?? "", idToken ?? ""] as const,
+    queryFn: async (): Promise<api.HostTaxProfileDTO | null> => {
+      try {
+        const res = await api.getHostTaxProfile(hostId!, idToken!);
+        return res.data ?? null;
+      } catch (e) {
+        if ((e as { status?: number }).status === 404) return null;
+        throw e;
+      }
+    },
+    enabled: !!hostId && !!idToken,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+}
+
+export function useUpdateHostTaxProfile(idToken: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: {
+      hostId: string;
+      body: api.UpdateHostTaxProfilePayload;
+    }) => api.updateHostTaxProfile(vars.hostId, vars.body, idToken!),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["hostTaxProfile"] });
+    },
+  });
+}
+
+/** 404-tolerant read: resolves to null when the backend has nothing (or
+ *  doesn't serve the route yet), so screens can fall back quietly. */
+async function orNull<T>(p: Promise<api.Envelope<T>>): Promise<T | null> {
+  try {
+    return (await p).data ?? null;
+  } catch (e) {
+    const status = (e as { status?: number }).status;
+    if (status === 404 || status === 405 || status === 501) return null;
+    throw e;
+  }
+}
+
+/** Can this host pick weekly payouts, plus strikes and any balance owed. */
+export function usePayoutEligibility(
+  hostId: string | null,
+  idToken?: string | null,
+) {
+  return useQuery({
+    queryKey: ["payoutEligibility", hostId ?? "", idToken ?? ""] as const,
+    queryFn: () => orNull(api.getPayoutEligibility(hostId!, idToken!)),
+    enabled: !!hostId && !!idToken,
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+}
+
+/** The event's current Marketing Boost, or null when there is none. */
+export function useEventBoost(eventId: string | null, idToken?: string | null) {
+  return useQuery({
+    queryKey: ["eventBoost", eventId ?? "", idToken ?? ""] as const,
+    queryFn: () => orNull(api.getEventBoost(eventId!, idToken!)),
+    enabled: !!eventId && !!idToken,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+/** Every Boost this host has requested (Promote page, Boosted badges). */
+export function useHostBoosts(idToken?: string | null) {
+  return useQuery({
+    queryKey: ["hostBoosts", idToken ?? ""] as const,
+    queryFn: async () =>
+      (await orNull(api.getHostBoosts(idToken!))) ?? ([] as api.BoostDTO[]),
+    enabled: !!idToken,
+    staleTime: 30 * 1000,
+    retry: false,
+  });
+}
+
+function useBoostMutation<V>(
+  idToken: string | null,
+  fn: (vars: V, token: string) => Promise<api.Envelope<api.BoostDTO>>,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: V) => fn(vars, idToken!),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["eventBoost"] });
+      void qc.invalidateQueries({ queryKey: ["hostBoosts"] });
+    },
+  });
+}
+
+export const useRequestBoost = (idToken: string | null) =>
+  useBoostMutation(
+    idToken,
+    (v: { eventId: string; body: api.BoostRequestPayload }, t) =>
+      api.requestBoost(v.eventId, v.body, t),
+  );
+
+export const useAcceptBoost = (idToken: string | null) =>
+  useBoostMutation(idToken, (boostId: string, t) =>
+    api.acceptBoost(boostId, t),
+  );
+
+export const useStopBoost = (idToken: string | null) =>
+  useBoostMutation(idToken, (boostId: string, t) => api.stopBoost(boostId, t));
 
 export function useEventMessages(eventId: string | null) {
   return useQuery({

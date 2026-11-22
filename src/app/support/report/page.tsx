@@ -232,19 +232,19 @@ export default function ReportIssuePage() {
       />
 
       <header className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
+        <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
           Report a Participant
         </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-slate-500 sm:text-base">
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[#A5A8C3] sm:text-base">
           Your safety is our priority. This report is confidential and reviewed
           by our Trust &amp; Safety team.
         </p>
       </header>
 
-      <section className="mx-auto mt-10 max-w-3xl rounded-[28px] border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+      <section className="mx-auto mt-10 max-w-3xl rounded-[28px] border border-white/10 bg-[#121426] p-6 shadow-sm sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-900">
+            <label className="mb-2 block text-sm font-semibold text-white">
               Select Experience
             </label>
             <select
@@ -255,7 +255,7 @@ export default function ReportIssuePage() {
                   selectedExperience: event.target.value,
                 }));
               }}
-              className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
+              className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white/80 transition outline-none focus:border-[#A020F0]"
             >
               <option value="">Choose experience...</option>
               {experienceOptions.map((item) => (
@@ -265,7 +265,7 @@ export default function ReportIssuePage() {
               ))}
             </select>
             {experienceOptions.length === 0 && (
-              <p className="mt-2 text-xs text-slate-400">
+              <p className="mt-2 text-xs text-[#777B98]">
                 No hosted experiences found yet. If needed, continue with a
                 general report.
               </p>
@@ -274,7 +274,7 @@ export default function ReportIssuePage() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-900">
+              <label className="mb-2 block text-sm font-semibold text-white">
                 Session Date
               </label>
               <input
@@ -286,13 +286,13 @@ export default function ReportIssuePage() {
                     date: event.target.value,
                   }));
                 }}
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
+                className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white/80 transition outline-none focus:border-[#A020F0]"
                 required
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-900">
+              <label className="mb-2 block text-sm font-semibold text-white">
                 Participant Name
               </label>
               <input
@@ -305,14 +305,14 @@ export default function ReportIssuePage() {
                   }));
                 }}
                 placeholder="Who is this about?"
-                className="h-12 w-full rounded-xl border border-gray-200 bg-[#f8fbfd] px-4 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
+                className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white/80 transition outline-none focus:border-[#A020F0]"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="mb-3 block text-sm font-semibold text-slate-900">
+            <label className="mb-3 block text-sm font-semibold text-white">
               Why are you reporting this person?
             </label>
             <div className="grid gap-3 md:grid-cols-2">
@@ -332,8 +332,8 @@ export default function ReportIssuePage() {
                     }}
                     className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm font-medium transition ${
                       active
-                        ? "border-[#0094CA] bg-[#e6f8ff] text-[#007dab]"
-                        : "border-gray-200 bg-[#f8fbfd] text-slate-700 hover:border-[#0094CA]"
+                        ? "border-[#A020F0] bg-[#241333] text-[#D8B4FE]"
+                        : "border-white/10 bg-white/[0.04] text-white/80 hover:border-[#A020F0]"
                     }`}
                   >
                     <Icon className="h-4 w-4 shrink-0" />
@@ -346,10 +346,10 @@ export default function ReportIssuePage() {
 
           <div>
             <div className="mb-2 flex items-center justify-between gap-3">
-              <label className="block text-sm font-semibold text-slate-900">
+              <label className="block text-sm font-semibold text-white">
                 Detailed Description
               </label>
-              <span className="text-xs text-slate-400">
+              <span className="text-xs text-[#777B98]">
                 {formData.description.length}/3000 characters
               </span>
             </div>
@@ -363,15 +363,15 @@ export default function ReportIssuePage() {
               }}
               placeholder="Describe what happened and any actions already taken"
               rows={6}
-              className="w-full rounded-2xl border border-gray-200 bg-[#f8fbfd] px-4 py-3 text-sm text-slate-700 transition outline-none focus:border-[#0094CA]"
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/80 transition outline-none focus:border-[#A020F0]"
               required
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-900">
+            <label className="mb-2 block text-sm font-semibold text-white">
               Evidence Upload{" "}
-              <span className="font-normal text-slate-400">(Optional)</span>
+              <span className="font-normal text-[#777B98]">(Optional)</span>
             </label>
             <SupportFileDropzone
               fileName={formData.evidence?.name}
@@ -379,16 +379,16 @@ export default function ReportIssuePage() {
             />
           </div>
 
-          <div className="flex flex-col gap-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-4 rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-rose-500 shadow-sm">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#121426] text-rose-400 shadow-sm">
                 <FiAlertTriangle className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-slate-900">
+                <h2 className="text-sm font-semibold text-white">
                   This is an urgent safety concern
                 </h2>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
+                <p className="mt-1 text-sm leading-6 text-[#A5A8C3]">
                   Toggle this if there is an immediate risk to you or others.
                   Urgent reports are prioritized for faster review.
                 </p>
@@ -404,21 +404,21 @@ export default function ReportIssuePage() {
                 }));
               }}
               className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition-colors ${
-                formData.isUrgent ? "bg-[#0094CA]" : "bg-slate-300"
+                formData.isUrgent ? "bg-[#A020F0]" : "bg-white/10"
               }`}
               aria-pressed={formData.isUrgent}
             >
               <span
-                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-6 w-6 transform rounded-full bg-[#121426] transition-transform ${
                   formData.isUrgent ? "translate-x-7" : "translate-x-1"
                 }`}
               />
             </button>
           </div>
 
-          <div className="flex flex-col gap-4 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="text-sm leading-6 text-slate-500">
-              <p className="font-semibold text-slate-700">Review Process</p>
+          <div className="flex flex-col gap-4 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm leading-6 text-[#A5A8C3]">
+              <p className="font-semibold text-white/80">Review Process</p>
               <p>
                 We aim to review all reports within 24 hours. If you are in
                 immediate danger, contact local authorities first.
@@ -428,14 +428,14 @@ export default function ReportIssuePage() {
             <div className="flex flex-col-reverse gap-3 sm:flex-row">
               <Link
                 href="/support"
-                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-gray-300"
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/15"
               >
                 Cancel
               </Link>
               <button
                 type="submit"
                 disabled={isSubmitting || !user}
-                className="inline-flex items-center justify-center rounded-xl bg-[#0094CA] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#007dab] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center justify-center rounded-xl bg-[#A020F0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#8A1AD0] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSubmitting ? "Submitting..." : "Submit Report"}
               </button>

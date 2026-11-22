@@ -9,7 +9,7 @@ const Idea = () => {
   return (
     <section className="site-x w-full">
       <div className="mx-auto grid w-full max-w-[1120px] gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-        <article className="rounded-[26px] bg-[linear-gradient(135deg,#109ae9,#0d85db)] p-7 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
+        <article className="rounded-[26px] bg-[linear-gradient(135deg,#7B2FFF,#A020F0)] p-7 text-white shadow-[0_22px_48px_rgba(18,132,214,0.22)]">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/20 px-3.5 py-2 text-[11px] font-extrabold tracking-[0.08em] uppercase">
             List your time
           </span>
@@ -35,11 +35,11 @@ const Idea = () => {
           </button>
         </article>
 
-        <article className="rounded-3xl border border-[#aeddf89e] bg-white p-5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
-          <h3 className="text-base font-bold text-[#16304c]">
+        <article className="rounded-3xl border border-white/10 bg-[#121426] p-5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
+          <h3 className="text-base font-bold text-white">
             The Idea Behind MySlotMate
           </h3>
-          <p className="mt-1 text-sm text-[#6f8daa]">
+          <p className="mt-1 text-sm text-[#A5A8C3]">
             Find your kind of people for real-world experiences.
           </p>
 
@@ -63,9 +63,9 @@ const Idea = () => {
             ].map((item) => (
               <div
                 key={item.title}
-                className="rounded-2xl bg-[#f7fcff] p-4 text-center"
+                className="rounded-2xl bg-white/[0.04] p-4 text-center"
               >
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#0094CA1A]">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#A020F0]/15">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.icon}
@@ -74,10 +74,10 @@ const Idea = () => {
                     className="h-5 w-5"
                   />
                 </div>
-                <h4 className="mt-2 text-sm font-bold text-[#16304c]">
+                <h4 className="mt-2 text-sm font-bold text-white">
                   {item.title}
                 </h4>
-                <p className="mt-1 text-xs leading-5 text-[#6f8daa]">
+                <p className="mt-1 text-xs leading-5 text-[#A5A8C3]">
                   {item.copy}
                 </p>
               </div>

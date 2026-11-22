@@ -82,12 +82,12 @@ export default function Hero() {
   return (
     <section
       aria-label="Welcome to MySlotMate"
-      className="relative isolate flex min-h-[calc(100svh-80px)] w-full flex-col gap-10 overflow-hidden"
+      className="relative isolate flex min-h-[calc(100svh-80px)] w-full flex-col justify-center gap-12 overflow-hidden sm:justify-start sm:gap-10"
     >
       <CitySky />
 
       <div className="mx-auto flex w-full max-w-[1280px] flex-col items-center px-5 pt-8 text-center md:px-10 md:pt-12">
-        <h1 className="font-outfit msm-rise max-w-[11ch] text-[clamp(46px,6.4vw,92px)] leading-[1] font-light tracking-[-0.035em] text-balance text-white md:max-w-[17ch]">
+        <h1 className="font-outfit msm-rise max-w-[11ch] text-[clamp(52px,15vw,66px)] leading-[1] font-light tracking-[-0.035em] text-balance text-white sm:text-[clamp(46px,6.4vw,92px)] md:max-w-[17ch]">
           Life happens when you{" "}
           <span
             className={`${GRADIENT} bg-clip-text pr-[0.04em] font-medium text-transparent`}
@@ -97,26 +97,26 @@ export default function Hero() {
         </h1>
 
         <div
-          className="msm-rise mt-9 flex flex-col items-center gap-4"
+          className="msm-rise mt-10 flex flex-col items-center gap-5 sm:mt-9 sm:gap-4"
           style={{ animationDelay: "0.3s" }}
         >
           <a
             href="#discover"
-            className={`font-outfit flex h-14 items-center gap-2 rounded-full px-8 text-[17px] font-semibold text-white shadow-[0_14px_36px_rgb(160_32_240/0.38)] transition hover:brightness-110 ${GRADIENT}`}
+            className={`font-outfit flex h-[60px] items-center gap-2 rounded-full px-9 text-[18px] font-semibold text-white shadow-[0_14px_36px_rgb(160_32_240/0.38)] transition hover:brightness-110 sm:h-14 sm:px-8 sm:text-[17px] ${GRADIENT}`}
           >
             Explore what’s near you <ArrowDown className="h-4 w-4" />
           </a>
           <BecomeHostButton
             label="or become a host, it’s free"
             icon={<ArrowRight className="h-4 w-4" />}
-            className="flex items-center gap-1.5 text-[15px] font-medium text-[#A5A8C3] transition hover:text-white"
+            className="flex items-center gap-1.5 text-[16px] font-medium text-[#A5A8C3] transition hover:text-white sm:text-[15px]"
           />
         </div>
       </div>
 
       {/* Community photos rotating on the horizon. Hover pauses. */}
       <div
-        className="msm-rise relative mx-auto mt-auto h-[clamp(230px,min(62vw,38svh),300px)] w-full max-w-[980px] shrink-0 sm:h-[clamp(190px,min(26vw,40svh),340px)]"
+        className="msm-rise relative mx-auto h-[clamp(250px,min(72vw,40svh),320px)] w-full max-w-[980px] shrink-0 sm:mt-auto sm:h-[clamp(190px,min(26vw,40svh),340px)]"
         style={{ animationDelay: "0.5s" }}
         onPointerEnter={() => setPaused(true)}
         onPointerLeave={() => setPaused(false)}
@@ -131,7 +131,7 @@ export default function Hero() {
             <figure
               key={src}
               aria-hidden={slot !== 0}
-              className="absolute top-[6%] left-1/2 w-[50%] transition-[transform,opacity] duration-[1100ms] ease-[cubic-bezier(.65,0,.25,1)] sm:w-[30%]"
+              className="absolute top-[6%] left-1/2 w-[56%] transition-[transform,opacity] duration-[1100ms] ease-[cubic-bezier(.65,0,.25,1)] sm:w-[30%]"
               style={{
                 transform: `translate(${p.x * 100}%, ${p.y * 100}%) rotate(${p.r}deg) scale(${p.s})`,
                 opacity: p.o,

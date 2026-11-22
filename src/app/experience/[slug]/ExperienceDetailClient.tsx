@@ -560,11 +560,15 @@ export default function ExperienceDetailClient({
     );
   }
 
-  const images = event.gallery_urls?.length
-    ? event.gallery_urls
-    : event.cover_image_url
-      ? [event.cover_image_url]
-      : [];
+  // The poster leads, as on the booking and ticket pages; "More photos"
+  // follow. Duplicates are dropped in case the poster is also in the gallery.
+  const images = [
+    ...new Set(
+      [event.cover_image_url, ...(event.gallery_urls ?? [])].filter(
+        (u): u is string => Boolean(u),
+      ),
+    ),
+  ];
   const place = event.is_online
     ? "Online"
     : (event.location ?? "Location shared after booking");

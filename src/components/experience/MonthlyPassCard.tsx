@@ -17,6 +17,7 @@ import { useIdToken } from "~/hooks/useIdToken";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import {
   useCreateTopupOrder,
+  usePlatformSetting,
   useVerifyTopupPayment,
   useWalletBalance,
 } from "~/hooks/useApi";
@@ -96,6 +97,23 @@ export default function MonthlyPassCard({
   const createOrder = useCreateTopupOrder();
   const verifyPayment = useVerifyTopupPayment();
   const walletBalance = wallet?.balance_cents ?? 0;
+
+  // Guest booking fee, charged on a pass exactly as on a ticket (flat, or a
+  // floored percentage of the price; 0 = off). Must match the server, or the
+  // card top-up below comes up short and the purchase fails.
+  const { data: bookingFee, isSuccess: feeReady } = usePlatformSetting<{
+    type?: "flat" | "percentage";
+    amount_cents?: number;
+    percentage?: number;
+  }>("booking_fee");
+  const feeCents =
+    priceCents <= 0
+      ? 0
+      : bookingFee?.type === "percentage"
+        ? Math.floor((priceCents * (bookingFee.percentage ?? 0)) / 100)
+        : Math.max(0, bookingFee?.amount_cents ?? 0);
+  /** What the guest actually pays for the pass: price + booking fee. */
+  const payCents = priceCents + feeCents;
 
   // Razorpay's checkout script, loaded the same way the booking page does it.
   useEffect(() => {
@@ -204,10 +222,7 @@ export default function MonthlyPassCard({
                 razorpay_payment_id: response.razorpay_payment_id,
                 razorpay_signature: response.razorpay_signature,
               });
-              await waitForBalance(
-                priceCents,
-                verified.data.balance_cents ?? 0,
-              );
+              await waitForBalance(payCents, verified.data.balance_cents ?? 0);
               await buy.mutateAsync();
             } catch {
               toast.error(
@@ -235,8 +250,8 @@ export default function MonthlyPassCard({
   const handleConfirm = async () => {
     const fresh = await refetchWallet();
     const balance = fresh.data?.balance_cents ?? walletBalance;
-    if (balance < priceCents) {
-      await payShortfallThenBuy(priceCents - balance);
+    if (balance < payCents) {
+      await payShortfallThenBuy(payCents - balance);
       return;
     }
     await buy.mutateAsync().catch(() => undefined); // onError already toasts
@@ -338,6 +353,11 @@ export default function MonthlyPassCard({
           <p className="font-outfit mb-1 text-2xl leading-none font-extrabold text-white">
             {rupees(priceCents)}
           </p>
+          {feeCents > 0 && (
+            <p className="mb-1 text-xs text-[#5f7e9a]">
+              + {rupees(feeCents)} booking fee
+            </p>
+          )}
           <p className="mb-4 text-sm text-[#5f7e9a]">
             {coverage}
             {savingPct && savingPct > 0 ? ` · save ${savingPct}%` : ""}
@@ -351,9 +371,11 @@ export default function MonthlyPassCard({
           {confirming ? (
             <div className="rounded-2xl border border-white/10 bg-[#121426] p-3">
               <p className="mb-3 text-sm text-[#5f7e9a]">
-                {walletBalance >= priceCents
-                  ? `${rupees(priceCents)} comes out of your wallet now.`
-                  : `${rupees(priceCents)} — your wallet has ${rupees(walletBalance)}, so the remaining ${rupees(priceCents - walletBalance)} is paid by card or UPI and topped into your wallet first.`}{" "}
+                {feeCents > 0 &&
+                  `${rupees(priceCents)} + ${rupees(feeCents)} booking fee = ${rupees(payCents)}. `}
+                {walletBalance >= payCents
+                  ? `${rupees(payCents)} comes out of your wallet now.`
+                  : `Your wallet has ${rupees(walletBalance)}, so the remaining ${rupees(payCents - walletBalance)} is paid by card or UPI and topped into your wallet first.`}{" "}
                 You can cancel for a full refund within 48 hours, before using a
                 session.
               </p>
@@ -378,7 +400,10 @@ export default function MonthlyPassCard({
                 <button
                   type="button"
                   disabled={
-                    buy.isPending || paying || (needsCode && !accessCode.trim())
+                    buy.isPending ||
+                    paying ||
+                    !feeReady ||
+                    (needsCode && !accessCode.trim())
                   }
                   onClick={() => void handleConfirm()}
                   className="flex-1 rounded-2xl bg-gradient-to-r from-[#A020F0] to-[#A020F0] py-2.5 text-sm font-semibold text-white shadow-[0_16px_32px_rgba(31,167,255,0.32)] transition disabled:cursor-not-allowed disabled:opacity-50"
@@ -387,7 +412,7 @@ export default function MonthlyPassCard({
                     ? "Paying…"
                     : buy.isPending
                       ? "Buying…"
-                      : walletBalance >= priceCents
+                      : walletBalance >= payCents
                         ? "Confirm"
                         : "Pay & get pass"}
                 </button>

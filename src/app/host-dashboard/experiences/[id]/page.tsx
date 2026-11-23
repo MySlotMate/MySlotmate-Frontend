@@ -1632,6 +1632,9 @@ export default function EditEventPage({
                         updateForm("breakMinutes", minutes)
                       }
                       durationMinutes={form.durationMinutes}
+                      onDurationMinutesChange={(mins) =>
+                        updateForm("durationMinutes", mins)
+                      }
                       isWeekly={form.sessionIsWeekly}
                       onIsWeeklyChange={(weekly) =>
                         updateForm("sessionIsWeekly", weekly)
@@ -1639,25 +1642,23 @@ export default function EditEventPage({
                     />
                   )}
 
-                  {(form.sessionType === "one_on_one" ||
-                    form.scheduleType === "custom_dates") && (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="mr-1 text-sm text-white/55">
-                        {form.sessionType === "one_on_one"
-                          ? "Each session"
-                          : "Each date lasts"}
-                      </span>
-                      {DURATION_OPTIONS.map((mins) => (
-                        <Chip
-                          key={mins}
-                          active={form.durationMinutes === mins}
-                          onClick={() => updateForm("durationMinutes", mins)}
-                        >
-                          {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                        </Chip>
-                      ))}
-                    </div>
-                  )}
+                  {form.sessionType === "group" &&
+                    form.scheduleType === "custom_dates" && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="mr-1 text-sm text-white/55">
+                          Each date lasts
+                        </span>
+                        {DURATION_OPTIONS.map((mins) => (
+                          <Chip
+                            key={mins}
+                            active={form.durationMinutes === mins}
+                            onClick={() => updateForm("durationMinutes", mins)}
+                          >
+                            {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
+                          </Chip>
+                        ))}
+                      </div>
+                    )}
                 </section>
 
                 {/* Location */}

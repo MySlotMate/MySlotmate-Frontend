@@ -15,7 +15,13 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-import { Calendar, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Repeat,
+} from "lucide-react";
 
 /**
  * Date and time pickers that read like the event page: a pill showing
@@ -65,7 +71,7 @@ function Pill({
       onClick={onClick}
       aria-label={ariaLabel}
       aria-expanded={open}
-      className={`flex h-11 items-center gap-2 rounded-full border px-4 text-[15px] font-medium transition ${
+      className={`flex h-11 items-center gap-2 rounded-full border px-4 text-[15px] font-medium whitespace-nowrap transition ${
         open
           ? "border-[#B57BFF] bg-[#7B2FFF]/15 text-white"
           : error
@@ -362,6 +368,73 @@ export function TimePill({
               );
             })}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Monday first, matching the calendar. Values are JS weekdays (0 = Sunday). */
+const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+/** A repeating day of the week, shown as "Every Monday". */
+export function WeekdayPill({
+  value,
+  onChange,
+  error,
+  placeholder = "Pick a day",
+}: {
+  value: number | undefined;
+  onChange: (v: number) => void;
+  error?: boolean;
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useOutside(open, () => setOpen(false));
+  const has = value !== undefined;
+
+  return (
+    <div ref={ref} className="relative">
+      <Pill
+        icon={<Repeat className="h-[18px] w-[18px]" />}
+        label={has ? `Every ${WEEKDAY_NAMES[value]}` : placeholder}
+        empty={!has}
+        error={error}
+        open={open}
+        onClick={() => setOpen((v) => !v)}
+        ariaLabel="Day of the week"
+      />
+      {open && (
+        <div data-msm-picker className={`${PANEL} w-[200px] p-2`}>
+          {WEEK_ORDER.map((day) => {
+            const on = day === value;
+            return (
+              <button
+                key={day}
+                type="button"
+                onClick={() => {
+                  onChange(day);
+                  setOpen(false);
+                }}
+                className={`flex w-full rounded-xl px-3 py-2 text-left text-sm transition ${
+                  on
+                    ? "bg-gradient-to-r from-[#7038F5] to-[#B724EA] font-semibold text-white"
+                    : "text-white/85 hover:bg-white/10"
+                }`}
+              >
+                {WEEKDAY_NAMES[day]}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

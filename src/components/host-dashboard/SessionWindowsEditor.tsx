@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { FiClock, FiX } from "react-icons/fi";
+import type { ReactNode } from "react";
+import { FiPlus, FiX } from "react-icons/fi";
 import { format, parseISO } from "date-fns";
 import {
   generateSessionSlots,
@@ -13,16 +13,32 @@ import {
   WEEKDAY_LABELS,
   type SessionWindow,
 } from "~/lib/sessionSlots";
+import {
+  DatePill,
+  TimePill,
+  WeekdayPill,
+} from "~/components/host-dashboard/DateTimePills";
+import {
+  Chip,
+  DURATION_OPTIONS,
+  Segmented,
+} from "~/components/host-dashboard/EventFormKit";
 
 /**
  * Availability editor for one-on-one experiences.
  *
- * The host describes their day in windows ("10:00–12:00, 15:00–18:00") rather
- * than listing every slot; this component expands those windows live so they
- * can see exactly what guests will be able to book before publishing.
+ * The host describes when they're free ("Mondays 10 AM to 1 PM") rather than
+ * listing every slot; this component splits those hours into sessions live so
+ * they can see exactly what guests will be able to book before publishing.
+ *
+ * Laid out top to bottom in the order a host decides things: how it repeats,
+ * how long a session is, which hours, and the break. Uses the same pill
+ * pickers as group events.
  *
  * Shared by the create and edit forms — both drive the same generator.
  */
+
+const BREAK_OPTIONS = [0, 5, 10, 15, 30];
 
 const formatDayLabel = (date: string) => {
   try {
@@ -32,14 +48,49 @@ const formatDayLabel = (date: string) => {
   }
 };
 
+const shortLength = (mins: number) =>
+  mins >= 60 ? `${mins / 60}h` : `${mins}m`;
+
+/** "14:00" → "2:00 PM", to match the pickers. */
+const time12 = (v: string) => {
+  const [h = 0, m = 0] = v.split(":").map(Number);
+  const ap = h < 12 ? "AM" : "PM";
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${ap}`;
+};
+
+function Step({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-white/55">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+function SlotChips({ slots }: { slots: { time: string; endTime: string }[] }) {
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {slots.map((slot) => (
+        <span
+          key={slot.time}
+          className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-xs font-medium text-white/85"
+        >
+          {time12(slot.time)}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 type Props = {
   windows: SessionWindow[];
   onWindowsChange: (windows: SessionWindow[]) => void;
   breakMinutes: number;
   onBreakMinutesChange: (minutes: number) => void;
-  /** Session length, set in the Basics step — one session per slot. */
+  /** Length of one session — each slot is one session. */
   durationMinutes: number;
-  /** True = weekly office hours; false = a fixed list of dates. */
+  onDurationMinutesChange: (minutes: number) => void;
+  /** True = weekly hours; false = a fixed list of dates. */
   isWeekly: boolean;
   onIsWeeklyChange: (weekly: boolean) => void;
   /** Show validation errors even before the host has touched anything. */
@@ -52,21 +103,11 @@ export default function SessionWindowsEditor({
   breakMinutes,
   onBreakMinutesChange,
   durationMinutes,
+  onDurationMinutesChange,
   isWeekly,
   onIsWeeklyChange,
   showErrors = false,
 }: Props) {
-  // Mirror the numeric input as a string so clearing the field doesn't snap
-  // back to "0" mid-edit (same pattern as the other numeric inputs in the form).
-  // Resyncing happens during render rather than in an effect — the value is
-  // derived from a prop, so an effect would cost an extra render pass.
-  const [breakInputStr, setBreakInputStr] = useState(String(breakMinutes));
-  const [lastBreakMinutes, setLastBreakMinutes] = useState(breakMinutes);
-  if (breakMinutes !== lastBreakMinutes) {
-    setLastBreakMinutes(breakMinutes);
-    setBreakInputStr(String(breakMinutes));
-  }
-
   const dated = generateSessionSlots(windows, durationMinutes, breakMinutes);
   const weekly = generateWeeklySessions(windows, durationMinutes, breakMinutes);
   const grouped = groupSlotsByDate(dated.slots);
@@ -85,34 +126,29 @@ export default function SessionWindowsEditor({
   const switchMode = (weeklyMode: boolean) => {
     if (weeklyMode === isWeekly) return;
     onWindowsChange(
-      windows.map((w) => {
-        if (weeklyMode) {
-          return {
-            date: "",
-            start: w.start,
-            end: w.end,
-            weekday: weekdayOfDate(w.date),
-          };
-        }
-        return { date: "", start: w.start, end: w.end };
-      }),
+      windows.map((w) =>
+        weeklyMode
+          ? {
+              date: "",
+              start: w.start,
+              end: w.end,
+              weekday: weekdayOfDate(w.date),
+            }
+          : { date: "", start: w.start, end: w.end },
+      ),
     );
     onIsWeeklyChange(weeklyMode);
   };
 
-  const updateWindow = (
-    index: number,
-    field: keyof SessionWindow,
-    value: string,
-  ) => {
+  const patchWindow = (index: number, patch: Partial<SessionWindow>) => {
     onWindowsChange(
-      windows.map((w, i) => (i === index ? { ...w, [field]: value } : w)),
+      windows.map((w, i) => (i === index ? { ...w, ...patch } : w)),
     );
   };
 
   const addWindow = () => {
-    // A second window on the same day is the common case (a lunch break), so
-    // carry the last date forward.
+    // A second stretch on the same day is the common case (a lunch break), so
+    // carry the last day forward.
     const last = windows[windows.length - 1];
     onWindowsChange([
       ...windows,
@@ -127,245 +163,156 @@ export default function SessionWindowsEditor({
   };
 
   const today = new Date().toISOString().split("T")[0];
+  // Keep a break saved from before (say 20 min) selectable.
+  const breakOptions = BREAK_OPTIONS.includes(breakMinutes)
+    ? BREAK_OPTIONS
+    : [...BREAK_OPTIONS, breakMinutes].sort((a, b) => a - b);
+
+  const sessionCount = isWeekly ? weekly.perWeek : dated.slots.length;
 
   return (
-    <div className="space-y-4 rounded-xl border border-[#A020F0] bg-[#A020F0]/10 p-5">
-      <div>
-        <h4 className="text-sm font-semibold text-white">Your availability</h4>
-        <p className="text-xs text-[#A5A8C3]">
-          Add the stretches of time you&apos;re free. We&apos;ll split each one
-          into{" "}
-          {durationMinutes > 0 ? `${durationMinutes}-minute` : "individual"}{" "}
-          sessions that guests book one at a time.
-        </p>
-        <p className="mt-1 text-xs text-[#A5A8C3]">
-          Each session seats one guest, so the group size you set in Basics
-          doesn&apos;t apply here.
-        </p>
+    <div className="space-y-6">
+      <div className="max-w-sm">
+        <Segmented
+          options={[
+            { value: "weekly", label: "Every week" },
+            { value: "dates", label: "Specific dates" },
+          ]}
+          value={isWeekly ? "weekly" : "dates"}
+          onChange={(v) => switchMode(v === "weekly")}
+        />
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <button
-          type="button"
-          onClick={() => switchMode(true)}
-          className={`flex-1 rounded-lg border p-3 text-left transition ${
-            isWeekly
-              ? "border-[#A020F0] bg-[#121426] font-semibold text-[#D8B4FE]"
-              : "border-white/10 bg-[#121426] text-white/80 hover:border-white/15"
-          }`}
-        >
-          <div className="text-sm font-medium">Weekly hours</div>
-          <div className="mt-0.5 text-xs text-[#A5A8C3]">
-            Same hours every week, repeating indefinitely
-          </div>
-        </button>
-        <button
-          type="button"
-          onClick={() => switchMode(false)}
-          className={`flex-1 rounded-lg border p-3 text-left transition ${
-            !isWeekly
-              ? "border-[#A020F0] bg-[#121426] font-semibold text-[#D8B4FE]"
-              : "border-white/10 bg-[#121426] text-white/80 hover:border-white/15"
-          }`}
-        >
-          <div className="text-sm font-medium">Specific dates</div>
-          <div className="mt-0.5 text-xs text-[#A5A8C3]">
-            A fixed set of days, one by one
-          </div>
-        </button>
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-xs font-medium text-[#A5A8C3]">
-          Break between sessions
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={0}
-            step={5}
-            value={breakInputStr}
-            onChange={(e) => {
-              setBreakInputStr(e.target.value);
-              const parsed = parseInt(e.target.value, 10);
-              onBreakMinutesChange(
-                Number.isNaN(parsed) || parsed < 0 ? 0 : parsed,
-              );
-            }}
-            onBlur={() => setBreakInputStr(String(breakMinutes))}
-            className="w-28 rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
-          />
-          <span className="text-sm text-[#A5A8C3]">minutes</span>
+      <Step label="Each session lasts">
+        <div className="flex flex-wrap gap-2">
+          {DURATION_OPTIONS.map((mins) => (
+            <Chip
+              key={mins}
+              active={durationMinutes === mins}
+              onClick={() => onDurationMinutesChange(mins)}
+            >
+              {shortLength(mins)}
+            </Chip>
+          ))}
         </div>
-        <p className="text-xs text-[#A5A8C3]">
-          Buffer to catch your breath between back-to-back guests. 0 means no
-          gap.
-        </p>
-      </div>
+      </Step>
 
-      <div className="space-y-3">
-        {windows.map((w, idx) => (
-          <div
-            key={idx}
-            className="flex flex-wrap items-end gap-3 rounded-lg border border-white/10 bg-[#121426] p-3 shadow-sm"
-          >
-            <div className="min-w-[150px] flex-1">
-              <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
-                {isWeekly ? "Day" : "Date"}
-              </label>
+      <Step label="When you're free">
+        <div className="space-y-3">
+          {windows.map((w, idx) => (
+            <div key={idx} className="flex flex-wrap items-center gap-2">
               {isWeekly ? (
-                <select
-                  value={w.weekday ?? ""}
-                  onChange={(e) =>
-                    onWindowsChange(
-                      windows.map((win, i) =>
-                        i === idx
-                          ? {
-                              ...win,
-                              weekday:
-                                e.target.value === ""
-                                  ? undefined
-                                  : Number(e.target.value),
-                            }
-                          : win,
-                      ),
-                    )
-                  }
-                  className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
-                >
-                  <option value="">Pick a day</option>
-                  {WEEKDAY_LABELS.map((label, day) => (
-                    <option key={label} value={day}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
+                <WeekdayPill
+                  value={w.weekday}
+                  onChange={(day) => patchWindow(idx, { weekday: day })}
+                  error={showErrors && w.weekday === undefined}
+                />
               ) : (
-                <input
-                  type="date"
+                <DatePill
                   value={w.date}
                   min={today}
-                  onChange={(e) => updateWindow(idx, "date", e.target.value)}
-                  className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
+                  onChange={(v) => patchWindow(idx, { date: v })}
+                  error={showErrors && !w.date}
                 />
               )}
+              {/* Keep From–Until together so phones wrap the whole pair. */}
+              <div className="flex items-center gap-2">
+                <TimePill
+                  value={w.start}
+                  onChange={(v) => patchWindow(idx, { start: v })}
+                  placeholder="From"
+                  error={showErrors && !w.start}
+                  ariaLabel={`Free from, row ${idx + 1}`}
+                />
+                <span className="text-white/35">to</span>
+                <TimePill
+                  value={w.end}
+                  onChange={(v) => patchWindow(idx, { end: v })}
+                  placeholder="Until"
+                  start={w.start || undefined}
+                  error={showErrors && !w.end}
+                  ariaLabel={`Free until, row ${idx + 1}`}
+                />
+                {windows.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeWindow(idx)}
+                    className="p-1.5 text-white/40 transition hover:text-red-400"
+                    aria-label="Remove these hours"
+                  >
+                    <FiX size={16} />
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="w-32 min-w-[110px]">
-              <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
-                From
-              </label>
-              <input
-                type="time"
-                value={w.start}
-                onChange={(e) => updateWindow(idx, "start", e.target.value)}
-                className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
-              />
-            </div>
-            <div className="w-32 min-w-[110px]">
-              <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
-                To
-              </label>
-              <input
-                type="time"
-                value={w.end}
-                onChange={(e) => updateWindow(idx, "end", e.target.value)}
-                className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#A020F0]"
-              />
-            </div>
-            {windows.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeWindow(idx)}
-                className="p-2 text-[#777B98] transition hover:text-red-400"
-                title="Remove window"
-              >
-                <FiX size={18} />
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+          <button
+            type="button"
+            onClick={addWindow}
+            className="flex items-center gap-1.5 px-2 text-sm font-medium text-[#D8B4FE] transition hover:text-white"
+          >
+            <FiPlus size={15} /> Add more hours
+          </button>
+        </div>
+      </Step>
 
-      <button
-        type="button"
-        onClick={addWindow}
-        className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#D8B4FE] hover:underline"
-      >
-        + Add another {isWeekly ? "weekly window" : "time window"}
-      </button>
+      <Step label="Break between sessions">
+        <div className="flex flex-wrap gap-2">
+          {breakOptions.map((mins) => (
+            <Chip
+              key={mins}
+              active={breakMinutes === mins}
+              onClick={() => onBreakMinutesChange(mins)}
+            >
+              {mins === 0 ? "None" : `${mins}m`}
+            </Chip>
+          ))}
+        </div>
+      </Step>
 
       {visibleErrors.length > 0 && (
-        <ul className="space-y-1 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300">
+        <ul className="space-y-1 rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-300">
           {visibleErrors.map((err) => (
             <li key={err}>{err}</li>
           ))}
         </ul>
       )}
 
-      {isWeekly && weekly.perWeek > 0 && (
-        <div className="space-y-3 rounded-lg border border-white/10 bg-[#121426] p-4">
-          <div className="flex items-center gap-1.5">
-            <FiClock className="h-4 w-4 text-[#D8B4FE]" />
-            <h5 className="text-sm font-semibold text-white">
-              {weekly.perWeek} session{weekly.perWeek === 1 ? "" : "s"} a week,
-              every week
-            </h5>
-          </div>
-          {weekly.days.map((day) => (
-            <div key={day.weekday} className="space-y-1.5">
-              <p className="text-xs font-medium text-[#A5A8C3]">
-                {WEEKDAY_LABELS[day.weekday]}s · {day.slots.length} session
-                {day.slots.length === 1 ? "" : "s"}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {day.slots.map((slot) => (
-                  <span
-                    key={slot.time}
-                    className="rounded-md border border-[#A020F0] bg-[#A020F0]/10 px-2 py-1 text-xs font-medium text-white"
-                  >
-                    {slot.time}–{slot.endTime}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-          <p className="text-xs text-[#A5A8C3]">
-            {weekly.perWeek * SESSION_HORIZON_WEEKS > MAX_GENERATED_SESSIONS
-              ? `That's a dense schedule — guests will see the next ${MAX_GENERATED_SESSIONS} sessions rather than the full ${SESSION_HORIZON_WEEKS} weeks.`
-              : `Guests can book up to ${SESSION_HORIZON_WEEKS} weeks ahead.`}{" "}
-            The window rolls forward on its own, so your calendar never runs
-            out.
+      {sessionCount > 0 && (
+        <div className="space-y-3 rounded-2xl border border-white/[0.06] bg-[#131328] p-4">
+          <p className="text-sm font-semibold text-white">
+            Guests can book {sessionCount} session
+            {sessionCount === 1 ? "" : "s"}
+            {isWeekly ? " a week" : ""}
+            <span className="font-normal text-white/45"> · one guest each</span>
           </p>
-        </div>
-      )}
 
-      {!isWeekly && dated.slots.length > 0 && (
-        <div className="space-y-3 rounded-lg border border-white/10 bg-[#121426] p-4">
-          <div className="flex items-center gap-1.5">
-            <FiClock className="h-4 w-4 text-[#D8B4FE]" />
-            <h5 className="text-sm font-semibold text-white">
-              {dated.slots.length} session{dated.slots.length === 1 ? "" : "s"}{" "}
-              will be created
-            </h5>
-          </div>
-          {grouped.map(([date, daySlots]) => (
-            <div key={date} className="space-y-1.5">
-              <p className="text-xs font-medium text-[#A5A8C3]">
-                {formatDayLabel(date)} · {daySlots.length} session
-                {daySlots.length === 1 ? "" : "s"}
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {daySlots.map((slot) => (
-                  <span
-                    key={`${slot.date}-${slot.time}`}
-                    className="rounded-md border border-[#A020F0] bg-[#A020F0]/10 px-2 py-1 text-xs font-medium text-white"
-                  >
-                    {slot.time}–{slot.endTime}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+          {isWeekly
+            ? weekly.days.map((day) => (
+                <div key={day.weekday} className="space-y-1.5">
+                  <p className="text-xs text-white/50">
+                    {WEEKDAY_LABELS[day.weekday]}s
+                  </p>
+                  <SlotChips slots={day.slots} />
+                </div>
+              ))
+            : grouped.map(([date, daySlots]) => (
+                <div key={date} className="space-y-1.5">
+                  <p className="text-xs text-white/50">
+                    {formatDayLabel(date)}
+                  </p>
+                  <SlotChips slots={daySlots} />
+                </div>
+              ))}
+
+          {isWeekly && (
+            <p className="text-xs text-white/45">
+              {weekly.perWeek * SESSION_HORIZON_WEEKS > MAX_GENERATED_SESSIONS
+                ? `Guests see your next ${MAX_GENERATED_SESSIONS} sessions at a time.`
+                : `Guests can book up to ${SESSION_HORIZON_WEEKS} weeks ahead.`}{" "}
+              It keeps rolling forward, so you never run out.
+            </p>
+          )}
         </div>
       )}
     </div>

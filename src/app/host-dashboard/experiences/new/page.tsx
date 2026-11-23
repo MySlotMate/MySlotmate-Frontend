@@ -1969,41 +1969,26 @@ export default function CreateExperiencePage() {
                   )}
 
                 {form.sessionType === "one_on_one" && (
-                  <>
-                    <SessionWindowsEditor
-                      windows={form.sessionWindows}
-                      onWindowsChange={(windows) =>
-                        updateForm("sessionWindows", windows)
-                      }
-                      breakMinutes={form.breakMinutes}
-                      onBreakMinutesChange={(minutes) =>
-                        updateForm("breakMinutes", minutes)
-                      }
-                      durationMinutes={form.durationMinutes}
-                      isWeekly={form.sessionIsWeekly}
-                      onIsWeeklyChange={(weekly) =>
-                        updateForm("sessionIsWeekly", weekly)
-                      }
-                      showErrors={showErrors}
-                    />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="mr-1 text-sm text-white/55">
-                        Each session
-                      </span>
-                      {DURATION_OPTIONS.map((mins) => (
-                        <Chip
-                          key={mins}
-                          active={form.durationMinutes === mins}
-                          onClick={() => {
-                            updateForm("durationMinutes", mins);
-                            setDurationInputStr(mins.toString());
-                          }}
-                        >
-                          {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                        </Chip>
-                      ))}
-                    </div>
-                  </>
+                  <SessionWindowsEditor
+                    windows={form.sessionWindows}
+                    onWindowsChange={(windows) =>
+                      updateForm("sessionWindows", windows)
+                    }
+                    breakMinutes={form.breakMinutes}
+                    onBreakMinutesChange={(minutes) =>
+                      updateForm("breakMinutes", minutes)
+                    }
+                    durationMinutes={form.durationMinutes}
+                    onDurationMinutesChange={(mins) => {
+                      updateForm("durationMinutes", mins);
+                      setDurationInputStr(mins.toString());
+                    }}
+                    isWeekly={form.sessionIsWeekly}
+                    onIsWeeklyChange={(weekly) =>
+                      updateForm("sessionIsWeekly", weekly)
+                    }
+                    showErrors={showErrors}
+                  />
                 )}
 
                 {form.sessionType === "group" &&

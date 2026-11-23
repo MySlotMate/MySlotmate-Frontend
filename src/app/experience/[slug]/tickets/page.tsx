@@ -6,11 +6,16 @@ export default async function TicketsPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ date?: string }>;
+  searchParams: Promise<{ date?: string; guest?: string }>;
 }) {
-  const [{ slug }, { date }] = await Promise.all([params, searchParams]);
+  const [{ slug }, { date, guest }] = await Promise.all([params, searchParams]);
   const initialEvent = await getPublicEvent(slug);
   return (
-    <TicketsClient slug={slug} initialEvent={initialEvent} initialDate={date} />
+    <TicketsClient
+      slug={slug}
+      initialEvent={initialEvent}
+      initialDate={date}
+      guestCheckout={guest === "1"}
+    />
   );
 }

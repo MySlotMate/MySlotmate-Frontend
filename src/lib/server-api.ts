@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { cache } from "react";
 import { env } from "~/env";
 import type { EventDTO } from "~/lib/api";
@@ -51,4 +52,39 @@ export async function fetchPublicList<T>(
 export const getPublicEvent = cache(
   async (slug: string): Promise<EventDTO | null> =>
     fetchPublic<EventDTO>(`/events/${slug}`),
+);
+
+/** A marketing landing page (/{slug}); see app/[slug]/page.tsx. */
+export type LandingPageDTO = {
+  slug: string;
+  event_slug: string;
+  title: string;
+  hook_line: string | null;
+  cover_image_url: string | null;
+  gallery_urls: string[];
+  content: string;
+  cta_text: string | null;
+  seo_description: string | null;
+};
+
+const LANDING_SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/**
+ * Unlike fetchPublic, this never maps a failure to "not found": a cold or
+ * erroring backend throws (Next keeps serving the last good page / shows the
+ * error page) instead of caching a 404 for a live ad landing page. Only a real
+ * 404 from the API — or a path that can't be a slug, like /wp-admin probes,
+ * which then never reach the backend — becomes notFound().
+ */
+export const getLandingPage = cache(
+  async (slug: string): Promise<LandingPageDTO> => {
+    if (!LANDING_SLUG_RE.test(slug)) notFound();
+    const res = await fetch(
+      `${env.NEXT_PUBLIC_API_URL}/marketing-pages/${slug}`,
+      { next: { revalidate: 300 } },
+    );
+    if (res.status === 404) notFound();
+    if (!res.ok) throw new Error(`landing page ${slug}: HTTP ${res.status}`);
+    return ((await res.json()) as Envelope<LandingPageDTO>).data;
+  },
 );

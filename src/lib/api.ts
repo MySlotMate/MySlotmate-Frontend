@@ -226,10 +226,16 @@ export function sendLoginOTP(phone: string) {
 }
 
 /** POST /auth/otp/login/verify */
-export function verifyLoginOTP(phone: string, sessionID: string, otp: string) {
+export function verifyLoginOTP(
+  phone: string,
+  sessionID: string,
+  otp: string,
+  /** Optional details (guest checkout); they only fill an account's empty fields. */
+  profile?: { name?: string; email?: string },
+) {
   return apiFetch<PhoneLoginVerifyResponse>("/auth/otp/login/verify", {
     method: "POST",
-    data: { phone, session_id: sessionID, otp },
+    data: { phone, session_id: sessionID, otp, ...profile },
   });
 }
 

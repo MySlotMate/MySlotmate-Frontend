@@ -3182,3 +3182,21 @@ export async function downloadFeeDocument(doc: FeeDocumentDTO) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
+
+/** Downloads the signed-in host's payout statement PDF for month "2026-11". */
+export async function downloadHostStatement(month: string) {
+  const res = await api.request<Blob>({
+    url: "/billing/host-statement",
+    params: { month, format: "pdf" },
+    responseType: "blob",
+    headers: await currentAuthHeader(),
+  });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `MySlotMate-statement-${month}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

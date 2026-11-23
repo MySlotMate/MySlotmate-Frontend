@@ -12,6 +12,7 @@ import {
   needsTaxProfile,
 } from "~/components/host-dashboard/TaxDetails";
 import PayoutScheduleCard from "~/components/host-dashboard/PayoutScheduleCard";
+import MonthlyStatementCard from "~/components/host-dashboard/MonthlyStatementCard";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { SharedEventsCard } from "~/components/host-dashboard";
@@ -1075,6 +1076,8 @@ function EarningsContent() {
                   fmt={fmtCurrency}
                   onEdit={() => openTaxModal()}
                 />
+
+                <MonthlyStatementCard />
               </section>
             )}
           </>

@@ -5,7 +5,9 @@ import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CoHostManager } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
-import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
+import PrivacyAccessSection, {
+  whoCanBookLabel,
+} from "~/components/host/PrivacyAccessSection";
 import CouponsManager from "~/components/host/CouponsManager";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
@@ -1557,7 +1559,9 @@ export default function EditEventPage({
                     ) : (
                       <LuGlobe className="h-3.5 w-3.5 text-[#D8B4FE]" />
                     )}
-                    {form.isPrivate ? "Private event" : "Public event"}
+                    {form.isPrivate
+                      ? whoCanBookLabel(true, form.privateAccessMode)
+                      : "Anyone can book"}
                   </button>
                   {form.sessionType === "one_on_one" && (
                     <span className="rounded-full border border-white/15 px-3.5 py-1.5 text-[13px] font-medium text-white/75">
@@ -1911,32 +1915,23 @@ export default function EditEventPage({
                 >
                   <div>
                     <MoreOptions
-                      title="Who can see it"
-                      summary={form.isPrivate ? "Private" : "Public"}
+                      title="Who can book?"
+                      summary={whoCanBookLabel(
+                        form.isPrivate,
+                        form.privateAccessMode,
+                      )}
                       defaultOpen={form.isPrivate}
                     >
-                      <Segmented<"public" | "private">
-                        value={form.isPrivate ? "private" : "public"}
-                        onChange={(v) =>
-                          updateForm("isPrivate", v === "private")
+                      <PrivacyAccessSection
+                        isPrivate={form.isPrivate}
+                        privateAccessMode={form.privateAccessMode}
+                        accessMode={form.accessMode}
+                        accessPasskey={form.accessPasskey}
+                        canGenerateCodes
+                        onChange={(patch) =>
+                          setForm((prev) => ({ ...prev, ...patch }))
                         }
-                        options={[
-                          { value: "public", label: "Public" },
-                          { value: "private", label: "Private" },
-                        ]}
                       />
-                      {form.isPrivate && (
-                        <PrivacyAccessSection
-                          isPrivate={form.isPrivate}
-                          privateAccessMode={form.privateAccessMode}
-                          accessMode={form.accessMode}
-                          accessPasskey={form.accessPasskey}
-                          canGenerateCodes
-                          onChange={(patch) =>
-                            setForm((prev) => ({ ...prev, ...patch }))
-                          }
-                        />
-                      )}
                       {host?.id && event?.id && form.isPrivate && (
                         <CouponsManager
                           eventId={event.id}

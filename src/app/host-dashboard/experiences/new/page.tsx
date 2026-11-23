@@ -32,7 +32,9 @@ import {
 } from "~/components/host-dashboard/EventFormKit";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
 import { DatePill, TimePill } from "~/components/host-dashboard/DateTimePills";
-import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
+import PrivacyAccessSection, {
+  whoCanBookLabel,
+} from "~/components/host/PrivacyAccessSection";
 import { CoHostManager } from "~/components/host-dashboard";
 import {
   useMyHost,
@@ -1895,7 +1897,9 @@ export default function CreateExperiencePage() {
                   ) : (
                     <LuGlobe className="h-3.5 w-3.5 text-[#D8B4FE]" />
                   )}
-                  {form.isPrivate ? "Private event" : "Public event"}
+                  {form.isPrivate
+                    ? whoCanBookLabel(true, form.privateAccessMode)
+                    : "Anyone can book"}
                 </button>
                 {isProfessional && (
                   <div className="flex rounded-full border border-white/15 bg-white/[0.04] p-0.5 text-[13px] font-medium">
@@ -2469,36 +2473,24 @@ export default function CreateExperiencePage() {
               >
                 <div>
                   <MoreOptions
-                    title="Who can see it"
-                    summary={form.isPrivate ? "Private" : "Public"}
+                    title="Who can book?"
+                    summary={whoCanBookLabel(
+                      form.isPrivate,
+                      form.privateAccessMode,
+                    )}
                     defaultOpen={form.isPrivate}
                   >
-                    <Segmented<"public" | "private">
-                      value={form.isPrivate ? "private" : "public"}
-                      onChange={(v) => updateForm("isPrivate", v === "private")}
-                      options={[
-                        { value: "public", label: "Public" },
-                        { value: "private", label: "Private" },
-                      ]}
+                    <PrivacyAccessSection
+                      isPrivate={form.isPrivate}
+                      privateAccessMode={form.privateAccessMode}
+                      accessMode={form.accessMode}
+                      accessPasskey={form.accessPasskey}
+                      showError={showErrors}
+                      canGenerateCodes={!!createdEventId}
+                      onChange={(patch) =>
+                        setForm((prev) => ({ ...prev, ...patch }))
+                      }
                     />
-                    <p className="px-1 text-xs text-white/45">
-                      {form.isPrivate
-                        ? "Private: only people with your passkey or invite can book."
-                        : "Public: anyone on MySlotMate can find and book it."}
-                    </p>
-                    {form.isPrivate && (
-                      <PrivacyAccessSection
-                        isPrivate={form.isPrivate}
-                        privateAccessMode={form.privateAccessMode}
-                        accessMode={form.accessMode}
-                        accessPasskey={form.accessPasskey}
-                        showError={showErrors}
-                        canGenerateCodes={!!createdEventId}
-                        onChange={(patch) =>
-                          setForm((prev) => ({ ...prev, ...patch }))
-                        }
-                      />
-                    )}
                   </MoreOptions>
                   <MoreOptions
                     title="Refunds & payout"

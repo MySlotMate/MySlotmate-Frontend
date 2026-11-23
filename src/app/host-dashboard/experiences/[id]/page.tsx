@@ -20,6 +20,7 @@ import {
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { useHostTier } from "~/hooks/useHostTier";
 import { VerifyToEarnSheet } from "~/components/host-dashboard/VerifyToEarn";
+import GuestPaymentCard from "~/components/host-dashboard/GuestPaymentCard";
 import { FREE_HOST_LIMITS, findOffPlatformPayment } from "~/lib/hostTier";
 import {
   FiArrowLeft,
@@ -59,10 +60,8 @@ import {
 import type { SessionType } from "~/lib/api";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
 import {
-  AddPill,
   Chip,
   CoverPoster,
-  FIELD,
   GRADIENT,
   INLINE_FIELD,
   INLINE_PICKER,
@@ -73,7 +72,6 @@ import {
   Rows,
   Section,
   Segmented,
-  ToggleRow,
 } from "~/components/host-dashboard/EventFormKit";
 import { DatePill, TimePill } from "~/components/host-dashboard/DateTimePills";
 import { LocationSearchInput, MapPickerModal } from "~/components";
@@ -947,28 +945,6 @@ export default function EditEventPage({
       setForm((prev) => ({ ...prev, durationMinutes: mins }));
   }, [form.sessionType, form.eventTime, form.endTime, form.durationMinutes]);
 
-  const addPriceTier = () => {
-    updateForm("priceTiers", [...form.priceTiers, { name: "", priceStr: "" }]);
-  };
-  const removePriceTier = (index: number) => {
-    updateForm(
-      "priceTiers",
-      form.priceTiers.filter((_, i) => i !== index),
-    );
-  };
-  const updatePriceTier = (
-    index: number,
-    field: "name" | "priceStr" | "seatsStr",
-    value: string,
-  ) => {
-    updateForm(
-      "priceTiers",
-      form.priceTiers.map((t, i) =>
-        i === index ? { ...t, [field]: value } : t,
-      ),
-    );
-  };
-
   const handleCoverUpload = (files: File[]) => {
     const file = files[0];
     if (file) {
@@ -1829,11 +1805,7 @@ export default function EditEventPage({
                 </Section>
 
                 {/* Tickets */}
-                <Section
-                  title={
-                    form.sessionType === "one_on_one" ? "Price" : "Tickets"
-                  }
-                >
+                <Section title="How do guests pay?">
                   {form.sessionType === "group" && (
                     <Rows>
                       <Row label="Slots">
@@ -1888,23 +1860,16 @@ export default function EditEventPage({
                       </button>
                     </p>
                   )}
-                  {!form.isFree && !form.useTiers && (
-                    <Rows>
-                      <Row label="Price per person (₹)">
-                        <input
-                          type="number"
-                          min={0}
-                          value={form.priceCents / 100}
-                          onChange={(e) =>
-                            updateForm(
-                              "priceCents",
-                              Math.round(parseFloat(e.target.value) * 100) || 0,
-                            )
-                          }
-                          className={ROW_INPUT}
-                        />
-                      </Row>
-                    </Rows>
+                  {!form.isFree && (
+                    <GuestPaymentCard
+                      value={form}
+                      onChange={(patch) =>
+                        setForm((prev) => ({ ...prev, ...patch }))
+                      }
+                      repeating={form.scheduleType !== "one_time"}
+                      showErrors={false}
+                      passExtra={<PassHoldersPanel eventId={id} />}
+                    />
                   )}
                 </Section>
 
@@ -1983,166 +1948,6 @@ export default function EditEventPage({
                         }
                       />
                     </MoreOptions>
-
-                    {!form.isFree && (
-                      <MoreOptions
-                        title="Ticket types & monthly pass"
-                        summary={
-                          form.useTiers
-                            ? `${form.priceTiers.length} ticket types`
-                            : form.monthlyPassEnabled
-                              ? "One price · pass on"
-                              : "One price"
-                        }
-                      >
-                        <Segmented<"single" | "tiers">
-                          value={form.useTiers ? "tiers" : "single"}
-                          onChange={(v) =>
-                            updateForm("useTiers", v === "tiers")
-                          }
-                          options={[
-                            { value: "single", label: "Single price" },
-                            { value: "tiers", label: "Multiple ticket types" },
-                          ]}
-                        />
-                        {form.useTiers && (
-                          <div className="space-y-2">
-                            {form.priceTiers.map((tier, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2"
-                              >
-                                <input
-                                  type="text"
-                                  value={tier.name}
-                                  onChange={(e) =>
-                                    updatePriceTier(
-                                      index,
-                                      "name",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="Ticket name, e.g. VIP"
-                                  className={`${FIELD} !py-2.5`}
-                                />
-                                <input
-                                  type="number"
-                                  min={0}
-                                  value={tier.priceStr}
-                                  onChange={(e) =>
-                                    updatePriceTier(
-                                      index,
-                                      "priceStr",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="₹ Price"
-                                  className={`${FIELD} !w-32 !py-2.5`}
-                                />
-                                <input
-                                  type="text"
-                                  inputMode="numeric"
-                                  value={tier.seatsStr ?? ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    if (val === "" || /^\d+$/.test(val)) {
-                                      updatePriceTier(index, "seatsStr", val);
-                                    }
-                                  }}
-                                  placeholder="Seats"
-                                  aria-label="Seats per session (blank = no limit)"
-                                  title="Seats per session. Leave blank for no limit."
-                                  className={`${FIELD} !w-24 !py-2.5`}
-                                />
-                                {form.priceTiers.length > 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => removePriceTier(index)}
-                                    className="p-1.5 text-white/40 transition hover:text-red-400"
-                                    aria-label="Remove ticket type"
-                                  >
-                                    <FiX className="h-5 w-5" />
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                            <AddPill onClick={addPriceTier}>
-                              Add another ticket type
-                            </AddPill>
-                            <p className="px-1 text-xs text-white/40">
-                              Seats caps a ticket type per session (e.g. 10
-                              Gold). Leave blank for no limit.
-                            </p>
-                          </div>
-                        )}
-                        <ToggleRow
-                          label="Monthly pass"
-                          hint={
-                            form.scheduleType === "one_time"
-                              ? "Repeating or several-dates events only."
-                              : "Guests pay once and attend for 30 days."
-                          }
-                          checked={form.monthlyPassEnabled}
-                          disabled={form.scheduleType === "one_time"}
-                          onChange={(next) =>
-                            updateForm("monthlyPassEnabled", next)
-                          }
-                        />
-                        {form.monthlyPassEnabled &&
-                          form.scheduleType !== "one_time" && (
-                            <Rows>
-                              <Row label="Pass price (₹)">
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={form.monthlyPassPriceStr}
-                                  onChange={(e) =>
-                                    updateForm(
-                                      "monthlyPassPriceStr",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="2500"
-                                  className={ROW_INPUT}
-                                />
-                              </Row>
-                              <Row label="Sessions included">
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={form.monthlyPassSessionsStr}
-                                  onChange={(e) =>
-                                    updateForm(
-                                      "monthlyPassSessionsStr",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="e.g. 8"
-                                  className={ROW_INPUT}
-                                />
-                              </Row>
-                              <Row label="Passes available">
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={form.monthlyPassCapacityStr}
-                                  onChange={(e) =>
-                                    updateForm(
-                                      "monthlyPassCapacityStr",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="Unlimited"
-                                  className={ROW_INPUT}
-                                />
-                              </Row>
-                            </Rows>
-                          )}
-                        {form.monthlyPassEnabled && (
-                          <PassHoldersPanel eventId={id} />
-                        )}
-                      </MoreOptions>
-                    )}
 
                     <MoreOptions
                       title="More photos"

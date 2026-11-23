@@ -1748,7 +1748,8 @@ export default function CreateExperiencePage() {
                         }}
                         className={`rounded-full px-3 py-1 transition ${
                           form.sessionType === key
-                            ? "bg-white text-[#080914]"
+                            ? // Not `bg-white`: .msm-dark-form remaps that to a dark fill.
+                              "bg-[#ffffff] text-[#080914] shadow-sm"
                             : "text-white/65 hover:text-white"
                         }`}
                       >

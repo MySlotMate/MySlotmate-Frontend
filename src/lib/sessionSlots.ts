@@ -86,8 +86,68 @@ function toTimeString(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-function formatWindow(w: SessionWindow): string {
-  return `${w.date || "(no date)"} ${w.start || "--:--"}–${w.end || "--:--"}`;
+/* ── Error wording ─────────────────────────────────────────────────────
+ * Errors are shown to hosts as-is, so they read as sentences using the same
+ * words as the form ("2:00 PM", "Every Monday") rather than raw values.
+ */
+
+/** "14:00" → "2:00 PM". */
+function time12(time: string): string {
+  const mins = toMinutes(time);
+  if (mins === null) return time;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  const ap = h < 12 ? "AM" : "PM";
+  return `${h % 12 === 0 ? 12 : h % 12}:${String(m).padStart(2, "0")} ${ap}`;
+}
+
+const range12 = (start: number, end: number) =>
+  `${time12(toTimeString(start))} to ${time12(toTimeString(end))}`;
+
+/** "2026-12-07" → "Mon 7 Dec". */
+function dateLabel(date: string): string {
+  const [y, m, d] = date.split("-").map(Number);
+  if (!y || !m || !d) return date;
+  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+/** 60 → "1-hour", 90 → "90-minute". */
+const sessionLength = (mins: number) =>
+  mins % 60 === 0 ? `${mins / 60}-hour` : `${mins}-minute`;
+
+/** ["a", "b", "c"] → "a, b and c". */
+function listOf(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
+}
+
+/**
+ * "Your Tuesday hours need a start time and an end time." Names the day when
+ * there is one, so the host can find the row.
+ */
+function missingMessage(
+  day: string | undefined,
+  dayWord: "day" | "date",
+  w: SessionWindow,
+  hasDay: boolean,
+): string {
+  const missing = [
+    !hasDay && `a ${dayWord}`,
+    !w.start && "a start time",
+    !w.end && "an end time",
+  ].filter((x): x is string => Boolean(x));
+  const subject = day
+    ? dayWord === "day"
+      ? `Your ${day} hours`
+      : `Your hours on ${day}`
+    : w.start && w.end
+      ? `Your ${time12(w.start)} to ${time12(w.end)} hours`
+      : "One of your rows";
+  return `${subject} ${subject === "One of your rows" ? "needs" : "need"} ${listOf(missing)}.`;
 }
 
 /**
@@ -132,7 +192,7 @@ export function generateSessionSlots(
 
   const filled = windows.filter((w) => w.date || w.start || w.end);
   if (filled.length === 0) {
-    errors.push("Add at least one availability window.");
+    errors.push("Add at least one time you're free.");
   }
 
   // Parse and validate each window on its own before looking at overlaps, so a
@@ -141,35 +201,32 @@ export function generateSessionSlots(
   const parsed: Parsed[] = [];
 
   for (const w of filled) {
+    const day = w.date ? dateLabel(w.date) : undefined;
     if (!w.date || !w.start || !w.end) {
-      errors.push(
-        `${formatWindow(w)} — pick a date, a start time and an end time.`,
-      );
+      errors.push(missingMessage(day, "date", w, Boolean(w.date)));
       continue;
     }
     const start = toMinutes(w.start);
     const end = toMinutes(w.end);
     if (start === null || end === null) {
-      errors.push(`${formatWindow(w)} — that isn't a valid time.`);
+      errors.push(`Your hours on ${day} have a time that isn't valid.`);
       continue;
     }
     if (end <= start) {
       // Overnight windows (22:00–02:00) are deliberately not supported: they'd
       // split across two dates and make the host's "date" ambiguous.
       errors.push(
-        `${formatWindow(w)} — the end time must be after the start time.`,
+        `On ${day}, the end time (${time12(w.end)}) must be after the start time (${time12(w.start)}).`,
       );
       continue;
     }
     if (end > MINUTES_IN_DAY) {
-      errors.push(
-        `${formatWindow(w)} — the end time must be within the same day.`,
-      );
+      errors.push(`On ${day}, the end time must be on the same day.`);
       continue;
     }
     if (durationMinutes > 0 && end - start < durationMinutes) {
       errors.push(
-        `${formatWindow(w)} — too short for a ${durationMinutes}-minute session.`,
+        `On ${day}, ${range12(start, end)} is too short for a ${sessionLength(durationMinutes)} session.`,
       );
       continue;
     }
@@ -191,7 +248,7 @@ export function generateSessionSlots(
       const curr = sorted[i]!;
       if (curr.start < prev.end) {
         errors.push(
-          `${date} — the ${toTimeString(prev.start)}–${toTimeString(prev.end)} and ${toTimeString(curr.start)}–${toTimeString(curr.end)} windows overlap.`,
+          `On ${dateLabel(date)}, ${range12(prev.start, prev.end)} overlaps with ${range12(curr.start, curr.end)}.`,
         );
       }
     }
@@ -265,31 +322,33 @@ export function generateWeeklySessions(
     (w) => w.weekday !== undefined || w.start || w.end,
   );
   if (filled.length === 0) {
-    errors.push("Add at least one weekly time window.");
+    errors.push("Add at least one time you're free.");
   }
 
   type Parsed = { weekday: number; start: number; end: number };
   const parsed: Parsed[] = [];
 
   for (const w of filled) {
-    const label = `${w.weekday !== undefined ? WEEKDAY_LABELS[w.weekday] : "(no day)"} ${w.start || "--:--"}–${w.end || "--:--"}`;
+    const day = w.weekday !== undefined ? WEEKDAY_LABELS[w.weekday] : undefined;
     if (w.weekday === undefined || !w.start || !w.end) {
-      errors.push(`${label} — pick a day, a start time and an end time.`);
+      errors.push(missingMessage(day, "day", w, w.weekday !== undefined));
       continue;
     }
     const start = toMinutes(w.start);
     const end = toMinutes(w.end);
     if (start === null || end === null) {
-      errors.push(`${label} — that isn't a valid time.`);
+      errors.push(`Your ${day} hours have a time that isn't valid.`);
       continue;
     }
     if (end <= start) {
-      errors.push(`${label} — the end time must be after the start time.`);
+      errors.push(
+        `On ${day}, the end time (${time12(w.end)}) must be after the start time (${time12(w.start)}).`,
+      );
       continue;
     }
     if (durationMinutes > 0 && end - start < durationMinutes) {
       errors.push(
-        `${label} — too short for a ${durationMinutes}-minute session.`,
+        `On ${day}, ${range12(start, end)} is too short for a ${sessionLength(durationMinutes)} session.`,
       );
       continue;
     }
@@ -311,7 +370,7 @@ export function generateWeeklySessions(
       const curr = sorted[i]!;
       if (curr.start < prev.end) {
         errors.push(
-          `${WEEKDAY_LABELS[weekday]} — the ${toTimeString(prev.start)}–${toTimeString(prev.end)} and ${toTimeString(curr.start)}–${toTimeString(curr.end)} windows overlap.`,
+          `On ${WEEKDAY_LABELS[weekday]}, ${range12(prev.start, prev.end)} overlaps with ${range12(curr.start, curr.end)}.`,
         );
       }
     }

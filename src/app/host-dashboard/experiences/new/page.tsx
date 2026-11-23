@@ -46,6 +46,12 @@ import { useContentModeration } from "~/hooks/useContentModeration";
 import { useHostTier } from "~/hooks/useHostTier";
 import { VerifyToEarnSheet } from "~/components/host-dashboard/VerifyToEarn";
 import GuestPaymentCard from "~/components/host-dashboard/GuestPaymentCard";
+import {
+  accessPayload,
+  firstProblem,
+  hookLineWithFallback,
+  pricingPayload,
+} from "~/lib/experienceForm";
 import { FREE_HOST_LIMITS, findOffPlatformPayment } from "~/lib/hostTier";
 import { Lock } from "lucide-react";
 import { categoriesFor } from "~/lib/categories";
@@ -103,24 +109,6 @@ import { ImageCropModal } from "~/components/ImageCropModal";
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-/**
- * A monthly pass only makes sense on a repeating, paid experience: nothing
- * repeats on a one-time event, and nothing is saved on a free one. The server
- * enforces this too — this just keeps the form honest.
- */
-function passEligible(form: {
-  monthlyPassEnabled: boolean;
-  monthlyPassPriceStr: string;
-  isFree: boolean;
-  scheduleType: string;
-}): boolean {
-  return (
-    form.monthlyPassEnabled &&
-    !form.isFree &&
-    form.scheduleType !== "one_time" &&
-    Number(form.monthlyPassPriceStr) > 0
-  );
-}
 
 interface FormData {
   // Step 1 - Basics
@@ -1198,143 +1186,48 @@ export default function CreateExperiencePage() {
   /* ---------------------------------------------------------------- */
   /*  Validation                                                       */
   /* ---------------------------------------------------------------- */
-  const validateStep1 = (): boolean => {
-    if (!form.title.trim()) {
-      setShowErrors(true);
-      toast.error("Please enter an experience title");
-      return false;
-    }
-    if (!form.mood) {
-      setShowErrors(true);
-      toast.error("Please select a mood");
-      return false;
-    }
-    if (!form.description.trim()) {
-      setShowErrors(true);
-      toast.error("Please add a description");
-      return false;
-    }
+  // The 1:1 availability error, if the windows don't make any sessions.
+  const oneOnOneProblem = (): string | null => {
+    if (form.sessionType !== "one_on_one") return null;
+    const { errors, count } = form.sessionIsWeekly
+      ? (() => {
+          const r = generateWeeklySessions(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          );
+          return { errors: r.errors, count: r.perWeek };
+        })()
+      : (() => {
+          const r = generateSessionSlots(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          );
+          return { errors: r.errors, count: r.slots.length };
+        })();
+    if (errors.length > 0) return errors[0] ?? null;
+    if (count === 0)
+      return "Your availability windows don't fit a single session";
+    return null;
+  };
 
-    // Check description for malicious content
+  // The shared rules (same as the edit page and the admin), then the
+  // description's content check.
+  const validateForPublish = (): boolean => {
+    const problem = firstProblem(form, {
+      publish: true,
+      sessionProblem: oneOnOneProblem(),
+    });
+    if (problem) {
+      setShowErrors(true);
+      toast.error(problem);
+      return false;
+    }
     const descriptionCheck = checkContentSync(form.description);
     if (descriptionCheck.score > 5) {
       toast.error(
         `Description violates community guidelines (Risk Level: ${descriptionCheck.score}/10). ${descriptionCheck.details}`,
-      );
-      return false;
-    }
-
-    return true;
-  };
-
-  const validateStep2 = (): boolean => {
-    if (form.sessionType === "one_on_one") {
-      const { errors, count } = form.sessionIsWeekly
-        ? (() => {
-            const r = generateWeeklySessions(
-              form.sessionWindows,
-              form.durationMinutes,
-              form.breakMinutes,
-            );
-            return { errors: r.errors, count: r.perWeek };
-          })()
-        : (() => {
-            const r = generateSessionSlots(
-              form.sessionWindows,
-              form.durationMinutes,
-              form.breakMinutes,
-            );
-            return { errors: r.errors, count: r.slots.length };
-          })();
-      if (errors.length > 0) {
-        setShowErrors(true);
-        toast.error(errors[0]);
-        return false;
-      }
-      if (count === 0) {
-        setShowErrors(true);
-        toast.error("Your availability windows don't fit a single session");
-        return false;
-      }
-    } else if (form.scheduleType === "custom_dates") {
-      const valid = form.customDatesList.filter((s) => s.date && s.time);
-      if (valid.length === 0) {
-        setShowErrors(true);
-        toast.error("Please add at least one custom date and time slot");
-        return false;
-      }
-    } else {
-      if (!form.eventDate) {
-        setShowErrors(true);
-        toast.error("Please select an event date");
-        return false;
-      }
-      if (!form.eventTime) {
-        setShowErrors(true);
-        toast.error("Please select a start time");
-        return false;
-      }
-    }
-    if (!form.isFree && !form.useTiers && form.priceCents <= 0) {
-      setShowErrors(true);
-      toast.error("Please set a valid price");
-      return false;
-    }
-    if (
-      form.monthlyPassEnabled &&
-      form.scheduleType !== "one_time" &&
-      !form.isFree &&
-      Number(form.monthlyPassPriceStr) <= 0
-    ) {
-      setShowErrors(true);
-      toast.error("Please set a monthly pass price, or switch the pass off");
-      return false;
-    }
-    // A pass is a balance of sessions the guest spends one at a time, so it
-    // must say how many it holds.
-    if (
-      form.monthlyPassEnabled &&
-      form.scheduleType !== "one_time" &&
-      !form.isFree &&
-      !(Number(form.monthlyPassSessionsStr) >= 1)
-    ) {
-      setShowErrors(true);
-      toast.error("Set how many sessions the monthly pass includes");
-      return false;
-    }
-    if (!form.isFree && form.useTiers) {
-      const valid = form.priceTiers.filter(
-        (t) => t.name.trim() && Number(t.priceStr) > 0,
-      );
-      if (valid.length === 0) {
-        setShowErrors(true);
-        toast.error("Add at least one ticket type with a name and price");
-        return false;
-      }
-    }
-    // RSVP-gated events have no passkey at all — access comes from an approved
-    // request — so the passkey requirement applies only to the passkey gate.
-    if (
-      form.isPrivate &&
-      form.privateAccessMode === "passkey" &&
-      form.accessMode === "shared" &&
-      !form.accessPasskey.trim()
-    ) {
-      setShowErrors(true);
-      toast.error("A private experience needs a passkey");
-      return false;
-    }
-    // An RSVP host approves people on the strength of what they submit, so the
-    // request form can't be empty — without required fields every request would
-    // arrive as a bare name and there'd be nothing to judge.
-    if (
-      form.isPrivate &&
-      form.privateAccessMode === "rsvp" &&
-      (!form.requiresAttendeeDetails || form.attendeeFields.length === 0)
-    ) {
-      setShowErrors(true);
-      toast.error(
-        "Request-to-join needs attendee details — turn them on and pick at least one field",
       );
       return false;
     }
@@ -1425,7 +1318,7 @@ export default function CreateExperiencePage() {
         toast.error("Add a title before saving as draft");
         return;
       }
-    } else if (!validateStep1() || !validateStep2()) {
+    } else if (!validateForPublish()) {
       return;
     }
     if (!userId || userId === "existing") {
@@ -1569,15 +1462,7 @@ export default function CreateExperiencePage() {
       const eventRes = await createEvent.mutateAsync({
         host_id: host.id,
         title: form.title.trim(),
-        // The tagline is optional: fall back to the opening of the description.
-        hook_line:
-          form.hookLine.trim() ||
-          form.description
-            .replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 140) ||
-          form.title.trim(),
+        hook_line: hookLineWithFallback(form),
         mood: form.mood,
         description: form.description.trim(),
         cover_image_url: coverImageUrl,
@@ -1600,32 +1485,7 @@ export default function CreateExperiencePage() {
           form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
         languages: form.languages,
         level: form.level || undefined,
-        price_cents: form.isFree || form.useTiers ? 0 : form.priceCents,
-        is_free: form.isFree,
-        price_tiers:
-          !form.isFree && form.useTiers
-            ? form.priceTiers
-                .filter((t) => t.name.trim() && Number(t.priceStr) > 0)
-                .map((t) => ({
-                  name: t.name.trim(),
-                  price_cents: Math.round(Number(t.priceStr) * 100),
-                  // Blank = no limit of its own (event capacity still applies).
-                  ...(Number(t.seatsStr) > 0
-                    ? { capacity: Math.floor(Number(t.seatsStr)) }
-                    : {}),
-                }))
-            : undefined,
-        monthly_pass: {
-          price_cents: passEligible(form)
-            ? Math.round(Number(form.monthlyPassPriceStr) * 100)
-            : 0,
-          session_limit: form.monthlyPassSessionsStr
-            ? Number(form.monthlyPassSessionsStr)
-            : undefined,
-          capacity: form.monthlyPassCapacityStr
-            ? Number(form.monthlyPassCapacityStr)
-            : undefined,
-        },
+        ...pricingPayload(form),
         schedule_type: isWeeklyOneOnOne ? "recurring" : form.scheduleType,
         custom_dates: isWeeklyOneOnOne
           ? []
@@ -1656,14 +1516,7 @@ export default function CreateExperiencePage() {
         attendee_fields: form.requiresAttendeeDetails
           ? form.attendeeFields
           : [],
-        is_private: form.isPrivate,
-        private_access_mode: form.privateAccessMode,
-        // Shared mode sends the one passkey; unique mode clears it (access comes
-        // from the per-guest access codes generated after saving).
-        access_passkey:
-          form.isPrivate && form.accessMode === "shared"
-            ? form.accessPasskey.trim()
-            : "",
+        ...accessPayload(form),
         status: asDraft ? "draft" : "live",
       });
 

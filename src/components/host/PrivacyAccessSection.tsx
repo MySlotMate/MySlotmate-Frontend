@@ -38,15 +38,7 @@ export function whoCanBookOf(
 }
 
 /** One-line summary for a collapsed "Who can book?" row or a pill. */
-export function whoCanBookLabel(
-  isPrivate: boolean,
-  mode: PrivateAccessMode,
-): string {
-  const w = whoCanBookOf(isPrivate, mode);
-  if (w === "anyone") return "Anyone";
-  if (w === "code") return "People with a code";
-  return "People I approve";
-}
+export { whoCanBookLabel } from "~/lib/experienceForm";
 
 const CHOICES: { key: WhoCanBook; title: string; desc: string }[] = [
   {

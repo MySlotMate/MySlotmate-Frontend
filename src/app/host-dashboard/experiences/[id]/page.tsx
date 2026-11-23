@@ -9,6 +9,12 @@ import PrivacyAccessSection, {
   whoCanBookLabel,
 } from "~/components/host/PrivacyAccessSection";
 import CodesPanel from "~/components/host/CodesPanel";
+import {
+  accessPayload,
+  firstProblem,
+  hookLineWithFallback,
+  pricingPayload,
+} from "~/lib/experienceForm";
 import NeedsAttention from "~/components/host-dashboard/NeedsAttention";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
@@ -1003,32 +1009,40 @@ export default function EditEventPage({
     );
   };
 
+  // The 1:1 availability error, if the windows don't make any sessions.
+  const oneOnOneProblem = (): string | null => {
+    if (form.sessionType !== "one_on_one") return null;
+    const { errors, count } = form.sessionIsWeekly
+      ? (() => {
+          const r = generateWeeklySessions(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          );
+          return { errors: r.errors, count: r.perWeek };
+        })()
+      : (() => {
+          const r = generateSessionSlots(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          );
+          return { errors: r.errors, count: r.slots.length };
+        })();
+    if (errors.length > 0) return errors[0] ?? null;
+    if (count === 0)
+      return "Your availability windows don't fit a single session";
+    return null;
+  };
+
   // Returns the first validation error string, or null if the draft is
   // complete enough to publish.
   const validateForPublish = (): string | null => {
-    if (!form.title.trim()) return "Add a title before publishing";
-    if (!form.hookLine.trim()) return "Add a hook line before publishing";
-    if (!form.mood) return "Pick a mood before publishing";
-    if (!form.description.trim()) return "Add a description before publishing";
-    if (!form.eventDate || !form.eventTime)
-      return "Set a date and time before publishing";
-    if (!form.isFree && !form.useTiers && form.priceCents <= 0)
-      return "Set a price (or mark as free) before publishing";
-    if (
-      !form.isFree &&
-      form.useTiers &&
-      form.priceTiers.filter((t) => t.name.trim() && Number(t.priceStr) > 0)
-        .length === 0
-    )
-      return "Add at least one ticket type with a name and price";
-    if (!form.isOnline && !form.location.trim())
-      return "Add a location (or mark as online) before publishing";
-    if (form.isOnline && !form.meetingLink.trim())
-      return "Add a meeting link before publishing";
-    if (form.maxGroupSize < 1)
-      return "Set a valid group size before publishing";
-    if (!form.cancellationPolicy)
-      return "Pick a cancellation policy before publishing";
+    const problem = firstProblem(form, {
+      publish: true,
+      sessionProblem: oneOnOneProblem(),
+    });
+    if (problem) return problem;
     if (!isVerified) {
       if (!form.isFree) return "Only verified hosts can sell tickets";
       if (
@@ -1054,75 +1068,16 @@ export default function EditEventPage({
       return;
     }
 
-    // A shared-passkey private event is unbookable without its passkey. (Unique
-    // mode needs no passkey — access comes from the per-guest codes.)
-    // RSVP-gated events have no passkey at all — access comes from an approved
-    // request — so the passkey requirement applies only to the passkey gate.
-    if (
-      form.isPrivate &&
-      form.privateAccessMode === "passkey" &&
-      form.accessMode === "shared" &&
-      !form.accessPasskey.trim()
-    ) {
-      toast.error("A private experience needs a passkey");
+    // Checked on every save (shared rules): the code gate, request to join,
+    // the monthly pass and 1:1 availability. Saving broken windows would wipe
+    // custom_dates and leave the event with no bookable sessions at all.
+    const saveProblem = firstProblem(form, {
+      publish: false,
+      sessionProblem: oneOnOneProblem(),
+    });
+    if (saveProblem) {
+      toast.error(saveProblem);
       return;
-    }
-
-    // An RSVP host approves people on the strength of what they submit, so the
-    // request form can't be empty — without required fields every request would
-    // arrive as a bare name and there'd be nothing to judge.
-    if (
-      form.isPrivate &&
-      form.privateAccessMode === "rsvp" &&
-      (!form.requiresAttendeeDetails || form.attendeeFields.length === 0)
-    ) {
-      toast.error(
-        "Request-to-join needs attendee details — turn them on and pick at least one field",
-      );
-      return;
-    }
-
-    // A pass is a balance of sessions the guest spends one at a time, so it
-    // must say how many it holds. The server refuses a pass without one.
-    if (
-      form.monthlyPassEnabled &&
-      !form.isFree &&
-      form.scheduleType !== "one_time" &&
-      Number(form.monthlyPassPriceStr) > 0 &&
-      !(Number(form.monthlyPassSessionsStr) >= 1)
-    ) {
-      toast.error("Set how many sessions the monthly pass includes");
-      return;
-    }
-
-    // Saving broken windows would wipe custom_dates and leave the event with no
-    // bookable sessions at all, so this is enforced on save, not just on publish.
-    if (form.sessionType === "one_on_one") {
-      const { errors, count } = form.sessionIsWeekly
-        ? (() => {
-            const r = generateWeeklySessions(
-              form.sessionWindows,
-              form.durationMinutes,
-              form.breakMinutes,
-            );
-            return { errors: r.errors, count: r.perWeek };
-          })()
-        : (() => {
-            const r = generateSessionSlots(
-              form.sessionWindows,
-              form.durationMinutes,
-              form.breakMinutes,
-            );
-            return { errors: r.errors, count: r.slots.length };
-          })();
-      if (errors.length > 0) {
-        toast.error(errors[0]);
-        return;
-      }
-      if (count === 0) {
-        toast.error("Your availability windows don't fit a single session");
-        return;
-      }
     }
 
     // Only enforce completeness when the host is actually trying to publish.
@@ -1233,7 +1188,7 @@ export default function EditEventPage({
         body: {
           host_id: host.id,
           title: form.title.trim(),
-          hook_line: form.hookLine.trim(),
+          hook_line: hookLineWithFallback(form),
           mood: form.mood,
           description: form.description.trim(),
           // Send explicit values so removals persist: the backend keeps the
@@ -1259,35 +1214,7 @@ export default function EditEventPage({
             form.sessionType === "one_on_one" ? 1 : form.minGroupSize,
           max_group_size:
             form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
-          price_cents: form.isFree || form.useTiers ? 0 : form.priceCents,
-          is_free: form.isFree,
-          price_tiers:
-            !form.isFree && form.useTiers
-              ? form.priceTiers
-                  .filter((t) => t.name.trim() && Number(t.priceStr) > 0)
-                  .map((t) => ({
-                    name: t.name.trim(),
-                    price_cents: Math.round(Number(t.priceStr) * 100),
-                    // Blank = no limit of its own (event capacity still applies).
-                    ...(Number(t.seatsStr) > 0
-                      ? { capacity: Math.floor(Number(t.seatsStr)) }
-                      : {}),
-                  }))
-              : [],
-          monthly_pass: {
-            price_cents:
-              form.monthlyPassEnabled &&
-              !form.isFree &&
-              form.scheduleType !== "one_time"
-                ? Math.round(Number(form.monthlyPassPriceStr) * 100)
-                : 0,
-            session_limit: form.monthlyPassSessionsStr
-              ? Number(form.monthlyPassSessionsStr)
-              : undefined,
-            capacity: form.monthlyPassCapacityStr
-              ? Number(form.monthlyPassCapacityStr)
-              : undefined,
-          },
+          ...pricingPayload(form),
           is_recurring: isWeeklyOneOnOne || form.scheduleType === "recurring",
           recurrence_rule: isWeeklyOneOnOne
             ? "FREQ=WEEKLY"
@@ -1317,13 +1244,7 @@ export default function EditEventPage({
           attendee_fields: form.requiresAttendeeDetails
             ? form.attendeeFields
             : [],
-          is_private: form.isPrivate,
-          private_access_mode: form.privateAccessMode,
-          // Unique mode clears the shared passkey (access via per-guest codes).
-          access_passkey:
-            form.isPrivate && form.accessMode === "shared"
-              ? form.accessPasskey.trim()
-              : "",
+          ...accessPayload(form),
         },
       });
 

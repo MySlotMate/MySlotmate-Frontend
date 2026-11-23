@@ -1173,6 +1173,8 @@ export interface OccurrenceAvailability {
   remaining: number;
   is_fully_booked: boolean;
   is_paused?: boolean;
+  /** Seats left per ticket type (tier id → seats), only for types with their own limit. */
+  tier_remaining?: Record<string, number>;
 }
 
 /** GET /events/host/{hostID} — includes drafts, so host-scoped and authed. */

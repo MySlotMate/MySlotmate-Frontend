@@ -137,7 +137,24 @@ export default function TicketsClient({
   const spotsLeft = occurrence
     ? occurrence.remaining
     : (event?.capacity ?? 0) - (event?.total_bookings ?? 0);
-  const maxGuests = Math.max(0, Math.min(spotsLeft, 10));
+  // Seats left for a ticket type in this session; undefined = no own limit.
+  const tierLeft = (tierId: string): number | undefined =>
+    tierId ? occurrence?.tier_remaining?.[tierId] : undefined;
+  const maxGuests = Math.max(
+    0,
+    Math.min(spotsLeft, 10, tierLeft(selectedTierId) ?? Infinity),
+  );
+
+  // If the chosen ticket type is sold out for this session, move to the
+  // first one that still has seats.
+  useEffect(() => {
+    if (!hasTiers || !occurrence?.tier_remaining) return;
+    if ((occurrence.tier_remaining[selectedTierId] ?? 1) > 0) return;
+    const open = priceTiers.find(
+      (t) => (occurrence.tier_remaining?.[t.id] ?? 1) > 0,
+    );
+    if (open) setSelectedTierId(open.id);
+  }, [hasTiers, occurrence, priceTiers, selectedTierId]);
 
   useEffect(() => {
     if (maxGuests > 0 && guests > maxGuests) setGuests(maxGuests);
@@ -202,7 +219,7 @@ export default function TicketsClient({
           formatIST(selectedDate, "yyyy-MM-dd"),
       )
     : [];
-  const canContinue = !!selectedDate && spotsLeft > 0 && !eventHasPassed;
+  const canContinue = !!selectedDate && maxGuests > 0 && !eventHasPassed;
   const endDate =
     selectedDate && event.duration_minutes
       ? new Date(
@@ -300,10 +317,12 @@ export default function TicketsClient({
             <div className="divide-y divide-white/10 border-y border-white/10">
               {ticketRows.map((row) => {
                 const on = !hasTiers || row.id === selectedTierId;
+                const left = tierLeft(row.id);
+                const rowSoldOut = soldOut || left === 0;
                 return (
                   <div
                     key={row.id || "single"}
-                    className={`flex items-center justify-between gap-4 py-6 ${soldOut ? "opacity-45" : ""}`}
+                    className={`flex items-center justify-between gap-4 py-6 ${rowSoldOut ? "opacity-45" : ""}`}
                   >
                     <div className="min-w-0">
                       <p className="font-outfit text-lg font-semibold text-white">
@@ -311,9 +330,14 @@ export default function TicketsClient({
                       </p>
                       <p className="mt-1 text-[15px] text-white/65">
                         {isFree || row.cents === 0 ? "Free" : rupees(row.cents)}
+                        {!rowSoldOut && left !== undefined && left <= 10 && (
+                          <span className="ml-2 text-sm text-[#D8B4FE]">
+                            {left} left
+                          </span>
+                        )}
                       </p>
                     </div>
-                    {soldOut ? (
+                    {rowSoldOut ? (
                       <span className="text-sm font-semibold text-white/70">
                         {eventHasPassed ? "Closed" : "Sold out"}
                       </span>

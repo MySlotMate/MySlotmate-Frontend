@@ -146,7 +146,7 @@ interface FormData {
   // Multiple ticket tiers. When useTiers is true, priceTiers drives pricing
   // instead of the single priceCents. priceStr is the raw input mirror.
   useTiers: boolean;
-  priceTiers: { name: string; priceStr: string }[];
+  priceTiers: { name: string; priceStr: string; seatsStr?: string }[];
   // Monthly pass: one payment covers a month of sessions. Recurring, paid
   // experiences only — there is nothing to repeat otherwise.
   monthlyPassEnabled: boolean;
@@ -934,7 +934,7 @@ export default function CreateExperiencePage() {
     isFree: false,
     priceCents: 50000,
     useTiers: false,
-    priceTiers: [{ name: "", priceStr: "" }],
+    priceTiers: [{ name: "", priceStr: "", seatsStr: "" }],
     monthlyPassEnabled: false,
     monthlyPassPriceStr: "",
     monthlyPassSessionsStr: "",
@@ -1170,7 +1170,10 @@ export default function CreateExperiencePage() {
   /*  Ticket tiers                                                     */
   /* ---------------------------------------------------------------- */
   const addPriceTier = () => {
-    updateForm("priceTiers", [...form.priceTiers, { name: "", priceStr: "" }]);
+    updateForm("priceTiers", [
+      ...form.priceTiers,
+      { name: "", priceStr: "", seatsStr: "" },
+    ]);
   };
 
   const removePriceTier = (index: number) => {
@@ -1182,7 +1185,7 @@ export default function CreateExperiencePage() {
 
   const updatePriceTier = (
     index: number,
-    field: "name" | "priceStr",
+    field: "name" | "priceStr" | "seatsStr",
     value: string,
   ) => {
     updateForm(
@@ -1631,6 +1634,10 @@ export default function CreateExperiencePage() {
                 .map((t) => ({
                   name: t.name.trim(),
                   price_cents: Math.round(Number(t.priceStr) * 100),
+                  // Blank = no limit of its own (event capacity still applies).
+                  ...(Number(t.seatsStr) > 0
+                    ? { capacity: Math.floor(Number(t.seatsStr)) }
+                    : {}),
                 }))
             : undefined,
         monthly_pass: {
@@ -2668,6 +2675,25 @@ export default function CreateExperiencePage() {
                                       className={ROW_INPUT}
                                     />
                                   </Row>
+                                  <Row label="Seats (optional)">
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={tier.seatsStr ?? ""}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === "" || /^\d+$/.test(val)) {
+                                          updatePriceTier(
+                                            index,
+                                            "seatsStr",
+                                            val,
+                                          );
+                                        }
+                                      }}
+                                      placeholder="No limit"
+                                      className={ROW_INPUT}
+                                    />
+                                  </Row>
                                 </Rows>
                               </div>
                               {form.priceTiers.length > 1 && (
@@ -2686,7 +2712,8 @@ export default function CreateExperiencePage() {
                             Add another ticket type
                           </AddPill>
                           <p className="px-1 text-xs text-white/40">
-                            Guests pick one ticket type when booking.
+                            Guests pick one ticket type when booking. Set seats
+                            to cap a ticket type per session (e.g. 10 Gold).
                           </p>
                         </div>
                       )}

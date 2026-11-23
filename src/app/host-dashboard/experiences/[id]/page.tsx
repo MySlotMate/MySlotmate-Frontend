@@ -104,7 +104,7 @@ interface EventFormData {
   isFree: boolean;
   priceCents: number;
   useTiers: boolean;
-  priceTiers: { name: string; priceStr: string }[];
+  priceTiers: { name: string; priceStr: string; seatsStr?: string }[];
   // Monthly pass: one payment covers a month of sessions. Recurring, paid
   // experiences only.
   monthlyPassEnabled: boolean;
@@ -837,6 +837,7 @@ export default function EditEventPage({
             ? event.price_tiers.map((t) => ({
                 name: t.name,
                 priceStr: (t.price_cents / 100).toString(),
+                seatsStr: t.capacity ? String(t.capacity) : "",
               }))
             : [{ name: "", priceStr: "" }],
         monthlyPassEnabled: !!event.monthly_pass_price_cents,
@@ -955,7 +956,7 @@ export default function EditEventPage({
   };
   const updatePriceTier = (
     index: number,
-    field: "name" | "priceStr",
+    field: "name" | "priceStr" | "seatsStr",
     value: string,
   ) => {
     updateForm(
@@ -1288,6 +1289,10 @@ export default function EditEventPage({
                   .map((t) => ({
                     name: t.name.trim(),
                     price_cents: Math.round(Number(t.priceStr) * 100),
+                    // Blank = no limit of its own (event capacity still applies).
+                    ...(Number(t.seatsStr) > 0
+                      ? { capacity: Math.floor(Number(t.seatsStr)) }
+                      : {}),
                   }))
               : [],
           monthly_pass: {
@@ -2022,6 +2027,21 @@ export default function EditEventPage({
                                   placeholder="₹ Price"
                                   className={`${FIELD} !w-32 !py-2.5`}
                                 />
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  value={tier.seatsStr ?? ""}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "" || /^\d+$/.test(val)) {
+                                      updatePriceTier(index, "seatsStr", val);
+                                    }
+                                  }}
+                                  placeholder="Seats"
+                                  aria-label="Seats per session (blank = no limit)"
+                                  title="Seats per session. Leave blank for no limit."
+                                  className={`${FIELD} !w-24 !py-2.5`}
+                                />
                                 {form.priceTiers.length > 1 && (
                                   <button
                                     type="button"
@@ -2037,6 +2057,10 @@ export default function EditEventPage({
                             <AddPill onClick={addPriceTier}>
                               Add another ticket type
                             </AddPill>
+                            <p className="px-1 text-xs text-white/40">
+                              Seats caps a ticket type per session (e.g. 10
+                              Gold). Leave blank for no limit.
+                            </p>
                           </div>
                         )}
                         <ToggleRow

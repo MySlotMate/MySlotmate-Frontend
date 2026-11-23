@@ -881,7 +881,7 @@ function BookingContent({ eventId }: { eventId: string }) {
       {platformFeeCents > 0 && (
         <div className="flex justify-between text-white/60">
           <span>
-            Service fee{feeIsPercentage ? ` (${feePercentage}%)` : ""}
+            Platform fee{feeIsPercentage ? ` (${feePercentage}%, incl. GST)` : " (incl. GST)"}
           </span>
           <span className="text-white">{formatRupees(platformFeeCents)}</span>
         </div>

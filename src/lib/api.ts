@@ -2038,6 +2038,7 @@ export interface CouponBatchPayload {
   /** Defaults to single-use (max_redemptions=1, per_user_limit=1). */
   max_redemptions?: number | null;
   per_user_limit?: number | null;
+  valid_from?: string | null;
   valid_until?: string | null;
 }
 

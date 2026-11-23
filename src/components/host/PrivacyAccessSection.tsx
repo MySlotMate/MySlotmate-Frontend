@@ -210,7 +210,7 @@ export default function PrivacyAccessSection({
           ) : (
             <p className="text-sm text-[#A5A8C3]">
               {canGenerateCodes
-                ? "Generate the codes in the access codes list below."
+                ? "Make the codes in Codes below."
                 : "Save the experience first, then generate the codes here."}
             </p>
           )}

@@ -8,7 +8,7 @@ import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsCo
 import PrivacyAccessSection, {
   whoCanBookLabel,
 } from "~/components/host/PrivacyAccessSection";
-import CouponsManager from "~/components/host/CouponsManager";
+import CodesPanel from "~/components/host/CodesPanel";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
   useMyHost,
@@ -1932,14 +1932,31 @@ export default function EditEventPage({
                           setForm((prev) => ({ ...prev, ...patch }))
                         }
                       />
-                      {host?.id && event?.id && form.isPrivate && (
-                        <CouponsManager
+                    </MoreOptions>
+
+                    {host?.id && event?.id && (
+                      <MoreOptions
+                        title="Codes"
+                        summary="Unlock, % off or free"
+                      >
+                        <CodesPanel
                           eventId={event.id}
                           hostId={host.id}
-                          kind="access"
+                          isFree={form.isFree}
+                          codeGated={
+                            form.isPrivate &&
+                            form.privateAccessMode === "passkey"
+                          }
+                          sharedPasskey={
+                            form.isPrivate &&
+                            form.privateAccessMode === "passkey" &&
+                            form.accessMode === "shared"
+                              ? form.accessPasskey
+                              : ""
+                          }
                         />
-                      )}
-                    </MoreOptions>
+                      </MoreOptions>
+                    )}
 
                     <MoreOptions
                       title="Refunds & payout"
@@ -2124,24 +2141,6 @@ export default function EditEventPage({
                         {form.monthlyPassEnabled && (
                           <PassHoldersPanel eventId={id} />
                         )}
-                      </MoreOptions>
-                    )}
-
-                    {host?.id && event?.id && !form.isFree && (
-                      <MoreOptions
-                        title="Coupons & free codes"
-                        summary="Discounts and comps"
-                      >
-                        <CouponsManager
-                          eventId={event.id}
-                          hostId={host.id}
-                          kind="discount"
-                        />
-                        <CouponsManager
-                          eventId={event.id}
-                          hostId={host.id}
-                          kind="free"
-                        />
                       </MoreOptions>
                     )}
 

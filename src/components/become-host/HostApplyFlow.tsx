@@ -507,31 +507,6 @@ export default function HostApplyFlow() {
   const categoryLabel =
     CATEGORIES.find((c) => c.mood === form.category)?.label ?? "";
 
-  /** Everything readable in one place for the review team. */
-  const summary = () =>
-    (path === "pro"
-      ? [
-          "Path: Verified professional",
-          `Profession: ${profLabel}`,
-          `Specialization: ${form.specialization}`,
-          `Experience: ${form.years}`,
-          form.workHistory && `Work history: ${form.workHistory}`,
-          `Languages: ${form.languages.join(", ")}`,
-          form.achievements && `Achievements: ${form.achievements}`,
-          form.licenseNumber && `License / registration: ${form.licenseNumber}`,
-          form.membership && `Professional body: ${form.membership}`,
-        ]
-      : [
-          "Path: Community host",
-          form.communityName && `Community: ${form.communityName}`,
-          `Category: ${categoryLabel}`,
-          form.years && `Hosting for: ${form.years}`,
-          form.events && `Events hosted: ${form.events}`,
-        ]
-    )
-      .filter(Boolean)
-      .join("\n");
-
   const basePayload = (): HostApplicationPayload => {
     const [first, ...rest] = form.fullName.trim().split(/\s+/);
     const mood =
@@ -553,12 +528,26 @@ export default function HostApplyFlow() {
         undefined,
       description:
         (path === "pro" ? form.workHistory : form.about).trim() || undefined,
-      experience_desc: summary(),
       social_instagram: /instagram\.com/i.test(social) ? social : null,
       social_linkedin: form.linkedin.trim() || null,
       social_website:
         form.portfolioUrl.trim() ||
         (social && !/instagram\.com/i.test(social) ? social : null),
+      // Each answer in its own field; the admin review page shows them as is.
+      host_type:
+        path === "pro" ? "professional" : path ? "community" : undefined,
+      community_name: form.communityName.trim() || undefined,
+      community_category: path === "community" ? form.category : undefined,
+      years_experience: form.years || undefined,
+      events_hosted: form.events || undefined,
+      portfolio_url: form.portfolioUrl.trim() || undefined,
+      profession: path === "pro" ? form.profession : undefined,
+      license_number: form.licenseNumber.trim() || undefined,
+      professional_body: form.membership.trim() || undefined,
+      specialization: form.specialization.trim() || undefined,
+      work_history: form.workHistory.trim() || undefined,
+      languages: path === "pro" ? form.languages : undefined,
+      achievements: form.achievements.trim() || undefined,
     };
   };
 
@@ -586,31 +575,15 @@ export default function HostApplyFlow() {
           ).data.map((r) => r.url)
         : [];
 
-      // Fields the backend stores today, plus the new ones it can pick up
-      // (unknown JSON fields are ignored until it does). The summary in
-      // experience_desc keeps every answer visible to the review team now.
-      const payload = {
+      const payload: HostApplicationPayload = {
         ...basePayload(),
         government_id_url: govId,
-        host_type: path === "pro" ? "professional" : "community",
         selfie_url: selfie,
-        community_name: form.communityName.trim() || undefined,
-        community_category: path === "community" ? form.category : undefined,
-        years_experience: form.years || undefined,
-        events_hosted: form.events || undefined,
-        portfolio_url: form.portfolioUrl.trim() || undefined,
-        portfolio_photo_urls: photos.length ? photos : undefined,
-        profession: path === "pro" ? form.profession : undefined,
         certificate_url: certificate,
         degree_url: degree,
-        license_number: form.licenseNumber.trim() || undefined,
-        professional_body: form.membership.trim() || undefined,
-        specialization: form.specialization.trim() || undefined,
-        work_history: form.workHistory.trim() || undefined,
-        languages: path === "pro" ? form.languages : undefined,
-        achievements: form.achievements.trim() || undefined,
+        portfolio_photo_urls: photos.length ? photos : undefined,
         testimonial_url: testimonial,
-      } as HostApplicationPayload;
+      };
 
       const res = await submitMutation.mutateAsync(payload);
       setStoredHostId(res.data.id);
@@ -624,7 +597,14 @@ export default function HostApplyFlow() {
       window.scrollTo({ top: 0 });
     } catch (e) {
       console.error("Host application failed:", e);
-      toast.error("We couldn't send your application. Please try again.");
+      // A 400 carries the check that failed, written for the applicant.
+      const status = (e as { status?: number }).status;
+      const msg = e instanceof Error ? e.message : "";
+      toast.error(
+        status === 400 && msg
+          ? msg
+          : "We couldn't send your application. Please try again.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -651,10 +631,7 @@ export default function HostApplyFlow() {
   const saveDraft = async () => {
     if (!requireAccount() || !userId) return;
     try {
-      await draftMutation.mutateAsync({
-        ...basePayload(),
-        experience_desc: summary(),
-      });
+      await draftMutation.mutateAsync(basePayload());
       toast.success("Saved. You can finish this later.");
     } catch {
       toast.error("Couldn't save. Please try again.");

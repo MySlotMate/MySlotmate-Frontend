@@ -40,7 +40,9 @@ export async function apiFetch<T>(
   } catch (err) {
     const axErr = err as AxiosError<Envelope<T>>;
     const data = axErr.response?.data;
-    let msg = data?.error ?? data?.message ?? axErr.message;
+    // Prefer the readable message: most errors repeat it in `error`, but some
+    // (e.g. host application checks) put a code there instead.
+    let msg = data?.message ?? data?.error ?? axErr.message;
     if (axErr.response?.status === 401 && SESSION_DEAD.has(msg)) {
       // A Firebase token can lapse mid-session; refresh once before giving up.
       // Drop any caller-supplied Authorization: it is usually a token cached
@@ -352,7 +354,7 @@ export async function uploadFiles(
   } catch (err) {
     const axErr = err as AxiosError<Envelope<UploadResult[]>>;
     const data = axErr.response?.data;
-    const msg = data?.error ?? data?.message ?? axErr.message;
+    const msg = data?.message ?? data?.error ?? axErr.message;
     const error = new Error(msg);
     (error as Error & { status: number }).status =
       axErr.response?.status ?? 500;
@@ -447,6 +449,26 @@ export interface HostApplicationPayload {
   social_linkedin?: string | null;
   social_website?: string | null;
   is_professional?: boolean;
+  // Two-path answers (backend-spec-host-application.md). Files are URLs from
+  // the private "hosts/government-ids" upload folder.
+  host_type?: "community" | "professional";
+  selfie_url?: string;
+  community_name?: string;
+  community_category?: string;
+  years_experience?: string;
+  events_hosted?: string;
+  portfolio_url?: string;
+  portfolio_photo_urls?: string[];
+  profession?: string;
+  certificate_url?: string;
+  degree_url?: string;
+  license_number?: string;
+  professional_body?: string;
+  specialization?: string;
+  work_history?: string;
+  languages?: string[];
+  achievements?: string;
+  testimonial_url?: string;
 }
 
 /** POST /hosts/apply — submit host application (status → pending) */
@@ -471,6 +493,8 @@ export interface ApplicationStatusResponse {
       | "under_review"
       | "approved"
       | "rejected";
+    /** Why the team turned the application down, when they said. */
+    rejection_reason?: string | null;
   };
 }
 

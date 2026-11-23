@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import type { IconType } from "react-icons";
 import {
   FiArrowRight,
@@ -194,12 +195,12 @@ function PolicyCard({
               <FiMaximize2 className="h-3.5 w-3.5" />
               Expand legal details
             </button>
-            <a
+            <Link
               href="/support/terms-conditions#cancellation"
               className="text-sm font-semibold text-[#D8B4FE] transition hover:text-[#D8B4FE]"
             >
               View full policy
-            </a>
+            </Link>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
 import { SupportBreadcrumb, SupportPageShell } from "~/components/support";
 
@@ -1081,18 +1082,18 @@ export default function TermsAndConditionsPage() {
             our support team.
           </p>
           <div className="flex flex-col gap-4 sm:flex-row">
-            <a
+            <Link
               href="/support"
               className="inline-flex items-center justify-center rounded-lg bg-[#A020F0] px-6 py-2 font-medium text-white transition hover:bg-[#A020F0]"
             >
               Contact Support
-            </a>
-            <a
+            </Link>
+            <Link
               href="/support/technical"
               className="inline-flex items-center justify-center rounded-lg border border-white/15 px-6 py-2 font-medium text-white/80 transition hover:bg-white/[0.04]"
             >
               Technical Help
-            </a>
+            </Link>
           </div>
         </div>
 

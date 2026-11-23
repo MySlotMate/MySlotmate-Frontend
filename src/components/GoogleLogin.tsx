@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   GoogleAuthProvider,
@@ -515,29 +516,29 @@ export default function GoogleLogin({
                 />
                 <span>
                   I agree to the{" "}
-                  <a
+                  <Link
                     href="/support/terms-conditions"
                     className="font-semibold text-[#D8B4FE] hover:underline"
                   >
                     User Agreement
-                  </a>{" "}
+                  </Link>{" "}
                   and{" "}
-                  <a
+                  <Link
                     href="/support/policies"
                     className="font-semibold text-[#D8B4FE] hover:underline"
                   >
                     Privacy Policy
-                  </a>
+                  </Link>
                 </span>
               </label>
               <p className="mt-6 border-t border-white/10 pt-5 text-center text-sm text-[#777B98]">
                 Having trouble logging in?{" "}
-                <a
+                <Link
                   href="/support"
                   className="font-semibold text-white hover:underline"
                 >
                   Get help
-                </a>
+                </Link>
               </p>
             </>
           )}

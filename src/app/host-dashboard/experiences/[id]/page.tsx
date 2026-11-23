@@ -9,6 +9,7 @@ import PrivacyAccessSection, {
   whoCanBookLabel,
 } from "~/components/host/PrivacyAccessSection";
 import CodesPanel from "~/components/host/CodesPanel";
+import NeedsAttention from "~/components/host-dashboard/NeedsAttention";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
   useMyHost,
@@ -1545,6 +1546,8 @@ export default function EditEventPage({
                     </span>
                   )}
                 </div>
+
+                <NeedsAttention eventId={id} />
 
                 {/* What */}
                 <section className="space-y-4">

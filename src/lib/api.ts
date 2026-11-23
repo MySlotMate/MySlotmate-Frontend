@@ -1797,6 +1797,25 @@ export function deleteEvent(eventId: string, hostId: string) {
  * Carries guests' contact details and government-ID links, so the server
  * restricts it to the host running the event. Must be authed.
  */
+/** One thing about an experience that needs the host's eye. */
+export interface EventAttentionItemDTO {
+  kind:
+    | "join_requests"
+    | "code_used_up"
+    | "code_near_limit"
+    | "code_expiring"
+    | "passes_expiring";
+  title: string;
+  count?: number;
+  code?: string;
+  due?: string;
+}
+
+/** GET /events/{id}/attention — the "Needs attention" list (host or admin). */
+export function getEventAttention(eventId: string) {
+  return authedFetch<EventAttentionItemDTO[]>(`/events/${eventId}/attention`);
+}
+
 export function getEventAttendees(eventId: string, date?: string) {
   let url = `/events/${eventId}/attendees`;
   if (date) url += `?date=${encodeURIComponent(date)}`;

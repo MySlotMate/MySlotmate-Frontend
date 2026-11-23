@@ -3128,3 +3128,57 @@ export function listPassHolders(eventId: string, idToken: string) {
     headers: getAuthHeader(idToken),
   });
 }
+
+/* ------------------------------------------------------------------ */
+/*  Billing: platform fee receipts (invoices) and refund notes         */
+/* ------------------------------------------------------------------ */
+
+/** A fee invoice or credit note. Amounts are paise. */
+export interface FeeDocumentDTO {
+  id: string;
+  kind: "invoice" | "credit_note";
+  number: string;
+  issued_at: string;
+  source_type: "booking" | "pass";
+  source_id: string;
+  event_id?: string;
+  event_title: string;
+  original_number?: string;
+  taxable_cents: number;
+  cgst_cents: number;
+  sgst_cents: number;
+  igst_cents: number;
+  total_cents: number;
+}
+
+/** GET /billing/documents: one booking's or pass's receipt and refund note. */
+export function getFeeDocuments(
+  sourceType: "booking" | "pass",
+  sourceId: string,
+) {
+  return apiFetch<FeeDocumentDTO[]>("/billing/documents", {
+    params: { source_type: sourceType, source_id: sourceId },
+  });
+}
+
+/** GET /billing/documents/mine: every receipt and refund note of the signed-in guest. */
+export function getMyFeeDocuments() {
+  return apiFetch<FeeDocumentDTO[]>("/billing/documents/mine");
+}
+
+/** Downloads a receipt or refund note PDF to the device. */
+export async function downloadFeeDocument(doc: FeeDocumentDTO) {
+  const res = await api.request<Blob>({
+    url: `/billing/documents/${doc.id}/pdf`,
+    responseType: "blob",
+    headers: await currentAuthHeader(),
+  });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `MySlotMate-${doc.number.replaceAll("/", "-")}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}

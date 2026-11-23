@@ -1754,3 +1754,28 @@ export function useReviewJoinRequest(idToken: string | null) {
     },
   });
 }
+
+/** A booking's or pass's platform fee receipt and refund note (empty when none). */
+export function useFeeDocuments(
+  sourceType: "booking" | "pass",
+  sourceId: string | null | undefined,
+) {
+  return useQuery({
+    queryKey: ["fee-documents", sourceType, sourceId ?? ""] as const,
+    queryFn: () => api.getFeeDocuments(sourceType, sourceId!),
+    enabled: !!sourceId,
+    staleTime: 60 * 1000,
+    select: (res) => res.data ?? [],
+  });
+}
+
+/** Every platform fee receipt and refund note of the signed-in guest. */
+export function useMyFeeDocuments(enabled = true) {
+  return useQuery({
+    queryKey: ["fee-documents", "mine"] as const,
+    queryFn: () => api.getMyFeeDocuments(),
+    enabled,
+    staleTime: 60 * 1000,
+    select: (res) => res.data ?? [],
+  });
+}

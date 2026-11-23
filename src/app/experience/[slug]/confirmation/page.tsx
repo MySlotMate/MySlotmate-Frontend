@@ -11,6 +11,7 @@ import {
   usePublicHostProfile,
   useListPublicEvents,
   useBooking,
+  useFeeDocuments,
   useUserProfile,
 } from "~/hooks/useApi";
 import {
@@ -24,6 +25,7 @@ import { pdfSafe } from "~/lib/pdfText";
 import { getRecommendedEventSync } from "~/lib/recommendations";
 import { currentAuthHeader, type EventDTO } from "~/lib/api";
 import { toast } from "sonner";
+import FeeReceiptButton from "~/components/billing/FeeReceiptButton";
 import { env } from "~/env";
 
 export const runtime = "edge";
@@ -421,6 +423,10 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
   const { data: event, isLoading: eventLoading } = useEvent(eventId);
   const { data: booking, isLoading: bookingLoading } = useBooking(bookingId);
+  // The platform fee receipt, when this booking has one (paid, billing on).
+  const { data: feeDocs } = useFeeDocuments("booking", bookingId);
+  const feeReceipt = feeDocs?.find((d) => d.kind === "invoice");
+  const refundNote = feeDocs?.find((d) => d.kind === "credit_note");
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
   const { data: allEvents } = useListPublicEvents();
   const { data: bookingUser } = useUserProfile(booking?.user_id ?? null);
@@ -784,6 +790,12 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
             {isDownloading ? "Preparing…" : "Download Ticket"}
           </button>
         </div>
+        {(feeReceipt ?? refundNote) && (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {feeReceipt && <FeeReceiptButton doc={feeReceipt} />}
+            {refundNote && <FeeReceiptButton doc={refundNote} />}
+          </div>
+        )}
         <button
           type="button"
           onClick={() => router.push("/activities")}

@@ -230,6 +230,11 @@ export default function CodesPanel({
         toast.error("Uses must be whole numbers of at least 1, or blank");
         return;
       }
+      // A shared free code books for ₹0, so it must have a cap.
+      if (effect === "free" && !totalUses.trim()) {
+        toast.error("Set total uses for a shared free code");
+        return;
+      }
     } else {
       const n = Number(count);
       if (!Number.isInteger(n) || n < 1 || n > 500) {
@@ -241,9 +246,7 @@ export default function CodesPanel({
       const n = handout === "shared" ? null : Number(count);
       const msg =
         handout === "shared"
-          ? `Create ${code.trim().toUpperCase()}? Every guest who enters it books for ₹0${
-              totalUses.trim() ? `, up to ${totalUses} bookings` : ""
-            }.`
+          ? `Create ${code.trim().toUpperCase()}? Every guest who enters it books for ₹0, up to ${totalUses} bookings.`
           : `Create ${n} free code${n! > 1 ? "s" : ""}? Each one books one guest for ₹0.`;
       if (!window.confirm(msg)) return;
     }
@@ -469,7 +472,7 @@ export default function CodesPanel({
                   min={1}
                   value={totalUses}
                   onChange={(e) => setTotalUses(e.target.value)}
-                  placeholder="No limit"
+                  placeholder={effect === "free" ? "Required" : "No limit"}
                   className={`${input} w-full`}
                 />
               </div>

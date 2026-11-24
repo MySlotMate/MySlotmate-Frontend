@@ -175,7 +175,7 @@ function Hero({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Floating "Book tickets" pill; tickets are picked on the next page  */
+/*  Floating "Book slots" pill; slots are picked on the next page      */
 /* ------------------------------------------------------------------ */
 function BookingPill({
   label,
@@ -469,12 +469,25 @@ function AllPhotosModal({
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
+
+/**
+ * Marketing landing pages (app/[slug]) reuse this page with their own copy:
+ * these fields replace the event's on screen, while dates, location, price,
+ * reviews and booking stay live from the event.
+ */
+export type ExperienceContentOverride = Pick<
+  EventDTO,
+  "title" | "hook_line" | "description" | "cover_image_url" | "gallery_urls"
+> & { cta_text?: string | null };
+
 export default function ExperienceDetailClient({
   params,
   initialEvent,
+  contentOverride,
 }: {
   params: Promise<{ slug: string }>;
   initialEvent: EventDTO | null;
+  contentOverride?: ExperienceContentOverride;
 }) {
   const resolvedParams = use(params);
   const { userId, hostId } = useStoredAuth();
@@ -493,7 +506,13 @@ export default function ExperienceDetailClient({
     resolvedParams.slug,
     initialEvent ? { success: true, data: initialEvent } : undefined,
   );
-  const event = fetchedEvent ?? initialEvent ?? undefined;
+  const liveEvent = fetchedEvent ?? initialEvent ?? undefined;
+  const event =
+    liveEvent && contentOverride
+      ? { ...liveEvent, ...contentOverride }
+      : liveEvent;
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- "" means unset
+  const bookWord = contentOverride?.cta_text || "Book slots";
   const eventLoading = eventQueryLoading && !event;
   // Secondary lookups (reviews, ratings, availability, save) key off the real
   // event UUID, not the slug — resolve it from the loaded event.
@@ -625,10 +644,14 @@ export default function ExperienceDetailClient({
           new Date(shownDate).getTime() + event.duration_minutes * 60_000,
         )
       : null;
+  // Marketing landing pages (contentOverride) let signed-out visitors book
+  // as a guest — name, phone + OTP, email — instead of the full login.
+  const ticketsQuery = new URLSearchParams();
+  if (shownDate && dateChips.length > 0) ticketsQuery.set("date", shownDate);
+  if (contentOverride) ticketsQuery.set("guest", "1");
+  const ticketsQs = ticketsQuery.toString();
   const ticketsHref = `/experience/${resolvedParams.slug}/tickets${
-    shownDate && dateChips.length > 0
-      ? `?date=${encodeURIComponent(shownDate)}`
-      : ""
+    ticketsQs ? `?${ticketsQs}` : ""
   }`;
   const barStatus = hasPassed
     ? "Event has passed"
@@ -847,8 +870,8 @@ export default function ExperienceDetailClient({
       <BookingPill
         label={
           event.is_free
-            ? "Book tickets · Free"
-            : `Book tickets from ${rupees(fromCents)}`
+            ? `${bookWord} · Free`
+            : `${bookWord} from ${rupees(fromCents)}`
         }
         status={barStatus}
         href={ticketsHref}

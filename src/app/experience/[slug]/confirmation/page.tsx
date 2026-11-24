@@ -2,14 +2,12 @@
 
 import Breadcrumbs from "~/components/Breadcrumbs";
 import { use, Suspense, useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Navbar from "~/components/Navbar";
 import Link from "next/link";
-import { RecommendationPopup } from "~/components/RecommendationPopup";
 import {
   useEvent,
   usePublicHostProfile,
-  useListPublicEvents,
   useBooking,
   useFeeDocuments,
   useUserProfile,
@@ -17,13 +15,16 @@ import {
 import {
   FiCheck,
   FiCalendar,
-  FiMessageCircle,
+  FiClock,
   FiDownload,
+  FiHome,
+  FiMapPin,
+  FiMessageCircle,
+  FiUsers,
 } from "react-icons/fi";
 import { formatIST } from "~/lib/datetime";
 import { pdfSafe } from "~/lib/pdfText";
-import { getRecommendedEventSync } from "~/lib/recommendations";
-import { currentAuthHeader, type EventDTO } from "~/lib/api";
+import { currentAuthHeader } from "~/lib/api";
 import { toast } from "sonner";
 import FeeReceiptButton from "~/components/billing/FeeReceiptButton";
 import { env } from "~/env";
@@ -403,16 +404,75 @@ function buildPdfDocument(
 /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
 /* ------------------------------------------------------------------ */
+/*  Celebration particles (CSS only; off with prefers-reduced-motion)  */
+/* ------------------------------------------------------------------ */
+const CONFETTI_COLORS = [
+  "#B57BFF",
+  "#E040FB",
+  "#D8B4FE",
+  "#4ADE80",
+  "#FBBF24",
+  "#FFFFFF",
+];
+
+/** One burst out of the success mark; positions are fixed, not random. */
+function Confetti() {
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      {Array.from({ length: 36 }, (_, i) => {
+        const angle = ((i * 360) / 36 + ((i * 47) % 20)) * (Math.PI / 180);
+        const dist = 90 + ((i * 53) % 110);
+        const style = {
+          "--dx": `${Math.round(Math.cos(angle) * dist)}px`,
+          // Pieces drift down after the burst.
+          "--dy": `${Math.round(Math.sin(angle) * dist + 140)}px`,
+          "--rot": `${(i * 97) % 540}deg`,
+          backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+          animationDelay: `${(i % 6) * 40}ms`,
+        } as React.CSSProperties;
+        return (
+          <span
+            key={i}
+            style={style}
+            className={`msm-confetti absolute top-1/2 left-1/2 ${
+              i % 3 === 0 ? "h-2 w-2 rounded-full" : "h-3 w-1.5 rounded-[2px]"
+            }`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+/** Soft twinkling dots across the top of the page. */
+function Sparkles() {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[520px]"
+    >
+      {Array.from({ length: 22 }, (_, i) => (
+        <span
+          key={i}
+          className="msm-star absolute rounded-full bg-white"
+          style={{
+            left: `${(i * 37 + 7) % 100}%`,
+            top: `${(i * 23 + 11) % 100}%`,
+            width: i % 4 === 0 ? 3 : 2,
+            height: i % 4 === 0 ? 3 : 2,
+            animationDelay: `${(i % 7) * -0.6}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Confirmation Content Component                                     */
 /* ------------------------------------------------------------------ */
 function ConfirmationContent({ eventId }: { eventId: string }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [showRecommendation, setShowRecommendation] = useState(false);
-  const [recommendedEvent, setRecommendedEvent] = useState<EventDTO | null>(
-    null,
-  );
-  const [reason, setReason] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   const sentNotificationRef = useRef<Record<string, boolean>>({});
 
@@ -428,26 +488,12 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
   const feeReceipt = feeDocs?.find((d) => d.kind === "invoice");
   const refundNote = feeDocs?.find((d) => d.kind === "credit_note");
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
-  const { data: allEvents } = useListPublicEvents();
   const { data: bookingUser } = useUserProfile(booking?.user_id ?? null);
 
   const bookedTierName = booking?.price_tier_id
     ? (event?.price_tiers?.find((t) => t.id === booking.price_tier_id)?.name ??
       null)
     : null;
-
-  // Get recommendation when event data is loaded
-  useEffect(() => {
-    if (event && allEvents && allEvents.length > 0) {
-      const result = getRecommendedEventSync(event, allEvents);
-      if (result.recommendedEvent) {
-        setRecommendedEvent(result.recommendedEvent);
-        setReason(result.reason);
-        // Show recommendation popup after a delay
-        setTimeout(() => setShowRecommendation(true), 800);
-      }
-    }
-  }, [event, allEvents]);
 
   const downloadPDF = () => {
     /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
@@ -683,112 +729,184 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
     ? `#MSM-${bookingId.slice(-6).toUpperCase()}`
     : null;
 
-  // Google Calendar "add event" link — no ICS file needed.
-  const calStamp = (d: Date) =>
-    d
-      .toISOString()
-      .replace(/[-:]/g, "")
-      .replace(/\.\d{3}/, "");
-  const calEnd = new Date(
-    eventDate.getTime() + (event.duration_minutes ?? 60) * 60_000,
-  );
-  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(event.title)}&dates=${calStamp(eventDate)}/${calStamp(calEnd)}&location=${encodeURIComponent(place)}&details=${encodeURIComponent(verifyUrl)}`;
+  const timeLabel = `${formatIST(eventDate, "h:mm a")}${
+    event.duration_minutes
+      ? ` – ${formatIST(
+          new Date(eventDate.getTime() + event.duration_minutes * 60_000),
+          "h:mm a",
+        )}`
+      : ""
+  }`;
+  const paidLabel = booking?.pass_id
+    ? booking.amount_cents
+      ? `Monthly pass + ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`
+      : "Monthly pass"
+    : booking?.amount_cents
+      ? `Paid ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`
+      : "Free";
+  const infoRow = "flex items-start gap-2.5 text-[14px] text-white/75";
+  const infoIcon = "mt-0.5 h-4 w-4 shrink-0 text-[#D8B4FE]";
 
   return (
-    <main className="min-h-screen bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28">
-      <div className="mx-auto flex w-full max-w-[860px] flex-col items-center px-6 pt-5 pb-16 text-center md:px-10 md:pt-8">
-        <Breadcrumbs className="self-start text-left" />
-        <div className="mt-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#22C55E] text-white">
-          <FiCheck className="h-7 w-7 stroke-[2.5]" />
+    <main className="relative isolate min-h-screen overflow-x-clip bg-[#080914] font-[family-name:var(--font-inter)] text-white max-md:pb-28">
+      {/* Ambient glow from the poster, as on the event page. */}
+      {event.cover_image_url && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[620px] overflow-hidden"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={event.cover_image_url}
+            alt=""
+            className="h-full w-full scale-125 object-cover opacity-30 blur-[100px] saturate-150"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#080914]/10 via-[#080914]/70 to-[#080914]" />
         </div>
-        <h1 className="font-outfit mt-4 text-2xl font-bold">
-          Booking Confirmed!
+      )}
+      <Sparkles />
+
+      <div className="mx-auto flex w-full max-w-[720px] flex-col items-center px-5 pt-5 pb-16 text-center md:px-8 md:pt-8">
+        <Breadcrumbs className="self-start text-left" />
+
+        {/* Success mark with a confetti burst behind it */}
+        <div className="relative mt-6 flex h-20 w-20 items-center justify-center md:mt-8">
+          <Confetti />
+          <span className="msm-ring absolute inset-0 rounded-full bg-[#22C55E]/40" />
+          <span className="msm-pop relative flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-[#4ADE80] to-[#16A34A] shadow-[0_0_60px_-6px_rgb(34_197_94/0.7)]">
+            <FiCheck className="h-9 w-9 stroke-[3] text-white" />
+          </span>
+        </div>
+        <h1
+          className="msm-rise font-outfit mt-6 text-[clamp(26px,6vw,36px)] leading-tight font-semibold tracking-[-0.02em] text-balance"
+          style={{ animationDelay: "150ms" }}
+        >
+          Thank you
+          {bookingUser?.name ? `, ${bookingUser.name.split(" ")[0]}` : ""}!
         </h1>
-        <p className="mt-1.5 text-sm text-white/60">
-          You&apos;re all set for an amazing experience
+        <p
+          className="msm-rise mt-2 text-[15px] text-white/65"
+          style={{ animationDelay: "250ms" }}
+        >
+          Your booking is confirmed. See you there!
         </p>
 
         {/* Ticket */}
         <div
           id="booking-ticket"
-          className="relative mt-7 flex w-full flex-col overflow-hidden rounded-[20px] border border-white/[0.06] bg-[#131328] text-left md:flex-row"
+          className="msm-rise relative mt-8 flex w-full flex-col overflow-hidden rounded-[24px] border border-white/[0.08] bg-[#131328]/90 text-left shadow-[0_30px_80px_-30px_rgb(0_0_0/0.8)] backdrop-blur md:flex-row"
+          style={{ animationDelay: "350ms" }}
         >
-          <div className="flex min-w-0 flex-1 flex-col p-6 md:p-7">
-            <span className="w-fit rounded-md bg-[#9B30FF]/20 px-2 py-1 text-[10px] font-bold tracking-wider text-[#D8B4FE] uppercase">
-              {bookedTierName ?? "Experience Pass"}
-            </span>
-            <h2 className="font-outfit mt-3 text-lg leading-6 font-semibold text-white">
-              {event.title}
-            </h2>
-            <p className="mt-2 text-[13px] text-white/60">
-              {hostName ? `Hosted by ${hostName} • ` : ""}
-              {formatIST(eventDate, "MMM d, yyyy · h:mm a")}
-            </p>
-            <p className="mt-1.5 text-[13px] text-white/60">{place}</p>
-            <div className="mt-auto flex items-center justify-between gap-4 pt-5 text-[13px]">
-              <span className="text-white/60">
+          <div className="flex min-w-0 flex-1 flex-col p-5 md:p-7">
+            <div className="flex items-start gap-4">
+              {event.cover_image_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={event.cover_image_url}
+                  alt=""
+                  className="h-[84px] w-[68px] shrink-0 rounded-xl object-cover ring-1 ring-white/10"
+                />
+              )}
+              <div className="min-w-0">
+                <span className="inline-block rounded-md bg-[#9B30FF]/20 px-2 py-1 text-[10px] font-bold tracking-wider text-[#D8B4FE] uppercase">
+                  {bookedTierName ?? "Experience Pass"}
+                </span>
+                <h2 className="font-outfit mt-2 text-lg leading-6 font-semibold text-white">
+                  {event.title}
+                </h2>
+                {hostName && (
+                  <p className="mt-1 truncate text-[13px] text-white/55">
+                    Hosted by {hostName}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <ul className="mt-5 flex flex-col gap-2.5">
+              <li className={infoRow}>
+                <FiCalendar className={infoIcon} />
+                {formatIST(eventDate, "EEE, d MMM yyyy")}
+              </li>
+              <li className={infoRow}>
+                <FiClock className={infoIcon} />
+                {timeLabel}
+              </li>
+              <li className={infoRow}>
+                <FiMapPin className={infoIcon} />
+                <span className="min-w-0 break-words">{place}</span>
+              </li>
+              <li className={infoRow}>
+                <FiUsers className={infoIcon} />
+                {guestCount} guest{guestCount > 1 ? "s" : ""}
+              </li>
+            </ul>
+
+            <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/[0.08] pt-4 text-[13px]">
+              <span className="truncate text-white/60">
                 {bookingUser?.name ?? "Guest"}
+                {refCode && (
+                  <span className="font-mono text-white/45 md:hidden">
+                    {" "}
+                    · {refCode}
+                  </span>
+                )}
               </span>
-              <span className="font-semibold text-white">
-                {booking?.pass_id
-                  ? booking.amount_cents
-                    ? `Monthly pass + ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`
-                    : "Monthly pass"
-                  : booking?.amount_cents
-                    ? `Paid ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`
-                    : "Free"}
+              <span className="shrink-0 font-semibold text-white">
+                {paidLabel}
               </span>
             </div>
           </div>
 
-          {/* Tear line with notches: vertical on desktop, horizontal on mobile */}
-          <div className="relative border-t border-dashed border-white/15 md:border-t-0 md:border-l">
-            <span className="absolute -top-3 -left-3 h-6 w-6 rounded-full bg-[#080914] md:-top-3 md:-left-3" />
+          {/* Tear line with notches: horizontal on mobile, vertical on desktop */}
+          {/* The QR stub is desktop-only: on a phone the guest is holding the
+              ticket already, and the PDF / WhatsApp ticket carries the QR. */}
+          <div className="relative hidden border-dashed border-white/15 md:block md:border-l">
+            <span className="absolute -top-3 -left-3 h-6 w-6 rounded-full bg-[#080914]" />
             <span className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-[#080914] md:top-auto md:right-auto md:-bottom-3 md:-left-3" />
           </div>
 
-          <div className="flex flex-col items-center justify-center p-6 md:w-[260px]">
-            <div className="rounded-xl bg-white p-2.5">
+          <div className="hidden flex-col items-center justify-center p-6 md:flex md:w-[240px]">
+            <div className="rounded-2xl bg-white p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&color=16304c&data=${encodeURIComponent(verifyUrl)}`}
                 alt="Booking QR code"
-                className="h-[100px] w-[100px]"
+                className="h-[140px] w-[140px] md:h-[120px] md:w-[120px]"
                 crossOrigin="anonymous"
               />
             </div>
+            <p className="mt-3 text-xs text-white/55">Show this at entry</p>
             {refCode && (
-              <p className="mt-3 text-xs text-white/50 select-all">
-                Ref: {refCode}
+              <p className="mt-1 font-mono text-[13px] font-semibold text-white select-all">
+                {refCode}
               </p>
             )}
-            <p className="mt-0.5 text-sm font-semibold text-white">
-              {guestCount} Guest{guestCount > 1 ? "s" : ""}
-            </p>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="mt-6 flex w-full max-w-[420px] flex-col gap-3 sm:flex-row">
-          <a
-            href={calendarUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#131328] text-sm font-medium text-white/80 transition hover:border-white/20 hover:text-white"
-          >
-            <FiCalendar className="h-4 w-4" /> Add to Calendar
-          </a>
+        <div
+          className="msm-rise mt-6 grid w-full gap-3 sm:grid-cols-2"
+          style={{ animationDelay: "450ms" }}
+        >
           <button
             type="button"
             onClick={downloadPDF}
             disabled={isDownloading}
-            className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-white/10 bg-[#131328] text-sm font-medium text-white/80 transition hover:border-white/20 hover:text-white disabled:opacity-50"
+            className="font-outfit flex h-13 items-center justify-center gap-2 rounded-full bg-white text-[15px] font-semibold text-[#080914] transition hover:bg-white/90 active:scale-[0.99] disabled:opacity-60"
           >
             <FiDownload
               className={`h-4 w-4 ${isDownloading ? "animate-bounce" : ""}`}
             />
-            {isDownloading ? "Preparing…" : "Download Ticket"}
+            {isDownloading ? "Preparing…" : "Download ticket"}
           </button>
+          <Link
+            href="/"
+            className="font-outfit flex h-13 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.04] text-[15px] font-semibold text-white transition hover:border-white/30 hover:bg-white/[0.08] active:scale-[0.99]"
+          >
+            <FiHome className="h-4 w-4" />
+            Go to home
+          </Link>
         </div>
         {(feeReceipt ?? refundNote) && (
           <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
@@ -796,13 +914,6 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
             {refundNote && <FeeReceiptButton doc={refundNote} />}
           </div>
         )}
-        <button
-          type="button"
-          onClick={() => router.push("/activities")}
-          className="mt-4 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
-        >
-          View Journey
-        </button>
 
         <p className="mt-6 flex items-center gap-2 text-xs text-white/50">
           <FiMessageCircle className="h-3.5 w-3.5 shrink-0" />
@@ -822,14 +933,6 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           </details>
         )}
       </div>
-
-      {/* Recommendation Popup */}
-      <RecommendationPopup
-        isOpen={showRecommendation}
-        onClose={() => setShowRecommendation(false)}
-        event={recommendedEvent}
-        reason={reason}
-      />
     </main>
   );
 }

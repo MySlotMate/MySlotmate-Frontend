@@ -112,7 +112,7 @@ export const HOST_GUIDE: GuideSection[] = [
       },
       {
         title: "Free",
-        body: "The guest books at ₹0. You comp the guest.",
+        body: "The guest books at ₹0. You comp the guest. A code shared with many guests needs a maximum number of uses.",
       },
       {
         title: "Set limits",

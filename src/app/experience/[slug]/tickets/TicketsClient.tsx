@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "~/components/Navbar";
 import WebsiteNav from "~/components/website/WebsiteNav";
 import GoogleLogin from "~/components/GoogleLogin";
+import GuestCheckoutModal from "~/components/GuestCheckoutModal";
 import MonthlyPassCard from "~/components/experience/MonthlyPassCard";
 import BookingShell, {
   StickyAction,
@@ -82,11 +83,14 @@ export default function TicketsClient({
   slug,
   initialEvent,
   initialDate,
+  guestCheckout = false,
 }: {
   slug: string;
   initialEvent: EventDTO | null;
   /** Session picked on the event page, if any. */
   initialDate?: string;
+  /** Came from a marketing landing page: signed-out visitors book as a guest. */
+  guestCheckout?: boolean;
 }) {
   const router = useRouter();
   const { userId } = useStoredAuth();
@@ -232,6 +236,10 @@ export default function TicketsClient({
       setShowLogin(true);
       return;
     }
+    goToBook();
+  };
+
+  const goToBook = () => {
     const tierParam =
       hasTiers && selectedTierId
         ? `&tier=${encodeURIComponent(selectedTierId)}`
@@ -433,7 +441,18 @@ export default function TicketsClient({
         </BookingShell>
       </main>
 
-      <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
+      {guestCheckout ? (
+        <GuestCheckoutModal
+          open={showLogin}
+          onClose={() => setShowLogin(false)}
+          onVerified={() => {
+            setShowLogin(false);
+            goToBook();
+          }}
+        />
+      ) : (
+        <GoogleLogin open={showLogin} onClose={() => setShowLogin(false)} />
+      )}
     </>
   );
 }

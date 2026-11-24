@@ -804,3 +804,61 @@ body:has([data-msm-picker]) .msm-publish-bar {
   transform: translateY(16px);
   pointer-events: none;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Booking confirmation: success mark + confetti burst.               */
+/* ------------------------------------------------------------------ */
+@keyframes msm-confetti {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      rotate(var(--rot));
+  }
+}
+@keyframes msm-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes msm-ring {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+.msm-confetti {
+  opacity: 0;
+}
+.msm-ring {
+  opacity: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .msm-confetti {
+    animation: msm-confetti 1.9s cubic-bezier(0.15, 0.6, 0.3, 1) forwards;
+  }
+  .msm-pop {
+    animation: msm-pop 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .msm-ring {
+    animation: msm-ring 1.8s ease-out 0.4s infinite;
+  }
+}

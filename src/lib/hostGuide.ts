@@ -194,7 +194,7 @@ export const HOST_GUIDE: GuideSection[] = [
     steps: [
       {
         title: "Check your event qualifies",
-        body: "A paid, published event whose next date is at least 10 days away, with at least 20 unsold tickets (50 if every ticket is under ₹500). You need to be a verified host with a payout method added. Boost is in a pilot with invited hosts; ask our team to add you.",
+        body: "A paid, published event whose next date is at least 10 days away, with a Moderate, Strict or No refunds policy (not Flexible), with at least 20 unsold tickets (50 if every ticket is under ₹500). You need to be a verified host with a payout method added. Boost is in a pilot with invited hosts; ask our team to add you.",
       },
       {
         title: "Request a Boost",
@@ -215,7 +215,8 @@ export const HOST_GUIDE: GuideSection[] = [
     ],
     tips: [
       "The commission comes out of your share of each ticket. The guest pays the same price.",
-      "If a boosted booking is refunded, its commission is returned too.",
+      "If a guest cancels in time for a full refund, that ticket's commission is returned. A late cancellation with no refund keeps it.",
+      "While a Boost is open or live, the refund policy can't be changed to Flexible.",
       "Change a ticket price after accepting and we'll send a new proposal.",
     ],
   },

@@ -164,7 +164,10 @@ export default function PromotePage() {
         {/* How it works, in three steps */}
         <ol className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
           {[
-            ["Ask for a Boost", "Pick a paid event at least 10 days away."],
+            [
+              "Ask for a Boost",
+              "A paid event at least 10 days away, with a Moderate, Strict or No refunds policy.",
+            ],
             ["We run the ads", "Our team sets them up and keeps them going."],
             [
               "Pay only on sales",

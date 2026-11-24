@@ -223,7 +223,8 @@ export default function BoostCard({
                   month: "short",
                 })
               : "you stop it"}
-            . If a booking is refunded, its commission is refunded too.
+            . A booking refunded in full gets its commission back; a late
+            cancellation with no refund keeps it.
           </p>
           <div className="grid grid-cols-2 gap-2">
             <Stat label="Reach" value={b.reach.toLocaleString("en-IN")} />
@@ -334,8 +335,10 @@ export default function BoostCard({
           <div className="rounded-2xl border border-[#B724EA]/30 bg-[#B724EA]/[0.08] p-3 text-xs leading-5 text-white/80">
             MySlotMate keeps {pct(top)} or less of each ticket sold while the
             Boost is live, from go-live until it ends or you stop it. The
-            commission comes out of your share; guests pay the same price. If a
-            booking is refunded, its commission is refunded too.
+            commission comes out of your share; guests pay the same price. A
+            booking refunded in full gets its commission back; a late
+            cancellation with no refund keeps it. Your refund policy must stay
+            Moderate, Strict or No refunds while the Boost runs.
           </div>
           <div className="flex gap-2">
             <button
@@ -535,8 +538,9 @@ export default function BoostCard({
         )}
         <Note>
           The commission comes out of your share of tickets sold while the Boost
-          is live; guests pay the same price. Refunded bookings get their
-          commission back.
+          is live; guests pay the same price. Boosted events need a Moderate,
+          Strict or No refunds policy. A booking refunded in full gets its
+          commission back; a late cancellation with no refund keeps it.
         </Note>
       </div>
     );

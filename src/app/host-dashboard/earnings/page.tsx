@@ -845,7 +845,9 @@ function EarningsContent() {
                                   ? "Refunded"
                                   : isPending
                                     ? "Pending"
-                                    : `Guest paid ${fmtCurrency(s.AmountCents)}`}
+                                    : (s.BoostCommissionCents ?? 0) > 0
+                                      ? `Boost −${fmtCurrency(s.BoostCommissionCents ?? 0)}`
+                                      : `Guest paid ${fmtCurrency(s.AmountCents)}`}
                               </p>
                             </div>
                           </li>

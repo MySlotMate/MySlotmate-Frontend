@@ -2240,6 +2240,8 @@ export interface PayoutEligibilityDTO {
   boost_blocked: boolean;
   /** Owed to MySlotmate after a cancellation; blocks Boost and weekly payouts. */
   recovery_balance_cents: number;
+  /** Event Boost pilot: only invited hosts can request a Boost. */
+  boost_invited?: boolean;
   /** Paid early across all upcoming events vs the backstop cap. */
   early_outstanding_cents: number;
   early_backstop_cents: number;
@@ -2275,6 +2277,10 @@ export interface BoostRateDTO {
   ticket_name: string;
   price_cents: number;
   rate_bps: number;
+  /** The host guide's rate for this price; differs when the team proposed another. */
+  guide_rate_bps?: number;
+  /** Why the proposed rate differs from the guide (shown to the host). */
+  reason?: string | null;
 }
 
 export interface BoostDTO {
@@ -2282,8 +2288,10 @@ export interface BoostDTO {
   event_id: string;
   status: BoostStatus;
   rates: BoostRateDTO[];
-  /** Why a ₹5,000+ event was quoted above the base rate. */
+  /** First per-ticket reason (older screens); see rates[].reason. */
   topup_reason: string | null;
+  /** The MySlotMate team's note with the proposal. */
+  admin_note?: string | null;
   decline_reason: string | null;
   goal_text: string | null;
   channels: BoostChannel[];

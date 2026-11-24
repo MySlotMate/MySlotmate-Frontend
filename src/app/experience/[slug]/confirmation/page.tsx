@@ -5,11 +5,9 @@ import { use, Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "~/components/Navbar";
 import Link from "next/link";
-import { RecommendationPopup } from "~/components/RecommendationPopup";
 import {
   useEvent,
   usePublicHostProfile,
-  useListPublicEvents,
   useBooking,
   useUserProfile,
 } from "~/hooks/useApi";
@@ -21,8 +19,7 @@ import {
 } from "react-icons/fi";
 import { formatIST } from "~/lib/datetime";
 import { pdfSafe } from "~/lib/pdfText";
-import { getRecommendedEventSync } from "~/lib/recommendations";
-import { currentAuthHeader, type EventDTO } from "~/lib/api";
+import { currentAuthHeader } from "~/lib/api";
 import { toast } from "sonner";
 import { env } from "~/env";
 
@@ -406,11 +403,6 @@ function buildPdfDocument(
 function ConfirmationContent({ eventId }: { eventId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showRecommendation, setShowRecommendation] = useState(false);
-  const [recommendedEvent, setRecommendedEvent] = useState<EventDTO | null>(
-    null,
-  );
-  const [reason, setReason] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
   const sentNotificationRef = useRef<Record<string, boolean>>({});
 
@@ -422,26 +414,12 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
   const { data: event, isLoading: eventLoading } = useEvent(eventId);
   const { data: booking, isLoading: bookingLoading } = useBooking(bookingId);
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
-  const { data: allEvents } = useListPublicEvents();
   const { data: bookingUser } = useUserProfile(booking?.user_id ?? null);
 
   const bookedTierName = booking?.price_tier_id
     ? (event?.price_tiers?.find((t) => t.id === booking.price_tier_id)?.name ??
       null)
     : null;
-
-  // Get recommendation when event data is loaded
-  useEffect(() => {
-    if (event && allEvents && allEvents.length > 0) {
-      const result = getRecommendedEventSync(event, allEvents);
-      if (result.recommendedEvent) {
-        setRecommendedEvent(result.recommendedEvent);
-        setReason(result.reason);
-        // Show recommendation popup after a delay
-        setTimeout(() => setShowRecommendation(true), 800);
-      }
-    }
-  }, [event, allEvents]);
 
   const downloadPDF = () => {
     /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
@@ -696,7 +674,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           <FiCheck className="h-7 w-7 stroke-[2.5]" />
         </div>
         <h1 className="font-outfit mt-4 text-2xl font-bold">
-          Booking Confirmed!
+          Thank you! Booking confirmed
         </h1>
         <p className="mt-1.5 text-sm text-white/60">
           You&apos;re all set for an amazing experience
@@ -784,13 +762,21 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
             {isDownloading ? "Preparing…" : "Download Ticket"}
           </button>
         </div>
-        <button
-          type="button"
-          onClick={() => router.push("/activities")}
-          className="mt-4 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
-        >
-          View Journey
-        </button>
+        <div className="mt-4 flex w-full max-w-[420px] flex-col items-center gap-3 sm:flex-row">
+          <Link
+            href="/"
+            className="flex h-11 w-full flex-1 items-center justify-center rounded-full bg-white text-sm font-semibold text-[#080914] transition hover:bg-white/90"
+          >
+            Go to home
+          </Link>
+          <button
+            type="button"
+            onClick={() => router.push("/activities")}
+            className="flex-1 text-sm font-semibold text-[#D8B4FE] transition hover:text-white"
+          >
+            View Journey
+          </button>
+        </div>
 
         <p className="mt-6 flex items-center gap-2 text-xs text-white/50">
           <FiMessageCircle className="h-3.5 w-3.5 shrink-0" />
@@ -810,14 +796,6 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           </details>
         )}
       </div>
-
-      {/* Recommendation Popup */}
-      <RecommendationPopup
-        isOpen={showRecommendation}
-        onClose={() => setShowRecommendation(false)}
-        event={recommendedEvent}
-        reason={reason}
-      />
     </main>
   );
 }

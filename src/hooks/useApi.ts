@@ -1779,3 +1779,14 @@ export function useMyFeeDocuments(enabled = true) {
     select: (res) => res.data ?? [],
   });
 }
+
+/** The signed-in host's Boost commission invoices and credit notes. */
+export function useHostCommissionDocuments(enabled = true) {
+  return useQuery({
+    queryKey: ["fee-documents", "host-commission"] as const,
+    queryFn: () => api.getHostCommissionDocuments(),
+    enabled,
+    staleTime: 60 * 1000,
+    select: (res) => res.data ?? [],
+  });
+}

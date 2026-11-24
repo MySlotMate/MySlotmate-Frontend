@@ -13,6 +13,7 @@ import {
 } from "~/components/host-dashboard/TaxDetails";
 import PayoutScheduleCard from "~/components/host-dashboard/PayoutScheduleCard";
 import MonthlyStatementCard from "~/components/host-dashboard/MonthlyStatementCard";
+import BoostInvoicesCard from "~/components/host-dashboard/BoostInvoicesCard";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { SharedEventsCard } from "~/components/host-dashboard";
@@ -1080,6 +1081,8 @@ function EarningsContent() {
                 />
 
                 <MonthlyStatementCard />
+
+                <BoostInvoicesCard />
               </section>
             )}
           </>

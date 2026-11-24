@@ -3147,9 +3147,11 @@ export interface FeeDocumentDTO {
   kind: "invoice" | "credit_note";
   number: string;
   issued_at: string;
-  source_type: "booking" | "pass";
+  source_type: "booking" | "pass" | "host_commission";
   source_id: string;
   event_id?: string;
+  /** Commission invoices: the month billed, e.g. "2026-11". */
+  period?: string;
   event_title: string;
   original_number?: string;
   taxable_cents: number;
@@ -3207,4 +3209,9 @@ export async function downloadHostStatement(month: string) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+/** GET /billing/host-commission: the signed-in host's Boost commission invoices and credit notes. */
+export function getHostCommissionDocuments() {
+  return apiFetch<FeeDocumentDTO[]>("/billing/host-commission");
 }

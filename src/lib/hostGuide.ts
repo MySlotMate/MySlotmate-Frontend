@@ -77,7 +77,7 @@ export const HOST_GUIDE: GuideSection[] = [
       },
       {
         title: "Who can book?",
-        body: "Anyone; People I approve (guests send a request and you accept it); or People with a code (only guests who have your unlock code can book).",
+        body: "Anyone; People I approve (guests send a request and you accept it); or People with a code. With a code, pick one code for everyone (type it or generate it), or single-use codes, one per guest, made right there once the experience is saved. These codes only let guests in; they pay the normal price.",
       },
       {
         title: "Refunds & payout",
@@ -95,17 +95,14 @@ export const HOST_GUIDE: GuideSection[] = [
   },
   {
     id: "codes",
-    title: "Codes: unlock, discount and free entry",
-    summary: "All your codes for an event live in one Codes panel.",
+    title: "Codes: % off and free",
+    summary:
+      "Codes that change the price: a discount, or a free booking. Codes that only let guests in are set in Who can book?.",
     where: {
       label: "Events → your event → Codes",
       href: "/host-dashboard/experiences",
     },
     steps: [
-      {
-        title: "Unlock only",
-        body: "Lets the guest book a code-only event. They pay the normal price.",
-      },
       {
         title: "% off",
         body: "Takes a share off the tickets (1 to 99%). You absorb the discount.",
@@ -115,11 +112,16 @@ export const HOST_GUIDE: GuideSection[] = [
         body: "The guest books at ₹0. You comp the guest. A code shared with many guests needs a maximum number of uses.",
       },
       {
+        title: "Share it or make one per guest",
+        body: "One code to share with everyone, or single-use codes, one per guest, which you can download as a list.",
+      },
+      {
         title: "Set limits",
         body: "Give a code a start and end date and a maximum number of uses, or leave them blank.",
       },
     ],
     tips: [
+      "On a People with a code experience, a % off or free code also lets the guest in.",
       "Your event's Needs attention list warns you when a shared code is nearly used up or about to end.",
     ],
   },

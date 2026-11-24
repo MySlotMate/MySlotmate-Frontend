@@ -184,15 +184,35 @@ export default function ManageCodesModal({
               )}
             </div>
 
-            <CodesPanel
-              eventId={eventId}
-              hostId={hostId}
-              isFree={isFree}
-              codeGated={isPrivate && accessGate === "passkey"}
-              sharedPasskey={
-                isPrivate && accessGate === "passkey" ? passkey : ""
-              }
-            />
+            {isPrivate && accessGate === "passkey" && (
+              <div className="rounded-xl border border-white/10 p-4">
+                <h3 className="text-sm font-semibold text-white">
+                  A code per guest
+                </h3>
+                <p className="mb-3 text-xs text-[#A5A8C3]">
+                  Single-use codes instead of, or as well as, the passkey above.
+                </p>
+                <CodesPanel
+                  mode="access"
+                  eventId={eventId}
+                  hostId={hostId}
+                  isFree={isFree}
+                  codeGated
+                />
+              </div>
+            )}
+
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-white">
+                % off and free codes
+              </h3>
+              <CodesPanel
+                eventId={eventId}
+                hostId={hostId}
+                isFree={isFree}
+                codeGated={isPrivate && accessGate === "passkey"}
+              />
+            </div>
           </div>
         )}
       </div>

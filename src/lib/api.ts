@@ -1006,6 +1006,9 @@ export interface HostEarningsDTO {
   current_balance_cents: number;
   /** Already paid out or in flight (pending / processing / completed payouts). */
   in_flight_payouts_cents: number;
+  /** Event Boost commission still owed on bookings the host cancelled; already
+   *  taken off the totals above. Absent on older backends. */
+  boost_commission_kept_cents?: number;
 
   estimated_clearance_at: string | null;
   platform_fee?: { host_percentage: number; platform_percentage: number };

@@ -605,6 +605,13 @@ function EarningsContent() {
                   <p className="mt-1 text-xs text-[#A5A8C3]">
                     From events that have already happened.
                   </p>
+                  {(earnings?.boost_commission_kept_cents ?? 0) > 0 && (
+                    <p className="mt-1 text-xs text-amber-300">
+                      Less{" "}
+                      {fmtCurrency(earnings?.boost_commission_kept_cents ?? 0)}{" "}
+                      Marketing Boost commission on bookings you cancelled.
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => {

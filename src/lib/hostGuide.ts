@@ -216,6 +216,7 @@ export const HOST_GUIDE: GuideSection[] = [
     tips: [
       "The commission comes out of your share of each ticket. The guest pays the same price.",
       "If a guest cancels in time for a full refund, that ticket's commission is returned. A late cancellation with no refund keeps it.",
+      "If you cancel the event or pause a session, your guests are refunded in full, but the commission on their tickets is still charged: the ads already ran. It comes off what you can withdraw.",
       "While a Boost is open or live, the refund policy can't be changed to Flexible.",
       "Change a ticket price after accepting and we'll send a new proposal.",
     ],

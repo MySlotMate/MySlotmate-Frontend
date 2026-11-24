@@ -1818,6 +1818,9 @@ export default function EditEventPage({
                         accessMode={form.accessMode}
                         accessPasskey={form.accessPasskey}
                         canGenerateCodes
+                        eventId={event?.id}
+                        hostId={host?.id}
+                        isFree={form.isFree}
                         onChange={(patch) =>
                           setForm((prev) => ({ ...prev, ...patch }))
                         }
@@ -1825,10 +1828,7 @@ export default function EditEventPage({
                     </MoreOptions>
 
                     {host?.id && event?.id && (
-                      <MoreOptions
-                        title="Codes"
-                        summary="Unlock, % off or free"
-                      >
+                      <MoreOptions title="Codes" summary="% off or free">
                         <CodesPanel
                           eventId={event.id}
                           hostId={host.id}
@@ -1836,13 +1836,6 @@ export default function EditEventPage({
                           codeGated={
                             form.isPrivate &&
                             form.privateAccessMode === "passkey"
-                          }
-                          sharedPasskey={
-                            form.isPrivate &&
-                            form.privateAccessMode === "passkey" &&
-                            form.accessMode === "shared"
-                              ? form.accessPasskey
-                              : ""
                           }
                         />
                       </MoreOptions>

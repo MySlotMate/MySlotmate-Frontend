@@ -2260,6 +2260,9 @@ export default function CreateExperiencePage() {
                       accessPasskey={form.accessPasskey}
                       showError={showErrors}
                       canGenerateCodes={!!createdEventId}
+                      eventId={createdEventId}
+                      hostId={host?.id}
+                      isFree={form.isFree}
                       onChange={(patch) =>
                         setForm((prev) => ({ ...prev, ...patch }))
                       }

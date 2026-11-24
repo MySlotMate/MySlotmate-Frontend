@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { FiChevronDown, FiCopy, FiDownload, FiTrash2 } from "react-icons/fi";
+import { FiChevronDown, FiDownload, FiTrash2 } from "react-icons/fi";
 import {
   createCoupon,
   createCouponsBatch,
@@ -79,11 +79,15 @@ interface Props {
   hostId: string;
   /** The experience itself is free: nothing to discount, so no % off / Free. */
   isFree: boolean;
-  /** Booking needs a code ("Who can book?" = People with a code). Only then
-   *  does an "Unlock only" code mean anything. */
+  /** Booking needs a code ("Who can book?" = People with a code). */
   codeGated: boolean;
-  /** The one-code-for-everyone passkey from "Who can book?", shown pinned. */
-  sharedPasskey?: string;
+  /**
+   * "price" (default): the Codes section, % off and Free codes only.
+   * "access": inside "Who can book? → A code per guest", single-use codes
+   * that only unlock booking. The one shared entry code is the passkey set
+   * in "Who can book?" itself, so it never appears here.
+   */
+  mode?: "price" | "access";
 }
 
 const EFFECTS: { key: CodeEffect; title: string; desc: string }[] = [
@@ -136,20 +140,27 @@ function Choice({
   );
 }
 
-// CodesPanel is the one place a host manages every code for an experience:
-// what it does (unlock only, % off, free), how it is handed out (one shared
-// code or unique codes per guest), how often it can be used and when it is
-// valid. All three kinds are rows in the same coupons table.
+// CodesPanel manages an experience's codes, in one of two places:
+//  - mode "price" (the Codes section): % off and Free codes, shared or one
+//    per guest, with use limits and dates;
+//  - mode "access" ("Who can book? → A code per guest"): single-use codes
+//    that only unlock booking.
+// Entry is decided in "Who can book?" and price in Codes, so a host never
+// sees the same unlock option twice. All kinds are rows in the coupons table.
 export default function CodesPanel({
   eventId,
   hostId,
   isFree,
   codeGated,
-  sharedPasskey,
+  mode = "price",
 }: Props) {
+  const access = mode === "access";
   const effects = useMemo(
-    () => EFFECTS.filter((e) => (e.key === "unlock" ? codeGated : !isFree)),
-    [codeGated, isFree],
+    () =>
+      EFFECTS.filter((e) =>
+        access ? e.key === "unlock" : e.key !== "unlock" && !isFree,
+      ),
+    [access, isFree],
   );
 
   const [codes, setCodes] = useState<CouponDTO[]>([]);
@@ -157,10 +168,12 @@ export default function CodesPanel({
   const [listOpen, setListOpen] = useState(false);
 
   const [picked, setEffect] = useState<CodeEffect>(
-    codeGated ? "unlock" : "percent",
+    access ? "unlock" : "percent",
   );
   const [percent, setPercent] = useState("10");
-  const [handout, setHandout] = useState<"shared" | "unique">("shared");
+  const [pickedHandout, setHandout] = useState<"shared" | "unique">("shared");
+  // Entry codes here are always one per guest: the shared one is the passkey.
+  const handout = access ? "unique" : pickedHandout;
   const [code, setCode] = useState("");
   const [totalUses, setTotalUses] = useState("");
   const [perGuest, setPerGuest] = useState("1");
@@ -179,14 +192,18 @@ export default function CodesPanel({
     try {
       const res = await getHostCoupons(hostId);
       setCodes(
-        res.data.filter((c) => c.event_id === eventId || c.event_id === null),
+        res.data.filter(
+          (c) =>
+            (c.event_id === eventId || c.event_id === null) &&
+            (codeEffectOf(c) === "unlock") === access,
+        ),
       );
     } catch {
       toast.error("Could not load codes");
     } finally {
       setLoading(false);
     }
-  }, [hostId, eventId]);
+  }, [hostId, eventId, access]);
 
   useEffect(() => {
     void load();
@@ -360,84 +377,92 @@ export default function CodesPanel({
   if (effects.length === 0) {
     return (
       <p className="text-sm text-[#A5A8C3]">
-        This experience is free and anyone can book it, so there is nothing for
-        a code to do. Codes work when the experience is paid, or when only
-        people with a code can book.
+        This experience is free, so there is nothing to take off the price.
+        {codeGated
+          ? " The codes guests use to get in are set in Who can book? above."
+          : " To let only some people book, pick People with a code in Who can book? above."}
       </p>
     );
   }
 
-  const passkey = sharedPasskey?.trim() ?? "";
-  const total = codes.length + (passkey ? 1 : 0);
+  const total = codes.length;
 
   return (
     <div className="space-y-4">
       {/* Create */}
       <div className="space-y-4 rounded-xl border border-white/10 bg-[#121426] p-4">
-        <div>
-          <p className="mb-2 text-sm font-medium text-white">
-            What does the code do?
+        {access ? (
+          <p className="text-sm text-[#A5A8C3]">
+            Each code lets one guest book, once. They pay the normal price.
           </p>
-          <div
-            className={`grid gap-2 ${effects.length === 3 ? "sm:grid-cols-3" : effects.length === 2 ? "sm:grid-cols-2" : ""}`}
-            role="radiogroup"
-            aria-label="What does the code do?"
-          >
-            {effects.map((e) => (
-              <Choice
-                key={e.key}
-                active={effect === e.key}
-                title={e.title}
-                desc={e.desc}
-                onClick={() => setEffect(e.key)}
-              />
-            ))}
-          </div>
-          {effect === "percent" && (
-            <label className="mt-3 flex items-center gap-2 text-sm text-white/80">
-              Discount
-              <input
-                type="number"
-                min={1}
-                max={99}
-                value={percent}
-                onChange={(e) => setPercent(e.target.value)}
-                className={`${input} w-20`}
-                aria-label="Discount percent"
-              />
-              % off
-            </label>
-          )}
-          {codeGated && effect !== "unlock" && (
-            <p className="mt-2 text-xs text-[#A5A8C3]">
-              It also lets the guest book this experience.
-            </p>
-          )}
-        </div>
+        ) : (
+          <>
+            <div>
+              <p className="mb-2 text-sm font-medium text-white">
+                What does the code do?
+              </p>
+              <div
+                className={`grid gap-2 ${effects.length === 3 ? "sm:grid-cols-3" : effects.length === 2 ? "sm:grid-cols-2" : ""}`}
+                role="radiogroup"
+                aria-label="What does the code do?"
+              >
+                {effects.map((e) => (
+                  <Choice
+                    key={e.key}
+                    active={effect === e.key}
+                    title={e.title}
+                    desc={e.desc}
+                    onClick={() => setEffect(e.key)}
+                  />
+                ))}
+              </div>
+              {effect === "percent" && (
+                <label className="mt-3 flex items-center gap-2 text-sm text-white/80">
+                  Discount
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={percent}
+                    onChange={(e) => setPercent(e.target.value)}
+                    className={`${input} w-20`}
+                    aria-label="Discount percent"
+                  />
+                  % off
+                </label>
+              )}
+              {codeGated && effect !== "unlock" && (
+                <p className="mt-2 text-xs text-[#A5A8C3]">
+                  It also lets the guest book this experience.
+                </p>
+              )}
+            </div>
 
-        <div>
-          <p className="mb-2 text-sm font-medium text-white">
-            How do you hand it out?
-          </p>
-          <div
-            className="grid gap-2 sm:grid-cols-2"
-            role="radiogroup"
-            aria-label="How do you hand it out?"
-          >
-            <Choice
-              active={handout === "shared"}
-              title="One code to share"
-              desc="The same code for everyone you send it to."
-              onClick={() => setHandout("shared")}
-            />
-            <Choice
-              active={handout === "unique"}
-              title="A code per guest"
-              desc="Unique codes, each used once."
-              onClick={() => setHandout("unique")}
-            />
-          </div>
-        </div>
+            <div>
+              <p className="mb-2 text-sm font-medium text-white">
+                How do you hand it out?
+              </p>
+              <div
+                className="grid gap-2 sm:grid-cols-2"
+                role="radiogroup"
+                aria-label="How do you hand it out?"
+              >
+                <Choice
+                  active={handout === "shared"}
+                  title="One code to share"
+                  desc="The same code for everyone you send it to."
+                  onClick={() => setHandout("shared")}
+                />
+                <Choice
+                  active={handout === "unique"}
+                  title="A code per guest"
+                  desc="Unique codes, each used once."
+                  onClick={() => setHandout("unique")}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         {handout === "shared" ? (
           <div className="space-y-3">
@@ -630,40 +655,6 @@ export default function CodesPanel({
                     </tr>
                   </thead>
                   <tbody>
-                    {passkey && (
-                      <tr className="border-t border-white/10">
-                        <td className="px-3 py-2 font-semibold text-white">
-                          <span className="flex items-center gap-1.5">
-                            {passkey}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                void navigator.clipboard.writeText(passkey);
-                                toast.success("Code copied");
-                              }}
-                              className="text-[#777B98] hover:text-white"
-                              aria-label="Copy code"
-                            >
-                              <FiCopy size={13} />
-                            </button>
-                          </span>
-                          <span className="block text-xs font-normal text-[#777B98]">
-                            Set in Who can book?
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-[#A5A8C3]">Unlocks</td>
-                        <td className="px-3 py-2 text-[#A5A8C3]">No limit</td>
-                        <td className="hidden px-3 py-2 text-[#A5A8C3] sm:table-cell">
-                          Always
-                        </td>
-                        <td className="px-3 py-2">
-                          <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-xs font-medium text-green-300">
-                            Active
-                          </span>
-                        </td>
-                        <td />
-                      </tr>
-                    )}
                     {codes.map((c) => (
                       <tr key={c.id} className="border-t border-white/10">
                         <td className="px-3 py-2 font-semibold text-white">

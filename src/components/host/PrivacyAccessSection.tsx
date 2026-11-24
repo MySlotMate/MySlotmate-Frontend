@@ -1,5 +1,7 @@
 "use client";
 
+import CodesPanel from "~/components/host/CodesPanel";
+
 export type AccessMode = "shared" | "unique";
 
 /** Which gate a private event uses. Mirrors the API's private_access_mode. */
@@ -16,6 +18,11 @@ interface Props {
   showError?: boolean;
   /** True on the edit form (event saved) — enables generating per-guest codes. */
   canGenerateCodes?: boolean;
+  /** The saved experience and its host: needed to make per-guest codes here. */
+  eventId?: string | null;
+  hostId?: string | null;
+  /** The experience is free (passed through to the per-guest code maker). */
+  isFree?: boolean;
   onChange: (
     patch: Partial<{
       isPrivate: boolean;
@@ -71,6 +78,9 @@ export default function PrivacyAccessSection({
   accessPasskey,
   showError,
   canGenerateCodes,
+  eventId,
+  hostId,
+  isFree = false,
   onChange,
 }: Props) {
   const choice = whoCanBookOf(isPrivate, privateAccessMode);
@@ -199,15 +209,22 @@ export default function PrivacyAccessSection({
                 </p>
               )}
             </div>
+          ) : canGenerateCodes && eventId && hostId ? (
+            <CodesPanel
+              mode="access"
+              eventId={eventId}
+              hostId={hostId}
+              isFree={isFree}
+              codeGated
+            />
           ) : (
             <p className="text-sm text-[#A5A8C3]">
-              {canGenerateCodes
-                ? "Make the codes in Codes below."
-                : "Save the experience first, then generate the codes here."}
+              Save the experience first, then make the codes here.
             </p>
           )}
           <p className="text-xs text-[#A5A8C3]">
-            A code only unlocks booking; guests pay the normal price.
+            These codes only let guests in; they pay the normal price. For % off
+            or free codes, use Codes below.
           </p>
         </div>
       )}

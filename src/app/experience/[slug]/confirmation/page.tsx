@@ -838,6 +838,12 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
             <div className="mt-5 flex items-center justify-between gap-4 border-t border-white/[0.08] pt-4 text-[13px]">
               <span className="truncate text-white/60">
                 {bookingUser?.name ?? "Guest"}
+                {refCode && (
+                  <span className="font-mono text-white/45 md:hidden">
+                    {" "}
+                    · {refCode}
+                  </span>
+                )}
               </span>
               <span className="shrink-0 font-semibold text-white">
                 {paidLabel}
@@ -846,12 +852,14 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
           </div>
 
           {/* Tear line with notches: horizontal on mobile, vertical on desktop */}
-          <div className="relative border-t border-dashed border-white/15 md:border-t-0 md:border-l">
+          {/* The QR stub is desktop-only: on a phone the guest is holding the
+              ticket already, and the PDF / WhatsApp ticket carries the QR. */}
+          <div className="relative hidden border-dashed border-white/15 md:block md:border-l">
             <span className="absolute -top-3 -left-3 h-6 w-6 rounded-full bg-[#080914]" />
             <span className="absolute -top-3 -right-3 h-6 w-6 rounded-full bg-[#080914] md:top-auto md:right-auto md:-bottom-3 md:-left-3" />
           </div>
 
-          <div className="flex flex-col items-center justify-center p-6 md:w-[240px]">
+          <div className="hidden flex-col items-center justify-center p-6 md:flex md:w-[240px]">
             <div className="rounded-2xl bg-white p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

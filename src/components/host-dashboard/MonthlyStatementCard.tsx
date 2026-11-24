@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FiDownload } from "react-icons/fi";
 import { toast } from "sonner";
 import { downloadHostStatement } from "~/lib/api";
+import { MonthPill } from "~/components/host-dashboard/DateTimePills";
 
 const thisMonth = () => {
   const d = new Date();
@@ -37,13 +38,11 @@ export default function MonthlyStatementCard() {
         payouts sent to you, as a PDF.
       </p>
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <input
-          type="month"
+        <MonthPill
           value={month}
           max={thisMonth()}
-          onChange={(e) => setMonth(e.target.value)}
-          aria-label="Statement month"
-          className="rounded-xl border border-white/10 bg-[#0D0E1C] px-3 py-2 text-sm text-white [color-scheme:dark]"
+          onChange={setMonth}
+          ariaLabel="Statement month"
         />
         <button
           type="button"

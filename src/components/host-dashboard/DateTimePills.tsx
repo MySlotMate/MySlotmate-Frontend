@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import {
   addDays,
   addMonths,
@@ -27,7 +34,12 @@ import {
  * Date and time pickers that read like the event page: a pill showing
  * "Sat, 28 Nov" or "2:00 PM", opening a small calendar or time list.
  * Values stay in the browser formats the form already uses
- * ("YYYY-MM-DD" and "HH:mm").
+ * ("YYYY-MM-DD", "HH:mm", "YYYY-MM-DDTHH:mm", "YYYY-MM").
+ *
+ * Kept identical to the admin's src/components/event-form/DateTimePills.tsx.
+ * Besides date and time: past dates (filters), a Clear option, a date + time
+ * pill (datetime-local) and a month pill. Use these instead of native
+ * <input type="date|time|datetime-local|month">.
  */
 
 function useOutside(open: boolean, onClose: () => void) {
@@ -56,6 +68,7 @@ function Pill({
   open,
   onClick,
   ariaLabel,
+  disabled,
 }: {
   icon: ReactNode;
   label: string;
@@ -64,14 +77,16 @@ function Pill({
   open: boolean;
   onClick: () => void;
   ariaLabel: string;
+  disabled?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       aria-label={ariaLabel}
       aria-expanded={open}
-      className={`flex h-11 items-center gap-2 rounded-full border px-4 text-[15px] font-medium whitespace-nowrap transition ${
+      className={`flex h-11 items-center gap-2 rounded-full border px-4 text-[15px] font-medium whitespace-nowrap transition disabled:cursor-not-allowed disabled:opacity-50 ${
         open
           ? "border-[#B57BFF] bg-[#7B2FFF]/15 text-white"
           : error
@@ -85,30 +100,68 @@ function Pill({
   );
 }
 
-const PANEL =
-  "absolute top-full left-0 z-50 mt-2 rounded-3xl border border-white/10 bg-[#14152a] p-3 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.85)]";
+const PANEL_BASE =
+  "absolute top-full z-50 mt-2 rounded-3xl border border-white/10 bg-[#14152a] p-3 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.85)]";
+
+/**
+ * Panel classes that keep it on screen: open to the right of the pill, or, when
+ * the pill sits near the right edge (a filter bar), line up with its right side.
+ */
+function usePanel(
+  ref: RefObject<HTMLDivElement | null>,
+  open: boolean,
+  width: number,
+) {
+  const [right, setRight] = useState(false);
+  useEffect(() => {
+    if (!open || !ref.current) return;
+    const box = ref.current.getBoundingClientRect();
+    setRight(box.left + width > window.innerWidth - 16);
+  }, [open, ref, width]);
+  return `${PANEL_BASE} ${right ? "right-0" : "left-0"}`;
+}
 
 export function DatePill({
   value,
   onChange,
   min,
+  max,
+  allowPast,
+  clearable,
+  disabled,
   error,
   placeholder = "Add date",
+  ariaLabel = "Date",
 }: {
   value: string;
   onChange: (v: string) => void;
-  /** Earliest pickable day, "YYYY-MM-DD". */
+  /** Earliest pickable day, "YYYY-MM-DD". Default today, unless allowPast. */
   min?: string;
+  /** Latest pickable day, "YYYY-MM-DD". */
+  max?: string;
+  /** Any day can be picked (filters, reports). */
+  allowPast?: boolean;
+  /** Show a Clear option when a day is set. */
+  clearable?: boolean;
+  disabled?: boolean;
   error?: boolean;
   placeholder?: string;
+  ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
+  const PANEL = usePanel(ref, open, 296);
   const selected = value ? parseISO(value) : null;
   const minDate = useMemo(
-    () => (min ? parseISO(min) : new Date(new Date().toDateString())),
-    [min],
+    () =>
+      min
+        ? parseISO(min)
+        : allowPast
+          ? new Date(1970, 0, 1)
+          : new Date(new Date().toDateString()),
+    [min, allowPast],
   );
+  const maxDate = useMemo(() => (max ? parseISO(max) : null), [max]);
   const [month, setMonth] = useState(() =>
     startOfMonth(selected ?? new Date()),
   );
@@ -130,16 +183,30 @@ export function DatePill({
     setOpen(false);
   };
   const today = new Date();
+  const tooLate = (d: Date) =>
+    maxDate !== null && isBefore(maxDate, d) && !isSameDay(d, maxDate);
   // On a weekend "this Saturday" is today or just gone, so offer the next one.
   const weekend = today.getDay() === 6 || today.getDay() === 0;
-  const quick = [
-    { label: "Today", day: today },
-    { label: "Tomorrow", day: addDays(today, 1) },
-    {
-      label: weekend ? "Next Saturday" : "This Saturday",
-      day: nextSaturday(today),
-    },
-  ].filter((q) => !isBefore(q.day, minDate) || isSameDay(q.day, minDate));
+  const quick = (
+    allowPast
+      ? [
+          { label: "Today", day: today },
+          { label: "Yesterday", day: addDays(today, -1) },
+          { label: "7 days ago", day: addDays(today, -7) },
+        ]
+      : [
+          { label: "Today", day: today },
+          { label: "Tomorrow", day: addDays(today, 1) },
+          {
+            label: weekend ? "Next Saturday" : "This Saturday",
+            day: nextSaturday(today),
+          },
+        ]
+  ).filter(
+    (q) =>
+      (!isBefore(q.day, minDate) || isSameDay(q.day, minDate)) &&
+      !tooLate(q.day),
+  );
 
   return (
     <div ref={ref} className="relative">
@@ -149,11 +216,12 @@ export function DatePill({
         empty={!selected}
         error={error}
         open={open}
+        disabled={disabled}
         onClick={() => {
           setMonth(startOfMonth(selected ?? new Date()));
           setOpen((v) => !v);
         }}
-        ariaLabel="Date"
+        ariaLabel={ariaLabel}
       />
       {open && (
         <div
@@ -189,6 +257,9 @@ export function DatePill({
               <button
                 type="button"
                 aria-label="Next month"
+                disabled={
+                  maxDate !== null && !isBefore(month, startOfMonth(maxDate))
+                }
                 onClick={() => setMonth((m) => addMonths(m, 1))}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10"
               >
@@ -206,19 +277,20 @@ export function DatePill({
           <div className="grid grid-cols-7 gap-y-1">
             {days.map((d) => {
               const inMonth = isSameMonth(d, month);
-              const disabled = isBefore(d, minDate) && !isSameDay(d, minDate);
+              const off =
+                (isBefore(d, minDate) && !isSameDay(d, minDate)) || tooLate(d);
               const on = selected && isSameDay(d, selected);
               const isToday = isSameDay(d, today);
               return (
                 <button
                   key={d.toISOString()}
                   type="button"
-                  disabled={disabled}
+                  disabled={off}
                   onClick={() => pick(d)}
                   className={`mx-auto flex h-8 w-8 items-center justify-center rounded-full text-[13px] transition ${
                     on
                       ? "bg-gradient-to-br from-[#7038F5] to-[#B724EA] font-semibold text-white"
-                      : disabled
+                      : off
                         ? "text-white/15"
                         : inMonth
                           ? "text-white hover:bg-white/10"
@@ -231,9 +303,23 @@ export function DatePill({
             })}
           </div>
           {selected && (
-            <p className="mt-2 px-1 text-xs text-white/45">
-              {format(selected, "EEEE, d MMMM yyyy")}
-            </p>
+            <div className="mt-2 flex items-center justify-between px-1">
+              <p className="text-xs text-white/45">
+                {format(selected, "EEEE, d MMMM yyyy")}
+              </p>
+              {clearable && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onChange("");
+                    setOpen(false);
+                  }}
+                  className="text-xs font-medium text-[#D8B4FE] hover:text-white"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -269,6 +355,7 @@ export function TimePill({
   start,
   clearable,
   ariaLabel,
+  disabled,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -279,9 +366,11 @@ export function TimePill({
   /** Show a "No end time" option. */
   clearable?: boolean;
   ariaLabel: string;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
+  const PANEL = usePanel(ref, open, 220);
   const listRef = useRef<HTMLDivElement>(null);
 
   // Every 15 minutes. An end time runs from just after the start, up to 12 h.
@@ -319,6 +408,7 @@ export function TimePill({
         empty={!value}
         error={error}
         open={open}
+        disabled={disabled}
         onClick={() => setOpen((v) => !v)}
         ariaLabel={ariaLabel}
       />
@@ -400,6 +490,7 @@ export function WeekdayPill({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
+  const PANEL = usePanel(ref, open, 200);
   const has = value !== undefined;
 
   return (
@@ -435,6 +526,192 @@ export function WeekdayPill({
               </button>
             );
           })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A date and a time together, for what a native datetime-local input held.
+ * Value "YYYY-MM-DDTHH:mm" in the browser's local time, or "" when empty.
+ * Picking a day with no time yet sets 10:00 AM; picking a time first uses today.
+ */
+export function DateTimePill({
+  value,
+  onChange,
+  min,
+  allowPast,
+  clearable,
+  disabled,
+  error,
+  datePlaceholder = "Add date",
+  timePlaceholder = "Add time",
+  label,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  /** Earliest pickable day, "YYYY-MM-DD". Default today, unless allowPast. */
+  min?: string;
+  allowPast?: boolean;
+  clearable?: boolean;
+  disabled?: boolean;
+  error?: boolean;
+  datePlaceholder?: string;
+  timePlaceholder?: string;
+  /** Names the pair for screen readers, e.g. "Planned start". */
+  label?: string;
+}) {
+  const [date = "", time = ""] = value ? value.split("T") : [];
+  const hm = time.slice(0, 5);
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <DatePill
+        value={date}
+        min={min}
+        allowPast={allowPast}
+        disabled={disabled}
+        error={error}
+        placeholder={datePlaceholder}
+        ariaLabel={label ? `${label} date` : "Date"}
+        onChange={(d) => onChange(d ? `${d}T${hm || "10:00"}` : "")}
+      />
+      <TimePill
+        value={hm}
+        disabled={disabled}
+        error={error}
+        placeholder={timePlaceholder}
+        ariaLabel={label ? `${label} time` : "Time"}
+        onChange={(t) =>
+          onChange(`${date || format(new Date(), "yyyy-MM-dd")}T${t}`)
+        }
+      />
+      {clearable && value && !disabled && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="px-1 text-xs font-medium text-[#D8B4FE] hover:text-white"
+        >
+          Clear
+        </button>
+      )}
+    </div>
+  );
+}
+
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+/** A calendar month, value "YYYY-MM" (what a native month input held). */
+export function MonthPill({
+  value,
+  onChange,
+  max,
+  disabled,
+  error,
+  placeholder = "Pick a month",
+  ariaLabel = "Month",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  /** Latest pickable month, "YYYY-MM". */
+  max?: string;
+  disabled?: boolean;
+  error?: boolean;
+  placeholder?: string;
+  ariaLabel?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useOutside(open, () => setOpen(false));
+  const PANEL = usePanel(ref, open, 260);
+  const parts = value ? value.split("-").map(Number) : [];
+  const vy = parts[0] ?? 0;
+  const vm = parts[1] ?? 0;
+  const thisYear = new Date().getFullYear();
+  const [year, setYear] = useState(() => (vy > 0 ? vy : thisYear));
+  const maxKey = max ?? "9999-12";
+  const key = (y: number, m: number) => `${y}-${String(m).padStart(2, "0")}`;
+
+  return (
+    <div ref={ref} className="relative">
+      <Pill
+        icon={<Calendar className="h-[18px] w-[18px]" />}
+        label={
+          value ? format(new Date(vy, vm - 1, 1), "MMMM yyyy") : placeholder
+        }
+        empty={!value}
+        error={error}
+        open={open}
+        disabled={disabled}
+        onClick={() => {
+          setYear(vy > 0 ? vy : thisYear);
+          setOpen((v) => !v);
+        }}
+        ariaLabel={ariaLabel}
+      />
+      {open && (
+        <div data-msm-picker className={`${PANEL} w-[260px]`}>
+          <div className="mb-2 flex items-center justify-between px-1">
+            <p className="font-outfit text-[15px] font-semibold">{year}</p>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                aria-label="Previous year"
+                onClick={() => setYear((y) => y - 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                aria-label="Next year"
+                disabled={key(year + 1, 1) > maxKey}
+                onClick={() => setYear((y) => y + 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-white/70 transition hover:bg-white/10 disabled:opacity-25"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {MONTHS.map((name, i) => {
+              const k = key(year, i + 1);
+              const on = k === value;
+              const off = k > maxKey;
+              return (
+                <button
+                  key={k}
+                  type="button"
+                  disabled={off}
+                  onClick={() => {
+                    onChange(k);
+                    setOpen(false);
+                  }}
+                  className={`rounded-xl py-2 text-sm transition ${
+                    on
+                      ? "bg-gradient-to-br from-[#7038F5] to-[#B724EA] font-semibold text-white"
+                      : off
+                        ? "text-white/15"
+                        : "text-white/85 hover:bg-white/10"
+                  }`}
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

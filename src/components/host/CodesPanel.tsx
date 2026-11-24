@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DatePill } from "~/components/host-dashboard/DateTimePills";
 import { toast } from "sonner";
 import { FiChevronDown, FiDownload, FiTrash2 } from "react-icons/fi";
 import {
@@ -551,22 +552,26 @@ export default function CodesPanel({
             <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
               Works from (optional)
             </label>
-            <input
-              type="date"
+            <DatePill
+              clearable
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className={`${input} w-full`}
+              max={until || undefined}
+              placeholder="Right away"
+              ariaLabel="Works from"
+              onChange={setFrom}
             />
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-[#A5A8C3]">
               Works until (optional)
             </label>
-            <input
-              type="date"
+            <DatePill
+              clearable
               value={until}
-              onChange={(e) => setUntil(e.target.value)}
-              className={`${input} w-full`}
+              min={from || undefined}
+              placeholder="No end date"
+              ariaLabel="Works until"
+              onChange={setUntil}
             />
           </div>
         </div>

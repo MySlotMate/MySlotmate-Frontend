@@ -25,6 +25,7 @@ import {
   useUploadFiles,
 } from "~/hooks/useApi";
 import { auth } from "~/utils/firebase";
+import { DatePill } from "~/components/host-dashboard/DateTimePills";
 
 interface ReportReasonOption {
   label: string;
@@ -274,20 +275,18 @@ export default function ReportIssuePage() {
 
           <div className="grid gap-6 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-white">
+              <p className="mb-2 block text-sm font-semibold text-white">
                 Session Date
-              </label>
-              <input
-                type="date"
+              </p>
+              <DatePill
+                allowPast
+                max={new Date().toLocaleDateString("en-CA")}
                 value={formData.date}
-                onChange={(event) => {
-                  setFormData((current) => ({
-                    ...current,
-                    date: event.target.value,
-                  }));
-                }}
-                className="h-12 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 text-sm text-white/80 transition outline-none focus:border-[#A020F0]"
-                required
+                placeholder="Pick the session date"
+                ariaLabel="Session date"
+                onChange={(date) =>
+                  setFormData((current) => ({ ...current, date }))
+                }
               />
             </div>
 

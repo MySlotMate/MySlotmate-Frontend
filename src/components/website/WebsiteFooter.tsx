@@ -31,6 +31,7 @@ const COLUMNS: { title: string; links: { href: string; label: string }[] }[] = [
     title: "Help",
     links: [
       { href: "/support", label: "Support" },
+      { href: "/host-guide", label: "Host Guide" },
       { href: "/support/terms-conditions", label: "Terms" },
       { href: "/privacy", label: "Privacy" },
       { href: "mailto:support@myslotmate.com", label: "Email us" },

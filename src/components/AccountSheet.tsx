@@ -33,6 +33,7 @@ import {
   Users,
   Wrench,
   X,
+  BookOpen,
 } from "lucide-react";
 import { LuBadgeCheck } from "react-icons/lu";
 import WalletDisplay from "~/components/wallet/WalletDisplay";
@@ -458,6 +459,12 @@ export default function AccountSheet({
               onClick={onClose}
               icon={<LifeBuoy className={ICON} />}
               label="Help centre"
+            />
+            <Row
+              href="/host-guide"
+              onClick={onClose}
+              icon={<BookOpen className={ICON} />}
+              label="Host Guide"
             />
             <Row
               href="/support/report"

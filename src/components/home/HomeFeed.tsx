@@ -664,8 +664,12 @@ export default function HomeFeed({
     if (synced.length > 0) return synced;
     // Same rule as Node: only the admin's picks, no top-up; soonest only
     // when none of them is still open.
+    // Admin order as-is (no city reordering, unlike pick()).
     const limit = marketingConfig?.featured_limit ?? FEATURED_DEFAULT;
-    const picked = pick(marketingConfig?.featured_event_ids ?? [], limit, []);
+    const picked = (marketingConfig?.featured_event_ids ?? [])
+      .map((id) => open.find((e) => e.id === id))
+      .filter((e): e is EventDTO => e !== undefined)
+      .slice(0, Math.max(0, limit));
     return picked.length > 0 ? picked : pick([], limit, open);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- pick only reads `open` and `place`
   }, [featuredIds, eventById, open, marketingConfig, place]);

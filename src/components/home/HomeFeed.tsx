@@ -662,11 +662,11 @@ export default function HomeFeed({
       .map((id) => eventById.get(id))
       .filter((e): e is EventDTO => e !== undefined);
     if (synced.length > 0) return synced;
-    return pick(
-      marketingConfig?.featured_event_ids ?? [],
-      marketingConfig?.featured_limit ?? FEATURED_DEFAULT,
-      open,
-    );
+    // Same rule as Node: only the admin's picks, no top-up; soonest only
+    // when none of them is still open.
+    const limit = marketingConfig?.featured_limit ?? FEATURED_DEFAULT;
+    const picked = pick(marketingConfig?.featured_event_ids ?? [], limit, []);
+    return picked.length > 0 ? picked : pick([], limit, open);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- pick only reads `open` and `place`
   }, [featuredIds, eventById, open, marketingConfig, place]);
 

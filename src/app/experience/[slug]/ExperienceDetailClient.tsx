@@ -175,7 +175,7 @@ function Hero({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Floating "Book tickets" pill; tickets are picked on the next page  */
+/*  Floating "Book slots" pill; slots are picked on the next page      */
 /* ------------------------------------------------------------------ */
 function BookingPill({
   label,
@@ -511,7 +511,8 @@ export default function ExperienceDetailClient({
     liveEvent && contentOverride
       ? { ...liveEvent, ...contentOverride }
       : liveEvent;
-  const bookWord = contentOverride?.cta_text ?? "Book tickets";
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- "" means unset
+  const bookWord = contentOverride?.cta_text || "Book slots";
   const eventLoading = eventQueryLoading && !event;
   // Secondary lookups (reviews, ratings, availability, save) key off the real
   // event UUID, not the slug — resolve it from the loaded event.

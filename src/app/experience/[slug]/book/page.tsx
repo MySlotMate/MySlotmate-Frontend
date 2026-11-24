@@ -649,10 +649,15 @@ function BookingContent({ eventId }: { eventId: string }) {
             setIsProcessingPayment(false);
           })();
         },
+        // From the signed-in user's profile, so Razorpay doesn't ask for
+        // the phone again (nothing writes the msm_user_* localStorage keys).
         prefill: {
-          name: userName,
-          email: userEmail,
-          contact: userPhone,
+          name: userProfile?.name ?? userName,
+          // `||`: a profile without them has "" here, not null.
+          /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+          email: userProfile?.email || userEmail,
+          contact: userProfile?.phn_number || userPhone,
+          /* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
         },
         theme: {
           color: "#A020F0",
@@ -1033,7 +1038,8 @@ function BookingContent({ eventId }: { eventId: string }) {
           <div className="flex flex-col gap-3">
             {detailRow("Name", userProfile?.name ?? userName)}
             {detailRow("Contact", userProfile?.phn_number ?? userPhone)}
-            {detailRow("Email", userEmail)}
+            {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+            {detailRow("Email", userProfile?.email || userEmail)}
           </div>
           {/* Say so rather than silently omitting the form — a guest who
                 filled these in to request the session should see that they

@@ -47,7 +47,9 @@ export default function GuestCheckoutModal({
 
   const digits = phone.replace(/\D/g, "");
   const formattedPhone = `+91${digits}`;
-  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  // Email is optional; checked only when filled in.
+  const emailOk =
+    !email.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
   const sendCode = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -74,8 +76,8 @@ export default function GuestCheckoutModal({
   const verify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!sessionId) return;
-    if (otp.length !== 4 && otp.length !== 6)
-      return toast.error("Please enter the code we sent");
+    if (otp.length !== 4)
+      return toast.error("Please enter the 4-digit code we sent");
     setLoading(true);
     try {
       const res = await verifyLoginOTP(formattedPhone, sessionId, otp, {
@@ -173,7 +175,7 @@ export default function GuestCheckoutModal({
             </div>
             <div>
               <label className={LABEL} htmlFor="guest-email">
-                Email
+                Email <span className="text-[#777B98]">(optional)</span>
               </label>
               <input
                 id="guest-email"
@@ -210,13 +212,14 @@ export default function GuestCheckoutModal({
               autoFocus
               value={otp}
               onChange={(e) =>
-                setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))
               }
-              placeholder="••••••"
+              maxLength={4}
+              placeholder="••••"
             />
             <button
               type="submit"
-              disabled={loading || !(otp.length === 4 || otp.length === 6)}
+              disabled={loading || otp.length !== 4}
               className={PRIMARY}
             >
               {loading ? "Verifying…" : "Verify & continue"}

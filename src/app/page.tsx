@@ -1,5 +1,9 @@
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
-import { fetchPublic, fetchPublicList } from "~/lib/server-api";
+import {
+  fetchHomeFeaturedIds,
+  fetchPublic,
+  fetchPublicList,
+} from "~/lib/server-api";
 import type { HomepageMarketingConfig } from "~/components/home/ShowcaseSections";
 import { type Metadata } from "next";
 import HomeClient from "./HomeClient";
@@ -21,12 +25,13 @@ export const revalidate = 300;
  * All three are fetched in parallel: none depends on another.
  */
 export default async function HomePage() {
-  const [events, hosts, marketingConfig] = await Promise.all([
+  const [events, hosts, marketingConfig, featuredIds] = await Promise.all([
     fetchPublicList<EventDTO>("/events/"),
     fetchPublicList<PublicHostProfileDTO>("/hosts"),
     fetchPublic<HomepageMarketingConfig>(
       "/platform-settings/homepage_marketing_config",
     ),
+    fetchHomeFeaturedIds(),
   ]);
 
   return (
@@ -34,6 +39,7 @@ export default async function HomePage() {
       initialEvents={events}
       initialHosts={hosts}
       initialMarketingConfig={marketingConfig}
+      featuredIds={featuredIds}
     />
   );
 }

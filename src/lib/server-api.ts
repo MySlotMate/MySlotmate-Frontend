@@ -36,6 +36,30 @@ export async function fetchPublicList<T>(
 }
 
 /**
+ * Ordered Featured event ids from the Node /home feed: the same rail the
+ * mobile app renders (admin picks in admin order, topped up with the soonest).
+ * Null when NODE_API_URL is unset or the call fails. The Node service sleeps
+ * on Render's free plan, so the timeout keeps a cold start from stalling the
+ * page; the caller falls back to picking Featured itself.
+ */
+export async function fetchHomeFeaturedIds(): Promise<string[] | null> {
+  if (!env.NODE_API_URL) return null;
+  try {
+    const res = await fetch(`${env.NODE_API_URL}/api/v1/home`, {
+      next: { revalidate: 60 },
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return null;
+    const json = (await res.json()) as Envelope<{
+      featured?: { id: string }[];
+    }>;
+    return json.data?.featured?.map((e) => e.id) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Shared, request-deduplicated read of a single public event.
  *
  * Both `experience/[slug]/layout.tsx` (generateMetadata) and

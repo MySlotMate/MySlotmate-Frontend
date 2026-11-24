@@ -19,10 +19,12 @@ export default function HomeClient({
   initialEvents,
   initialHosts,
   initialMarketingConfig,
+  featuredIds,
 }: {
   initialEvents: EventDTO[];
   initialHosts: PublicHostProfileDTO[];
   initialMarketingConfig: HomepageMarketingConfig | null;
+  featuredIds: string[] | null;
 }) {
   const mainRef = useRef<HTMLElement>(null);
   const { userId } = useStoredAuth();
@@ -84,6 +86,7 @@ export default function HomeClient({
             initialEvents={initialEvents}
             initialHosts={initialHosts}
             initialMarketingConfig={initialMarketingConfig}
+            featuredIds={featuredIds}
           />
           {/* <div ref={filterBarRef} className="w-full site-x">
             <div className="mx-auto flex w-full max-w-[1120px] justify-start">

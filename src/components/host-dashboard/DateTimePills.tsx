@@ -2,12 +2,14 @@
 
 import {
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ReactNode,
   type RefObject,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   addDays,
   addMonths,
@@ -47,7 +49,10 @@ function useOutside(open: boolean, onClose: () => void) {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+      const t = e.target as Element;
+      // The panel lives in a portal (see Floating), outside the pill's box.
+      if (t.closest?.("[data-msm-picker]")) return;
+      if (ref.current && !ref.current.contains(t)) onClose();
     };
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     document.addEventListener("mousedown", onDown);
@@ -101,24 +106,67 @@ function Pill({
 }
 
 const PANEL_BASE =
-  "absolute top-full z-50 mt-2 rounded-3xl border border-white/10 bg-[#14152a] p-3 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.85)]";
+  "rounded-3xl border border-white/10 bg-[#14152a] p-3 shadow-[0_24px_60px_-16px_rgba(0,0,0,0.85)]";
 
 /**
- * Panel classes that keep it on screen: open to the right of the pill, or, when
- * the pill sits near the right edge (a filter bar), line up with its right side.
+ * The open panel, drawn in a portal on <body> so no card's overflow or a later
+ * card can hide it. Placed under the pill, or above it when there is no room
+ * below; lined up with the pill's right side near the right edge. Follows the
+ * pill on scroll and resize.
  */
-function usePanel(
-  ref: RefObject<HTMLDivElement | null>,
-  open: boolean,
-  width: number,
-) {
-  const [right, setRight] = useState(false);
-  useEffect(() => {
-    if (!open || !ref.current) return;
-    const box = ref.current.getBoundingClientRect();
-    setRight(box.left + width > window.innerWidth - 16);
-  }, [open, ref, width]);
-  return `${PANEL_BASE} ${right ? "right-0" : "left-0"}`;
+function Floating({
+  anchor,
+  width,
+  className = "",
+  children,
+}: {
+  anchor: RefObject<HTMLDivElement | null>;
+  width: number;
+  className?: string;
+  children: ReactNode;
+}) {
+  const panel = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  useLayoutEffect(() => {
+    const place = () => {
+      const a = anchor.current?.getBoundingClientRect();
+      if (!a) return;
+      const w = Math.min(width, window.innerWidth - 32);
+      const h = panel.current?.offsetHeight ?? 0;
+      let left = a.left;
+      if (left + w > window.innerWidth - 16) left = Math.max(16, a.right - w);
+      let top = a.bottom + 8;
+      if (top + h > window.innerHeight - 16 && a.top - 8 - h >= 16)
+        top = a.top - 8 - h;
+      setPos({ top, left });
+    };
+    // Measure once the panel is in the page, then keep up with the pill.
+    const frame = requestAnimationFrame(place);
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [anchor, width]);
+  return createPortal(
+    <div
+      ref={panel}
+      data-msm-picker
+      style={{
+        position: "fixed",
+        top: pos?.top ?? 0,
+        left: pos?.left ?? 0,
+        zIndex: 1000,
+        visibility: pos ? "visible" : "hidden",
+      }}
+      className={`${PANEL_BASE} ${className}`}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
 }
 
 export function DatePill({
@@ -150,7 +198,6 @@ export function DatePill({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
-  const PANEL = usePanel(ref, open, 296);
   const selected = value ? parseISO(value) : null;
   const minDate = useMemo(
     () =>
@@ -224,9 +271,10 @@ export function DatePill({
         ariaLabel={ariaLabel}
       />
       {open && (
-        <div
-          data-msm-picker
-          className={`${PANEL} w-[min(296px,calc(100vw-40px))]`}
+        <Floating
+          anchor={ref}
+          width={296}
+          className="w-[min(296px,calc(100vw-32px))]"
         >
           <div className="mb-3 flex flex-wrap gap-1.5">
             {quick.map((q) => (
@@ -321,7 +369,7 @@ export function DatePill({
               )}
             </div>
           )}
-        </div>
+        </Floating>
       )}
     </div>
   );
@@ -370,7 +418,6 @@ export function TimePill({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
-  const PANEL = usePanel(ref, open, 220);
   const listRef = useRef<HTMLDivElement>(null);
 
   // Every 15 minutes. An end time runs from just after the start, up to 12 h.
@@ -413,7 +460,7 @@ export function TimePill({
         ariaLabel={ariaLabel}
       />
       {open && (
-        <div data-msm-picker className={`${PANEL} w-[220px] p-2`}>
+        <Floating anchor={ref} width={220} className="w-[220px] p-2">
           {clearable && value && (
             <button
               type="button"
@@ -458,7 +505,7 @@ export function TimePill({
               );
             })}
           </div>
-        </div>
+        </Floating>
       )}
     </div>
   );
@@ -490,7 +537,6 @@ export function WeekdayPill({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
-  const PANEL = usePanel(ref, open, 200);
   const has = value !== undefined;
 
   return (
@@ -505,7 +551,7 @@ export function WeekdayPill({
         ariaLabel="Day of the week"
       />
       {open && (
-        <div data-msm-picker className={`${PANEL} w-[200px] p-2`}>
+        <Floating anchor={ref} width={200} className="w-[200px] p-2">
           {WEEK_ORDER.map((day) => {
             const on = day === value;
             return (
@@ -526,7 +572,7 @@ export function WeekdayPill({
               </button>
             );
           })}
-        </div>
+        </Floating>
       )}
     </div>
   );
@@ -635,7 +681,6 @@ export function MonthPill({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useOutside(open, () => setOpen(false));
-  const PANEL = usePanel(ref, open, 260);
   const parts = value ? value.split("-").map(Number) : [];
   const vy = parts[0] ?? 0;
   const vm = parts[1] ?? 0;
@@ -662,7 +707,7 @@ export function MonthPill({
         ariaLabel={ariaLabel}
       />
       {open && (
-        <div data-msm-picker className={`${PANEL} w-[260px]`}>
+        <Floating anchor={ref} width={260} className="w-[260px]">
           <div className="mb-2 flex items-center justify-between px-1">
             <p className="font-outfit text-[15px] font-semibold">{year}</p>
             <div className="flex gap-1">
@@ -712,7 +757,7 @@ export function MonthPill({
               );
             })}
           </div>
-        </div>
+        </Floating>
       )}
     </div>
   );

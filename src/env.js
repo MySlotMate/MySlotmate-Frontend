@@ -10,6 +10,9 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "production"]),
     GOOGLE_SITE_VERIFICATION: z.string().optional(),
     YANDEX_VERIFICATION: z.string().optional(),
+    // Node API base (no /api/v1). Its /home feed decides the Featured rail,
+    // the same one the mobile app shows. Unset: web picks Featured itself.
+    NODE_API_URL: z.string().url().optional(),
   },
 
   /**
@@ -38,6 +41,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     GOOGLE_SITE_VERIFICATION: process.env.GOOGLE_SITE_VERIFICATION,
     YANDEX_VERIFICATION: process.env.YANDEX_VERIFICATION,
+    NODE_API_URL: process.env.NODE_API_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_ADMIN_EMAIL: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
     NEXT_PUBLIC_GEMINI_API_KEY: process.env.NEXT_PUBLIC_GEMINI_API_KEY,

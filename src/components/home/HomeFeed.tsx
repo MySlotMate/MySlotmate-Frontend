@@ -579,10 +579,13 @@ export default function HomeFeed({
   initialEvents,
   initialHosts,
   initialMarketingConfig,
+  featuredIds,
 }: {
   initialEvents?: EventDTO[];
   initialHosts?: PublicHostProfileDTO[];
   initialMarketingConfig?: HomepageMarketingConfig | null;
+  /** Featured rail from the Node /home feed (what mobile shows), in order. */
+  featuredIds?: string[] | null;
 }) {
   const {
     closeBecomeHostModal,
@@ -652,16 +655,20 @@ export default function HomeFeed({
     );
   };
 
-  const featured = useMemo(
-    () =>
-      pick(
-        marketingConfig?.featured_event_ids ?? [],
-        marketingConfig?.featured_limit ?? FEATURED_DEFAULT,
-        open,
-      ),
+  // The Node /home feed decides Featured so web and mobile show the same rail
+  // in the same order. Local picking is only the fallback when it's unreachable.
+  const featured = useMemo(() => {
+    const synced = (featuredIds ?? [])
+      .map((id) => eventById.get(id))
+      .filter((e): e is EventDTO => e !== undefined);
+    if (synced.length > 0) return synced;
+    return pick(
+      marketingConfig?.featured_event_ids ?? [],
+      marketingConfig?.featured_limit ?? FEATURED_DEFAULT,
+      open,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- pick only reads `open` and `place`
-    [open, marketingConfig, place],
-  );
+  }, [featuredIds, eventById, open, marketingConfig, place]);
 
   const nextPlan = useMemo(() => {
     const now = Date.now();

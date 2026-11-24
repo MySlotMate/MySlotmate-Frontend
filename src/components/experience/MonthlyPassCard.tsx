@@ -112,7 +112,7 @@ export default function MonthlyPassCard({
       : bookingFee?.type === "percentage"
         ? Math.floor((priceCents * (bookingFee.percentage ?? 0)) / 100)
         : Math.max(0, bookingFee?.amount_cents ?? 0);
-  /** What the guest actually pays for the pass: price + booking fee. */
+  /** What the guest actually pays for the pass: price + platform fee (GST included). */
   const payCents = priceCents + feeCents;
 
   // Razorpay's checkout script, loaded the same way the booking page does it.
@@ -355,7 +355,7 @@ export default function MonthlyPassCard({
           </p>
           {feeCents > 0 && (
             <p className="mb-1 text-xs text-[#5f7e9a]">
-              + {rupees(feeCents)} booking fee
+              + {rupees(feeCents)} platform fee (incl. GST)
             </p>
           )}
           <p className="mb-4 text-sm text-[#5f7e9a]">
@@ -372,7 +372,7 @@ export default function MonthlyPassCard({
             <div className="rounded-2xl border border-white/10 bg-[#121426] p-3">
               <p className="mb-3 text-sm text-[#5f7e9a]">
                 {feeCents > 0 &&
-                  `${rupees(priceCents)} + ${rupees(feeCents)} booking fee = ${rupees(payCents)}. `}
+                  `${rupees(priceCents)} + ${rupees(feeCents)} platform fee (incl. GST) = ${rupees(payCents)}. `}
                 {walletBalance >= payCents
                   ? `${rupees(payCents)} comes out of your wallet now.`
                   : `Your wallet has ${rupees(walletBalance)}, so the remaining ${rupees(payCents - walletBalance)} is paid by card or UPI and topped into your wallet first.`}{" "}

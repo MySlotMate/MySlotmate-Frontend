@@ -47,9 +47,9 @@ function EventThumb({ event }: { event?: EventDTO }) {
 }
 
 function BoostRow({ boost, event }: { boost: BoostDTO; event?: EventDTO }) {
-  const top = boost.rates.length
-    ? Math.max(...boost.rates.map((r) => r.rate_bps))
-    : null;
+  const bps = boost.rates.map((r) => r.rate_bps);
+  const low = bps.length ? Math.min(...bps) : null;
+  const top = bps.length ? Math.max(...bps) : null;
   const live = boost.status === "live";
   return (
     <Link
@@ -65,7 +65,9 @@ function BoostRow({ boost, event }: { boost: BoostDTO; event?: EventDTO }) {
           <span className={live ? "font-semibold text-[#E9D5FF]" : ""}>
             {BOOST_STATUS_LABEL[boost.status]}
           </span>
-          {top !== null && <> · {pct(top)} rate</>}
+          {top !== null && low !== null && (
+            <> · {low === top ? pct(top) : `${pct(low)}–${pct(top)}`} rate</>
+          )}
         </p>
       </div>
       <div className="hidden shrink-0 gap-6 text-right sm:flex">
@@ -335,9 +337,9 @@ export default function PromotePage() {
         </div>
 
         <p className="mt-6 text-xs leading-5 text-[#777B98]">
-          Guest refunds still pay commission. If you cancel or reschedule a
-          Boosted event, you repay our actual ad spend, never more than the
-          commission. Repeated host cancellations pause Boost.
+          Commission is taken only on tickets sold while a Boost is live, from
+          your share; guests pay the same price. If a booking is refunded, its
+          commission is refunded too. You can stop a Boost at any time.
         </p>
       </main>
     </div>

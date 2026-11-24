@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { FiX, FiCopy, FiRefreshCw, FiLock } from "react-icons/fi";
 import { getEvent } from "~/lib/api";
 import { useUpdateEvent } from "~/hooks/useApi";
-import CouponsManager from "~/components/host/CouponsManager";
+import CodesPanel from "~/components/host/CodesPanel";
 
 interface Props {
   eventId: string;
@@ -31,6 +31,7 @@ export default function ManageCodesModal({
   const [isPrivate, setIsPrivate] = useState(false);
   const [isFree, setIsFree] = useState(false);
   const [passkey, setPasskey] = useState("");
+  const [accessGate, setAccessGate] = useState<"passkey" | "rsvp">("passkey");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const updateEvent = useUpdateEvent();
@@ -47,6 +48,7 @@ export default function ManageCodesModal({
         setIsPrivate(res.data.is_private);
         setIsFree(res.data.is_free);
         setPasskey(res.data.access_passkey ?? "");
+        setAccessGate(res.data.private_access_mode ?? "passkey");
       } catch {
         toast.error("Could not load access settings");
       } finally {
@@ -182,20 +184,15 @@ export default function ManageCodesModal({
               )}
             </div>
 
-            {/* Per-guest access codes */}
-            <CouponsManager eventId={eventId} hostId={hostId} kind="access" />
-
-            {/* Free-booking coupons — only meaningful for a paid event. */}
-            {!isFree && (
-              <>
-                <CouponsManager eventId={eventId} hostId={hostId} kind="free" />
-                <CouponsManager
-                  eventId={eventId}
-                  hostId={hostId}
-                  kind="discount"
-                />
-              </>
-            )}
+            <CodesPanel
+              eventId={eventId}
+              hostId={hostId}
+              isFree={isFree}
+              codeGated={isPrivate && accessGate === "passkey"}
+              sharedPasskey={
+                isPrivate && accessGate === "passkey" ? passkey : ""
+              }
+            />
           </div>
         )}
       </div>

@@ -21,7 +21,6 @@ import { useIdToken } from "~/hooks/useIdToken";
 import type { BoostChannel, BoostDTO, EventDTO } from "~/lib/api";
 import {
   BOOST_ENABLED,
-  PREMIUM_PRICE_CENTS,
   boostBlockers,
   commissionCents,
   pct,
@@ -74,14 +73,20 @@ function Shell({
 function RateRows({
   rows,
 }: {
-  rows: { name: string; priceCents: number; bps: number }[];
+  rows: {
+    name: string;
+    priceCents: number;
+    bps: number;
+    guideBps?: number;
+    reason?: string | null;
+  }[];
 }) {
   return (
     <div className="divide-y divide-white/[0.06] rounded-2xl border border-white/[0.08] bg-black/20 text-sm">
       {rows.map((r) => (
         <div
           key={`${r.name}-${r.priceCents}`}
-          className="flex items-center justify-between gap-3 px-3.5 py-2.5"
+          className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 px-3.5 py-2.5"
         >
           <span className="min-w-0 truncate text-white/80">
             {r.name} · {rupees(r.priceCents)}
@@ -93,6 +98,12 @@ function RateRows({
             </span>{" "}
             <span className="text-white/45">per ticket</span>
           </span>
+          {r.guideBps !== undefined && r.guideBps !== r.bps && (
+            <span className="basis-full text-xs text-white/50">
+              Guide rate {pct(r.guideBps)}
+              {r.reason ? ` · ${r.reason}` : ""}
+            </span>
+          )}
         </div>
       ))}
     </div>
@@ -205,8 +216,14 @@ export default function BoostCard({
                   month: "short",
                 })
               : "today"}
-            . Commission applies to tickets sold until you stop or the event
-            starts.
+            . Commission applies to tickets sold until{" "}
+            {b.live_until
+              ? new Date(b.live_until).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                })
+              : "you stop it"}
+            . If a booking is refunded, its commission is refunded too.
           </p>
           <div className="grid grid-cols-2 gap-2">
             <Stat label="Reach" value={b.reach.toLocaleString("en-IN")} />
@@ -297,18 +314,28 @@ export default function BoostCard({
         name: r.ticket_name,
         priceCents: r.price_cents,
         bps: r.rate_bps,
+        guideBps: r.guide_rate_bps,
+        reason: r.reason,
       }));
       const top = Math.max(...b.rates.map((r) => r.rate_bps));
       return (
         <div className="space-y-3">
-          <p className="text-sm text-white/70">Your final rate is ready.</p>
+          <p className="text-sm text-white/70">
+            Our team’s proposal is ready. Nothing is charged until you accept
+            and the ads go live.
+          </p>
           <RateRows rows={rows} />
-          {b.topup_reason && <Note>Premium rate: {b.topup_reason}</Note>}
+          {b.admin_note && (
+            <p className="rounded-2xl bg-white/[0.04] px-3 py-2 text-sm whitespace-pre-line text-white/80">
+              <span className="text-white/50">From the MySlotMate team: </span>
+              {b.admin_note}
+            </p>
+          )}
           <div className="rounded-2xl border border-[#B724EA]/30 bg-[#B724EA]/[0.08] p-3 text-xs leading-5 text-white/80">
-            MySlotmate keeps {pct(top)} or less of each ticket sold from go-live
-            until you stop or the event starts. Guest refunds still pay
-            commission. If you cancel or reschedule, you repay what we spent on
-            ads, never more than the commission.
+            MySlotMate keeps {pct(top)} or less of each ticket sold while the
+            Boost is live, from go-live until it ends or you stop it. The
+            commission comes out of your share; guests pay the same price. If a
+            booking is refunded, its commission is refunded too.
           </div>
           <div className="flex gap-2">
             <button
@@ -354,6 +381,8 @@ export default function BoostCard({
           <div className="grid grid-cols-2 gap-2">
             <Stat label="Tickets sold" value={String(b.tickets_sold)} />
             <Stat label="Commission" value={rupees(b.commission_cents)} />
+            <Stat label="Reach" value={b.reach.toLocaleString("en-IN")} />
+            <Stat label="Clicks" value={b.clicks.toLocaleString("en-IN")} />
           </div>
           <Link
             href="/host-dashboard/promote"
@@ -369,6 +398,20 @@ export default function BoostCard({
 
     // ── Not eligible ──
     if (hostBlock) return <p className="text-sm text-white/70">{hostBlock}</p>;
+    if (eligibility?.boost_invited === false)
+      return (
+        <div className="space-y-2">
+          {declined?.decline_reason && (
+            <p className="text-sm text-white/70">
+              Not approved: {declined.decline_reason}
+            </p>
+          )}
+          <p className="text-sm text-white/70">
+            Marketing Boost is in a pilot with a small group of hosts. Write to
+            us at support@myslotmate.com if you’d like to join.
+          </p>
+        </div>
+      );
     if (blockers.length > 0)
       return (
         <div className="space-y-2">
@@ -392,7 +435,7 @@ export default function BoostCard({
       );
 
     // ── Eligible: preview + request ──
-    const premium = quote.some((q) => q.priceCents >= PREMIUM_PRICE_CENTS);
+    const premium = quote.some((q) => q.priceCents >= 100_000);
     return (
       <div ref={ref} className="space-y-3">
         {declined?.decline_reason && (
@@ -407,8 +450,8 @@ export default function BoostCard({
         <RateRows rows={quote} />
         {premium && (
           <Note>
-            Events at ₹5,000+ with a narrow audience may be quoted up to 20%.
-            You’ll see the rate and the reason before you accept.
+            For tickets of ₹1,000 or more our team may propose a different rate,
+            up to 20%. You’ll see the rate and the reason before you accept.
           </Note>
         )}
         {!formOpen ? (
@@ -491,8 +534,9 @@ export default function BoostCard({
           </div>
         )}
         <Note>
-          Guest refunds still pay commission. If you cancel or reschedule, you
-          repay our actual ad spend, capped at the commission.
+          The commission comes out of your share of tickets sold while the Boost
+          is live; guests pay the same price. Refunded bookings get their
+          commission back.
         </Note>
       </div>
     );

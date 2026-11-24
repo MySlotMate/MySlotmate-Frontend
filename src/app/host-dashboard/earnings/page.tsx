@@ -12,6 +12,8 @@ import {
   needsTaxProfile,
 } from "~/components/host-dashboard/TaxDetails";
 import PayoutScheduleCard from "~/components/host-dashboard/PayoutScheduleCard";
+import MonthlyStatementCard from "~/components/host-dashboard/MonthlyStatementCard";
+import BoostInvoicesCard from "~/components/host-dashboard/BoostInvoicesCard";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "~/utils/firebase";
 import { SharedEventsCard } from "~/components/host-dashboard";
@@ -844,7 +846,9 @@ function EarningsContent() {
                                   ? "Refunded"
                                   : isPending
                                     ? "Pending"
-                                    : `Guest paid ${fmtCurrency(s.AmountCents)}`}
+                                    : (s.BoostCommissionCents ?? 0) > 0
+                                      ? `Boost −${fmtCurrency(s.BoostCommissionCents ?? 0)}`
+                                      : `Guest paid ${fmtCurrency(s.AmountCents)}`}
                               </p>
                             </div>
                           </li>
@@ -1075,6 +1079,10 @@ function EarningsContent() {
                   fmt={fmtCurrency}
                   onEdit={() => openTaxModal()}
                 />
+
+                <MonthlyStatementCard />
+
+                <BoostInvoicesCard />
               </section>
             )}
           </>

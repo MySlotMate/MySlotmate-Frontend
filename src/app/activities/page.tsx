@@ -8,6 +8,7 @@ import { auth } from "~/utils/firebase";
 import {
   queryKeys,
   useBookingsByUser,
+  useMyFeeDocuments,
   useListHosts,
   useListPublicEvents,
   useCancelBooking,
@@ -29,6 +30,9 @@ import * as components from "~/components";
 import EventPhotos from "~/components/profile/EventPhotos";
 import Milestones, { BadgeSheet } from "~/components/profile/Milestones";
 import { refundDueOnCancel } from "~/lib/cancellationPolicy";
+import FeeReceiptButton, {
+  feeDocumentLabel,
+} from "~/components/billing/FeeReceiptButton";
 import {
   InboxSidebar,
   MyPassesSection,
@@ -87,6 +91,7 @@ function UpcomingCard({
   onTicket,
   onInbox,
   onCancel,
+  feeReceipt,
 }: {
   booking: BookingDTO;
   event: EventDTO;
@@ -95,6 +100,8 @@ function UpcomingCard({
   onTicket: () => void;
   onInbox: () => void;
   onCancel: () => void;
+  /** The platform fee receipt, when the booking has one. */
+  feeReceipt?: api.FeeDocumentDTO;
 }) {
   return (
     <article className={`flex flex-col overflow-hidden ${CARD}`}>
@@ -200,8 +207,59 @@ function UpcomingCard({
             View Details
           </Link>
         </div>
+        {feeReceipt && (
+          <FeeReceiptButton
+            doc={feeReceipt}
+            className="mt-3 flex items-center justify-center gap-1.5 text-xs font-medium text-white/55 transition hover:text-white disabled:opacity-50"
+          />
+        )}
       </div>
     </article>
+  );
+}
+
+/** Every platform fee receipt and refund note, newest first. */
+function FeeReceiptsList({ docs }: { docs: api.FeeDocumentDTO[] }) {
+  return (
+    <details className="mt-8">
+      <summary className="cursor-pointer text-sm font-semibold text-white/55 hover:text-white">
+        Fee receipts ({docs.length})
+      </summary>
+      <p className="mt-2 text-xs text-white/45">
+        Receipts for the platform fee (GST included). The ticket price is paid
+        to the host and isn&apos;t on them.
+      </p>
+      <div className="mt-3 flex flex-col gap-2">
+        {docs.map((d) => (
+          <div
+            key={d.id}
+            className={`flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 text-sm ${CARD}`}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-white/80">
+                {d.event_title ||
+                  (d.source_type === "pass" ? "Monthly pass" : "Booking")}
+              </span>
+              <span className="text-xs text-white/45">
+                {feeDocumentLabel(d)}
+                {d.source_type === "pass" ? " · monthly pass" : ""} · {d.number}{" "}
+                · {formatIST(d.issued_at, "MMM d, yyyy")}
+              </span>
+            </span>
+            <span className="flex shrink-0 items-center gap-4">
+              <span className="text-white/70">
+                {d.kind === "credit_note" ? "−" : ""}₹
+                {(d.total_cents / 100).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+              <FeeReceiptButton doc={d} label="PDF" />
+            </span>
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -579,6 +637,16 @@ export default function ActivitiesPage() {
 
   const { data: bookings, isLoading: bookingsLoading } =
     useBookingsByUser(userId);
+  const { data: feeDocs } = useMyFeeDocuments(!!userId);
+  const receiptByBooking = useMemo(
+    () =>
+      new Map(
+        (feeDocs ?? [])
+          .filter((d) => d.kind === "invoice" && d.source_type === "booking")
+          .map((d) => [d.source_id, d]),
+      ),
+    [feeDocs],
+  );
   const { data: allEvents } = useListPublicEvents();
   const { data: hosts } = useListHosts();
   const { data: saved } = useSavedExperiences(userId);
@@ -900,6 +968,7 @@ export default function ActivitiesPage() {
                           }
                           onInbox={() => setActiveInboxEventId(event.id)}
                           onCancel={() => setActiveCancelBookingId(booking.id)}
+                          feeReceipt={receiptByBooking.get(booking.id)}
                         />
                       ))}
                     </div>
@@ -908,6 +977,9 @@ export default function ActivitiesPage() {
                       title="Nothing planned yet"
                       text="Your next chapter starts with a booking. It'll show up here with your ticket."
                     />
+                  )}
+                  {(feeDocs?.length ?? 0) > 0 && (
+                    <FeeReceiptsList docs={feeDocs!} />
                   )}
                 </>
               ) : tab === "memories" ? (

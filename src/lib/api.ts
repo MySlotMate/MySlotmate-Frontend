@@ -40,7 +40,9 @@ export async function apiFetch<T>(
   } catch (err) {
     const axErr = err as AxiosError<Envelope<T>>;
     const data = axErr.response?.data;
-    let msg = data?.error ?? data?.message ?? axErr.message;
+    // Prefer the readable message: most errors repeat it in `error`, but some
+    // (e.g. host application checks) put a code there instead.
+    let msg = data?.message ?? data?.error ?? axErr.message;
     if (axErr.response?.status === 401 && SESSION_DEAD.has(msg)) {
       // A Firebase token can lapse mid-session; refresh once before giving up.
       // Drop any caller-supplied Authorization: it is usually a token cached
@@ -358,7 +360,7 @@ export async function uploadFiles(
   } catch (err) {
     const axErr = err as AxiosError<Envelope<UploadResult[]>>;
     const data = axErr.response?.data;
-    const msg = data?.error ?? data?.message ?? axErr.message;
+    const msg = data?.message ?? data?.error ?? axErr.message;
     const error = new Error(msg);
     (error as Error & { status: number }).status =
       axErr.response?.status ?? 500;
@@ -453,6 +455,26 @@ export interface HostApplicationPayload {
   social_linkedin?: string | null;
   social_website?: string | null;
   is_professional?: boolean;
+  // Two-path answers (backend-spec-host-application.md). Files are URLs from
+  // the private "hosts/government-ids" upload folder.
+  host_type?: "community" | "professional";
+  selfie_url?: string;
+  community_name?: string;
+  community_category?: string;
+  years_experience?: string;
+  events_hosted?: string;
+  portfolio_url?: string;
+  portfolio_photo_urls?: string[];
+  profession?: string;
+  certificate_url?: string;
+  degree_url?: string;
+  license_number?: string;
+  professional_body?: string;
+  specialization?: string;
+  work_history?: string;
+  languages?: string[];
+  achievements?: string;
+  testimonial_url?: string;
 }
 
 /** POST /hosts/apply — submit host application (status → pending) */
@@ -477,6 +499,8 @@ export interface ApplicationStatusResponse {
       | "under_review"
       | "approved"
       | "rejected";
+    /** Why the team turned the application down, when they said. */
+    rejection_reason?: string | null;
   };
 }
 
@@ -1179,6 +1203,8 @@ export interface OccurrenceAvailability {
   remaining: number;
   is_fully_booked: boolean;
   is_paused?: boolean;
+  /** Seats left per ticket type (tier id → seats), only for types with their own limit. */
+  tier_remaining?: Record<string, number>;
 }
 
 /** GET /events/host/{hostID} — includes drafts, so host-scoped and authed. */
@@ -1801,6 +1827,25 @@ export function deleteEvent(eventId: string, hostId: string) {
  * Carries guests' contact details and government-ID links, so the server
  * restricts it to the host running the event. Must be authed.
  */
+/** One thing about an experience that needs the host's eye. */
+export interface EventAttentionItemDTO {
+  kind:
+    | "join_requests"
+    | "code_used_up"
+    | "code_near_limit"
+    | "code_expiring"
+    | "passes_expiring";
+  title: string;
+  count?: number;
+  code?: string;
+  due?: string;
+}
+
+/** GET /events/{id}/attention — the "Needs attention" list (host or admin). */
+export function getEventAttention(eventId: string) {
+  return authedFetch<EventAttentionItemDTO[]>(`/events/${eventId}/attention`);
+}
+
 export function getEventAttendees(eventId: string, date?: string) {
   let url = `/events/${eventId}/attendees`;
   if (date) url += `?date=${encodeURIComponent(date)}`;
@@ -2042,6 +2087,7 @@ export interface CouponBatchPayload {
   /** Defaults to single-use (max_redemptions=1, per_user_limit=1). */
   max_redemptions?: number | null;
   per_user_limit?: number | null;
+  valid_from?: string | null;
   valid_until?: string | null;
 }
 
@@ -2200,6 +2246,8 @@ export interface PayoutEligibilityDTO {
   boost_blocked: boolean;
   /** Owed to MySlotmate after a cancellation; blocks Boost and weekly payouts. */
   recovery_balance_cents: number;
+  /** Event Boost pilot: only invited hosts can request a Boost. */
+  boost_invited?: boolean;
   /** Paid early across all upcoming events vs the backstop cap. */
   early_outstanding_cents: number;
   early_backstop_cents: number;
@@ -2235,6 +2283,10 @@ export interface BoostRateDTO {
   ticket_name: string;
   price_cents: number;
   rate_bps: number;
+  /** The host guide's rate for this price; differs when the team proposed another. */
+  guide_rate_bps?: number;
+  /** Why the proposed rate differs from the guide (shown to the host). */
+  reason?: string | null;
 }
 
 export interface BoostDTO {
@@ -2242,8 +2294,10 @@ export interface BoostDTO {
   event_id: string;
   status: BoostStatus;
   rates: BoostRateDTO[];
-  /** Why a ₹5,000+ event was quoted above the base rate. */
+  /** First per-ticket reason (older screens); see rates[].reason. */
   topup_reason: string | null;
+  /** The MySlotMate team's note with the proposal. */
+  admin_note?: string | null;
   decline_reason: string | null;
   goal_text: string | null;
   channels: BoostChannel[];
@@ -3087,4 +3141,83 @@ export function listPassHolders(eventId: string, idToken: string) {
   return apiFetch<PassHolderDTO[]>(`/passes/host/event/${eventId}`, {
     headers: getAuthHeader(idToken),
   });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Billing: platform fee receipts (invoices) and refund notes         */
+/* ------------------------------------------------------------------ */
+
+/** A fee invoice or credit note. Amounts are paise. */
+export interface FeeDocumentDTO {
+  id: string;
+  kind: "invoice" | "credit_note";
+  number: string;
+  issued_at: string;
+  source_type: "booking" | "pass" | "host_commission";
+  source_id: string;
+  event_id?: string;
+  /** Commission invoices: the month billed, e.g. "2026-11". */
+  period?: string;
+  event_title: string;
+  original_number?: string;
+  taxable_cents: number;
+  cgst_cents: number;
+  sgst_cents: number;
+  igst_cents: number;
+  total_cents: number;
+}
+
+/** GET /billing/documents: one booking's or pass's receipt and refund note. */
+export function getFeeDocuments(
+  sourceType: "booking" | "pass",
+  sourceId: string,
+) {
+  return apiFetch<FeeDocumentDTO[]>("/billing/documents", {
+    params: { source_type: sourceType, source_id: sourceId },
+  });
+}
+
+/** GET /billing/documents/mine: every receipt and refund note of the signed-in guest. */
+export function getMyFeeDocuments() {
+  return apiFetch<FeeDocumentDTO[]>("/billing/documents/mine");
+}
+
+/** Downloads a receipt or refund note PDF to the device. */
+export async function downloadFeeDocument(doc: FeeDocumentDTO) {
+  const res = await api.request<Blob>({
+    url: `/billing/documents/${doc.id}/pdf`,
+    responseType: "blob",
+    headers: await currentAuthHeader(),
+  });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `MySlotMate-${doc.number.replaceAll("/", "-")}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+/** Downloads the signed-in host's payout statement PDF for month "2026-11". */
+export async function downloadHostStatement(month: string) {
+  const res = await api.request<Blob>({
+    url: "/billing/host-statement",
+    params: { month, format: "pdf" },
+    responseType: "blob",
+    headers: await currentAuthHeader(),
+  });
+  const url = URL.createObjectURL(res.data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `MySlotMate-statement-${month}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
+}
+
+/** GET /billing/host-commission: the signed-in host's Boost commission invoices and credit notes. */
+export function getHostCommissionDocuments() {
+  return apiFetch<FeeDocumentDTO[]>("/billing/host-commission");
 }

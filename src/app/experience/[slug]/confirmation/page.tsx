@@ -9,6 +9,7 @@ import {
   useEvent,
   usePublicHostProfile,
   useBooking,
+  useFeeDocuments,
   useUserProfile,
 } from "~/hooks/useApi";
 import {
@@ -25,6 +26,7 @@ import { formatIST } from "~/lib/datetime";
 import { pdfSafe } from "~/lib/pdfText";
 import { currentAuthHeader } from "~/lib/api";
 import { toast } from "sonner";
+import FeeReceiptButton from "~/components/billing/FeeReceiptButton";
 import { env } from "~/env";
 
 export const runtime = "edge";
@@ -481,6 +483,10 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
 
   const { data: event, isLoading: eventLoading } = useEvent(eventId);
   const { data: booking, isLoading: bookingLoading } = useBooking(bookingId);
+  // The platform fee receipt, when this booking has one (paid, billing on).
+  const { data: feeDocs } = useFeeDocuments("booking", bookingId);
+  const feeReceipt = feeDocs?.find((d) => d.kind === "invoice");
+  const refundNote = feeDocs?.find((d) => d.kind === "credit_note");
   const { data: host } = usePublicHostProfile(event?.host_id ?? null);
   const { data: bookingUser } = useUserProfile(booking?.user_id ?? null);
 
@@ -902,6 +908,12 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
             Go to home
           </Link>
         </div>
+        {(feeReceipt ?? refundNote) && (
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {feeReceipt && <FeeReceiptButton doc={feeReceipt} />}
+            {refundNote && <FeeReceiptButton doc={refundNote} />}
+          </div>
+        )}
 
         <p className="mt-6 flex items-center gap-2 text-xs text-white/50">
           <FiMessageCircle className="h-3.5 w-3.5 shrink-0" />

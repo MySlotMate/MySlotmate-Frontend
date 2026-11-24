@@ -5,8 +5,17 @@ import { useEffect, useState, useRef, use, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CoHostManager } from "~/components/host-dashboard";
 import AttendeeDetailsConfig from "~/components/host-dashboard/AttendeeDetailsConfig";
-import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
-import CouponsManager from "~/components/host/CouponsManager";
+import PrivacyAccessSection, {
+  whoCanBookLabel,
+} from "~/components/host/PrivacyAccessSection";
+import CodesPanel from "~/components/host/CodesPanel";
+import {
+  accessPayload,
+  firstProblem,
+  hookLineWithFallback,
+  pricingPayload,
+} from "~/lib/experienceForm";
+import NeedsAttention from "~/components/host-dashboard/NeedsAttention";
 import { RichTextEditor } from "~/components/RichTextEditor";
 import {
   useMyHost,
@@ -18,6 +27,7 @@ import {
 import { useDragDrop } from "~/hooks/useDragDrop";
 import { useHostTier } from "~/hooks/useHostTier";
 import { VerifyToEarnSheet } from "~/components/host-dashboard/VerifyToEarn";
+import GuestPaymentCard from "~/components/host-dashboard/GuestPaymentCard";
 import { FREE_HOST_LIMITS, findOffPlatformPayment } from "~/lib/hostTier";
 import {
   FiArrowLeft,
@@ -57,10 +67,8 @@ import {
 import type { SessionType } from "~/lib/api";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
 import {
-  AddPill,
   Chip,
   CoverPoster,
-  FIELD,
   GRADIENT,
   INLINE_FIELD,
   INLINE_PICKER,
@@ -71,7 +79,6 @@ import {
   Rows,
   Section,
   Segmented,
-  ToggleRow,
 } from "~/components/host-dashboard/EventFormKit";
 import { DatePill, TimePill } from "~/components/host-dashboard/DateTimePills";
 import { LocationSearchInput, MapPickerModal } from "~/components";
@@ -104,7 +111,7 @@ interface EventFormData {
   isFree: boolean;
   priceCents: number;
   useTiers: boolean;
-  priceTiers: { name: string; priceStr: string }[];
+  priceTiers: { name: string; priceStr: string; seatsStr?: string }[];
   // Monthly pass: one payment covers a month of sessions. Recurring, paid
   // experiences only.
   monthlyPassEnabled: boolean;
@@ -837,6 +844,7 @@ export default function EditEventPage({
             ? event.price_tiers.map((t) => ({
                 name: t.name,
                 priceStr: (t.price_cents / 100).toString(),
+                seatsStr: t.capacity ? String(t.capacity) : "",
               }))
             : [{ name: "", priceStr: "" }],
         monthlyPassEnabled: !!event.monthly_pass_price_cents,
@@ -944,28 +952,6 @@ export default function EditEventPage({
       setForm((prev) => ({ ...prev, durationMinutes: mins }));
   }, [form.sessionType, form.eventTime, form.endTime, form.durationMinutes]);
 
-  const addPriceTier = () => {
-    updateForm("priceTiers", [...form.priceTiers, { name: "", priceStr: "" }]);
-  };
-  const removePriceTier = (index: number) => {
-    updateForm(
-      "priceTiers",
-      form.priceTiers.filter((_, i) => i !== index),
-    );
-  };
-  const updatePriceTier = (
-    index: number,
-    field: "name" | "priceStr",
-    value: string,
-  ) => {
-    updateForm(
-      "priceTiers",
-      form.priceTiers.map((t, i) =>
-        i === index ? { ...t, [field]: value } : t,
-      ),
-    );
-  };
-
   const handleCoverUpload = (files: File[]) => {
     const file = files[0];
     if (file) {
@@ -1023,32 +1009,40 @@ export default function EditEventPage({
     );
   };
 
+  // The 1:1 availability error, if the windows don't make any sessions.
+  const oneOnOneProblem = (): string | null => {
+    if (form.sessionType !== "one_on_one") return null;
+    const { errors, count } = form.sessionIsWeekly
+      ? (() => {
+          const r = generateWeeklySessions(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          );
+          return { errors: r.errors, count: r.perWeek };
+        })()
+      : (() => {
+          const r = generateSessionSlots(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          );
+          return { errors: r.errors, count: r.slots.length };
+        })();
+    if (errors.length > 0) return errors[0] ?? null;
+    if (count === 0)
+      return "Your availability windows don't fit a single session";
+    return null;
+  };
+
   // Returns the first validation error string, or null if the draft is
   // complete enough to publish.
   const validateForPublish = (): string | null => {
-    if (!form.title.trim()) return "Add a title before publishing";
-    if (!form.hookLine.trim()) return "Add a hook line before publishing";
-    if (!form.mood) return "Pick a mood before publishing";
-    if (!form.description.trim()) return "Add a description before publishing";
-    if (!form.eventDate || !form.eventTime)
-      return "Set a date and time before publishing";
-    if (!form.isFree && !form.useTiers && form.priceCents <= 0)
-      return "Set a price (or mark as free) before publishing";
-    if (
-      !form.isFree &&
-      form.useTiers &&
-      form.priceTiers.filter((t) => t.name.trim() && Number(t.priceStr) > 0)
-        .length === 0
-    )
-      return "Add at least one ticket type with a name and price";
-    if (!form.isOnline && !form.location.trim())
-      return "Add a location (or mark as online) before publishing";
-    if (form.isOnline && !form.meetingLink.trim())
-      return "Add a meeting link before publishing";
-    if (form.maxGroupSize < 1)
-      return "Set a valid group size before publishing";
-    if (!form.cancellationPolicy)
-      return "Pick a cancellation policy before publishing";
+    const problem = firstProblem(form, {
+      publish: true,
+      sessionProblem: oneOnOneProblem(),
+    });
+    if (problem) return problem;
     if (!isVerified) {
       if (!form.isFree) return "Only verified hosts can sell tickets";
       if (
@@ -1074,75 +1068,16 @@ export default function EditEventPage({
       return;
     }
 
-    // A shared-passkey private event is unbookable without its passkey. (Unique
-    // mode needs no passkey — access comes from the per-guest codes.)
-    // RSVP-gated events have no passkey at all — access comes from an approved
-    // request — so the passkey requirement applies only to the passkey gate.
-    if (
-      form.isPrivate &&
-      form.privateAccessMode === "passkey" &&
-      form.accessMode === "shared" &&
-      !form.accessPasskey.trim()
-    ) {
-      toast.error("A private experience needs a passkey");
+    // Checked on every save (shared rules): the code gate, request to join,
+    // the monthly pass and 1:1 availability. Saving broken windows would wipe
+    // custom_dates and leave the event with no bookable sessions at all.
+    const saveProblem = firstProblem(form, {
+      publish: false,
+      sessionProblem: oneOnOneProblem(),
+    });
+    if (saveProblem) {
+      toast.error(saveProblem);
       return;
-    }
-
-    // An RSVP host approves people on the strength of what they submit, so the
-    // request form can't be empty — without required fields every request would
-    // arrive as a bare name and there'd be nothing to judge.
-    if (
-      form.isPrivate &&
-      form.privateAccessMode === "rsvp" &&
-      (!form.requiresAttendeeDetails || form.attendeeFields.length === 0)
-    ) {
-      toast.error(
-        "Request-to-join needs attendee details — turn them on and pick at least one field",
-      );
-      return;
-    }
-
-    // A pass is a balance of sessions the guest spends one at a time, so it
-    // must say how many it holds. The server refuses a pass without one.
-    if (
-      form.monthlyPassEnabled &&
-      !form.isFree &&
-      form.scheduleType !== "one_time" &&
-      Number(form.monthlyPassPriceStr) > 0 &&
-      !(Number(form.monthlyPassSessionsStr) >= 1)
-    ) {
-      toast.error("Set how many sessions the monthly pass includes");
-      return;
-    }
-
-    // Saving broken windows would wipe custom_dates and leave the event with no
-    // bookable sessions at all, so this is enforced on save, not just on publish.
-    if (form.sessionType === "one_on_one") {
-      const { errors, count } = form.sessionIsWeekly
-        ? (() => {
-            const r = generateWeeklySessions(
-              form.sessionWindows,
-              form.durationMinutes,
-              form.breakMinutes,
-            );
-            return { errors: r.errors, count: r.perWeek };
-          })()
-        : (() => {
-            const r = generateSessionSlots(
-              form.sessionWindows,
-              form.durationMinutes,
-              form.breakMinutes,
-            );
-            return { errors: r.errors, count: r.slots.length };
-          })();
-      if (errors.length > 0) {
-        toast.error(errors[0]);
-        return;
-      }
-      if (count === 0) {
-        toast.error("Your availability windows don't fit a single session");
-        return;
-      }
     }
 
     // Only enforce completeness when the host is actually trying to publish.
@@ -1253,7 +1188,7 @@ export default function EditEventPage({
         body: {
           host_id: host.id,
           title: form.title.trim(),
-          hook_line: form.hookLine.trim(),
+          hook_line: hookLineWithFallback(form),
           mood: form.mood,
           description: form.description.trim(),
           // Send explicit values so removals persist: the backend keeps the
@@ -1279,31 +1214,7 @@ export default function EditEventPage({
             form.sessionType === "one_on_one" ? 1 : form.minGroupSize,
           max_group_size:
             form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
-          price_cents: form.isFree || form.useTiers ? 0 : form.priceCents,
-          is_free: form.isFree,
-          price_tiers:
-            !form.isFree && form.useTiers
-              ? form.priceTiers
-                  .filter((t) => t.name.trim() && Number(t.priceStr) > 0)
-                  .map((t) => ({
-                    name: t.name.trim(),
-                    price_cents: Math.round(Number(t.priceStr) * 100),
-                  }))
-              : [],
-          monthly_pass: {
-            price_cents:
-              form.monthlyPassEnabled &&
-              !form.isFree &&
-              form.scheduleType !== "one_time"
-                ? Math.round(Number(form.monthlyPassPriceStr) * 100)
-                : 0,
-            session_limit: form.monthlyPassSessionsStr
-              ? Number(form.monthlyPassSessionsStr)
-              : undefined,
-            capacity: form.monthlyPassCapacityStr
-              ? Number(form.monthlyPassCapacityStr)
-              : undefined,
-          },
+          ...pricingPayload(form),
           is_recurring: isWeeklyOneOnOne || form.scheduleType === "recurring",
           recurrence_rule: isWeeklyOneOnOne
             ? "FREQ=WEEKLY"
@@ -1333,13 +1244,7 @@ export default function EditEventPage({
           attendee_fields: form.requiresAttendeeDetails
             ? form.attendeeFields
             : [],
-          is_private: form.isPrivate,
-          private_access_mode: form.privateAccessMode,
-          // Unique mode clears the shared passkey (access via per-guest codes).
-          access_passkey:
-            form.isPrivate && form.accessMode === "shared"
-              ? form.accessPasskey.trim()
-              : "",
+          ...accessPayload(form),
         },
       });
 
@@ -1552,7 +1457,9 @@ export default function EditEventPage({
                     ) : (
                       <LuGlobe className="h-3.5 w-3.5 text-[#D8B4FE]" />
                     )}
-                    {form.isPrivate ? "Private event" : "Public event"}
+                    {form.isPrivate
+                      ? whoCanBookLabel(true, form.privateAccessMode)
+                      : "Anyone can book"}
                   </button>
                   {form.sessionType === "one_on_one" && (
                     <span className="rounded-full border border-white/15 px-3.5 py-1.5 text-[13px] font-medium text-white/75">
@@ -1560,6 +1467,8 @@ export default function EditEventPage({
                     </span>
                   )}
                 </div>
+
+                <NeedsAttention eventId={id} />
 
                 {/* What */}
                 <section className="space-y-4">
@@ -1723,6 +1632,9 @@ export default function EditEventPage({
                         updateForm("breakMinutes", minutes)
                       }
                       durationMinutes={form.durationMinutes}
+                      onDurationMinutesChange={(mins) =>
+                        updateForm("durationMinutes", mins)
+                      }
                       isWeekly={form.sessionIsWeekly}
                       onIsWeeklyChange={(weekly) =>
                         updateForm("sessionIsWeekly", weekly)
@@ -1730,25 +1642,23 @@ export default function EditEventPage({
                     />
                   )}
 
-                  {(form.sessionType === "one_on_one" ||
-                    form.scheduleType === "custom_dates") && (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="mr-1 text-sm text-white/55">
-                        {form.sessionType === "one_on_one"
-                          ? "Each session"
-                          : "Each date lasts"}
-                      </span>
-                      {DURATION_OPTIONS.map((mins) => (
-                        <Chip
-                          key={mins}
-                          active={form.durationMinutes === mins}
-                          onClick={() => updateForm("durationMinutes", mins)}
-                        >
-                          {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                        </Chip>
-                      ))}
-                    </div>
-                  )}
+                  {form.sessionType === "group" &&
+                    form.scheduleType === "custom_dates" && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="mr-1 text-sm text-white/55">
+                          Each date lasts
+                        </span>
+                        {DURATION_OPTIONS.map((mins) => (
+                          <Chip
+                            key={mins}
+                            active={form.durationMinutes === mins}
+                            onClick={() => updateForm("durationMinutes", mins)}
+                          >
+                            {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
+                          </Chip>
+                        ))}
+                      </div>
+                    )}
                 </section>
 
                 {/* Location */}
@@ -1820,11 +1730,7 @@ export default function EditEventPage({
                 </Section>
 
                 {/* Tickets */}
-                <Section
-                  title={
-                    form.sessionType === "one_on_one" ? "Price" : "Tickets"
-                  }
-                >
+                <Section title="How do guests pay?">
                   {form.sessionType === "group" && (
                     <Rows>
                       <Row label="Slots">
@@ -1879,23 +1785,16 @@ export default function EditEventPage({
                       </button>
                     </p>
                   )}
-                  {!form.isFree && !form.useTiers && (
-                    <Rows>
-                      <Row label="Price per person (₹)">
-                        <input
-                          type="number"
-                          min={0}
-                          value={form.priceCents / 100}
-                          onChange={(e) =>
-                            updateForm(
-                              "priceCents",
-                              Math.round(parseFloat(e.target.value) * 100) || 0,
-                            )
-                          }
-                          className={ROW_INPUT}
-                        />
-                      </Row>
-                    </Rows>
+                  {!form.isFree && (
+                    <GuestPaymentCard
+                      value={form}
+                      onChange={(patch) =>
+                        setForm((prev) => ({ ...prev, ...patch }))
+                      }
+                      repeating={form.scheduleType !== "one_time"}
+                      showErrors={false}
+                      passExtra={<PassHoldersPanel eventId={id} />}
+                    />
                   )}
                 </Section>
 
@@ -1906,40 +1805,48 @@ export default function EditEventPage({
                 >
                   <div>
                     <MoreOptions
-                      title="Who can see it"
-                      summary={form.isPrivate ? "Private" : "Public"}
+                      title="Who can book?"
+                      summary={whoCanBookLabel(
+                        form.isPrivate,
+                        form.privateAccessMode,
+                      )}
                       defaultOpen={form.isPrivate}
                     >
-                      <Segmented<"public" | "private">
-                        value={form.isPrivate ? "private" : "public"}
-                        onChange={(v) =>
-                          updateForm("isPrivate", v === "private")
+                      <PrivacyAccessSection
+                        isPrivate={form.isPrivate}
+                        privateAccessMode={form.privateAccessMode}
+                        accessMode={form.accessMode}
+                        accessPasskey={form.accessPasskey}
+                        canGenerateCodes
+                        onChange={(patch) =>
+                          setForm((prev) => ({ ...prev, ...patch }))
                         }
-                        options={[
-                          { value: "public", label: "Public" },
-                          { value: "private", label: "Private" },
-                        ]}
                       />
-                      {form.isPrivate && (
-                        <PrivacyAccessSection
-                          isPrivate={form.isPrivate}
-                          privateAccessMode={form.privateAccessMode}
-                          accessMode={form.accessMode}
-                          accessPasskey={form.accessPasskey}
-                          canGenerateCodes
-                          onChange={(patch) =>
-                            setForm((prev) => ({ ...prev, ...patch }))
-                          }
-                        />
-                      )}
-                      {host?.id && event?.id && form.isPrivate && (
-                        <CouponsManager
+                    </MoreOptions>
+
+                    {host?.id && event?.id && (
+                      <MoreOptions
+                        title="Codes"
+                        summary="Unlock, % off or free"
+                      >
+                        <CodesPanel
                           eventId={event.id}
                           hostId={host.id}
-                          kind="access"
+                          isFree={form.isFree}
+                          codeGated={
+                            form.isPrivate &&
+                            form.privateAccessMode === "passkey"
+                          }
+                          sharedPasskey={
+                            form.isPrivate &&
+                            form.privateAccessMode === "passkey" &&
+                            form.accessMode === "shared"
+                              ? form.accessPasskey
+                              : ""
+                          }
                         />
-                      )}
-                    </MoreOptions>
+                      </MoreOptions>
+                    )}
 
                     <MoreOptions
                       title="Refunds & payout"
@@ -1966,165 +1873,6 @@ export default function EditEventPage({
                         }
                       />
                     </MoreOptions>
-
-                    {!form.isFree && (
-                      <MoreOptions
-                        title="Ticket types & monthly pass"
-                        summary={
-                          form.useTiers
-                            ? `${form.priceTiers.length} ticket types`
-                            : form.monthlyPassEnabled
-                              ? "One price · pass on"
-                              : "One price"
-                        }
-                      >
-                        <Segmented<"single" | "tiers">
-                          value={form.useTiers ? "tiers" : "single"}
-                          onChange={(v) =>
-                            updateForm("useTiers", v === "tiers")
-                          }
-                          options={[
-                            { value: "single", label: "Single price" },
-                            { value: "tiers", label: "Multiple ticket types" },
-                          ]}
-                        />
-                        {form.useTiers && (
-                          <div className="space-y-2">
-                            {form.priceTiers.map((tier, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2"
-                              >
-                                <input
-                                  type="text"
-                                  value={tier.name}
-                                  onChange={(e) =>
-                                    updatePriceTier(
-                                      index,
-                                      "name",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="Ticket name, e.g. VIP"
-                                  className={`${FIELD} !py-2.5`}
-                                />
-                                <input
-                                  type="number"
-                                  min={0}
-                                  value={tier.priceStr}
-                                  onChange={(e) =>
-                                    updatePriceTier(
-                                      index,
-                                      "priceStr",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="₹ Price"
-                                  className={`${FIELD} !w-32 !py-2.5`}
-                                />
-                                {form.priceTiers.length > 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => removePriceTier(index)}
-                                    className="p-1.5 text-white/40 transition hover:text-red-400"
-                                    aria-label="Remove ticket type"
-                                  >
-                                    <FiX className="h-5 w-5" />
-                                  </button>
-                                )}
-                              </div>
-                            ))}
-                            <AddPill onClick={addPriceTier}>
-                              Add another ticket type
-                            </AddPill>
-                          </div>
-                        )}
-                        <ToggleRow
-                          label="Monthly pass"
-                          hint={
-                            form.scheduleType === "one_time"
-                              ? "Repeating or several-dates events only."
-                              : "Guests pay once and attend for 30 days."
-                          }
-                          checked={form.monthlyPassEnabled}
-                          disabled={form.scheduleType === "one_time"}
-                          onChange={(next) =>
-                            updateForm("monthlyPassEnabled", next)
-                          }
-                        />
-                        {form.monthlyPassEnabled &&
-                          form.scheduleType !== "one_time" && (
-                            <Rows>
-                              <Row label="Pass price (₹)">
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={form.monthlyPassPriceStr}
-                                  onChange={(e) =>
-                                    updateForm(
-                                      "monthlyPassPriceStr",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="2500"
-                                  className={ROW_INPUT}
-                                />
-                              </Row>
-                              <Row label="Sessions included">
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={form.monthlyPassSessionsStr}
-                                  onChange={(e) =>
-                                    updateForm(
-                                      "monthlyPassSessionsStr",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="e.g. 8"
-                                  className={ROW_INPUT}
-                                />
-                              </Row>
-                              <Row label="Passes available">
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={form.monthlyPassCapacityStr}
-                                  onChange={(e) =>
-                                    updateForm(
-                                      "monthlyPassCapacityStr",
-                                      e.target.value,
-                                    )
-                                  }
-                                  placeholder="Unlimited"
-                                  className={ROW_INPUT}
-                                />
-                              </Row>
-                            </Rows>
-                          )}
-                        {form.monthlyPassEnabled && (
-                          <PassHoldersPanel eventId={id} />
-                        )}
-                      </MoreOptions>
-                    )}
-
-                    {host?.id && event?.id && !form.isFree && (
-                      <MoreOptions
-                        title="Coupons & free codes"
-                        summary="Discounts and comps"
-                      >
-                        <CouponsManager
-                          eventId={event.id}
-                          hostId={host.id}
-                          kind="discount"
-                        />
-                        <CouponsManager
-                          eventId={event.id}
-                          hostId={host.id}
-                          kind="free"
-                        />
-                      </MoreOptions>
-                    )}
 
                     <MoreOptions
                       title="More photos"

@@ -147,7 +147,11 @@ export const NO_REFUND_POLICY = "no_refund";
 
 // ─── Formatting ──────────────────────────────────────────────────────────────
 
+// Whole rupees print without paise; anything else shows two decimals (₹159.80).
 export const rupees = (cents: number) =>
-  `₹${(cents / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  `₹${(cents / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`;
 
 export const pct = (bps: number) => `${bps / 100}%`;

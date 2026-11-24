@@ -9,7 +9,6 @@ import PayoutTimingFields, {
 } from "~/components/host-dashboard/PayoutTimingFields";
 import { WEEKLY_PAYOUTS_ENABLED } from "~/lib/boost";
 import {
-  AddPill,
   Chip,
   CoverPoster,
   DURATION_OPTIONS,
@@ -28,11 +27,12 @@ import {
   Rows,
   Section,
   Segmented,
-  ToggleRow,
 } from "~/components/host-dashboard/EventFormKit";
 import SessionWindowsEditor from "~/components/host-dashboard/SessionWindowsEditor";
 import { DatePill, TimePill } from "~/components/host-dashboard/DateTimePills";
-import PrivacyAccessSection from "~/components/host/PrivacyAccessSection";
+import PrivacyAccessSection, {
+  whoCanBookLabel,
+} from "~/components/host/PrivacyAccessSection";
 import { CoHostManager } from "~/components/host-dashboard";
 import {
   useMyHost,
@@ -45,6 +45,13 @@ import {
 import { useContentModeration } from "~/hooks/useContentModeration";
 import { useHostTier } from "~/hooks/useHostTier";
 import { VerifyToEarnSheet } from "~/components/host-dashboard/VerifyToEarn";
+import GuestPaymentCard from "~/components/host-dashboard/GuestPaymentCard";
+import {
+  accessPayload,
+  firstProblem,
+  hookLineWithFallback,
+  pricingPayload,
+} from "~/lib/experienceForm";
 import { FREE_HOST_LIMITS, findOffPlatformPayment } from "~/lib/hostTier";
 import { Lock } from "lucide-react";
 import { categoriesFor } from "~/lib/categories";
@@ -102,24 +109,6 @@ import { ImageCropModal } from "~/components/ImageCropModal";
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
-/**
- * A monthly pass only makes sense on a repeating, paid experience: nothing
- * repeats on a one-time event, and nothing is saved on a free one. The server
- * enforces this too — this just keeps the form honest.
- */
-function passEligible(form: {
-  monthlyPassEnabled: boolean;
-  monthlyPassPriceStr: string;
-  isFree: boolean;
-  scheduleType: string;
-}): boolean {
-  return (
-    form.monthlyPassEnabled &&
-    !form.isFree &&
-    form.scheduleType !== "one_time" &&
-    Number(form.monthlyPassPriceStr) > 0
-  );
-}
 
 interface FormData {
   // Step 1 - Basics
@@ -146,7 +135,7 @@ interface FormData {
   // Multiple ticket tiers. When useTiers is true, priceTiers drives pricing
   // instead of the single priceCents. priceStr is the raw input mirror.
   useTiers: boolean;
-  priceTiers: { name: string; priceStr: string }[];
+  priceTiers: { name: string; priceStr: string; seatsStr?: string }[];
   // Monthly pass: one payment covers a month of sessions. Recurring, paid
   // experiences only — there is nothing to repeat otherwise.
   monthlyPassEnabled: boolean;
@@ -934,7 +923,7 @@ export default function CreateExperiencePage() {
     isFree: false,
     priceCents: 50000,
     useTiers: false,
-    priceTiers: [{ name: "", priceStr: "" }],
+    priceTiers: [{ name: "", priceStr: "", seatsStr: "" }],
     monthlyPassEnabled: false,
     monthlyPassPriceStr: "",
     monthlyPassSessionsStr: "",
@@ -1169,29 +1158,6 @@ export default function CreateExperiencePage() {
   /* ---------------------------------------------------------------- */
   /*  Ticket tiers                                                     */
   /* ---------------------------------------------------------------- */
-  const addPriceTier = () => {
-    updateForm("priceTiers", [...form.priceTiers, { name: "", priceStr: "" }]);
-  };
-
-  const removePriceTier = (index: number) => {
-    updateForm(
-      "priceTiers",
-      form.priceTiers.filter((_, i) => i !== index),
-    );
-  };
-
-  const updatePriceTier = (
-    index: number,
-    field: "name" | "priceStr",
-    value: string,
-  ) => {
-    updateForm(
-      "priceTiers",
-      form.priceTiers.map((t, i) =>
-        i === index ? { ...t, [field]: value } : t,
-      ),
-    );
-  };
 
   /* ---------------------------------------------------------------- */
   /*  Content Moderation                                               */
@@ -1220,143 +1186,48 @@ export default function CreateExperiencePage() {
   /* ---------------------------------------------------------------- */
   /*  Validation                                                       */
   /* ---------------------------------------------------------------- */
-  const validateStep1 = (): boolean => {
-    if (!form.title.trim()) {
-      setShowErrors(true);
-      toast.error("Please enter an experience title");
-      return false;
-    }
-    if (!form.mood) {
-      setShowErrors(true);
-      toast.error("Please select a mood");
-      return false;
-    }
-    if (!form.description.trim()) {
-      setShowErrors(true);
-      toast.error("Please add a description");
-      return false;
-    }
+  // The 1:1 availability error, if the windows don't make any sessions.
+  const oneOnOneProblem = (): string | null => {
+    if (form.sessionType !== "one_on_one") return null;
+    const { errors, count } = form.sessionIsWeekly
+      ? (() => {
+          const r = generateWeeklySessions(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          );
+          return { errors: r.errors, count: r.perWeek };
+        })()
+      : (() => {
+          const r = generateSessionSlots(
+            form.sessionWindows,
+            form.durationMinutes,
+            form.breakMinutes,
+          );
+          return { errors: r.errors, count: r.slots.length };
+        })();
+    if (errors.length > 0) return errors[0] ?? null;
+    if (count === 0)
+      return "Your availability windows don't fit a single session";
+    return null;
+  };
 
-    // Check description for malicious content
+  // The shared rules (same as the edit page and the admin), then the
+  // description's content check.
+  const validateForPublish = (): boolean => {
+    const problem = firstProblem(form, {
+      publish: true,
+      sessionProblem: oneOnOneProblem(),
+    });
+    if (problem) {
+      setShowErrors(true);
+      toast.error(problem);
+      return false;
+    }
     const descriptionCheck = checkContentSync(form.description);
     if (descriptionCheck.score > 5) {
       toast.error(
         `Description violates community guidelines (Risk Level: ${descriptionCheck.score}/10). ${descriptionCheck.details}`,
-      );
-      return false;
-    }
-
-    return true;
-  };
-
-  const validateStep2 = (): boolean => {
-    if (form.sessionType === "one_on_one") {
-      const { errors, count } = form.sessionIsWeekly
-        ? (() => {
-            const r = generateWeeklySessions(
-              form.sessionWindows,
-              form.durationMinutes,
-              form.breakMinutes,
-            );
-            return { errors: r.errors, count: r.perWeek };
-          })()
-        : (() => {
-            const r = generateSessionSlots(
-              form.sessionWindows,
-              form.durationMinutes,
-              form.breakMinutes,
-            );
-            return { errors: r.errors, count: r.slots.length };
-          })();
-      if (errors.length > 0) {
-        setShowErrors(true);
-        toast.error(errors[0]);
-        return false;
-      }
-      if (count === 0) {
-        setShowErrors(true);
-        toast.error("Your availability windows don't fit a single session");
-        return false;
-      }
-    } else if (form.scheduleType === "custom_dates") {
-      const valid = form.customDatesList.filter((s) => s.date && s.time);
-      if (valid.length === 0) {
-        setShowErrors(true);
-        toast.error("Please add at least one custom date and time slot");
-        return false;
-      }
-    } else {
-      if (!form.eventDate) {
-        setShowErrors(true);
-        toast.error("Please select an event date");
-        return false;
-      }
-      if (!form.eventTime) {
-        setShowErrors(true);
-        toast.error("Please select a start time");
-        return false;
-      }
-    }
-    if (!form.isFree && !form.useTiers && form.priceCents <= 0) {
-      setShowErrors(true);
-      toast.error("Please set a valid price");
-      return false;
-    }
-    if (
-      form.monthlyPassEnabled &&
-      form.scheduleType !== "one_time" &&
-      !form.isFree &&
-      Number(form.monthlyPassPriceStr) <= 0
-    ) {
-      setShowErrors(true);
-      toast.error("Please set a monthly pass price, or switch the pass off");
-      return false;
-    }
-    // A pass is a balance of sessions the guest spends one at a time, so it
-    // must say how many it holds.
-    if (
-      form.monthlyPassEnabled &&
-      form.scheduleType !== "one_time" &&
-      !form.isFree &&
-      !(Number(form.monthlyPassSessionsStr) >= 1)
-    ) {
-      setShowErrors(true);
-      toast.error("Set how many sessions the monthly pass includes");
-      return false;
-    }
-    if (!form.isFree && form.useTiers) {
-      const valid = form.priceTiers.filter(
-        (t) => t.name.trim() && Number(t.priceStr) > 0,
-      );
-      if (valid.length === 0) {
-        setShowErrors(true);
-        toast.error("Add at least one ticket type with a name and price");
-        return false;
-      }
-    }
-    // RSVP-gated events have no passkey at all — access comes from an approved
-    // request — so the passkey requirement applies only to the passkey gate.
-    if (
-      form.isPrivate &&
-      form.privateAccessMode === "passkey" &&
-      form.accessMode === "shared" &&
-      !form.accessPasskey.trim()
-    ) {
-      setShowErrors(true);
-      toast.error("A private experience needs a passkey");
-      return false;
-    }
-    // An RSVP host approves people on the strength of what they submit, so the
-    // request form can't be empty — without required fields every request would
-    // arrive as a bare name and there'd be nothing to judge.
-    if (
-      form.isPrivate &&
-      form.privateAccessMode === "rsvp" &&
-      (!form.requiresAttendeeDetails || form.attendeeFields.length === 0)
-    ) {
-      setShowErrors(true);
-      toast.error(
-        "Request-to-join needs attendee details — turn them on and pick at least one field",
       );
       return false;
     }
@@ -1447,7 +1318,7 @@ export default function CreateExperiencePage() {
         toast.error("Add a title before saving as draft");
         return;
       }
-    } else if (!validateStep1() || !validateStep2()) {
+    } else if (!validateForPublish()) {
       return;
     }
     if (!userId || userId === "existing") {
@@ -1591,15 +1462,7 @@ export default function CreateExperiencePage() {
       const eventRes = await createEvent.mutateAsync({
         host_id: host.id,
         title: form.title.trim(),
-        // The tagline is optional: fall back to the opening of the description.
-        hook_line:
-          form.hookLine.trim() ||
-          form.description
-            .replace(/<[^>]+>/g, " ")
-            .replace(/\s+/g, " ")
-            .trim()
-            .slice(0, 140) ||
-          form.title.trim(),
+        hook_line: hookLineWithFallback(form),
         mood: form.mood,
         description: form.description.trim(),
         cover_image_url: coverImageUrl,
@@ -1622,28 +1485,7 @@ export default function CreateExperiencePage() {
           form.sessionType === "one_on_one" ? 1 : form.maxGroupSize,
         languages: form.languages,
         level: form.level || undefined,
-        price_cents: form.isFree || form.useTiers ? 0 : form.priceCents,
-        is_free: form.isFree,
-        price_tiers:
-          !form.isFree && form.useTiers
-            ? form.priceTiers
-                .filter((t) => t.name.trim() && Number(t.priceStr) > 0)
-                .map((t) => ({
-                  name: t.name.trim(),
-                  price_cents: Math.round(Number(t.priceStr) * 100),
-                }))
-            : undefined,
-        monthly_pass: {
-          price_cents: passEligible(form)
-            ? Math.round(Number(form.monthlyPassPriceStr) * 100)
-            : 0,
-          session_limit: form.monthlyPassSessionsStr
-            ? Number(form.monthlyPassSessionsStr)
-            : undefined,
-          capacity: form.monthlyPassCapacityStr
-            ? Number(form.monthlyPassCapacityStr)
-            : undefined,
-        },
+        ...pricingPayload(form),
         schedule_type: isWeeklyOneOnOne ? "recurring" : form.scheduleType,
         custom_dates: isWeeklyOneOnOne
           ? []
@@ -1674,14 +1516,7 @@ export default function CreateExperiencePage() {
         attendee_fields: form.requiresAttendeeDetails
           ? form.attendeeFields
           : [],
-        is_private: form.isPrivate,
-        private_access_mode: form.privateAccessMode,
-        // Shared mode sends the one passkey; unique mode clears it (access comes
-        // from the per-guest access codes generated after saving).
-        access_passkey:
-          form.isPrivate && form.accessMode === "shared"
-            ? form.accessPasskey.trim()
-            : "",
+        ...accessPayload(form),
         status: asDraft ? "draft" : "live",
       });
 
@@ -1888,7 +1723,9 @@ export default function CreateExperiencePage() {
                   ) : (
                     <LuGlobe className="h-3.5 w-3.5 text-[#D8B4FE]" />
                   )}
-                  {form.isPrivate ? "Private event" : "Public event"}
+                  {form.isPrivate
+                    ? whoCanBookLabel(true, form.privateAccessMode)
+                    : "Anyone can book"}
                 </button>
                 {isProfessional && (
                   <div className="flex rounded-full border border-white/15 bg-white/[0.04] p-0.5 text-[13px] font-medium">
@@ -1911,7 +1748,8 @@ export default function CreateExperiencePage() {
                         }}
                         className={`rounded-full px-3 py-1 transition ${
                           form.sessionType === key
-                            ? "bg-white text-[#080914]"
+                            ? // Not `bg-white`: .msm-dark-form remaps that to a dark fill.
+                              "bg-[#ffffff] text-[#080914] shadow-sm"
                             : "text-white/65 hover:text-white"
                         }`}
                       >
@@ -2131,41 +1969,26 @@ export default function CreateExperiencePage() {
                   )}
 
                 {form.sessionType === "one_on_one" && (
-                  <>
-                    <SessionWindowsEditor
-                      windows={form.sessionWindows}
-                      onWindowsChange={(windows) =>
-                        updateForm("sessionWindows", windows)
-                      }
-                      breakMinutes={form.breakMinutes}
-                      onBreakMinutesChange={(minutes) =>
-                        updateForm("breakMinutes", minutes)
-                      }
-                      durationMinutes={form.durationMinutes}
-                      isWeekly={form.sessionIsWeekly}
-                      onIsWeeklyChange={(weekly) =>
-                        updateForm("sessionIsWeekly", weekly)
-                      }
-                      showErrors={showErrors}
-                    />
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="mr-1 text-sm text-white/55">
-                        Each session
-                      </span>
-                      {DURATION_OPTIONS.map((mins) => (
-                        <Chip
-                          key={mins}
-                          active={form.durationMinutes === mins}
-                          onClick={() => {
-                            updateForm("durationMinutes", mins);
-                            setDurationInputStr(mins.toString());
-                          }}
-                        >
-                          {mins >= 60 ? `${mins / 60}h` : `${mins}m`}
-                        </Chip>
-                      ))}
-                    </div>
-                  </>
+                  <SessionWindowsEditor
+                    windows={form.sessionWindows}
+                    onWindowsChange={(windows) =>
+                      updateForm("sessionWindows", windows)
+                    }
+                    breakMinutes={form.breakMinutes}
+                    onBreakMinutesChange={(minutes) =>
+                      updateForm("breakMinutes", minutes)
+                    }
+                    durationMinutes={form.durationMinutes}
+                    onDurationMinutesChange={(mins) => {
+                      updateForm("durationMinutes", mins);
+                      setDurationInputStr(mins.toString());
+                    }}
+                    isWeekly={form.sessionIsWeekly}
+                    onIsWeeklyChange={(weekly) =>
+                      updateForm("sessionIsWeekly", weekly)
+                    }
+                    showErrors={showErrors}
+                  />
                 )}
 
                 {form.sessionType === "group" &&
@@ -2350,11 +2173,7 @@ export default function CreateExperiencePage() {
 
               {/* Slots & price */}
               <section id="sec-price" className="scroll-mt-24">
-                <Section
-                  title={
-                    form.sessionType === "one_on_one" ? "Price" : "Tickets"
-                  }
-                >
+                <Section title="How do guests pay?">
                   {form.sessionType === "group" && (
                     <Rows>
                       <Row label="Slots">
@@ -2407,50 +2226,15 @@ export default function CreateExperiencePage() {
                       </button>
                     </p>
                   )}
-                  {!form.isFree && !form.useTiers && (
-                    <Rows>
-                      <Row
-                        label="Price per person (₹)"
-                        error={showErrors && form.priceCents <= 0}
-                      >
-                        <input
-                          type="text"
-                          inputMode="decimal"
-                          value={priceInputStr}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val === "" || /^\d*\.?\d*$/.test(val)) {
-                              setPriceInputStr(val);
-                              if (val === "") {
-                                updateForm("priceCents", 0);
-                              } else {
-                                const parsed = parseFloat(val);
-                                if (!isNaN(parsed)) {
-                                  updateForm(
-                                    "priceCents",
-                                    Math.round(parsed * 100),
-                                  );
-                                }
-                              }
-                            }
-                          }}
-                          onBlur={() => {
-                            const parsed = parseFloat(priceInputStr);
-                            if (isNaN(parsed) || parsed < 0) {
-                              setPriceInputStr("0");
-                              updateForm("priceCents", 0);
-                            } else {
-                              setPriceInputStr(parsed.toString());
-                              updateForm(
-                                "priceCents",
-                                Math.round(parsed * 100),
-                              );
-                            }
-                          }}
-                          className={ROW_INPUT}
-                        />
-                      </Row>
-                    </Rows>
+                  {!form.isFree && (
+                    <GuestPaymentCard
+                      value={form}
+                      onChange={(patch) =>
+                        setForm((prev) => ({ ...prev, ...patch }))
+                      }
+                      repeating={form.scheduleType !== "one_time"}
+                      showErrors={showErrors}
+                    />
                   )}
                 </Section>
               </section>
@@ -2462,36 +2246,24 @@ export default function CreateExperiencePage() {
               >
                 <div>
                   <MoreOptions
-                    title="Who can see it"
-                    summary={form.isPrivate ? "Private" : "Public"}
+                    title="Who can book?"
+                    summary={whoCanBookLabel(
+                      form.isPrivate,
+                      form.privateAccessMode,
+                    )}
                     defaultOpen={form.isPrivate}
                   >
-                    <Segmented<"public" | "private">
-                      value={form.isPrivate ? "private" : "public"}
-                      onChange={(v) => updateForm("isPrivate", v === "private")}
-                      options={[
-                        { value: "public", label: "Public" },
-                        { value: "private", label: "Private" },
-                      ]}
+                    <PrivacyAccessSection
+                      isPrivate={form.isPrivate}
+                      privateAccessMode={form.privateAccessMode}
+                      accessMode={form.accessMode}
+                      accessPasskey={form.accessPasskey}
+                      showError={showErrors}
+                      canGenerateCodes={!!createdEventId}
+                      onChange={(patch) =>
+                        setForm((prev) => ({ ...prev, ...patch }))
+                      }
                     />
-                    <p className="px-1 text-xs text-white/45">
-                      {form.isPrivate
-                        ? "Private: only people with your passkey or invite can book."
-                        : "Public: anyone on MySlotMate can find and book it."}
-                    </p>
-                    {form.isPrivate && (
-                      <PrivacyAccessSection
-                        isPrivate={form.isPrivate}
-                        privateAccessMode={form.privateAccessMode}
-                        accessMode={form.accessMode}
-                        accessPasskey={form.accessPasskey}
-                        showError={showErrors}
-                        canGenerateCodes={!!createdEventId}
-                        onChange={(patch) =>
-                          setForm((prev) => ({ ...prev, ...patch }))
-                        }
-                      />
-                    )}
                   </MoreOptions>
                   <MoreOptions
                     title="Refunds & payout"
@@ -2593,172 +2365,7 @@ export default function CreateExperiencePage() {
                       </div>
                     </div>
                   </MoreOptions>
-                  {!form.isFree && (
-                    <MoreOptions
-                      title="Ticket types & monthly pass"
-                      summary={
-                        form.useTiers
-                          ? `${form.priceTiers.length} ticket types`
-                          : "One price"
-                      }
-                    >
-                      {!form.isFree && (
-                        <Segmented<"single" | "tiers">
-                          value={form.useTiers ? "tiers" : "single"}
-                          onChange={(v) =>
-                            updateForm("useTiers", v === "tiers")
-                          }
-                          options={[
-                            { value: "single", label: "Single price" },
-                            { value: "tiers", label: "Multiple ticket types" },
-                          ]}
-                        />
-                      )}
-                      {!form.isFree && form.useTiers && (
-                        <div className="space-y-3">
-                          {form.priceTiers.map((tier, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-2"
-                            >
-                              <div className="min-w-0 flex-1">
-                                <Rows>
-                                  <Row
-                                    label="Ticket name"
-                                    error={showErrors && !tier.name.trim()}
-                                  >
-                                    <input
-                                      type="text"
-                                      value={tier.name}
-                                      onChange={(e) =>
-                                        updatePriceTier(
-                                          index,
-                                          "name",
-                                          e.target.value,
-                                        )
-                                      }
-                                      placeholder="General, VIP…"
-                                      className={ROW_INPUT}
-                                    />
-                                  </Row>
-                                  <Row
-                                    label="Price (₹)"
-                                    error={
-                                      showErrors && !(Number(tier.priceStr) > 0)
-                                    }
-                                  >
-                                    <input
-                                      type="text"
-                                      inputMode="decimal"
-                                      value={tier.priceStr}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (
-                                          val === "" ||
-                                          /^\d*\.?\d*$/.test(val)
-                                        ) {
-                                          updatePriceTier(
-                                            index,
-                                            "priceStr",
-                                            val,
-                                          );
-                                        }
-                                      }}
-                                      placeholder="0"
-                                      className={ROW_INPUT}
-                                    />
-                                  </Row>
-                                </Rows>
-                              </div>
-                              {form.priceTiers.length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => removePriceTier(index)}
-                                  className="p-2 text-white/40 transition hover:text-red-400"
-                                  aria-label="Remove ticket type"
-                                >
-                                  <FiX className="h-5 w-5" />
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                          <AddPill onClick={addPriceTier}>
-                            Add another ticket type
-                          </AddPill>
-                          <p className="px-1 text-xs text-white/40">
-                            Guests pick one ticket type when booking.
-                          </p>
-                        </div>
-                      )}
-                      {!form.isFree && (
-                        <>
-                          <ToggleRow
-                            label="Monthly pass"
-                            hint={
-                              form.scheduleType === "one_time"
-                                ? "Pick a recurring or custom-dates schedule to offer a pass."
-                                : "Guests pay once and attend for 30 days."
-                            }
-                            checked={form.monthlyPassEnabled}
-                            disabled={form.scheduleType === "one_time"}
-                            onChange={(v) =>
-                              updateForm("monthlyPassEnabled", v)
-                            }
-                          />
-                          {form.monthlyPassEnabled &&
-                            form.scheduleType !== "one_time" && (
-                              <Rows>
-                                <Row label="Pass price (₹)">
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    value={form.monthlyPassPriceStr}
-                                    onChange={(e) =>
-                                      updateForm(
-                                        "monthlyPassPriceStr",
-                                        e.target.value,
-                                      )
-                                    }
-                                    placeholder="2500"
-                                    className={ROW_INPUT}
-                                  />
-                                </Row>
-                                <Row label="Sessions included">
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    value={form.monthlyPassSessionsStr}
-                                    onChange={(e) =>
-                                      updateForm(
-                                        "monthlyPassSessionsStr",
-                                        e.target.value,
-                                      )
-                                    }
-                                    placeholder="e.g. 8"
-                                    className={ROW_INPUT}
-                                  />
-                                </Row>
-                                <Row label="Passes available">
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    value={form.monthlyPassCapacityStr}
-                                    onChange={(e) =>
-                                      updateForm(
-                                        "monthlyPassCapacityStr",
-                                        e.target.value,
-                                      )
-                                    }
-                                    placeholder="Unlimited"
-                                    className={ROW_INPUT}
-                                  />
-                                </Row>
-                              </Rows>
-                            )}
-                        </>
-                      )}
-                    </MoreOptions>
-                  )}
+
                   <MoreOptions
                     title="More photos"
                     summary={

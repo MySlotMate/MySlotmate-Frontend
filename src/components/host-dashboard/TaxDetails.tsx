@@ -3,7 +3,7 @@
 /**
  * Host tax details for the Earnings page (PRD: Payout and tax spec).
  *
- * MySlotmate pays GST on its own 8% platform fee, so nothing here is a
+ * MySlotmate pays GST on its own guest platform fee, so nothing here is a
  * MySlotmate charge. The only deductions a host can see are the ones the
  * government requires us to make for them, and both are credited back:
  *   - GST TCS (Section 52 CGST Act), 0.5%, only if the host has a GSTIN

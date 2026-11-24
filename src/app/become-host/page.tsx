@@ -21,6 +21,8 @@ export default function BecomeHostPage() {
   const [, loadingAuth] = useAuthState(auth);
   const [mounted, setMounted] = useState(false);
   const [storedUserId, setStoredUserId] = useState<string | null>(null);
+  // A turned-down applicant can apply again; that replaces every answer.
+  const [reapplying, setReapplying] = useState(false);
   useEffect(() => {
     setMounted(true);
     setStoredUserId(localStorage.getItem("msm_user_id"));
@@ -44,7 +46,71 @@ export default function BecomeHostPage() {
     applicationStatus?.status?.application_status &&
     applicationStatus.status.application_status !== "draft";
 
-  if (!statusLoading && hasExistingApplication) {
+  if (
+    !statusLoading &&
+    hasExistingApplication &&
+    applicationStatus.status!.application_status === "rejected" &&
+    !reapplying
+  ) {
+    const reason = applicationStatus.status!.rejection_reason?.trim();
+    return (
+      <>
+        <Navbar dark />
+        <main className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden bg-[#080914] pt-10 pb-16">
+          <div className="pointer-events-none absolute top-[-10%] left-[-10%] h-[600px] w-[600px] rounded-full bg-[#7038F5]/15 blur-[120px]" />
+          <div className="relative z-10 w-full max-w-lg px-4">
+            <div className="mb-8 text-center">
+              <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+                Your application wasn&apos;t approved
+              </h1>
+              <p className="mt-2.5 text-sm font-medium text-white/55">
+                {reason
+                  ? "Here's what our team said. You can fix it and apply again."
+                  : "Our team couldn't approve it this time. You can update your answers and apply again."}
+              </p>
+            </div>
+
+            {reason && (
+              <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-5">
+                <p className="text-xs font-bold tracking-wide text-red-300 uppercase">
+                  Reason
+                </p>
+                <p className="mt-2 text-sm whitespace-pre-line text-white/85">
+                  {reason}
+                </p>
+              </div>
+            )}
+
+            <div className="mb-6">
+              <SharedEventsCard />
+            </div>
+
+            <button
+              onClick={() => {
+                setReapplying(true);
+                window.scrollTo({ top: 0 });
+              }}
+              className="w-full rounded-2xl bg-gradient-to-r from-[#7038F5] to-[#B724EA] px-8 py-4 text-sm font-bold text-white transition-all hover:brightness-110 active:scale-95"
+            >
+              Apply again
+            </button>
+            <p className="mt-4 text-center text-xs text-white/45">
+              Questions?{" "}
+              <a
+                href="mailto:support@myslotmate.com"
+                className="font-semibold text-[#D8B4FE] hover:text-white"
+              >
+                Email support@myslotmate.com
+              </a>
+            </p>
+          </div>
+        </main>
+        <Home.Footer dark />
+      </>
+    );
+  }
+
+  if (!statusLoading && hasExistingApplication && !reapplying) {
     const status = applicationStatus.status!.application_status;
     const statusConfig = {
       pending: {
@@ -73,15 +139,6 @@ export default function BecomeHostPage() {
         bgColor: "bg-emerald-500/10",
         borderColor: "border-emerald-500/30",
         badgeColor: "bg-emerald-500/15 text-emerald-300",
-      },
-      rejected: {
-        title: "Application Status",
-        description:
-          "Unfortunately, your application was not approved at this time. Please contact our support team if you'd like more information.",
-        icon: "❌",
-        bgColor: "bg-red-500/10",
-        borderColor: "border-red-500/30",
-        badgeColor: "bg-red-500/100/15 text-red-300",
       },
     };
 

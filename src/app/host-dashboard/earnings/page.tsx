@@ -117,14 +117,20 @@ function authHeaders(idToken: string): Record<string, string> {
   };
 }
 
-async function apiPost(path: string, body: object, idToken: string) {
+/** POSTs and returns the response's `data` (null when there is none). */
+async function apiPost<T = unknown>(
+  path: string,
+  body: object,
+  idToken: string,
+): Promise<T | null> {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: authHeaders(idToken),
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(await readError(res));
-  return null;
+  const json = (await res.json().catch(() => null)) as { data?: T } | null;
+  return json?.data ?? null;
 }
 
 async function apiPut(
@@ -501,14 +507,23 @@ function EarningsContent() {
     try {
       if (!idToken)
         throw new Error("Your session has expired. Please sign in again.");
-      await apiPost(
+      const payment = await apiPost<{ status?: string }>(
         "/payouts/withdraw",
         { host_id: hostId, amount_cents: amountCents },
         idToken,
       );
-      setActionSuccess(
-        `Payout of ${fmtCurrency(amountCents)} requested successfully.`,
-      );
+      // The bank transfer can be refused after the request is accepted: the
+      // API still answers 201, with the payment marked failed. Say so — and
+      // that nothing left the balance — instead of reporting success.
+      if (payment?.status === "failed") {
+        setActionError(
+          `Your payout of ${fmtCurrency(amountCents)} couldn't be sent to your bank. Your balance hasn't changed — please try again later, or contact support if it keeps failing.`,
+        );
+      } else {
+        setActionSuccess(
+          `Payout of ${fmtCurrency(amountCents)} requested successfully.`,
+        );
+      }
       setShowPayoutModal(false);
       setPayoutAmountCents("");
       void refetchEarnings?.();

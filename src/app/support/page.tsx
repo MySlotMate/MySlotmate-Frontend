@@ -12,6 +12,7 @@ import {
   LuShieldAlert,
   LuClock,
   LuCheckCircle2,
+  LuBookOpen,
 } from "react-icons/lu";
 import { SupportPageShell } from "~/components/support";
 import Breadcrumb from "~/components/Breadcrumb";
@@ -28,6 +29,15 @@ interface AssistCard {
 }
 
 const assistCards: AssistCard[] = [
+  {
+    title: "Host Guide",
+    description:
+      "Step by step: creating experiences, tickets and codes, check-in, payouts, Marketing Boost, statements and invoices.",
+    href: "/host-guide",
+    actionLabel: "Read the guide",
+    icon: <LuBookOpen className="h-5 w-5" />,
+    accentClassName: "bg-white/[0.04] text-[#D8B4FE]",
+  },
   {
     title: "Report a Participant",
     description:

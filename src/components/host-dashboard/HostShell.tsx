@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowLeftRight,
+  BookOpen,
   CalendarDays,
   ChevronRight,
   ClipboardList,
@@ -121,6 +122,12 @@ const CO_HOSTS: NavItem = {
   label: "Co-hosts",
   href: `${BASE}/co-hosting`,
   icon: Users,
+};
+/** How every host feature works, step by step (public page). */
+const GUIDE: NavItem = {
+  label: "Host Guide",
+  href: "/host-guide",
+  icon: BookOpen,
 };
 
 /** Editors carry their own sticky save bar on phones, so the tabs step aside. */
@@ -331,6 +338,14 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
       </nav>
 
       <div className="flex flex-col gap-1 border-t border-white/[0.06] p-3 xl:p-4">
+        <Link
+          href={GUIDE.href}
+          title={GUIDE.label}
+          className={`${railLink} text-white/65 hover:bg-white/[0.05] hover:text-white`}
+        >
+          <BookOpen className="h-5 w-5" />
+          <span className="sr-only xl:not-sr-only">{GUIDE.label}</span>
+        </Link>
         <Link
           href="/explore"
           title="Switch to guest"
@@ -577,6 +592,11 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
             Help
           </p>
           <div className="divide-y divide-white/[0.06] overflow-hidden rounded-2xl border border-white/10">
+            <Link href="/host-guide" className={row}>
+              <BookOpen className="h-5 w-5 text-white/55" />
+              <span className="flex-1">Host Guide</span>
+              <ChevronRight className="h-4 w-4 text-white/35" />
+            </Link>
             <Link href="/support" className={row}>
               <LifeBuoy className="h-5 w-5 text-white/55" />
               <span className="flex-1">Support &amp; safety</span>

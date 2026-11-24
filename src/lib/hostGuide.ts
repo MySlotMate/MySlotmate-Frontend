@@ -153,7 +153,7 @@ export const HOST_GUIDE: GuideSection[] = [
       },
       {
         title: "Messages and Co-hosts",
-        body: "Talk to your guests, and invite co-hosts to help run an event. Co-hosts can manage the event; earnings stay with you.",
+        body: "Talk to your guests, and invite co-hosts to help run an event from its edit page, by email. Co-hosts can manage the event; earnings stay with you unless you let them withdraw. Not on MySlotMate yet? They get an email, and the invite waits until they become a host with that email.",
       },
     ],
   },

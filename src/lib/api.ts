@@ -2555,7 +2555,9 @@ export interface CoHostDTO {
   event_id: string;
   host_id: string;
   invited_by_host_id: string;
-  status: "pending" | "accepted" | "declined" | "revoked";
+  /** awaiting_signup: invited by email, no host profile yet; becomes
+   *  "pending" once they become a host with that email. */
+  status: "pending" | "accepted" | "declined" | "revoked" | "awaiting_signup";
   /** Owner-controlled: may this co-host withdraw the event's earnings? */
   can_withdraw: boolean;
   responded_at: string | null;
@@ -2588,8 +2590,10 @@ export interface SharedEventDTO {
   my_claimed_cents: number;
 }
 
-/** POST /cohosts/invite — invite an existing host to co-host one event.
- *  can_withdraw grants earnings access up front; it can also be flipped later. */
+/** POST /cohosts/invite — invite a host to co-host one event, by email. Someone
+ *  who isn't a host yet gets an "awaiting_signup" invite that turns into a
+ *  normal one once they become a host. can_withdraw grants earnings access up
+ *  front; it can also be flipped later. Gives up after 45 s (a waking server). */
 export function inviteCoHost(
   body: { event_id: string; email: string; can_withdraw: boolean },
   idToken: string,
@@ -2598,6 +2602,7 @@ export function inviteCoHost(
     method: "POST",
     headers: getAuthHeader(idToken),
     data: body,
+    timeout: 45_000,
   });
 }
 

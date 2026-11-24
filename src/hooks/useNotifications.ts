@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import * as api from "~/lib/api";
 
 import {
@@ -72,6 +72,16 @@ export function useNotifications() {
   const { data: pendingJoins } = useHostPendingJoinRequestCount(
     hostId ? idToken : null,
   );
+  // Co-host invitations waiting for this host's answer. The same request that
+  // fills the dashboard's shared-experiences card; it also attaches invites
+  // sent to this email before they became a host.
+  const { data: shared } = useQuery({
+    queryKey: ["cohost-shared", idToken ? "me" : null],
+    queryFn: () => api.listSharedEvents(idToken!),
+    enabled: Boolean(hostId && idToken),
+    staleTime: 60 * 1000,
+    select: (res) => res.data ?? [],
+  });
 
   // Past events drop out of the public list; fetch the ones bookings point at.
   const missingIds = useMemo(() => {
@@ -262,6 +272,17 @@ export function useNotifications() {
                 : "/host-dashboard",
         });
       }
+      for (const sh of shared ?? []) {
+        if (sh.status !== "pending") continue;
+        out.push({
+          id: `cohost-invite-${sh.cohost_id}`,
+          kind: "host",
+          title: "Co-host invitation",
+          body: `${sh.owner_name || "A host"} invited you to co-host ${sh.event_title}. Accept or decline it.`,
+          at: sh.invited_at,
+          href: "/host-dashboard/co-hosting",
+        });
+      }
       if (pendingJoins && pendingJoins > 0) {
         out.push({
           id: `joins-${pendingJoins}`,
@@ -287,6 +308,7 @@ export function useNotifications() {
     extraKey,
     attention,
     pendingJoins,
+    shared,
     hostId,
   ]);
 

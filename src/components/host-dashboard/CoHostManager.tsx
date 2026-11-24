@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { FiSend, FiTrash2, FiUserPlus } from "react-icons/fi";
 import { format } from "date-fns";
 import { useIdToken } from "~/hooks/useIdToken";
+import { auth } from "~/utils/firebase";
 import {
   inviteCoHost,
   listEventCoHosts,
@@ -22,6 +23,7 @@ const STATUS_LABEL: Record<CoHostDTO["status"], string> = {
   accepted: "Co-hosting",
   declined: "Declined",
   revoked: "Removed",
+  awaiting_signup: "Waiting for them to join",
 };
 
 /**
@@ -63,13 +65,20 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
 
   const handleInvite = async () => {
     if (!idToken) return;
-    if (!email.trim()) {
+    const typed = email.trim().toLowerCase();
+    if (!typed) {
       toast.error("Enter the co-host's email");
+      return;
+    }
+    if (typed === auth.currentUser?.email?.trim().toLowerCase()) {
+      toast.error(
+        "That's your own email. Enter the email of the host you want to invite.",
+      );
       return;
     }
     setInviting(true);
     try {
-      await inviteCoHost(
+      const res = await inviteCoHost(
         {
           event_id: eventId,
           email: email.trim(),
@@ -79,10 +88,20 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
       );
       setEmail("");
       setGrantWithdraw(false);
-      toast.success("Invitation sent");
+      toast.success(
+        res.data?.status === "awaiting_signup"
+          ? "Invitation sent. They're not a host yet, so it will be waiting for them once they join MySlotMate as a host with this email."
+          : "Invitation sent",
+      );
       await load();
     } catch (err) {
-      toast.error((err as Error).message);
+      const message = (err as Error).message;
+      toast.error(
+        /timeout/i.test(message)
+          ? "The server is taking too long to answer. Your invite may still have gone through, so check the list below in a minute before trying again."
+          : message,
+      );
+      if (/timeout/i.test(message)) setTimeout(() => void load(), 15_000);
     } finally {
       setInviting(false);
     }
@@ -133,7 +152,10 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
   };
 
   const live = rows.filter(
-    (r) => r.status === "pending" || r.status === "accepted",
+    (r) =>
+      r.status === "pending" ||
+      r.status === "accepted" ||
+      r.status === "awaiting_signup",
   );
 
   return (
@@ -151,7 +173,7 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="co-host's account email"
+          placeholder="co-host's email"
           className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm focus:border-white/15 focus:outline-none"
         />
         <button
@@ -164,6 +186,11 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
           {inviting ? "Inviting…" : "Invite"}
         </button>
       </div>
+
+      <p className="mb-2 text-xs text-[#777B98]">
+        Use the email they sign in to MySlotMate with. Not on MySlotMate yet?
+        We&apos;ll email them, and the invite waits until they become a host.
+      </p>
 
       <label className="mb-4 flex items-center gap-2 text-xs text-white/80">
         <input
@@ -205,7 +232,9 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
                         new Date(row.responded_at),
                         "d MMM yyyy",
                       )}`
-                    : " · awaiting their reply"}
+                    : row.status === "awaiting_signup"
+                      ? " · not a host yet"
+                      : " · awaiting their reply"}
                   {" · "}
                   {row.can_withdraw
                     ? "earnings access granted"
@@ -226,7 +255,8 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
                   />
                   Can withdraw
                 </label>
-                {row.status === "pending" && (
+                {(row.status === "pending" ||
+                  row.status === "awaiting_signup") && (
                   <button
                     type="button"
                     onClick={() => void handleResend(row)}

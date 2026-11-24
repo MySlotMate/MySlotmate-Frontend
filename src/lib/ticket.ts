@@ -81,370 +81,500 @@ async function toPngDataUrl(dataUrl: string): Promise<string> {
   }
 }
 
-function buildPdfDocument(
-  doc: any,
-  event: any,
-  booking: any,
-  bookingUser: any,
-  coverBase64: string,
-  qrBase64: string,
-  bookingId: string | null,
+// ---------------------------------------------------------------------------
+// Ticket design ("light"): a white card with the brand-gradient header, the
+// event, a details grid, a tear line, the entry QR and the total. Everything is
+// in mm on an A4 page. jsPDF has no gradients, rounded image clipping or
+// transparency we can rely on, so the header and the rounded cover are painted
+// on a canvas first and placed as PNGs.
+// ---------------------------------------------------------------------------
+
+const BRAND_FROM = "#7038F5";
+const BRAND_TO = "#B724EA";
+const INK: [number, number, number] = [20, 18, 43]; // #14122B
+const MUTED: [number, number, number] = [107, 104, 136]; // #6B6888
+const LINE: [number, number, number] = [231, 224, 245]; // #E7E0F5
+const LILAC: [number, number, number] = [243, 232, 255]; // #F3E8FF
+const PURPLE: [number, number, number] = [126, 34, 206]; // #7E22CE
+
+const CARD_X = 50;
+const CARD_Y = 16;
+const CARD_W = 110;
+const CARD_R = 8;
+const PAD = 7;
+const HEADER_H = 48;
+const PX_PER_MM = 10; // canvas resolution for the painted pieces
+
+// The four-point sparkle from the brand mark, on a 100x100 box.
+function sparklePath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
 ) {
-  const eventDate = new Date(booking?.occurrence_date ?? event?.time ?? "");
-
-  // Outer Card Dimensions
-  const startX = 55;
-  const startY = 30;
-  const width = 100;
-  // Sized so the gold footer sits just below the Total row. Content ends at
-  // startY+124 (the Total baseline) and the footer is pinned to
-  // startY+height-12, so height=142 leaves a ~6mm gap instead of ~29mm.
-  const height = 142; // ends at 172
-
-  // Draw outer card background
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(243, 244, 246); // border gray-100
-  doc.roundedRect(startX, startY, width, height, 6, 6, "FD");
-
-  // Subtle outer shadow line
-  doc.setDrawColor(229, 231, 235); // gray-200
-  doc.setLineWidth(0.3);
-  doc.roundedRect(
-    startX - 0.2,
-    startY - 0.2,
-    width + 0.4,
-    height + 0.4,
-    6.2,
-    6.2,
-    "D",
-  );
-  doc.setLineWidth(0.2); // reset
-
-  // 1. Top Brand Stripe
-  doc.setFillColor(22, 48, 76); // #16304c deep slate
-  doc.roundedRect(startX + 0.1, startY + 0.1, width - 0.2, 8, 5.8, 5.8, "F");
-  doc.rect(startX + 0.1, startY + 5, width - 0.2, 3.2, "F"); // keep bottom edge straight
-
-  // Top Brand Stripe Text
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  doc.setTextColor(255, 255, 255);
-  doc.text("M Y S L O T M A T E", startX + width / 2, startY + 5.5, {
-    align: "center",
-  });
-
-  // 2. Header Content (Image & Text details)
-  // Draw Event Cover Image on Left
-  const imgX = startX + 5;
-  const imgY = startY + 12;
-  const imgW = 20;
-  const imgH = 26;
-
-  if (coverBase64) {
-    // Draw at the image's own aspect ratio, scaled to sit inside the reserved
-    // slot — don't stretch it to imgW x imgH. Covers are cropped wide (4:1), so
-    // forcing them into the tall box squashed them.
-    let drawX = imgX;
-    let drawY = imgY;
-    let drawW = imgW;
-    let drawH = imgH;
-    try {
-      const props = doc.getImageProperties(coverBase64);
-      if (props?.width && props?.height) {
-        const scale = Math.min(imgW / props.width, imgH / props.height);
-        drawW = props.width * scale;
-        drawH = props.height * scale;
-        drawX = imgX + (imgW - drawW) / 2;
-        drawY = imgY + (imgH - drawH) / 2;
-      }
-    } catch {
-      /* couldn't read dimensions — fall back to the reserved box */
-    }
-    doc.addImage(coverBase64, "PNG", drawX, drawY, drawW, drawH);
-  } else {
-    // Beautiful dark placeholder card
-    doc.setFillColor(22, 48, 76); // slate blue
-    doc.roundedRect(imgX, imgY, imgW, imgH, 2, 2, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    doc.setTextColor(255, 255, 255);
-    doc.text("MYSLOT", imgX + imgW / 2, imgY + 11, { align: "center" });
-    doc.text("MATE", imgX + imgW / 2, imgY + 16, { align: "center" });
-  }
-
-  // Draw Event Details on Right
-  const textX = startX + 28;
-  let textY = startY + 16;
-
-  // Event Title (Uppercase, Bold, Black)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(17, 24, 39); // gray-900
-  const titleText = pdfSafe(event?.title ?? "EXPERIENCE TICKET").toUpperCase();
-  const titleLines = doc.splitTextToSize(titleText, 52); // fits within right block width
-  doc.text(titleLines, textX, textY);
-
-  const titleHeight = titleLines.length * 4.2;
-  textY += titleHeight + 0.5;
-
-  // Subtitle (Mood & Language)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
-  doc.setTextColor(107, 114, 128); // gray-500
-  const subtitleText = pdfSafe(
-    `${event?.mood ?? "Experience"} | ${event?.languages?.join("/") ?? "English"}`,
-  );
-  doc.text(subtitleText, textX, textY);
-  textY += 4.5;
-
-  // Date and Time
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  doc.setTextColor(17, 24, 39); // gray-900
-  const dateText = formatIST(eventDate, "EEE, d MMM | hh:mm a");
-  doc.text(dateText, textX, textY);
-  textY += 4;
-
-  // Venue Location (Truncated)
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
-  doc.setTextColor(107, 114, 128); // gray-500
-  const venueText = pdfSafe(
-    event?.is_online ? "Online Meet Link" : (event?.location ?? "TBD"),
-  ).toUpperCase();
-  const venueLines = doc.splitTextToSize(venueText, 52);
-  doc.text(venueLines, textX, textY);
-
-  // Draw Vertical "M-Ticket" on the far right
-  const verticalX = startX + width - 6;
-  // Border left of M-Ticket
-  doc.setDrawColor(243, 244, 246); // gray-100
-  doc.line(verticalX - 3.5, startY + 12, verticalX - 3.5, startY + 38);
-
-  // M-Ticket Text
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
-  doc.setTextColor(156, 163, 175); // slate-400
-  const mTicketLetters = ["M", "-", "T", "I", "C", "K", "E", "T"];
-  let letterY = startY + 14.5;
-  for (const letter of mTicketLetters) {
-    doc.text(letter, verticalX, letterY, { align: "center" });
-    letterY += 3.2;
-  }
-
-  // 3. Notch Divider
-  const dividerY = startY + 43;
-
-  // Circular cuts on left and right border
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(229, 231, 235); // matches card outer border
-
-  // Left notch
-  doc.circle(startX, dividerY, 3.5, "FD");
-  doc.setFillColor(255, 255, 255);
-  doc.rect(startX - 5, dividerY - 5, 5, 10, "F"); // Mask left outer half
-
-  // Right notch
-  doc.circle(startX + width, dividerY, 3.5, "FD");
-  doc.setFillColor(255, 255, 255);
-  doc.rect(startX + width, dividerY - 5, 5, 10, "F"); // Mask right outer half
-
-  // Dashed Divider line
-  doc.setLineDashPattern([2, 2], 0);
-  doc.setDrawColor(229, 231, 235); // gray-200
-  doc.line(startX + 4, dividerY, startX + width - 4, dividerY);
-  doc.setLineDashPattern([], 0); // Reset to solid
-
-  // 4. Instruction Pill
-  const pillY = dividerY + 5;
-  doc.setFillColor(249, 250, 251); // gray-50
-  doc.roundedRect(startX + 5, pillY, width - 10, 7, 3.5, 3.5, "F");
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
-  doc.setTextColor(75, 85, 99); // gray-600
-  doc.text(
-    "SHOW THIS MOBILE TICKET AT CHECK-IN",
-    startX + width / 2,
-    pillY + 4.8,
-    { align: "center" },
-  );
-
-  // 5. Nested Inner Card (QR Code & Info)
-  const innerY = pillY + 11;
-  const innerH = 38;
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(229, 231, 235); // gray-200
-  doc.roundedRect(startX + 5, innerY, width - 10, innerH, 4, 4, "FD");
-
-  // Inner Left: QR Code
-  const qrX = startX + 9;
-  const qrY = innerY + 4;
-  const qrSize = 22;
-  if (qrBase64) {
-    doc.addImage(qrBase64, "PNG", qrX, qrY, qrSize, qrSize);
-  } else {
-    // fallback placeholder box
-    doc.setFillColor(243, 244, 246);
-    doc.rect(qrX, qrY, qrSize, qrSize, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(6);
-    doc.setTextColor(156, 163, 175);
-    doc.text("[QR CODE]", qrX + qrSize / 2, qrY + qrSize / 2 + 2, {
-      align: "center",
-    });
-  }
-
-  // Red Line Decoration under QR Code
-  doc.setFillColor(239, 68, 68); // bg-red-500
-  doc.rect(qrX, qrY + qrSize + 1.5, qrSize, 0.8, "F");
-
-  // Inner Right: Metadata
-  const infoX = startX + 37;
-  const infoCenter = infoX + (width - 10 - 32) / 2; // centered in right area
-
-  // Guest count
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.setTextColor(156, 163, 175); // gray-400
-  const guestText = `${booking?.quantity ?? 1} Guest${(booking?.quantity ?? 1) > 1 ? "s" : ""} · Myslotmate Pass`;
-  doc.text(guestText, infoCenter, innerY + 9, { align: "center" });
-
-  // Booking Person Name
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
-  doc.setTextColor(17, 24, 39); // gray-900
-  const guestName = pdfSafe(bookingUser?.name ?? "Guest").toUpperCase();
-  doc.text(guestName, infoCenter, innerY + 13.5, { align: "center" });
-
-  // Booking ID
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.5);
-  doc.setTextColor(17, 24, 39); // gray-900
-  const displayBookingId = bookingId
-    ? `XXXX${bookingId.slice(-6).toUpperCase()}`
-    : "N/A";
-  doc.text(`BOOKING ID: ${displayBookingId}`, infoCenter, innerY + 18.5, {
-    align: "center",
-  });
-
-  // Confirmed Badge (Green Pill shape)
-  const badgeW = 20;
-  const badgeH = 5;
-  const badgeX = infoCenter - badgeW / 2;
-  const badgeY = innerY + 23.5;
-
-  doc.setFillColor(240, 253, 250); // green-50
-  doc.setDrawColor(187, 247, 208); // green-200
-  doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1, 1, "FD");
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.0);
-  doc.setTextColor(21, 128, 61); // green-700
-  doc.text("CONFIRMED", infoCenter, badgeY + 3.6, { align: "center" });
-
-  // 6. Realistic Barcode Decoration
-  const barcodeY = innerY + innerH + 4;
-  doc.setDrawColor(22, 48, 76);
-  let barX = startX + 39.5;
-  const barWidths = [
-    0.3, 0.6, 0.2, 0.8, 0.3, 0.5, 0.2, 0.7, 0.3, 0.4, 0.8, 0.2, 0.5, 0.3, 0.7,
-    0.2, 0.6, 0.4, 0.3, 0.8,
+  const s = size / 100;
+  const p = (px: number, py: number): [number, number] => [
+    x + px * s,
+    y + py * s,
   ];
-  for (const w of barWidths) {
-    doc.setLineWidth(w);
-    doc.line(barX, barcodeY, barX, barcodeY + 4);
-    barX += w + 0.6;
+  ctx.beginPath();
+  ctx.moveTo(...p(50, 0));
+  ctx.bezierCurveTo(...p(54, 32), ...p(68, 46), ...p(100, 50));
+  ctx.bezierCurveTo(...p(68, 54), ...p(54, 68), ...p(50, 100));
+  ctx.bezierCurveTo(...p(46, 68), ...p(32, 54), ...p(0, 50));
+  ctx.bezierCurveTo(...p(32, 46), ...p(46, 32), ...p(50, 0));
+  ctx.closePath();
+}
+
+function roundedRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: { tl: number; tr: number; br: number; bl: number },
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r.tl, y);
+  ctx.lineTo(x + w - r.tr, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r.tr);
+  ctx.lineTo(x + w, y + h - r.br);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r.br, y + h);
+  ctx.lineTo(x + r.bl, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r.bl);
+  ctx.lineTo(x, y + r.tl);
+  ctx.quadraticCurveTo(x, y, x + r.tl, y);
+  ctx.closePath();
+}
+
+// Paints the gradient header (rounded top corners, sparkles and the translucent
+// chip behind "M-TICKET"). chip is in mm, relative to the header's top-left.
+function paintHeader(chip: {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}): string {
+  try {
+    const k = PX_PER_MM;
+    const w = CARD_W * k;
+    const h = HEADER_H * k;
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+    const r = CARD_R * k;
+    roundedRectPath(ctx, 0, 0, w, h, { tl: r, tr: r, br: 0, bl: 0 });
+    ctx.save();
+    ctx.clip();
+    // 135deg: top-left to bottom-right.
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, BRAND_FROM);
+    grad.addColorStop(1, BRAND_TO);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = "#ffffff";
+    ctx.globalAlpha = 0.18;
+    sparklePath(ctx, w - 47 * k, -6.4 * k, 55 * k);
+    ctx.fill();
+    ctx.globalAlpha = 0.55;
+    sparklePath(ctx, w - 51 * k, 27 * k, 7.5 * k);
+    ctx.fill();
+    ctx.globalAlpha = 0.2;
+    const cr = (chip.h / 2) * k;
+    roundedRectPath(ctx, chip.x * k, chip.y * k, chip.w * k, chip.h * k, {
+      tl: cr,
+      tr: cr,
+      br: cr,
+      bl: cr,
+    });
+    ctx.fill();
+    ctx.restore();
+    return canvas.toDataURL("image/png");
+  } catch (err) {
+    console.warn("Could not paint the ticket header:", err);
+    return "";
   }
-  doc.setLineWidth(0.2); // reset
+}
 
-  // 7. Cancellation Banner
-  const cancelY = barcodeY + 8;
-  doc.setFillColor(249, 250, 251); // gray-50
-  doc.rect(startX + 0.1, cancelY, width - 0.2, 8, "F");
+// Centre-crops an image to a square with rounded corners.
+async function roundedSquarePng(
+  dataUrl: string,
+  sizeMm: number,
+  radiusMm: number,
+) {
+  if (!dataUrl) return "";
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("image decode failed"));
+      el.src = dataUrl;
+    });
+    if (!img.naturalWidth || !img.naturalHeight) return "";
+    const side = Math.round(sizeMm * PX_PER_MM);
+    const canvas = document.createElement("canvas");
+    canvas.width = side;
+    canvas.height = side;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return "";
+    const r = radiusMm * PX_PER_MM;
+    roundedRectPath(ctx, 0, 0, side, side, { tl: r, tr: r, br: r, bl: r });
+    ctx.clip();
+    const crop = Math.min(img.naturalWidth, img.naturalHeight);
+    const sx = (img.naturalWidth - crop) / 2;
+    const sy = (img.naturalHeight - crop) / 2;
+    ctx.drawImage(img, sx, sy, crop, crop, 0, 0, side, side);
+    return canvas.toDataURL("image/png");
+  } catch (err) {
+    console.warn("Could not crop the cover for the ticket:", err);
+    return "";
+  }
+}
 
-  // top & bottom border for banner
-  doc.setDrawColor(243, 244, 246); // gray-100
-  doc.line(startX + 0.1, cancelY, startX + width - 0.1, cancelY);
-  doc.line(startX + 0.1, cancelY + 8, startX + width - 0.1, cancelY + 8);
+export interface TicketImages {
+  cover: string; // rounded square PNG, or "" for the placeholder
+  qr: string;
+  logoWhite: string;
+  logoMark: string;
+}
 
+export interface TicketData {
+  title: string;
+  category: string;
+  start: Date;
+  venue: string;
+  guests: number;
+  guestName: string;
+  bookingId: string | null;
+  amountCents: number;
+  terms: string;
+}
+
+const COVER = 24;
+
+function buildPdfDocument(doc: any, t: TicketData, img: TicketImages) {
+  const x0 = CARD_X;
+  const y0 = CARD_Y;
+  const inner = CARD_W - PAD * 2;
+  const cx = x0 + CARD_W / 2;
+
+  // ---- measure first, so the card is drawn at the height its content needs
+  const textX = x0 + PAD + COVER + 4.5;
+  const textW = x0 + CARD_W - PAD - textX;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
-  doc.setTextColor(107, 114, 128); // gray-500
-  doc.text(
-    "CANCELLATION POLICY RULES APPLY FOR BOOKINGS",
-    startX + width / 2,
-    cancelY + 5.2,
-    { align: "center" },
+  doc.setFontSize(14);
+  let titleLines: string[] = doc.splitTextToSize(
+    t.title || "Experience",
+    textW,
   );
+  if (titleLines.length > 3) {
+    titleLines = titleLines.slice(0, 3);
+    titleLines[2] = `${titleLines[2]!.replace(/\s+\S*$/, "")}...`;
+  }
+  doc.setFontSize(10.5);
+  let venueLines: string[] = doc.splitTextToSize(t.venue, inner);
+  if (venueLines.length > 2) {
+    venueLines = venueLines.slice(0, 2);
+    venueLines[1] = `${venueLines[1]!.replace(/\s+\S*$/, "")}...`;
+  }
 
-  // 8. Total Amount Paid Row
-  const amountY = cancelY + 8;
+  const rowY = y0 + HEADER_H + 6.5;
+  const chipH = t.category ? 6 : 0;
+  const titleTop = rowY + (chipH ? chipH + 2.5 : 0);
+  const rowH = Math.max(COVER, titleTop - rowY + titleLines.length * 5.8);
+  const gridY = rowY + rowH + 6;
+  const ITEM = 13.5; // label + value + gap
+  const venueY = gridY + ITEM;
+  const guestsY = venueY + ITEM + (venueLines.length - 1) * 4.6;
+  const tearY = guestsY + ITEM + 2;
+  const QR = 38;
+  const TILE = QR + 8;
+  const RING = 1.8;
+  const tileY = tearY + 8;
+  const idY = tileY + TILE + RING + 6;
+  const nameY = idY + 15;
+  const totalY = nameY + 7;
+  const noteY = totalY + 12 + 7;
+  const cardH = noteY + 4.5 + 6 - y0;
+
+  // ---- card
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...LINE);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(x0, y0, CARD_W, cardH, CARD_R, CARD_R, "FD");
+
+  // ---- header
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.5);
-  doc.setTextColor(107, 114, 128); // gray-500
-  doc.text("Total Amount", startX + 5, amountY + 7);
+  doc.setCharSpace(0.45);
+  const chipLabel = "M-TICKET";
+  const chipTextW = doc.getTextWidth(chipLabel) + chipLabel.length * 0.45;
+  const chip = { w: chipTextW + 6, h: 6.2, x: 0, y: 6.4 };
+  chip.x = CARD_W - PAD - chip.w;
+  const header = paintHeader(chip);
+  if (header) {
+    doc.addImage(header, "PNG", x0, y0, CARD_W, HEADER_H);
+  } else {
+    doc.setFillColor(112, 56, 245);
+    doc.roundedRect(x0, y0, CARD_W, HEADER_H, CARD_R, CARD_R, "F");
+    doc.rect(x0, y0 + HEADER_H - CARD_R, CARD_W, CARD_R, "F");
+  }
+  doc.setTextColor(255, 255, 255);
+  doc.text(chipLabel, x0 + chip.x + 3, y0 + chip.y + 4.25);
+  doc.setCharSpace(0);
 
+  if (img.logoWhite) {
+    const lh = 6.8;
+    doc.addImage(
+      img.logoWhite,
+      "PNG",
+      x0 + PAD,
+      y0 + 6.1,
+      lh * (1048 / 209),
+      lh,
+    );
+  } else {
+    doc.setFontSize(11);
+    doc.text("MySlotMate", x0 + PAD, y0 + 11);
+  }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(9.5);
-  doc.setTextColor(17, 24, 39); // gray-900
-  const priceText = `Rs. ${booking?.amount_cents ? (booking.amount_cents / 100).toFixed(2) : "0.00"}`;
-  doc.text(priceText, startX + width - 5, amountY + 7, { align: "right" });
+  doc.setFontSize(24);
+  doc.text("You're in.", x0 + PAD, y0 + HEADER_H - 13);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  doc.text("Life happens when you show up.", x0 + PAD, y0 + HEADER_H - 6.5);
 
-  // 9. Gold Footer
-  const footerY = startY + height - 12;
-  doc.setFillColor(254, 243, 199); // amber-100/60
-  doc.roundedRect(startX + 0.1, footerY, width - 0.2, 11.9, 5.8, 5.8, "F");
-  doc.rect(startX + 0.1, footerY, width - 0.2, 5, "F"); // keep top flat
+  // ---- event row
+  const coverX = x0 + PAD;
+  if (img.cover) {
+    doc.addImage(img.cover, "PNG", coverX, rowY, COVER, COVER);
+  } else {
+    doc.setFillColor(243, 238, 252);
+    doc.setDrawColor(...LINE);
+    doc.roundedRect(coverX, rowY, COVER, COVER, 5, 5, "FD");
+    if (img.logoMark) {
+      doc.addImage(img.logoMark, "PNG", coverX + 6, rowY + 6, 12, 12);
+    }
+  }
 
-  // border top line for gold footer
-  doc.setDrawColor(253, 230, 138); // amber-200
-  doc.line(startX + 0.1, footerY, startX + width - 0.1, footerY);
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  doc.setTextColor(146, 64, 14); // amber-800
-
-  // 10. Per-experience Terms & Conditions, printed below the ticket card. The
-  // card is fixed-height, so terms flow underneath and onto extra pages when
-  // long. Mirrors the confirmation-page and admin ticket PDFs.
-  const terms = pdfSafe(event?.terms_and_conditions);
-  if (terms) {
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const bottomMargin = 15;
-    let y = startY + height + 12;
-
+  if (t.category) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.setTextColor(22, 48, 76); // #16304c
-    doc.text("TERMS & CONDITIONS", startX, y);
-    y += 4;
+    const cw = doc.getTextWidth(t.category) + 6;
+    doc.setFillColor(...LILAC);
+    doc.roundedRect(textX, rowY, cw, chipH, 3, 3, "F");
+    doc.setTextColor(...PURPLE);
+    doc.text(t.category, textX + 3, rowY + 4.1);
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(...INK);
+  doc.text(titleLines, textX, titleTop + 4.6, { lineHeightFactor: 1.18 });
 
-    doc.setDrawColor(229, 231, 235); // gray-200
-    doc.line(startX, y, startX + width, y);
-    y += 4;
+  // ---- details grid
+  const label = (text: string, x: number, y: number) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setCharSpace(0.35);
+    doc.setTextColor(...MUTED);
+    doc.text(text, x, y + 2.6);
+    doc.setCharSpace(0);
+  };
+  const value = (text: string | string[], x: number, y: number) => {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(...INK);
+    doc.text(text, x, y + 8.2, { lineHeightFactor: 1.25 });
+  };
+  const col2 = x0 + PAD + inner / 2 + 2;
+  label("DATE", x0 + PAD, gridY);
+  value(formatIST(t.start, "EEE, d MMM yyyy"), x0 + PAD, gridY);
+  label("TIME", col2, gridY);
+  value(formatIST(t.start, "hh:mm a"), col2, gridY);
+  label("VENUE", x0 + PAD, venueY);
+  value(venueLines, x0 + PAD, venueY);
+  label("GUESTS", x0 + PAD, guestsY);
+  value(
+    `${t.guests} guest${t.guests === 1 ? "" : "s"} - MySlotMate Pass`,
+    x0 + PAD,
+    guestsY,
+  );
 
+  // ---- tear line with notches cut into the card edge
+  doc.setLineDashPattern([1.6, 1.4], 0);
+  doc.setDrawColor(220, 211, 238); // #DCD3EE
+  doc.setLineWidth(0.5);
+  doc.line(x0 + PAD + 1, tearY, x0 + CARD_W - PAD - 1, tearY);
+  doc.setLineDashPattern([], 0);
+  doc.setLineWidth(0.3);
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...LINE);
+  for (const nx of [x0, x0 + CARD_W]) {
+    doc.circle(nx, tearY, 4.4, "FD");
+  }
+  doc.rect(x0 - 5, tearY - 5, 4.85, 10, "F");
+  doc.rect(x0 + CARD_W + 0.15, tearY - 5, 5, 10, "F");
+
+  // ---- QR in a white tile with a lilac ring
+  const tileX = cx - TILE / 2;
+  doc.setFillColor(...LILAC);
+  doc.roundedRect(
+    tileX - RING,
+    tileY - RING,
+    TILE + RING * 2,
+    TILE + RING * 2,
+    7.5,
+    7.5,
+    "F",
+  );
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...LINE);
+  doc.roundedRect(tileX, tileY, TILE, TILE, 6, 6, "FD");
+  if (img.qr) {
+    doc.addImage(img.qr, "PNG", cx - QR / 2, tileY + 4, QR, QR);
+  } else {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED);
+    doc.text("QR unavailable", cx, tileY + TILE / 2, { align: "center" });
+  }
+
+  // ---- booking ID
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setCharSpace(0.5);
+  doc.setTextColor(...MUTED);
+  const idLabel = "BOOKING ID";
+  doc.text(
+    idLabel,
+    cx - (doc.getTextWidth(idLabel) + idLabel.length * 0.5) / 2,
+    idY,
+  );
+  const idText = t.bookingId
+    ? `XXXX${t.bookingId.slice(-6).toUpperCase()}`
+    : "N/A";
+  doc.setFontSize(16);
+  doc.setCharSpace(1.1);
+  doc.setTextColor(...INK);
+  doc.text(
+    idText,
+    cx - (doc.getTextWidth(idText) + (idText.length - 1) * 1.1) / 2,
+    idY + 7.5,
+  );
+  doc.setCharSpace(0);
+
+  // ---- name + confirmed pill, centred together
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10.5);
+  const nameW = doc.getTextWidth(t.guestName);
+  doc.setFontSize(8);
+  const pillText = "Confirmed";
+  const pillW = doc.getTextWidth(pillText) + 8.5;
+  const pillH = 6;
+  const rowW = nameW + 3 + pillW;
+  let px = cx - rowW / 2;
+  doc.setFontSize(10.5);
+  doc.setTextColor(...INK);
+  doc.text(t.guestName, px, nameY);
+  px += nameW + 3;
+  doc.setFillColor(220, 252, 231); // #DCFCE7
+  doc.roundedRect(px, nameY - 4.3, pillW, pillH, 3, 3, "F");
+  doc.setFillColor(22, 163, 74); // #16A34A
+  doc.circle(px + 3.3, nameY - 1.3, 0.95, "F");
+  doc.setFontSize(8);
+  doc.setTextColor(22, 101, 52); // #166534
+  doc.text(pillText, px + 5.6, nameY - 0.2);
+
+  // ---- total paid
+  doc.setFillColor(250, 247, 255); // #FAF7FF
+  doc.setDrawColor(239, 232, 250); // #EFE8FA
+  doc.roundedRect(x0 + PAD, totalY, inner, 12, 4.5, 4.5, "FD");
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.setTextColor(...MUTED);
+  doc.text("Total paid", x0 + PAD + 4.5, totalY + 7.4);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(...INK);
+  doc.text(
+    `Rs. ${(t.amountCents / 100).toFixed(2)}`,
+    x0 + CARD_W - PAD - 4.5,
+    totalY + 7.8,
+    {
+      align: "right",
+    },
+  );
+
+  // ---- note + support link
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  doc.setTextColor(...MUTED);
+  doc.text(
+    "Show this QR at the entrance. Cancellation policy applies.",
+    cx,
+    noteY,
+    {
+      align: "center",
+    },
+  );
+  const link = "myslotmate.com/support";
+  doc.setTextColor(...PURPLE);
+  doc.textWithLink(link, cx - doc.getTextWidth(link) / 2, noteY + 4.5, {
+    url: "https://myslotmate.com/support",
+  });
+
+  // ---- per-experience Terms & Conditions below the card, flowing onto extra
+  // pages when long.
+  if (t.terms) {
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const bottomMargin = 15;
+    let y = y0 + cardH + 11;
+    if (y > pageHeight - bottomMargin - 10) {
+      doc.addPage();
+      y = 20;
+    }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    doc.setCharSpace(0.3);
+    doc.setTextColor(...INK);
+    doc.text("TERMS & CONDITIONS", x0, y);
+    doc.setCharSpace(0);
+    y += 3.5;
+    doc.setDrawColor(...LINE);
+    doc.line(x0, y, x0 + CARD_W, y);
+    y += 4;
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
-    doc.setTextColor(75, 85, 99); // gray-600
-    const lines: string[] = doc.splitTextToSize(terms, width);
+    doc.setFontSize(7);
+    doc.setTextColor(...MUTED);
+    const lines: string[] = doc.splitTextToSize(t.terms, CARD_W);
     for (const line of lines) {
       if (y > pageHeight - bottomMargin) {
         doc.addPage();
         y = 20;
         doc.setFont("helvetica", "normal");
-        doc.setFontSize(6.5);
-        doc.setTextColor(75, 85, 99);
+        doc.setFontSize(7);
+        doc.setTextColor(...MUTED);
       }
-      doc.text(line, startX, y);
-      y += 3.2;
+      doc.text(line, x0, y);
+      y += 3.3;
     }
   }
 }
 
+function titleCase(s: string): string {
+  return s.replace(/\b([a-z])/g, (m) => m.toUpperCase());
+}
+
 // renderTicketDoc builds the finished jsPDF document for a booking. Shared by
-// the download and the WhatsApp-send paths so both produce the same ticket.
-async function renderTicketDoc(booking: any, event: any, bookingUser: any) {
+// every download and WhatsApp-send path so all of them produce the same ticket.
+export async function renderTicketDoc(
+  booking: any,
+  event: any,
+  bookingUser: any,
+  verifyOrigin = "https://myslotmate.com",
+) {
   const jsPDFClass = await loadJsPdf();
   const doc = new jsPDFClass({
     orientation: "portrait",
@@ -452,30 +582,46 @@ async function renderTicketDoc(booking: any, event: any, bookingUser: any) {
     format: "a4",
   });
 
-  const verifyUrl = `https://myslotmate.com/experience/${event.id}/confirmation?booking=${booking.id}`;
+  const verifyUrl = `${verifyOrigin}/experience/${event.id}/confirmation?booking=${booking.id}`;
 
-  // Cover image proxying. Both images go through toPngDataUrl because jsPDF is
-  // told they are PNG at addImage time — anything else aborts the ticket.
-  const coverUrl = event?.cover_image_url ?? "/assets/home/cover.svg";
-  const proxiedCoverUrl = coverUrl.startsWith("http")
+  // Images are fetched as data URIs (no canvas tainting) and normalised to PNG,
+  // since jsPDF is told PNG at addImage time.
+  const coverUrl: string | undefined = event?.cover_image_url;
+  const proxiedCoverUrl = coverUrl?.startsWith("http")
     ? `/api/proxy-image?url=${encodeURIComponent(coverUrl)}`
     : coverUrl;
-  const coverBase64 = await toPngDataUrl(
-    await getBase64FromUrl(proxiedCoverUrl),
-  );
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&color=16113a&data=${encodeURIComponent(verifyUrl)}`;
+  const [coverRaw, qr, logoWhite, logoMark] = await Promise.all([
+    proxiedCoverUrl ? getBase64FromUrl(proxiedCoverUrl) : Promise.resolve(""),
+    getBase64FromUrl(qrUrl).then(toPngDataUrl),
+    getBase64FromUrl("/assets/brand/logo-horizontal-white.png").then(
+      toPngDataUrl,
+    ),
+    getBase64FromUrl("/assets/brand/logo-mark.png").then(toPngDataUrl),
+  ]);
+  const cover = await roundedSquarePng(coverRaw, COVER, 5);
 
-  // QR code proxying
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=16304c&data=${encodeURIComponent(verifyUrl)}`;
-  const qrBase64 = await toPngDataUrl(await getBase64FromUrl(qrUrl));
+  const isOnline = Boolean(event?.is_online);
+  const venue = pdfSafe(
+    isOnline ? "Online" : (event?.location ?? "To be announced"),
+  );
+  const guestName = pdfSafe(bookingUser?.name ?? "Guest") || "Guest";
+  const category = pdfSafe(event?.mood ?? "");
 
   buildPdfDocument(
     doc,
-    event,
-    booking,
-    bookingUser,
-    coverBase64,
-    qrBase64,
-    booking.id,
+    {
+      title: pdfSafe(event?.title ?? "Experience"),
+      category: category ? titleCase(category) : "",
+      start: new Date(booking?.occurrence_date ?? event?.time ?? ""),
+      venue: venue || "To be announced",
+      guests: Number(booking?.quantity ?? 1) || 1,
+      guestName,
+      bookingId: booking?.id ? String(booking.id) : null,
+      amountCents: Number(booking?.amount_cents ?? 0) || 0,
+      terms: pdfSafe(event?.terms_and_conditions),
+    },
+    { cover, qr, logoWhite, logoMark },
   );
   return doc;
 }

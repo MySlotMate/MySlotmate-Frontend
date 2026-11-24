@@ -109,6 +109,11 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
       return;
     }
     const cap = maxUses.trim() ? Number(maxUses) : null;
+    // A shared free code books for ₹0, so it must have a cap.
+    if (shared && isFree && cap === null) {
+      toast.error("Set max uses for a shared free code");
+      return;
+    }
     if (shared && cap !== null && (!Number.isInteger(cap) || cap < 1)) {
       toast.error("Max uses must be a whole number of at least 1");
       return;
@@ -379,7 +384,7 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
           <FiPlus size={15} /> Add
         </button>
       </div>
-      {isDiscount && (
+      {(isDiscount || isFree) && (
         <div className="flex flex-wrap items-center gap-3 text-sm text-white/80">
           <label className="flex items-center gap-2">
             <input
@@ -395,7 +400,9 @@ export default function CouponsManager({ eventId, hostId, kind }: Props) {
               min={1}
               value={maxUses}
               onChange={(e) => setMaxUses(e.target.value)}
-              placeholder="Max uses (blank = unlimited)"
+              placeholder={
+                isFree ? "Max uses (required)" : "Max uses (blank = unlimited)"
+              }
               className="w-56 rounded-lg border border-white/15 px-3 py-2 text-sm"
               aria-label="Max uses"
             />

@@ -203,11 +203,16 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Google tag (GTM-KCLPRQJC). Root layout wraps every route, so this
-            one copy covers the whole site. Keep it first in <head>. */}
+        {/* Google tags (GTM-KCLPRQJC, GTM-KRRPCDX7). Root layout wraps every
+            route, so this one copy covers the whole site. Both containers share
+            the dataLayer set up below. Keep these first in <head>. */}
         <script
           async
           src="https://www.googletagmanager.com/gtm.js?id=GTM-KCLPRQJC"
+        />
+        <script
+          async
+          src="https://www.googletagmanager.com/gtm.js?id=GTM-KRRPCDX7"
         />
         <script
           dangerouslySetInnerHTML={{

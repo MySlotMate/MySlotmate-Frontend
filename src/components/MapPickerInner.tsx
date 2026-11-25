@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -10,6 +10,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { mapTiles, OSM_TILES, useGoogle } from "~/lib/placeSearch";
 
 // Fix Leaflet marker icon issue in Next.js
 const fixLeafletIcon = () => {
@@ -57,8 +58,11 @@ export default function MapPickerInner({
   selectedPos,
   onPositionChange,
 }: MapPickerInnerProps) {
+  // null while the Google tile session is being created, so OSM never flashes first.
+  const [tiles, setTiles] = useState(useGoogle ? null : OSM_TILES);
   useEffect(() => {
     fixLeafletIcon();
+    void mapTiles().then(setTiles);
   }, []);
 
   return (
@@ -67,10 +71,14 @@ export default function MapPickerInner({
       zoom={13}
       style={{ height: "100%", width: "100%" }}
     >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      {tiles && (
+        <TileLayer
+          key={tiles.url}
+          attribution={tiles.attribution}
+          url={tiles.url}
+          maxZoom={tiles === OSM_TILES ? 19 : 22}
+        />
+      )}
       {selectedPos && <Marker position={selectedPos} />}
       <LocationEvents onPositionChange={onPositionChange} />
       <MapController center={selectedPos} />

@@ -5,14 +5,13 @@ import dynamic from "next/dynamic";
 import { FiX, FiCheck, FiSearch, FiMapPin, FiLoader } from "react-icons/fi";
 import "leaflet/dist/leaflet.css";
 import debounce from "lodash.debounce";
-
-interface NominatimResult {
-  display_name: string;
-  lat: string;
-  lon: string;
-  type?: string;
-  address?: Record<string, string>;
-}
+import {
+  newSessionToken,
+  resolvePlace,
+  reverseGeocode,
+  searchPlaces,
+  type PlaceHit,
+} from "~/lib/placeSearch";
 
 const MapPickerInner = dynamic(() => import("./MapPickerInner"), {
   ssr: false,
@@ -44,9 +43,10 @@ export default function MapPickerModal({
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
+  const [suggestions, setSuggestions] = useState<PlaceHit[]>([]);
   const [selectedPos, setSelectedPos] = useState<[number, number] | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const token = useRef(newSessionToken());
   const [initialCenter, setInitialCenter] = useState<[number, number]>([
     initialLat,
     initialLng,
@@ -61,12 +61,7 @@ export default function MapPickerModal({
 
       setLoading(true);
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=in`,
-          { headers: { "User-Agent": "MySlotMate/1.0" } },
-        );
-        const data = (await res.json()) as NominatimResult[];
-        setSuggestions(data);
+        setSuggestions(await searchPlaces(query, token.current));
         setShowSuggestions(true);
       } catch (err) {
         console.error(err);
@@ -80,14 +75,19 @@ export default function MapPickerModal({
     return () => fetchSuggestions.cancel();
   }, [fetchSuggestions]);
 
-  const handleSelectSuggestion = (item: NominatimResult) => {
-    const lat = parseFloat(item.lat);
-    const lng = parseFloat(item.lon);
-    setSelectedPos([lat, lng]);
-    setInitialCenter([lat, lng]);
-    setAddress(item.display_name);
-    setSearchQuery(item.display_name);
+  const handleSelectSuggestion = async (item: PlaceHit) => {
     setShowSuggestions(false);
+    try {
+      const { label, lat, lng } = await resolvePlace(item, token.current);
+      setSelectedPos([lat, lng]);
+      setInitialCenter([lat, lng]);
+      setAddress(label);
+      setSearchQuery(label);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      token.current = newSessionToken();
+    }
   };
 
   const handleConfirm = () => {
@@ -152,7 +152,7 @@ export default function MapPickerModal({
               {suggestions.map((item, idx) => (
                 <button
                   key={idx}
-                  onClick={() => handleSelectSuggestion(item)}
+                  onClick={() => void handleSelectSuggestion(item)}
                   className="flex w-full items-start gap-3 border-b border-white/10 p-3 text-left transition last:border-0 hover:bg-white/[0.04]"
                 >
                   <FiMapPin
@@ -161,12 +161,10 @@ export default function MapPickerModal({
                   />
                   <div>
                     <p className="text-sm font-medium text-white">
-                      {item.display_name}
+                      {item.label}
                     </p>
-                    {item.type && (
-                      <p className="text-xs text-[#D8B4FE] capitalize">
-                        {item.type.replace(/_/g, " ")}
-                      </p>
+                    {item.sub && (
+                      <p className="text-xs text-[#D8B4FE]">{item.sub}</p>
                     )}
                   </div>
                 </button>
@@ -182,20 +180,9 @@ export default function MapPickerModal({
             selectedPos={selectedPos}
             onPositionChange={(lat, lng) => {
               setSelectedPos([lat, lng]);
-              void (async () => {
-                try {
-                  const res = await fetch(
-                    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
-                    { headers: { "User-Agent": "MySlotMate/1.0" } },
-                  );
-                  const data = (await res.json()) as NominatimResult | null;
-                  if (data?.display_name) {
-                    setAddress(data.display_name);
-                  }
-                } catch (err) {
-                  console.error(err);
-                }
-              })();
+              reverseGeocode(lat, lng)
+                .then((addr) => addr && setAddress(addr))
+                .catch(console.error);
             }}
           />
 

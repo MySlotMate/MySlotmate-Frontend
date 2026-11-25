@@ -3,18 +3,17 @@
 import { useState, useEffect, useRef } from "react";
 import { FiMapPin, FiLoader } from "react-icons/fi";
 import debounce from "lodash.debounce";
-
-interface NominatimSuggestion {
-  display_name: string;
-  lat: string;
-  lon: string;
-  address?: { state?: string };
-}
+import {
+  newSessionToken,
+  resolvePlace,
+  searchPlaces,
+  type PlaceHit,
+} from "~/lib/placeSearch";
 
 interface LocationSearchInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSelect: (display_name: string, lat: string, lon: string) => void;
+  onSelect: (display_name: string, lat: number, lon: number) => void;
   placeholder?: string;
   className?: string;
 }
@@ -26,10 +25,11 @@ export default function LocationSearchInput({
   placeholder = "Search location...",
   className = "",
 }: LocationSearchInputProps) {
-  const [suggestions, setSuggestions] = useState<NominatimSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<PlaceHit[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const token = useRef(newSessionToken());
 
   const fetchSuggestions = useRef(
     debounce(async (query: string) => {
@@ -40,12 +40,7 @@ export default function LocationSearchInput({
 
       setLoading(true);
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=in`,
-          { headers: { "User-Agent": "MySlotMate/1.0" } },
-        );
-        const data = (await res.json()) as NominatimSuggestion[];
-        setSuggestions(data);
+        setSuggestions(await searchPlaces(query, token.current));
         setIsOpen(true);
       } catch (err) {
         console.error("Suggestion fetch error:", err);
@@ -101,19 +96,24 @@ export default function LocationSearchInput({
             <button
               key={idx}
               type="button"
-              onClick={() => {
-                onSelect(item.display_name, item.lat, item.lon);
+              onClick={async () => {
                 setIsOpen(false);
+                try {
+                  const p = await resolvePlace(item, token.current);
+                  onSelect(p.label, p.lat, p.lng);
+                } catch (err) {
+                  console.error("Place details error:", err);
+                } finally {
+                  token.current = newSessionToken();
+                }
               }}
               className="flex w-full items-start gap-3 border-b border-white/10 p-3 text-left transition last:border-0 hover:bg-white/[0.04]"
             >
               <FiMapPin className="mt-1 shrink-0 text-[#777B98]" size={16} />
               <div>
-                <p className="text-sm font-medium text-white">
-                  {item.display_name}
-                </p>
-                {item.address?.state && (
-                  <p className="text-xs text-[#A5A8C3]">{item.address.state}</p>
+                <p className="text-sm font-medium text-white">{item.label}</p>
+                {item.sub && (
+                  <p className="text-xs text-[#A5A8C3]">{item.sub}</p>
                 )}
               </div>
             </button>

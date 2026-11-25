@@ -31,6 +31,8 @@ export const env = createEnv({
     // development, off in production until the backend serves them.
     NEXT_PUBLIC_ENABLE_BOOST: z.enum(["true", "false"]).optional(),
     NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS: z.enum(["true", "false"]).optional(),
+    // Google Places key for host event location search (src/lib/placeSearch.ts).
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
   },
 
   /**
@@ -50,6 +52,8 @@ export const env = createEnv({
     NEXT_PUBLIC_ENABLE_BOOST: process.env.NEXT_PUBLIC_ENABLE_BOOST,
     NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS:
       process.env.NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS,
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

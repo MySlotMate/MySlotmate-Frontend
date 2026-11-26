@@ -57,7 +57,7 @@ function Sheet({
   if (typeof document === "undefined") return null;
   return createPortal(
     <div
-      className="animate-in fade-in msm-modal fixed inset-0 z-[320] flex items-end justify-center bg-black/60 backdrop-blur-sm duration-200 sm:items-center sm:p-4"
+      className="animate-in fade-in msm-modal fixed inset-0 z-[320] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm duration-200"
       onClick={onClose}
     >
       <div
@@ -65,7 +65,7 @@ function Sheet({
         aria-modal="true"
         aria-label={label}
         onClick={(e) => e.stopPropagation()}
-        className={`relative w-full overflow-hidden rounded-t-3xl border border-white/10 bg-[#121426] text-white sm:rounded-3xl ${className}`}
+        className={`relative w-full overflow-hidden rounded-3xl border border-white/10 bg-[#121426] text-white ${className}`}
       >
         <button
           type="button"

@@ -3,7 +3,7 @@
 import LocationButton from "~/components/LocationButton";
 import { nearFirst, placeName, useSavedLocation } from "~/lib/nearby";
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -242,45 +242,59 @@ export function MobileHero({
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const count = events.length;
-  // Autoplay loops by scrolling forward onto a copy of the first card, then
-  // jumping (unanimated) back to the real one — the same view, so the wrap
-  // can't be seen. Scrolling back to 0 instead would rewind past every card.
-  const slides = count > 1 ? [...events, events[0]!] : events;
+  // Slides are [copy of last, ...real cards, copy of first, copy of second]
+  // and the row starts on slide 1, the real first card. Autoplay scrolls off
+  // the last real card onto the copy of the first, then jumps (unanimated) to
+  // the real one. The neighbours peeking in on both sides are copies too, so
+  // the view is identical across the jump and the loop can't be seen. Copies
+  // on one side only changed the peeking neighbour on the jump.
+  const looping = count > 1;
+  const slides = looping
+    ? [events[count - 1]!, ...events, events[0]!, events[1 % count]!]
+    : events;
+
+  // Start on the real first card (before paint, so there's no flash).
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    if (row && looping)
+      row.scrollTo({ left: leftOf(row, 1), behavior: "instant" });
+    setIndex(0);
+  }, [looping, count]);
+
+  /** If the row sits on a copy, move it to the real card it copies. */
+  const settle = (row: HTMLDivElement, i: number) => {
+    if (i >= count + 1) i -= count;
+    else if (i <= 0) i = count;
+    else return i;
+    row.scrollTo({ left: leftOf(row, i), behavior: "instant" });
+    return i;
+  };
 
   useEffect(() => {
-    if (count < 2 || paused) return;
+    if (!looping || paused) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = window.setInterval(() => {
       const row = rowRef.current;
       if (!row || document.hidden) return;
-      let i = nearest(row);
-      // Still parked on the copy (the swap below didn't fire): swap now.
-      if (i >= count) {
-        row.scrollTo({ left: 0, behavior: "instant" });
-        i = 0;
-      }
+      // Normally already settled by onScroll; this covers a missed swap.
+      const i = settle(row, nearest(row));
       row.scrollTo({ left: leftOf(row, i + 1), behavior: "smooth" });
     }, 5000);
     return () => window.clearInterval(id);
-  }, [count, paused]);
+    // settle only reads count, which is already a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [looping, count, paused]);
 
   if (!count) return null;
 
   const onScroll = () => {
     const row = rowRef.current;
     if (!row) return;
-    const i = nearest(row);
-    // Settled on the trailing copy: swap to the real first card.
-    if (
-      count > 1 &&
-      i >= count &&
-      Math.abs(row.scrollLeft - leftOf(row, count)) < 2
-    ) {
-      row.scrollTo({ left: 0, behavior: "instant" });
-      setIndex(0);
-      return;
-    }
-    setIndex(i % count);
+    let i = nearest(row);
+    // Only swap once the scroll has come to rest on the copy.
+    if (looping && Math.abs(row.scrollLeft - leftOf(row, i)) < 2)
+      i = settle(row, i);
+    setIndex(looping ? (i - 1 + count) % count : 0);
   };
 
   return (
@@ -308,7 +322,7 @@ export function MobileHero({
         {slides.map((e, slide) => {
           const price = eventPriceLabel(e);
           const host = hostById.get(e.host_id);
-          const isCopy = slide === count;
+          const isCopy = looping && (slide === 0 || slide > count);
           const hostName = host
             ? `${host.first_name} ${host.last_name}`.trim()
             : null;

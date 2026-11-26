@@ -51,6 +51,29 @@ const SEEN_EVENT = "msm-notifications-seen";
 const rupees = (cents: number) =>
   `₹${(Math.abs(cents) / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
+const FIRST_SEEN_KEY = "msm_notifications_first_seen";
+
+/**
+ * When this device first saw a live count (e.g. "1 cancelled booking"). Those
+ * come from the API with no timestamp; dating them to today's midnight made the
+ * same old count reappear as new every day. The id carries the count, so a new
+ * cancellation (count changes) is a new notification, dated when first seen.
+ */
+function firstSeenAt(id: string): string {
+  const now = new Date().toISOString();
+  try {
+    const map = JSON.parse(
+      localStorage.getItem(FIRST_SEEN_KEY) ?? "{}",
+    ) as Record<string, string>;
+    if (map[id]) return map[id];
+    map[id] = now;
+    localStorage.setItem(FIRST_SEEN_KEY, JSON.stringify(map));
+  } catch {
+    /* private mode: falls back to "now", same as before for this session */
+  }
+  return now;
+}
+
 function readSeen(): number {
   try {
     return Number(localStorage.getItem(SEEN_KEY)) || 0;
@@ -244,13 +267,12 @@ export function useNotifications() {
     }
 
     if (hostId) {
-      // Live counts with no timestamp: date them to the start of today (IST).
-      const istMidnight = new Date(
-        `${formatIST(new Date(), "yyyy-MM-dd")}T00:00:00+05:30`,
-      ).toISOString();
+      // Live counts with no timestamp: dated to when this device first saw
+      // that exact count (see firstSeenAt).
       for (const a of attention ?? []) {
+        const id = `host-${a.type}-${a.count}`;
         out.push({
-          id: `host-${a.type}-${a.count}`,
+          id,
           kind: "host",
           title:
             a.type === "unread_message"
@@ -263,7 +285,7 @@ export function useNotifications() {
                     ? "Your rating dipped"
                     : "Hosting update",
           body: a.message,
-          at: istMidnight,
+          at: firstSeenAt(id),
           href:
             a.type === "unread_message"
               ? "/host-dashboard/messages"
@@ -289,7 +311,7 @@ export function useNotifications() {
           kind: "host",
           title: "Join requests waiting",
           body: `${pendingJoins} guest${pendingJoins === 1 ? " wants" : "s want"} to join a private experience.`,
-          at: istMidnight,
+          at: firstSeenAt(`joins-${pendingJoins}`),
           href: "/host-dashboard/requests",
         });
       }

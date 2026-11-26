@@ -116,17 +116,20 @@ function UpcomingCard({
           className="h-full w-full object-cover transition duration-300 hover:scale-105"
         />
       </Link>
-      <div className="flex flex-1 flex-col p-4">
+      {/* Phones show two cards per row, so everything below is tighter there. */}
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         <StatusPill status={booking.status} />
-        <h3 className="font-outfit mt-2.5 text-[15px] leading-5 font-semibold text-white">
+        <h3 className="font-outfit mt-2 line-clamp-2 text-[14px] leading-5 font-semibold text-white sm:mt-2.5 sm:text-[15px]">
           {event.title}
         </h3>
-        <p className="mt-2 flex items-center gap-2 text-[13px] text-white/60">
+        <p className="mt-2 flex min-w-0 items-center gap-2 text-[12px] text-white/60 sm:text-[13px]">
           <FiCalendar className="h-3.5 w-3.5 shrink-0" />
-          {formatIST(booking.occurrence_date, "EEE, MMM d · h:mm a")}
-          {booking.quantity > 1 && ` · ${booking.quantity} guests`}
+          <span className="truncate">
+            {formatIST(booking.occurrence_date, "EEE, MMM d · h:mm a")}
+            {booking.quantity > 1 && ` · ${booking.quantity} guests`}
+          </span>
         </p>
-        <p className="mt-1.5 flex items-center gap-2 text-[13px] text-white/60">
+        <p className="mt-1.5 flex min-w-0 items-center gap-2 text-[12px] text-white/60 sm:text-[13px]">
           {event.is_online ? (
             <FiVideo className="h-3.5 w-3.5 shrink-0" />
           ) : (
@@ -148,7 +151,7 @@ function UpcomingCard({
 
         <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/[0.06] pt-3">
           {host ? (
-            <span className="flex min-w-0 items-center gap-2 text-[13px] text-white/60">
+            <span className="hidden min-w-0 items-center gap-2 text-[13px] text-white/60 sm:flex">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 // Some hosts have avatar_url = "" — `??` would keep the empty string.
@@ -185,7 +188,7 @@ function UpcomingCard({
           </span>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
           <button
             type="button"
             onClick={onTicket}
@@ -195,14 +198,14 @@ function UpcomingCard({
                 ? "Download ticket"
                 : "Ticket is ready once the booking is confirmed"
             }
-            className="flex h-10 items-center justify-center gap-2 rounded-xl bg-[#1B1C33] text-sm font-medium text-white transition hover:bg-[#232445] disabled:opacity-50"
+            className="flex h-9 items-center justify-center gap-2 rounded-xl bg-[#1B1C33] text-[13px] font-medium text-white transition hover:bg-[#232445] disabled:opacity-50 sm:h-10 sm:text-sm"
           >
             <LuQrCode className="h-4 w-4" />
             {downloading ? "Preparing…" : "QR Ticket"}
           </button>
           <Link
             href={`/experience/${event.slug}`}
-            className={`flex h-10 items-center justify-center rounded-xl text-sm font-semibold ${GRADIENT_BTN}`}
+            className={`flex h-9 items-center justify-center rounded-xl text-[13px] font-semibold sm:h-10 sm:text-sm ${GRADIENT_BTN}`}
           >
             View Details
           </Link>
@@ -955,7 +958,7 @@ export default function ActivitiesPage() {
                     downloadingTicketId={downloadingTicketId}
                   />
                   {upcoming.length > 0 ? (
-                    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
                       {upcoming.map(({ booking, event }) => (
                         <UpcomingCard
                           key={booking.id}

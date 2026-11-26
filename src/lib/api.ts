@@ -1178,6 +1178,8 @@ export interface EventDTO {
   total_reviews: number;
   next_available_date: string | null;
   bookings_last_week?: number;
+  /** Accepted co-hosts, shown with the owner under "Hosted by". */
+  co_host_ids?: string[];
   price_tiers: PriceTierDTO[];
   /** Monthly pass — null price means this experience has no pass. */
   monthly_pass_price_cents?: number | null;

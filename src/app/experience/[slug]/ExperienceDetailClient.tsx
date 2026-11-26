@@ -216,6 +216,13 @@ function BookingPill({
 /* ------------------------------------------------------------------ */
 /*  Host row                                                           */
 /* ------------------------------------------------------------------ */
+// One co-host under "Hosted by". Its own component so each id gets its own
+// profile query (hooks can't run in a loop).
+function CoHostRow({ hostId }: { hostId: string }) {
+  const { data: host } = usePublicHostProfile(hostId);
+  return host ? <HostRow host={host} /> : null;
+}
+
 function HostRow({ host }: { host: PublicHostProfileDTO }) {
   return (
     <div className="flex flex-col gap-3">
@@ -606,7 +613,14 @@ export default function ExperienceDetailClient({
       <p className="mb-3 text-xs font-semibold tracking-[0.14em] text-white/45 uppercase">
         Hosted by
       </p>
-      <HostRow host={host} />
+      <div className="flex flex-col gap-4">
+        <HostRow host={host} />
+        {(event.co_host_ids ?? [])
+          .filter((id) => id !== event.host_id)
+          .map((id) => (
+            <CoHostRow key={id} hostId={id} />
+          ))}
+      </div>
     </div>
   ) : null;
 

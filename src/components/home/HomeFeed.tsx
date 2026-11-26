@@ -206,6 +206,26 @@ function NextPlan({ event, at }: { event: EventDTO; at: Date }) {
 /*  Hero: one event at a time, details left, poster right              */
 /* ------------------------------------------------------------------ */
 
+/** scrollLeft that centres card i (the row is the cards' offsetParent),
+ *  clamped to what the row can actually scroll. */
+const leftOf = (row: HTMLDivElement, i: number) => {
+  const card = row.children[i] as HTMLElement | undefined;
+  if (!card) return 0;
+  const want = card.offsetLeft - (row.clientWidth - card.offsetWidth) / 2;
+  return Math.max(0, Math.min(want, row.scrollWidth - row.clientWidth));
+};
+/** The card whose centred position is closest to where the row is now. */
+const nearest = (row: HTMLDivElement) => {
+  let best = 0;
+  for (let i = 1; i < row.children.length; i++)
+    if (
+      Math.abs(leftOf(row, i) - row.scrollLeft) <
+      Math.abs(leftOf(row, best) - row.scrollLeft)
+    )
+      best = i;
+  return best;
+};
+
 /**
  * Phones, matching the Android app: a "Featured" row of poster cards
  * with the neighbours peeking in, and the title, place and price under each
@@ -220,14 +240,47 @@ export function MobileHero({
 }) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const count = events.length;
+  // Autoplay loops by scrolling forward onto a copy of the first card, then
+  // jumping (unanimated) back to the real one — the same view, so the wrap
+  // can't be seen. Scrolling back to 0 instead would rewind past every card.
+  const slides = count > 1 ? [...events, events[0]!] : events;
 
-  if (!events.length) return null;
+  useEffect(() => {
+    if (count < 2 || paused) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const id = window.setInterval(() => {
+      const row = rowRef.current;
+      if (!row || document.hidden) return;
+      let i = nearest(row);
+      // Still parked on the copy (the swap below didn't fire): swap now.
+      if (i >= count) {
+        row.scrollTo({ left: 0, behavior: "instant" });
+        i = 0;
+      }
+      row.scrollTo({ left: leftOf(row, i + 1), behavior: "smooth" });
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [count, paused]);
+
+  if (!count) return null;
 
   const onScroll = () => {
     const row = rowRef.current;
-    const card = row?.firstElementChild as HTMLElement | null;
-    if (!row || !card) return;
-    setIndex(Math.round(row.scrollLeft / (card.offsetWidth + 12)));
+    if (!row) return;
+    const i = nearest(row);
+    // Settled on the trailing copy: swap to the real first card.
+    if (
+      count > 1 &&
+      i >= count &&
+      Math.abs(row.scrollLeft - leftOf(row, count)) < 2
+    ) {
+      row.scrollTo({ left: 0, behavior: "instant" });
+      setIndex(0);
+      return;
+    }
+    setIndex(i % count);
   };
 
   return (
@@ -247,18 +300,24 @@ export function MobileHero({
       <div
         ref={rowRef}
         onScroll={onScroll}
-        className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-[8%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        // A finger on the row stops autoplay; it resumes 5s after letting go.
+        onTouchStart={() => setPaused(true)}
+        onTouchEnd={() => setPaused(false)}
+        className="relative flex snap-x snap-mandatory gap-3 overflow-x-auto px-[8%] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {events.map((e) => {
+        {slides.map((e, slide) => {
           const price = eventPriceLabel(e);
           const host = hostById.get(e.host_id);
+          const isCopy = slide === count;
           const hostName = host
             ? `${host.first_name} ${host.last_name}`.trim()
             : null;
           return (
             <Link
-              key={e.id}
+              key={`${e.id}-${slide}`}
               href={`/experience/${e.slug}`}
+              aria-hidden={isCopy || undefined}
+              tabIndex={isCopy ? -1 : undefined}
               className="w-[84%] max-w-[340px] shrink-0 snap-center"
             >
               <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-[#121426] ring-1 ring-white/10">

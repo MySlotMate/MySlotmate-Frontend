@@ -6,7 +6,14 @@
  * Every feature is listed, including ones still rolling out (Marketing Boost,
  * statements and invoices): hosts should know about them up front. The guest
  * booking fee is never written here; the page reads it live from the server.
+ *
+ * Boost has two versions. Today's (commission only, invited pilot hosts) is
+ * what live hosts use. The paid-budget Boost for Premium hosts (PRD: Premium
+ * Hosts and paid Boost marketing) replaces it once NEXT_PUBLIC_ENABLE_BOOST_PLAN
+ * is on, and the guide follows the same switch so it never describes a Boost
+ * hosts can't use yet.
  */
+import { env } from "~/env";
 
 export interface GuideStep {
   /** Bold lead-in, e.g. "Pick who can book". */
@@ -28,7 +35,7 @@ export interface GuideSection {
   badge?: string;
 }
 
-export const HOST_GUIDE: GuideSection[] = [
+const CURRENT_GUIDE: GuideSection[] = [
   {
     id: "getting-started",
     title: "Getting started",
@@ -262,3 +269,117 @@ export const HOST_GUIDE: GuideSection[] = [
     ],
   },
 ];
+
+// ─── Premium Hosts and the paid-budget Boost ────────────────────────────────
+
+const PREMIUM_SECTION: GuideSection = {
+  id: "premium",
+  title: "Premium Hosts: MySlotMate as your marketing partner",
+  summary:
+    "Free to join, by approval. Premium unlocks Boost and gives you a named campaign manager.",
+  where: { label: "Premium", href: "/host-dashboard/premium" },
+  badge: "New",
+  steps: [
+    {
+      title: "Apply, free",
+      body: "Open Premium in your dashboard and tell us a little about your events. Any approved host can apply.",
+    },
+    {
+      title: "We review it",
+      body: "Our team usually replies within a day. Once approved, you get a named campaign manager, shown on your Premium page with their contact.",
+    },
+    {
+      title: "What you get",
+      body: "Boost for your events, same-day review of your Boost plans, up to 2 posters or reels a month made by our team, a Premium host badge and a featured slot on the home page.",
+    },
+  ],
+  tips: [
+    "Premium itself costs nothing. With Boost you pay only the ad budget you choose and a fee on the tickets it sells.",
+    "If Premium is removed from your account, we tell you why. A Boost that's already live runs to its end date.",
+  ],
+};
+
+const PLAN_BOOST_SECTION: GuideSection = {
+  id: "boost",
+  title: "Marketing Boost: ads that sell your tickets",
+  summary:
+    "For Premium hosts. You pay the ad budget upfront and all of it goes into your ads; we take a fee only on tickets sold while the Boost runs.",
+  where: { label: "Promote", href: "/host-dashboard/promote" },
+  badge: "Premium",
+  steps: [
+    {
+      title: "Check your event qualifies",
+      body: "You're a Premium host, verified, with a payout method added. The event is paid and published, its next date is at least 10 days away, its refund policy is Moderate, Strict or No refunds (not Flexible), and it has at least 20 unsold tickets (50 if every ticket is under ₹500).",
+    },
+    {
+      title: "Plan it",
+      body: "On the event's Boost card, pick a daily ad budget (from ₹500, in steps of ₹100) and the dates: at least 3 days, ending by the event's date. Choose where to advertise and, if you like, your goal and who should see it. You see the total with 18% GST and our fee per ticket type before you send it.",
+    },
+    {
+      title: "Review our proposal",
+      body: "Your manager confirms the plan and the fee for each ticket type, with a note. If they propose a fee different from the guide, they say why. Nothing is charged yet.",
+    },
+    {
+      title: "Accept and pay the ad budget",
+      body: "Accept and pay the budget with GST right away, or within 7 days; after that the plan expires. The budget isn't refundable: all of it is spent on your ads, and the reports show how.",
+    },
+    {
+      title: "Share your creatives",
+      body: "Upload what the ads should use: reels (vertical 9:16, up to 90 seconds), posts (1:1 or 4:5 images, a carousel of up to 10, or a video up to 60 seconds), stories (vertical 9:16) and brand material such as your logo. Your manager marks each one In use or asks for changes. Posters or reels made by our team wait for your approval. The ads need at least one creative in use.",
+    },
+    {
+      title: "We go live",
+      body: "Your manager starts the ads. The fee applies to tickets sold from then until the Boost ends.",
+    },
+    {
+      title: "Track it, top it up, or stop it",
+      body: "The Boost card shows the budget spent, reach, clicks, tickets sold and cost per ticket, day by day, plus the reports your manager shares from the ad platforms. Add days at the same daily budget, or stop it any time.",
+    },
+    {
+      title: "Get the final report",
+      body: "Within 2 days of the end, your manager shares the final report on the Boost card, with everything the budget did.",
+    },
+  ],
+  tips: [
+    "Our fee per ticket: 10% under ₹500, 8% for ₹500–999, 7% for ₹1,000–1,999, 6% for ₹2,000–4,999 and 5% from ₹5,000. The higher the price, the lower the fee.",
+    "The fee comes out of your share of each ticket. Guests pay the same price.",
+    "If a guest cancels in time for a full refund, that ticket's fee is returned. A late cancellation with no refund keeps it.",
+    "If you stop the Boost early or cancel the event, the ad budget isn't refunded, and the fee on tickets already sold is still charged.",
+    "While a Boost is open or live, the refund policy can't be changed to Flexible.",
+    "Change a ticket price after the proposal and we send a new one. A budget you've already paid carries over.",
+    "If you're GST-registered, you can usually claim back the GST on the ad budget.",
+  ],
+};
+
+const PLAN_INVOICES_STEP: GuideStep = {
+  title: "Marketing Boost invoices",
+  body: "You get a tax invoice for each ad budget payment, on the event's Boost card. The Boost fee is on a GST invoice each month, with a credit note if boosted bookings were refunded later. If you're GST-registered, you can claim that GST back.",
+};
+
+const isProd = process.env.NODE_ENV === "production";
+const BOOST_PLAN_ON =
+  env.NEXT_PUBLIC_ENABLE_BOOST_PLAN === "true" ||
+  (env.NEXT_PUBLIC_ENABLE_BOOST_PLAN === undefined && !isProd);
+
+/** The guide with Premium and the paid-budget Boost in place of today's Boost. */
+function withBoostPlan(guide: GuideSection[]): GuideSection[] {
+  return guide.flatMap((s) => {
+    if (s.id === "boost") return [PREMIUM_SECTION, PLAN_BOOST_SECTION];
+    if (s.id === "documents")
+      return [
+        {
+          ...s,
+          summary:
+            "Download your monthly statement and Boost invoices any time.",
+          steps: s.steps.map((st) =>
+            st.title === "Marketing Boost invoices" ? PLAN_INVOICES_STEP : st,
+          ),
+        },
+      ];
+    return [s];
+  });
+}
+
+export const HOST_GUIDE: GuideSection[] = BOOST_PLAN_ON
+  ? withBoostPlan(CURRENT_GUIDE)
+  : CURRENT_GUIDE;

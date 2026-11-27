@@ -29,6 +29,8 @@ import {
   rupees,
 } from "~/lib/boost";
 import EventCover from "~/components/EventCover";
+import PromotePlan from "~/components/host-dashboard/boost/PromotePlan";
+import { BOOST_PLAN_ENABLED } from "~/lib/boostPlan";
 
 const card = "rounded-2xl border border-white/10 bg-[#121426]";
 
@@ -88,7 +90,7 @@ function BoostRow({ boost, event }: { boost: BoostDTO; event?: EventDTO }) {
   );
 }
 
-export default function PromotePage() {
+function LegacyPromotePage() {
   const { hostId } = useStoredAuth();
   const idToken = useIdToken();
   const { data: events, isLoading: loadingEvents } = useEventsByHost(hostId);
@@ -347,4 +349,9 @@ export default function PromotePage() {
       </main>
     </div>
   );
+}
+
+/** The paid-budget Boost's Promote when it's switched on, else today's. */
+export default function PromotePage() {
+  return BOOST_PLAN_ENABLED ? <PromotePlan /> : <LegacyPromotePage />;
 }

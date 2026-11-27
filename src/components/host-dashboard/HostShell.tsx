@@ -13,6 +13,7 @@ import {
   CalendarDays,
   ChevronRight,
   ClipboardList,
+  Crown,
   FileText,
   Inbox,
   LayoutDashboard,
@@ -44,6 +45,7 @@ import { useIdToken } from "~/hooks/useIdToken";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { clearStoredAuth, setStoredHostId } from "~/lib/auth-storage";
 import { BOOST_ENABLED } from "~/lib/boost";
+import { BOOST_PLAN_ENABLED } from "~/lib/boostPlan";
 import { WalletDisplay } from "../wallet";
 
 const BASE = "/host-dashboard";
@@ -112,6 +114,12 @@ const PROMOTE: NavItem = {
   label: "Promote",
   href: `${BASE}/promote`,
   icon: TrendingUp,
+};
+/** Premium Hosts: the program that unlocks Boost (paid-budget Boost only). */
+const PREMIUM: NavItem = {
+  label: "Premium",
+  href: `${BASE}/premium`,
+  icon: Crown,
 };
 const PROFILE: NavItem = {
   label: "Host profile",
@@ -230,7 +238,8 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
       title: "Business",
       items: [
         EARNINGS,
-        ...(BOOST_ENABLED ? [PROMOTE] : []),
+        ...(BOOST_ENABLED || BOOST_PLAN_ENABLED ? [PROMOTE] : []),
+        ...(BOOST_PLAN_ENABLED ? [PREMIUM] : []),
         ...(hasCoHosting ? [CO_HOSTS] : []),
         PROFILE,
       ],

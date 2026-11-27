@@ -31,6 +31,12 @@ export const env = createEnv({
     // development, off in production until the backend serves them.
     NEXT_PUBLIC_ENABLE_BOOST: z.enum(["true", "false"]).optional(),
     NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS: z.enum(["true", "false"]).optional(),
+    // Boost with a paid ad budget for Premium hosts (PRD: Premium Hosts and
+    // paid Boost marketing). Unset: on in development, off in production.
+    NEXT_PUBLIC_ENABLE_BOOST_PLAN: z.enum(["true", "false"]).optional(),
+    // Run those screens on the in-browser stand-in (src/lib/boostPlanMock.ts)
+    // until the backend serves them. Unset: on in development only.
+    NEXT_PUBLIC_BOOST_PLAN_MOCK: z.enum(["true", "false"]).optional(),
     // Google Places key for host event location search (src/lib/placeSearch.ts).
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
   },
@@ -52,6 +58,8 @@ export const env = createEnv({
     NEXT_PUBLIC_ENABLE_BOOST: process.env.NEXT_PUBLIC_ENABLE_BOOST,
     NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS:
       process.env.NEXT_PUBLIC_ENABLE_WEEKLY_PAYOUTS,
+    NEXT_PUBLIC_ENABLE_BOOST_PLAN: process.env.NEXT_PUBLIC_ENABLE_BOOST_PLAN,
+    NEXT_PUBLIC_BOOST_PLAN_MOCK: process.env.NEXT_PUBLIC_BOOST_PLAN_MOCK,
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY:
       process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,

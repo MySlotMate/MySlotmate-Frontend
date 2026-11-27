@@ -31,6 +31,7 @@ import {
   FiMapPin,
   FiNavigation,
   FiShare,
+  FiShield,
   FiStar,
   FiUsers,
   FiVideo,
@@ -40,7 +41,8 @@ import { LuBadgeCheck, LuLock, LuShieldAlert } from "react-icons/lu";
 import { isUnverifiedHost } from "~/lib/hostTier";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { formatIST } from "~/lib/datetime";
+import { cancellationCopy } from "~/lib/cancellation";
+import { formatIST, formatISTTimeRange } from "~/lib/datetime";
 import { getMoodDisplayLabel } from "~/lib/moods";
 import type { EventDTO, PublicHostProfileDTO } from "~/lib/api";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -50,6 +52,8 @@ export const runtime = "edge";
 // Sizes follow the Figma "Experience detail" frames (Desktop 1440 → Mobile 390).
 const CARD = "rounded-[20px] border border-white/[0.06] bg-[#131328]";
 const DIVIDER = "border-t border-white/[0.08]";
+// An average of one or two reviews misleads; show "New" until there are 3.
+const MIN_REVIEWS_FOR_RATING = 3;
 const SECTION_H = "font-outfit mb-4 text-lg font-medium text-white";
 
 const rupees = (cents: number) => `₹${(cents / 100).toFixed(0)}`;
@@ -391,7 +395,7 @@ function GuestReviews({
     <section>
       <h2 className={`${SECTION_H} flex items-center gap-2`}>
         Guest reviews
-        {rating ? (
+        {rating && totalReviews >= MIN_REVIEWS_FOR_RATING ? (
           <span className="flex items-center gap-1 text-sm font-semibold text-amber-400">
             <FiStar className="h-3.5 w-3.5 fill-amber-400" />
             {rating.toFixed(1)}
@@ -652,12 +656,6 @@ export default function ExperienceDetailClient({
   }
   const dateChips = allDates ? openDays : openDays.slice(0, 4);
   const shownDate = pickedDate ?? openDays[0] ?? baseDate;
-  const endDate =
-    shownDate && event.duration_minutes
-      ? new Date(
-          new Date(shownDate).getTime() + event.duration_minutes * 60_000,
-        )
-      : null;
   // Marketing landing pages (contentOverride) let signed-out visitors book
   // as a guest — name, phone + OTP, email — instead of the full login.
   const ticketsQuery = new URLSearchParams();
@@ -752,7 +750,7 @@ export default function ExperienceDetailClient({
                       </>
                     )}
                   </span>
-                  {rating && totalReviews > 0 ? (
+                  {rating && totalReviews >= MIN_REVIEWS_FOR_RATING ? (
                     <span className={chip}>
                       <FiStar className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                       {rating.toFixed(1)}
@@ -780,8 +778,7 @@ export default function ExperienceDetailClient({
                   {shownDate && (
                     <li className="flex items-center gap-2">
                       <FiClock className="h-4 w-4 text-white/50" />
-                      {formatIST(shownDate, "h:mm a")}
-                      {endDate && ` – ${formatIST(endDate, "h:mm a")}`}
+                      {formatISTTimeRange(shownDate, event.duration_minutes)}
                     </li>
                   )}
                   <li className="flex min-w-0 items-center gap-2">
@@ -793,6 +790,13 @@ export default function ExperienceDetailClient({
                     <span className="truncate">{place}</span>
                   </li>
                 </ul>
+
+                {!event.is_free && (
+                  <p className="mt-3 flex items-center gap-2 text-sm text-white/60">
+                    <FiShield className="h-4 w-4 shrink-0 text-white/45" />
+                    {cancellationCopy(event.cancellation_policy)}
+                  </p>
+                )}
 
                 {dateChips.length > 1 && (
                   <div className="mt-6 flex flex-wrap gap-2.5">

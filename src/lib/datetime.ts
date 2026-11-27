@@ -64,6 +64,22 @@ export function formatIST(
 }
 
 /**
+ * "6:00 AM – 8:00 AM" for a same-day event; when it runs 20 hours or more the
+ * end carries its date ("6:00 AM – 2 Dec, 6:00 AM") so a multi-day package
+ * never reads as identical start and end times. Start only when no duration.
+ */
+export function formatISTTimeRange(
+  start: string | Date | null | undefined,
+  durationMinutes?: number | null,
+): string {
+  const from = formatIST(start, "h:mm a");
+  if (!from || !start || !durationMinutes) return from;
+  const end = new Date(new Date(start).getTime() + durationMinutes * 60_000);
+  const multiDay = durationMinutes >= 20 * 60;
+  return `${from} – ${formatIST(end, multiDay ? "d MMM, h:mm a" : "h:mm a")}`;
+}
+
+/**
  * Combine a host-entered date ("YYYY-MM-DD") and time ("HH:mm"), interpreted as
  * IST, into a UTC ISO string for storage. Anchoring to +05:30 makes the result
  * independent of the host's browser timezone.

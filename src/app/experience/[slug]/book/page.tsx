@@ -31,7 +31,8 @@ import {
   FiShield,
 } from "react-icons/fi";
 import { LuLoader2, LuTicket, LuWallet } from "react-icons/lu";
-import { formatIST } from "~/lib/datetime";
+import { cancellationCopy } from "~/lib/cancellation";
+import { formatIST, formatISTTimeRange } from "~/lib/datetime";
 import {
   getPassForEvent,
   reservePassSession,
@@ -125,7 +126,7 @@ function BookingContent({ eventId }: { eventId: string }) {
   const [userEmail, setUserEmail] = useState<string | undefined>();
   const [userPhone, setUserPhone] = useState<string | undefined>();
   const [note, setNote] = useState("");
-  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
@@ -780,21 +781,8 @@ function BookingContent({ eventId }: { eventId: string }) {
 
   const startDate = new Date(date || event.time);
   const hasStart = !isNaN(startDate.getTime());
-  const endDate =
-    hasStart && event.duration_minutes
-      ? new Date(startDate.getTime() + event.duration_minutes * 60_000)
-      : null;
 
-  const cancellationCopy =
-    event.cancellation_policy === "flexible"
-      ? "Free cancellation up to 24 hours before the experience starts."
-      : event.cancellation_policy === "moderate"
-        ? "Free cancellation up to 5 days before the experience starts."
-        : event.cancellation_policy === "strict"
-          ? "50% refund up to 1 week before the experience starts."
-          : event.cancellation_policy === "no_refund"
-            ? "This experience is non-refundable once booked."
-            : "Standard cancellation policy applies.";
+  const cancellationText = cancellationCopy(event.cancellation_policy);
 
   const payDisabled =
     isSubmitting ||
@@ -835,7 +823,11 @@ function BookingContent({ eventId }: { eventId: string }) {
         "Confirm Booking"
       )
     ) : hasInsufficientBalance ? (
-      `Pay ₹${(shortfall / 100).toFixed(0)} & Confirm (₹${(walletBalance / 100).toFixed(0)} from wallet)`
+      walletBalance > 0 ? (
+        `Pay ₹${(shortfall / 100).toFixed(0)} & Confirm (₹${(walletBalance / 100).toFixed(0)} from wallet)`
+      ) : (
+        `Pay ₹${(shortfall / 100).toFixed(0)} & Confirm`
+      )
     ) : (
       `Pay now · ${formatRupees(totalPriceCents)}`
     );
@@ -1007,7 +999,7 @@ function BookingContent({ eventId }: { eventId: string }) {
               <span className="flex items-center gap-1.5">
                 <FiClock className="h-4 w-4 text-white/45" />
                 {hasStart
-                  ? `${formatIST(startDate, "h:mm a")}${endDate ? ` – ${formatIST(endDate, "h:mm a")}` : ""}`
+                  ? formatISTTimeRange(startDate, event.duration_minutes)
                   : "TBD"}
               </span>
               <span className="flex items-center gap-1.5">
@@ -1340,7 +1332,7 @@ function BookingContent({ eventId }: { eventId: string }) {
 
         <p className="mt-6 flex items-start gap-2 text-[13px] leading-5 text-white/50">
           <FiShield className="mt-0.5 h-4 w-4 shrink-0" />
-          {cancellationCopy} Chat with {host?.first_name ?? "the host"} unlocks
+          {cancellationText} Chat with {host?.first_name ?? "the host"} unlocks
           once confirmed.
         </p>
 

@@ -81,6 +81,11 @@ export default function HomeClient({
       >
         <components.Navbar dark />
 
+        {/* The hero carousel uses h2s, so the page's one H1 is for screen readers and search. */}
+        <h1 className="sr-only">
+          Book events, treks and workshops across Northeast India
+        </h1>
+
         <div className="scroll-fade w-full">
           <components.Home.HomeFeed
             initialEvents={initialEvents}

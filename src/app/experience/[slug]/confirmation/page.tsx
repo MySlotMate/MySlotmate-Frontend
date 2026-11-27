@@ -22,7 +22,7 @@ import {
   FiMessageCircle,
   FiUsers,
 } from "react-icons/fi";
-import { formatIST } from "~/lib/datetime";
+import { formatIST, formatISTTimeRange } from "~/lib/datetime";
 import { downloadTicketPdf, sendTicketPdfNotification } from "~/lib/ticket";
 import FeeReceiptButton from "~/components/billing/FeeReceiptButton";
 
@@ -170,14 +170,7 @@ function ConfirmationContent({ eventId }: { eventId: string }) {
     ? `#MSM-${bookingId.slice(-6).toUpperCase()}`
     : null;
 
-  const timeLabel = `${formatIST(eventDate, "h:mm a")}${
-    event.duration_minutes
-      ? ` – ${formatIST(
-          new Date(eventDate.getTime() + event.duration_minutes * 60_000),
-          "h:mm a",
-        )}`
-      : ""
-  }`;
+  const timeLabel = formatISTTimeRange(eventDate, event.duration_minutes);
   const paidLabel = booking?.pass_id
     ? booking.amount_cents
       ? `Monthly pass + ₹${(booking.amount_cents / 100).toLocaleString("en-IN")}`

@@ -20,7 +20,8 @@ import {
 } from "~/hooks/useApi";
 import { isUnverifiedHost } from "~/lib/hostTier";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
-import { formatIST, sameInstant } from "~/lib/datetime";
+import { cancellationCopy } from "~/lib/cancellation";
+import { formatIST, formatISTTimeRange, sameInstant } from "~/lib/datetime";
 import type { EventDTO, OccurrenceAvailability } from "~/lib/api";
 import { FiAlertTriangle, FiCalendar, FiMinus, FiPlus } from "react-icons/fi";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -31,13 +32,6 @@ import { getPassForEvent } from "~/lib/api";
 const rupees = (cents: number) =>
   `₹${(cents / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 const SECTION_H = "font-outfit mb-4 text-lg font-semibold text-white";
-
-const CANCELLATION: Record<string, string> = {
-  flexible: "Free cancellation up to 24 hours before the experience.",
-  moderate: "Free cancellation up to 5 days before the experience.",
-  strict: "50% refund up to 1 week before the experience.",
-  no_refund: "This experience is non-refundable once booked.",
-};
 
 /** White pill stepper with violet controls. */
 function Stepper({
@@ -224,12 +218,6 @@ export default function TicketsClient({
       )
     : [];
   const canContinue = !!selectedDate && maxGuests > 0 && !eventHasPassed;
-  const endDate =
-    selectedDate && event.duration_minutes
-      ? new Date(
-          new Date(selectedDate).getTime() + event.duration_minutes * 60_000,
-        )
-      : null;
 
   const proceed = () => {
     if (!userId) {
@@ -284,8 +272,7 @@ export default function TicketsClient({
                   {formatIST(selectedDate, "EEEE, d MMMM")}
                 </p>
                 <p className="text-sm text-white/55">
-                  {formatIST(selectedDate, "h:mm a")}
-                  {endDate && ` – ${formatIST(endDate, "h:mm a")}`}
+                  {formatISTTimeRange(selectedDate, event.duration_minutes)}
                 </p>
               </div>
               <Link
@@ -414,8 +401,7 @@ export default function TicketsClient({
           )}
 
           <p className="mt-8 text-[13px] leading-5 text-white/50">
-            {CANCELLATION[event.cancellation_policy ?? ""] ??
-              "Standard cancellation policy applies."}
+            {cancellationCopy(event.cancellation_policy)}
           </p>
 
           <StickyAction>

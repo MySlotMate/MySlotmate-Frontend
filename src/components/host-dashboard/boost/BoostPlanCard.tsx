@@ -17,6 +17,7 @@ import {
   useAcceptPlanBoost,
   useCreatePlanPayment,
   usePlanBoost,
+  useBoostRules,
   usePremium,
   useRequestPlanBoost,
   useStopPlanBoost,
@@ -26,11 +27,9 @@ import type { BoostChannel, EventDTO } from "~/lib/api";
 import { boostBlockers, pct, rupees } from "~/lib/boost";
 import {
   BOOST_PLAN_MOCK,
-  DAILY_BUDGET_STEP_CENTS,
-  MIN_BUDGET_DAYS,
-  MIN_DAILY_BUDGET_CENTS,
   addDays,
   estimatePlan,
+  gstOn,
   feeLines,
   isoDay,
   lastBoostDay,
@@ -263,6 +262,7 @@ function Planner({
 }) {
   const idToken = useIdToken();
   const request = useRequestPlanBoost(idToken);
+  const rules = useBoostRules(idToken);
   const lines = useMemo(() => feeLines(event), [event]);
   const lastDay = lastBoostDay(event);
   const today = isoDay(new Date());
@@ -284,7 +284,7 @@ function Planner({
     budget_from: from,
     budget_until: until,
   };
-  const est = estimatePlan(plan, lastDay);
+  const est = estimatePlan(plan, lastDay, rules);
   const problems = [
     ...est.problems,
     ...(channels.length === 0 ? ["Pick at least one channel."] : []),
@@ -324,15 +324,15 @@ function Planner({
           <input
             type="number"
             inputMode="numeric"
-            min={MIN_DAILY_BUDGET_CENTS / 100}
-            step={DAILY_BUDGET_STEP_CENTS / 100}
+            min={rules.min_daily_budget_cents / 100}
+            step={rules.budget_step_cents / 100}
             value={daily}
             onChange={(e) => setDaily(Number(e.target.value))}
             className={field}
           />
           <span className="text-[11px] text-white/40">
-            At least ₹{MIN_DAILY_BUDGET_CENTS / 100} a day, in steps of ₹
-            {DAILY_BUDGET_STEP_CENTS / 100}
+            At least ₹{rules.min_daily_budget_cents / 100} a day, in steps of ₹
+            {rules.budget_step_cents / 100}
           </span>
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -342,7 +342,7 @@ function Planner({
               value={from}
               onChange={(v) => {
                 setFrom(v);
-                if (v > until) setUntil(addDays(v, MIN_BUDGET_DAYS - 1));
+                if (v > until) setUntil(addDays(v, rules.min_days - 1));
               }}
               min={today}
               max={lastDay ?? undefined}
@@ -418,7 +418,7 @@ function Planner({
           value={`${rupees(est.budget_total_cents)} · ${est.days}d`}
         />
         <Stat
-          label="To pay, with 18% GST"
+          label={`To pay, with ${rules.budget_gst_bps / 100}% GST`}
           value={rupees(est.total_payable_cents)}
         />
       </div>
@@ -489,6 +489,7 @@ export default function BoostPlanCard({
   const { data: boost, isLoading } = usePlanBoost(event.id, idToken);
   const accept = useAcceptPlanBoost(idToken);
   const stop = useStopPlanBoost(idToken);
+  const rules = useBoostRules(idToken);
   const { pay, busy: paying } = usePay();
   const [replanning, setReplanning] = useState(false);
   const [confirmStop, setConfirmStop] = useState(false);
@@ -608,13 +609,13 @@ export default function BoostPlanCard({
           </p>
         )}
         <div className="rounded-2xl border border-[#B724EA]/30 bg-[#B724EA]/[0.08] p-3 text-xs leading-5 text-white/80">
-          You pay {rupees(totalToPay)} now (the ad budget plus 18% GST). It is
-          all spent on your ads and is not refundable, including if the Boost
-          ends early. Myslotmate keeps {pct(top)} or less of each ticket sold
-          while the Boost is live; it comes out of your share and guests pay the
-          same price. If a guest cancels in time for a full refund, its fee is
-          returned. Your refund policy must stay Moderate, Strict or No refunds
-          while the Boost runs.
+          You pay {rupees(totalToPay)} now (the ad budget plus{" "}
+          {rules.budget_gst_bps / 100}% GST). It is all spent on your ads and is
+          not refundable, including if the Boost ends early. Myslotmate keeps{" "}
+          {pct(top)} or less of each ticket sold while the Boost is live; it
+          comes out of your share and guests pay the same price. If a guest
+          cancels in time for a full refund, its fee is returned. Your refund
+          policy must stay Moderate, Strict or No refunds while the Boost runs.
         </div>
         <div className="flex gap-2">
           <button
@@ -746,7 +747,8 @@ export default function BoostPlanCard({
               }
               className={`rounded-full px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 ${GRADIENT}`}
             >
-              Top up {rupees(topUpCents + Math.round(topUpCents * 0.18))}
+              Top up{" "}
+              {rupees(topUpCents + gstOn(topUpCents, rules.budget_gst_bps))}
             </button>
           </div>
         )}

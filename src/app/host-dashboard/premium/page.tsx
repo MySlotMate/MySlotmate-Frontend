@@ -12,7 +12,11 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { FiCheck, FiClock, FiMail, FiTrendingUp, FiZap } from "react-icons/fi";
 import { useIdToken } from "~/hooks/useIdToken";
-import { useApplyPremium, usePremium } from "~/hooks/useBoostPlan";
+import {
+  useApplyPremium,
+  useBoostRules,
+  usePremium,
+} from "~/hooks/useBoostPlan";
 import { BOOST_PLAN_ENABLED, BOOST_PLAN_MOCK, feeBand } from "~/lib/boostPlan";
 import { pct } from "~/lib/boost";
 import { GRADIENT } from "~/components/host-dashboard/boost/parts";
@@ -51,6 +55,7 @@ export default function PremiumPage() {
   const idToken = useIdToken();
   const { data: premium, isLoading, isError } = usePremium(idToken);
   const apply = useApplyPremium(idToken);
+  const rules = useBoostRules(idToken);
   const [note, setNote] = useState("");
 
   if (!BOOST_PLAN_ENABLED)
@@ -200,11 +205,11 @@ export default function PremiumPage() {
           {[
             [
               "Plan it",
-              "Pick a daily ad budget (from ₹500) and the dates. Your manager sends a proposal.",
+              `Pick a daily ad budget (from ₹${rules.min_daily_budget_cents / 100}) and the dates. Your manager sends a proposal.`,
             ],
             [
               "Pay the ad budget",
-              "Paid upfront with 18% GST. All of it goes into your ads, so it isn’t refundable.",
+              `Paid upfront with ${rules.budget_gst_bps / 100}% GST. All of it goes into your ads, so it isn’t refundable.`,
             ],
             [
               "A fee on tickets sold",

@@ -14,7 +14,9 @@ import {
 import {
   BOOST_PLAN_ENABLED,
   BOOST_PLAN_MOCK,
+  DEFAULT_RULES,
   boostPlanApi as api,
+  type BoostRules,
   type CreativePayload,
   type FeeLine,
   type PlanRequestPayload,
@@ -59,6 +61,15 @@ const read = <T>(key: QueryKey, enabled: boolean, fn: () => Promise<T>) => ({
   enabled: BOOST_PLAN_ENABLED && enabled,
   queryFn: fn,
 });
+
+/** The admin's budget rules; the defaults until they load or if they fail. */
+export function useBoostRules(t0: string | null, t = tok(t0)): BoostRules {
+  const { data } = useQuery({
+    ...read(["boostRules", t], !!t, () => api.settings(t!)),
+    staleTime: 5 * 60_000,
+  });
+  return data ?? DEFAULT_RULES;
+}
 
 export const usePremium = (t0: string | null, t = tok(t0)) =>
   useQuery(read(["premium", t], !!t, () => api.getPremium(t!)));

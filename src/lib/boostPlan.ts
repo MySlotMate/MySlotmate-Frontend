@@ -45,14 +45,44 @@ const FEE_BANDS: {
 export const feeBand = (priceCents: number) =>
   FEE_BANDS.find((b) => priceCents <= b.maxCents)!;
 
-export const MIN_DAILY_BUDGET_CENTS = 50_000; // ₹500
-export const DAILY_BUDGET_STEP_CENTS = 10_000; // ₹100
-export const MIN_BUDGET_DAYS = 3;
-export const BUDGET_GST_BPS = 1800;
-export const PAYMENT_WINDOW_DAYS = 7;
+/**
+ * The budget rules and upload limits the admin sets (Boost settings), read
+ * from GET /boost/settings. DEFAULT_RULES only fills in until that loads.
+ */
+export interface BoostRules {
+  min_daily_budget_cents: number;
+  budget_step_cents: number;
+  min_days: number;
+  payment_window_days: number;
+  budget_gst_bps: number;
+  budget_required: boolean;
+  creative_image_max_mb: number;
+  creative_video_max_mb: number;
+  creative_other_max_mb: number;
+  report_max_mb: number;
+}
 
-export const gstOn = (cents: number) =>
-  Math.round((cents * BUDGET_GST_BPS) / 10_000);
+export const DEFAULT_RULES: BoostRules = {
+  min_daily_budget_cents: 50_000, // ₹500
+  budget_step_cents: 10_000, // ₹100
+  min_days: 3,
+  payment_window_days: 7,
+  budget_gst_bps: 1800,
+  budget_required: false,
+  creative_image_max_mb: 20,
+  creative_video_max_mb: 200,
+  creative_other_max_mb: 50,
+  report_max_mb: 50,
+};
+
+export const MIN_DAILY_BUDGET_CENTS = DEFAULT_RULES.min_daily_budget_cents;
+export const DAILY_BUDGET_STEP_CENTS = DEFAULT_RULES.budget_step_cents;
+export const MIN_BUDGET_DAYS = DEFAULT_RULES.min_days;
+export const BUDGET_GST_BPS = DEFAULT_RULES.budget_gst_bps;
+export const PAYMENT_WINDOW_DAYS = DEFAULT_RULES.payment_window_days;
+
+export const gstOn = (cents: number, bps = BUDGET_GST_BPS) =>
+  Math.round((cents * bps) / 10_000);
 
 /** YYYY-MM-DD in India time. */
 export function isoDay(d: Date) {
@@ -136,6 +166,7 @@ export function lastBoostDay(event: EventDTO): string | null {
 export function estimatePlan(
   plan: BudgetPlan,
   lastDay: string | null,
+  rules: BoostRules = DEFAULT_RULES,
 ): PlanEstimate {
   const problems: string[] = [];
   const today = isoDay(new Date());
@@ -143,20 +174,22 @@ export function estimatePlan(
     plan.budget_from && plan.budget_until
       ? Math.max(0, daysBetween(plan.budget_from, plan.budget_until))
       : 0;
-  if (plan.daily_budget_cents < MIN_DAILY_BUDGET_CENTS)
+  if (plan.daily_budget_cents < rules.min_daily_budget_cents)
     problems.push(
-      `The daily budget is at least ₹${MIN_DAILY_BUDGET_CENTS / 100}.`,
+      `The daily budget is at least ₹${rules.min_daily_budget_cents / 100}.`,
     );
-  if (plan.daily_budget_cents % DAILY_BUDGET_STEP_CENTS !== 0)
-    problems.push(`Use steps of ₹${DAILY_BUDGET_STEP_CENTS / 100}.`);
+  if (plan.daily_budget_cents % rules.budget_step_cents !== 0)
+    problems.push(`Use steps of ₹${rules.budget_step_cents / 100}.`);
   if (plan.budget_from && plan.budget_from < today)
     problems.push("The start date can't be in the past.");
-  if (days < MIN_BUDGET_DAYS)
-    problems.push(`Run it for at least ${MIN_BUDGET_DAYS} days.`);
+  if (days < rules.min_days)
+    problems.push(
+      `Run it for at least ${rules.min_days} day${rules.min_days === 1 ? "" : "s"}.`,
+    );
   if (lastDay && plan.budget_until > lastDay)
     problems.push("The end date can't be after the event's last date.");
   const total = plan.daily_budget_cents * days;
-  const gst = gstOn(total);
+  const gst = gstOn(total, rules.budget_gst_bps);
   return {
     days,
     budget_total_cents: total,
@@ -347,12 +380,21 @@ export const CREATIVE_TYPES: {
 ];
 
 /** Why a file can't be uploaded as this type, or null. */
-export function fileProblem(type: CreativeType, file: File): string | null {
+export function fileProblem(
+  type: CreativeType,
+  file: File,
+  rules: BoostRules = DEFAULT_RULES,
+): string | null {
   const t = CREATIVE_TYPES.find((c) => c.value === type)!;
   if (!t.accept.split(",").includes(file.type))
     return `${file.name}: this file type isn't accepted for a ${t.label.toLowerCase()}.`;
   const video = file.type.startsWith("video/");
-  const limit = type === "brand" ? 50 * MB : video ? 200 * MB : 20 * MB;
+  const limit =
+    (type === "brand"
+      ? rules.creative_other_max_mb
+      : video
+        ? rules.creative_video_max_mb
+        : rules.creative_image_max_mb) * MB;
   if (file.size > limit) return `${file.name} is over ${limit / MB} MB.`;
   return null;
 }
@@ -430,6 +472,9 @@ async function putSigned(
 }
 
 const realApi = {
+  /** The admin's budget rules and upload limits. */
+  settings: (t: string) =>
+    data(apiFetch<BoostRules>("/boost/settings", auth(t))),
   getPremium: (t: string) =>
     data(apiFetch<PremiumDTO>("/host/premium", auth(t))),
   applyPremium: (note: string, t: string) =>

@@ -123,6 +123,19 @@ function file(
 }
 
 export const boostPlanMock: BoostPlanApi = {
+  settings: async () =>
+    wait({
+      min_daily_budget_cents: 50_000,
+      budget_step_cents: 10_000,
+      min_days: 3,
+      payment_window_days: 7,
+      budget_gst_bps: 1800,
+      budget_required: false,
+      creative_image_max_mb: 20,
+      creative_video_max_mb: 200,
+      creative_other_max_mb: 50,
+      report_max_mb: 50,
+    }),
   getPremium: async () => wait(load().premium),
 
   applyPremium: async () => {

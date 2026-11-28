@@ -18,6 +18,7 @@ import {
 import { useIdToken } from "~/hooks/useIdToken";
 import {
   useApproveCreative,
+  useBoostRules,
   useDeleteCreative,
   usePlanCreatives,
   useRequestCreativeChanges,
@@ -74,6 +75,7 @@ export default function BoostCreatives({ boost }: { boost: PlanBoostDTO }) {
   const approve = useApproveCreative(idToken);
   const changes = useRequestCreativeChanges(idToken);
   const remove = useDeleteCreative(idToken);
+  const rules = useBoostRules(idToken);
   const [type, setType] = useState<CreativeType>("reel");
   const [files, setFiles] = useState<File[]>([]);
   const [caption, setCaption] = useState("");
@@ -88,7 +90,7 @@ export default function BoostCreatives({ boost }: { boost: PlanBoostDTO }) {
   const pick = (list: FileList | null) => {
     if (!list) return;
     const chosen = Array.from(list).slice(0, t.maxFiles);
-    const bad = chosen.map((f) => fileProblem(type, f)).filter(Boolean);
+    const bad = chosen.map((f) => fileProblem(type, f, rules)).filter(Boolean);
     if (bad.length) {
       toast.error(bad[0]);
       return;

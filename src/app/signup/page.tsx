@@ -178,7 +178,7 @@ export default function SignUpPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/assets/brand/logo-horizontal-white.png"
-                  alt="MySlotMate"
+                  alt="Myslotmate"
                   width={1048}
                   height={209}
                   className="h-8 w-auto"

@@ -154,7 +154,7 @@ export function VerifyToEarnCard({
     { label: "Phone number verified", done: Boolean(isPhoneVerified) },
     { label: "Aadhaar verified", done: Boolean(isIdentityVerified) },
     { label: "Host application sent", done: submitted },
-    { label: "Approved by MySlotMate", done: false },
+    { label: "Approved by Myslotmate", done: false },
   ];
   const done = steps.filter((s) => s.done).length;
 

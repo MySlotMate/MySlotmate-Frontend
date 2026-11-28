@@ -75,13 +75,13 @@ function trailFor(path: string): Crumb[] {
   return crumbs;
 }
 
-/** "Dank Curry — Host in Guwahati | MySlotMate" → "Dank Curry". */
+/** "Dank Curry — Host in Guwahati | Myslotmate" → "Dank Curry". */
 function titleLabel() {
   const t = document.title
     .split(" | ")[0]
     ?.split(/ [—–-] /)[0]
     ?.trim();
-  return t && t !== "MySlotMate" ? t : null;
+  return t && t !== "Myslotmate" ? t : null;
 }
 
 export default function Breadcrumbs({

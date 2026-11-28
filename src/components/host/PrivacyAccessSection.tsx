@@ -51,7 +51,7 @@ const CHOICES: { key: WhoCanBook; title: string; desc: string }[] = [
   {
     key: "anyone",
     title: "Anyone",
-    desc: "Anyone on MySlotMate can find and book it.",
+    desc: "Anyone on Myslotmate can find and book it.",
   },
   {
     key: "code",

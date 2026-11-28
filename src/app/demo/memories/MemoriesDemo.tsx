@@ -327,7 +327,7 @@ export default function MemoriesDemo() {
               accounts={[
                 {
                   id: "demo-2",
-                  name: "MySlotMate Studio",
+                  name: "Myslotmate Studio",
                   email: "studio@example.com",
                   phone: null,
                   photo: null,

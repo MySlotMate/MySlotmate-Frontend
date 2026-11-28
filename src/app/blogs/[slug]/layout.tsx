@@ -43,7 +43,7 @@ const describe = (blog: PublicBlog) =>
   clamp(
     blog.description ??
       blog.content ??
-      `Read ${blog.title} on MySlotMate Stories.`,
+      `Read ${blog.title} on Myslotmate Stories.`,
   );
 
 export async function generateMetadata({
@@ -62,7 +62,7 @@ export async function generateMetadata({
     alternates: { canonical: `/blogs/${slug}` },
     openGraph: {
       type: "article",
-      title: `${blog.title} | MySlotMate`,
+      title: `${blog.title} | Myslotmate`,
       description,
       url: `/blogs/${slug}`,
       publishedTime: blog.published_at ?? undefined,
@@ -96,7 +96,7 @@ export default async function BlogDetailLayout({
         dateModified: blog.updated_at ?? blog.published_at ?? undefined,
         author: {
           "@type": blog.author_name ? "Person" : "Organization",
-          name: blog.author_name?.trim() ? blog.author_name : "MySlotMate",
+          name: blog.author_name?.trim() ? blog.author_name : "Myslotmate",
         },
         publisher: { "@id": `${SITE_URL}/#organization` },
         mainEntityOfPage: `${SITE_URL}/blogs/${slug}`,

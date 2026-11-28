@@ -50,11 +50,11 @@ export default function HomeSidebar({
     <>
       <header className="sticky top-0 z-[210] hidden border-b border-white/[0.06] bg-[#080914]/80 font-[family-name:var(--font-inter)] backdrop-blur-xl md:block">
         <div className="mx-auto flex h-[68px] w-full max-w-[1280px] items-center gap-6 px-6 lg:px-10">
-          <Link href="/" aria-label="MySlotMate home" className="shrink-0">
+          <Link href="/" aria-label="Myslotmate home" className="shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/logo-horizontal-white.png"
-              alt="MySlotMate"
+              alt="Myslotmate"
               width={1048}
               height={209}
               className="h-7 w-auto"

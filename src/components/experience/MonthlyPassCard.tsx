@@ -209,7 +209,7 @@ export default function MonthlyPassCard({
         key: order.key_id,
         amount: order.amount_cents,
         currency: order.currency ?? "INR",
-        name: "MySlotMate",
+        name: "Myslotmate",
         description: "Monthly Pass",
         order_id: order.order_id,
         handler: (response: RazorpayResponse) => {

@@ -119,7 +119,7 @@ function usePay() {
         key: order.key_id,
         amount: order.amount_cents,
         currency: order.currency,
-        name: "MySlotMate",
+        name: "Myslotmate",
         description: "Boost ad budget",
         order_id: order.order_id,
         theme: { color: "#A020F0" },
@@ -228,7 +228,7 @@ function Locked({
               ? `Your Premium application wasn’t approved: ${reason}`
               : status === "removed" && reason
                 ? `Premium was switched off on your account: ${reason}`
-                : "Premium makes MySlotMate your marketing partner. It’s free to join; you pay only for the ads you choose to run and a fee on the tickets they sell."}
+                : "Premium makes Myslotmate your marketing partner. It’s free to join; you pay only for the ads you choose to run and a fee on the tickets they sell."}
           </p>
           <ul className="space-y-1.5 text-sm text-white/75">
             {PREMIUM_PERKS.map((p) => (
@@ -610,7 +610,7 @@ export default function BoostPlanCard({
         <div className="rounded-2xl border border-[#B724EA]/30 bg-[#B724EA]/[0.08] p-3 text-xs leading-5 text-white/80">
           You pay {rupees(totalToPay)} now (the ad budget plus 18% GST). It is
           all spent on your ads and is not refundable, including if the Boost
-          ends early. MySlotMate keeps {pct(top)} or less of each ticket sold
+          ends early. Myslotmate keeps {pct(top)} or less of each ticket sold
           while the Boost is live; it comes out of your share and guests pay the
           same price. If a guest cancels in time for a full refund, its fee is
           returned. Your refund policy must stay Moderate, Strict or No refunds

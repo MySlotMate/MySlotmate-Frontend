@@ -235,12 +235,12 @@ function LegacyBoostCard({
           <RateRows rows={rows} />
           {b.admin_note && (
             <p className="rounded-2xl bg-white/[0.04] px-3 py-2 text-sm whitespace-pre-line text-white/80">
-              <span className="text-white/50">From the MySlotMate team: </span>
+              <span className="text-white/50">From the Myslotmate team: </span>
               {b.admin_note}
             </p>
           )}
           <div className="rounded-2xl border border-[#B724EA]/30 bg-[#B724EA]/[0.08] p-3 text-xs leading-5 text-white/80">
-            MySlotMate keeps {pct(top)} or less of each ticket sold while the
+            Myslotmate keeps {pct(top)} or less of each ticket sold while the
             Boost is live, from go-live until it ends or you stop it. The
             commission comes out of your share; guests pay the same price. If a
             guest cancels in time for a full refund, its commission is returned.

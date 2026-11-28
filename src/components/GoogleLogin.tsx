@@ -314,7 +314,7 @@ export default function GoogleLogin({
             <div className="relative">
               <Image
                 src="/assets/brand/logo-horizontal-white.png"
-                alt="MySlotMate"
+                alt="Myslotmate"
                 width={1048}
                 height={209}
                 priority

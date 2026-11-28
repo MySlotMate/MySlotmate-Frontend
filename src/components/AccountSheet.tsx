@@ -491,7 +491,7 @@ export default function AccountSheet({
               href="/about"
               onClick={onClose}
               icon={<Info className={ICON} />}
-              label="About MySlotMate"
+              label="About Myslotmate"
             />
             <Row
               href="/blogs"

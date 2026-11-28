@@ -34,7 +34,7 @@ const cover = (b: BlogDTO) => b.cover_image_url ?? null;
 function Author({ blog }: { blog: BlogDTO }) {
   const name = blog.author_name?.trim()
     ? blog.author_name.trim()
-    : "MySlotMate Team";
+    : "Myslotmate Team";
   return (
     <span className="flex min-w-0 items-center gap-2.5">
       <span className="font-outfit grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#7B2FFF] to-[#BF00FF] text-[13px] font-bold text-white">

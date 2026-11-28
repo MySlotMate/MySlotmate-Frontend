@@ -266,18 +266,18 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
     <aside className="fixed inset-y-0 left-0 z-[210] hidden w-[76px] flex-col border-r border-white/[0.06] bg-[#0A0B17] md:flex xl:w-[248px]">
       <div className="flex shrink-0 flex-col items-center gap-3 py-4 xl:h-[72px] xl:flex-row xl:gap-3 xl:px-4 xl:py-0">
         <BackButton />
-        {/* The logo always goes to the MySlotMate homepage. */}
-        <Link href="/" aria-label="MySlotMate home">
+        {/* The logo always goes to the Myslotmate homepage. */}
+        <Link href="/" aria-label="Myslotmate home">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/brand/logo-mark.png"
-            alt="MySlotMate"
+            alt="Myslotmate"
             className="h-9 w-9 xl:hidden"
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/assets/brand/logo-horizontal-white.png"
-            alt="MySlotMate"
+            alt="Myslotmate"
             className="hidden h-7 w-auto xl:block"
           />
         </Link>
@@ -397,13 +397,13 @@ export default function HostShell({ children }: { children: React.ReactNode }) {
       <BackButton className="-ml-1" />
       <Link
         href="/"
-        aria-label="MySlotMate home"
+        aria-label="Myslotmate home"
         className="flex min-w-0 flex-1 items-center gap-2"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/assets/brand/logo-horizontal-white.png"
-          alt="MySlotMate"
+          alt="Myslotmate"
           className="h-6 w-auto"
         />
         <span className="rounded-full bg-[#A020F0]/20 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-[#D8B4FE] uppercase">

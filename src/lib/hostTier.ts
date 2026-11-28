@@ -63,6 +63,6 @@ const OFF_PLATFORM_PAYMENT = [
 export function findOffPlatformPayment(text: string): string | null {
   const plain = text.replace(/<[^>]+>/g, " ");
   return OFF_PLATFORM_PAYMENT.some((rx) => rx.test(plain))
-    ? "Free events can't include phone numbers, UPI IDs or payment links. Guests should never pay outside MySlotMate."
+    ? "Free events can't include phone numbers, UPI IDs or payment links. Guests should never pay outside Myslotmate."
     : null;
 }

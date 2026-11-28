@@ -178,7 +178,7 @@ export default function HostScanPage() {
         // Venues are full of unrelated QR codes: say so instead of erroring.
         setResult({
           verdict: "not_found",
-          message: "That's not a MySlotMate ticket.",
+          message: "That's not a Myslotmate ticket.",
           checked_in_count: 0,
           remaining: 0,
           just_checked_in: 0,

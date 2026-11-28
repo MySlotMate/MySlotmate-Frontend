@@ -9,12 +9,12 @@ import { HOST_GUIDE } from "~/lib/hostGuide";
 export const metadata: Metadata = {
   title: "Host Guide",
   description:
-    "How to host on MySlotMate: create experiences, sell tickets, use codes, check guests in, get paid, boost your event and download your statements.",
+    "How to host on Myslotmate: create experiences, sell tickets, use codes, check guests in, get paid, boost your event and download your statements.",
   alternates: { canonical: "/host-guide" },
   openGraph: {
-    title: "Host Guide | MySlotMate",
+    title: "Host Guide | Myslotmate",
     description:
-      "Everything a MySlotMate host needs, step by step: experiences, tickets, codes, check-in, payouts, Marketing Boost and invoices.",
+      "Everything a Myslotmate host needs, step by step: experiences, tickets, codes, check-in, payouts, Marketing Boost and invoices.",
     url: "/host-guide",
   },
 };
@@ -32,7 +32,7 @@ export default function HostGuidePage() {
           Host Guide
         </h1>
         <p className="mt-3 text-sm leading-7 text-[#A5A8C3] sm:text-base">
-          Everything you can do as a MySlotMate host, step by step: from your
+          Everything you can do as a Myslotmate host, step by step: from your
           first experience to getting paid, promoting your events and
           downloading your statements.
         </p>

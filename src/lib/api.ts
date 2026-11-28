@@ -581,7 +581,7 @@ export interface PublicHostProfileDTO {
   is_professional: boolean;
   /**
    * Hosting tier, once the backend sends it. "unverified" = a free host who
-   * hasn't been approved; MySlotMate labels their events as community events.
+   * hasn't been approved; Myslotmate labels their events as community events.
    */
   host_tier?: "unverified" | "community" | "professional" | null;
   expertise_tags: string[];
@@ -2259,7 +2259,7 @@ export interface PayoutEligibilityDTO {
   paused_until: string | null;
   /** True after a 3rd strike in 12 months, until ops clears it. */
   boost_blocked: boolean;
-  /** Owed to MySlotmate after a cancellation; blocks Boost and weekly payouts. */
+  /** Owed to Myslotmate after a cancellation; blocks Boost and weekly payouts. */
   recovery_balance_cents: number;
   /** Event Boost pilot: only invited hosts can request a Boost. */
   boost_invited?: boolean;
@@ -2311,7 +2311,7 @@ export interface BoostDTO {
   rates: BoostRateDTO[];
   /** First per-ticket reason (older screens); see rates[].reason. */
   topup_reason: string | null;
-  /** The MySlotMate team's note with the proposal. */
+  /** The Myslotmate team's note with the proposal. */
   admin_note?: string | null;
   decline_reason: string | null;
   goal_text: string | null;
@@ -3212,7 +3212,7 @@ export async function downloadFeeDocument(doc: FeeDocumentDTO) {
   const url = URL.createObjectURL(res.data);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `MySlotMate-${doc.number.replaceAll("/", "-")}.pdf`;
+  a.download = `Myslotmate-${doc.number.replaceAll("/", "-")}.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -3230,7 +3230,7 @@ export async function downloadHostStatement(month: string) {
   const url = URL.createObjectURL(res.data);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `MySlotMate-statement-${month}.pdf`;
+  a.download = `Myslotmate-statement-${month}.pdf`;
   document.body.appendChild(a);
   a.click();
   a.remove();

@@ -2,7 +2,7 @@
 
 /**
  * Premium Hosts (PRD: Premium Host program). Free for now, by approval: it
- * makes MySlotMate the host's marketing partner and unlocks Boost. Shows what
+ * makes Myslotmate the host's marketing partner and unlocks Boost. Shows what
  * Premium includes, how Boost is charged, and the host's status, with the
  * application form when they haven't joined.
  */
@@ -88,7 +88,7 @@ export default function PremiumPage() {
           Premium Hosts
         </h1>
         <p className="mt-1 text-sm text-[#A5A8C3]">
-          MySlotMate as your marketing partner. Free to join; Boost is unlocked
+          Myslotmate as your marketing partner. Free to join; Boost is unlocked
           for Premium hosts.
         </p>
 

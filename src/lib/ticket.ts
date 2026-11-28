@@ -337,7 +337,7 @@ function buildPdfDocument(doc: any, t: TicketData, img: TicketImages) {
     );
   } else {
     doc.setFontSize(11);
-    doc.text("MySlotMate", x0 + PAD, y0 + 11);
+    doc.text("Myslotmate", x0 + PAD, y0 + 11);
   }
   doc.setFont("helvetica", "bold");
   doc.setFontSize(24);
@@ -397,7 +397,7 @@ function buildPdfDocument(doc: any, t: TicketData, img: TicketImages) {
   value(venueLines, x0 + PAD, venueY);
   label("GUESTS", x0 + PAD, guestsY);
   value(
-    `${t.guests} guest${t.guests === 1 ? "" : "s"} - MySlotMate Pass`,
+    `${t.guests} guest${t.guests === 1 ? "" : "s"} - Myslotmate Pass`,
     x0 + PAD,
     guestsY,
   );

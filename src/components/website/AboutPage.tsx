@@ -11,7 +11,7 @@ import StarField from "./about/StarField";
 /*
  * The About page is one story told in the night sky:
  * millions of stars are millions of moments around us we never notice;
- * MySlotMate connects the dots into one place; showing up turns a star into
+ * Myslotmate connects the dots into one place; showing up turns a star into
  * a memory. The fixed StarField stays behind every chapter.
  */
 
@@ -35,7 +35,7 @@ const UNSEEN_PHOTOS = [
   "/Event Photos/plate-to-fame/IMG-20260621-WA0069.webp",
 ];
 
-/** Chapter 2: the constellation that draws the MySlotMate "M". */
+/** Chapter 2: the constellation that draws the Myslotmate "M". */
 const NODES = {
   a: [60, 300],
   b: [150, 70],
@@ -65,7 +65,7 @@ const NODE_LABELS: {
   { node: "f", text: "You", dx: 0, dy: 34, anchor: "middle" },
 ];
 
-/** Chapter 3: real photos from MySlotMate events. */
+/** Chapter 3: real photos from Myslotmate events. */
 const PHOTOS = [
   ["/Event Photos/sip-and-paint/sip-and-paint.webp", "Sip & Paint"],
   ["/Event Photos/plate-to-fame/IMG-20260621-WA0023.webp", "Plate to Fame"],
@@ -229,7 +229,7 @@ function Star({ className = "" }: { className?: string }) {
 const H2 =
   "font-outfit msm-r mt-5 text-[clamp(32px,4.2vw,56px)] leading-[1.06] font-normal tracking-tight text-balance";
 
-/** Public About page: the MySlotMate story, told in the night sky. */
+/** Public About page: the Myslotmate story, told in the night sky. */
 export default function AboutPage() {
   return (
     <div className="relative isolate flex min-h-screen w-full flex-col bg-[#080914] font-[family-name:var(--font-inter)] text-white">
@@ -243,7 +243,7 @@ export default function AboutPage() {
         {/* Look up */}
         <section className="flex min-h-[calc(100svh-80px)] flex-col items-center justify-center px-5 pb-16 text-center md:px-10">
           <p className="msm-rise text-xs font-bold tracking-[0.2em] text-[#D8B4FE] uppercase">
-            About MySlotMate
+            About Myslotmate
           </p>
           <h1
             className="font-outfit msm-rise mt-6 max-w-[14ch] text-[clamp(44px,7vw,100px)] leading-[1] font-light tracking-[-0.035em] text-balance"
@@ -424,7 +424,7 @@ export default function AboutPage() {
           <Reveal>
             <Chapter n="04" title="Connected" />
             <h2 className={H2} style={delay(0.1)}>
-              MySlotMate connects the dots.
+              Myslotmate connects the dots.
             </h2>
             <p
               className="msm-r mt-5 text-[17px] leading-relaxed text-[#A5A8C3]"
@@ -440,7 +440,7 @@ export default function AboutPage() {
               viewBox="0 0 520 340"
               className="w-full overflow-visible"
               role="img"
-              aria-label="A constellation in the shape of the MySlotMate M, linking experiences, communities, professionals and you"
+              aria-label="A constellation in the shape of the Myslotmate M, linking experiences, communities, professionals and you"
             >
               <defs>
                 <radialGradient id="msm-node-glow">
@@ -529,7 +529,7 @@ export default function AboutPage() {
                           src={src}
                           alt={
                             copy === 0
-                              ? `People at a MySlotMate ${caption} event`
+                              ? `People at a Myslotmate ${caption} event`
                               : ""
                           }
                           loading="lazy"

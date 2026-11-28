@@ -608,7 +608,7 @@ function BookingContent({ eventId }: { eventId: string }) {
         key: orderData.key_id,
         amount: orderData.amount_cents,
         currency: orderData.currency ?? "INR",
-        name: "MySlotMate",
+        name: "Myslotmate",
         description: `Booking: ${event?.title}`,
         order_id: orderData.order_id,
         handler: (response: RazorpayResponse) => {

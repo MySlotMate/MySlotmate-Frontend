@@ -5,12 +5,12 @@ import { SupportBreadcrumb, SupportPageShell } from "~/components/support";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How MySlotMate collects, uses, shares and protects your personal information across our website and mobile app.",
+    "How Myslotmate collects, uses, shares and protects your personal information across our website and mobile app.",
   alternates: { canonical: "/privacy" },
   openGraph: {
-    title: "Privacy Policy | MySlotMate",
+    title: "Privacy Policy | Myslotmate",
     description:
-      "How MySlotMate collects, uses, shares and protects your personal information.",
+      "How Myslotmate collects, uses, shares and protects your personal information.",
     url: "/privacy",
   },
 };
@@ -174,9 +174,9 @@ export default function PrivacyPolicyPage() {
           Privacy Policy
         </h1>
         <p className="mt-3 text-[#A5A8C3]">
-          This policy explains what MySlotMate collects, why, who we share it
-          with, and the choices you have. It covers the MySlotMate website and
-          the MySlotMate Android app.
+          This policy explains what Myslotmate collects, why, who we share it
+          with, and the choices you have. It covers the Myslotmate website and
+          the Myslotmate Android app.
         </p>
         <p className="mt-2 text-sm text-[#A5A8C3]">
           Last updated {LAST_UPDATED}
@@ -186,7 +186,7 @@ export default function PrivacyPolicyPage() {
       <div className="space-y-10">
         <Section id="who-we-are" title="Who we are">
           <p>
-            MySlotMate is a platform for discovering and booking local
+            Myslotmate is a platform for discovering and booking local
             experiences, run by Moodverse Private Limited. Where this policy
             says &quot;we&quot; or &quot;us&quot;, it means that company, which
             is the controller of the personal information described here.
@@ -209,7 +209,7 @@ export default function PrivacyPolicyPage() {
 
         <Section
           id="what-we-record"
-          title="What we record as you use MySlotMate"
+          title="What we record as you use Myslotmate"
         >
           <DataTable rows={collectedAutomatically} />
           <p>
@@ -222,7 +222,7 @@ export default function PrivacyPolicyPage() {
         <Section id="payments" title="Payments">
           <p>
             Card, UPI and bank details are entered directly with our payment
-            providers and never reach MySlotMate&apos;s servers. What we store
+            providers and never reach Myslotmate&apos;s servers. What we store
             is the outcome: the amount, the status, and a reference number from
             the provider, which we need for your wallet balance, host payouts,
             refunds and our own accounting obligations.
@@ -334,7 +334,7 @@ export default function PrivacyPolicyPage() {
 
         <Section id="children" title="Children">
           <p>
-            MySlotMate is not intended for anyone under 18, and we do not
+            Myslotmate is not intended for anyone under 18, and we do not
             knowingly collect information from children. If you believe a child
             has created an account, write to us and we will remove it.
           </p>

@@ -1082,12 +1082,12 @@ function EarningsContent() {
                     You keep <b className="font-semibold">{hostPercent}%</b> of
                     each ticket price
                     {platformFeePercent > 0 &&
-                      `; ${platformFeePercent}% goes to MySlotmate`}
+                      `; ${platformFeePercent}% goes to Myslotmate`}
                     .
                   </p>
                   <p className="mt-2 text-xs leading-5 text-[#777B98]">
                     Guests pay the platform fee on top at checkout, and
-                    MySlotmate pays the GST on it. Tax deductions (GST TCS,
+                    Myslotmate pays the GST on it. Tax deductions (GST TCS,
                     income tax TDS) apply only if you&apos;re GST-registered or
                     sell over ₹5 lakh a year, and are credited back to you.
                   </p>

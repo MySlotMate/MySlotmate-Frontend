@@ -42,7 +42,7 @@ export default function HostApplicationSubmittedModal({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/logo-mark.png"
-              alt="MySlotMate"
+              alt="Myslotmate"
               className="h-9 w-9 object-contain"
             />
           </div>

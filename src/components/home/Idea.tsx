@@ -37,7 +37,7 @@ const Idea = () => {
 
         <article className="rounded-3xl border border-white/10 bg-[#121426] p-5 shadow-[0_14px_32px_rgba(77,140,190,0.08)]">
           <h3 className="text-base font-bold text-white">
-            The Idea Behind MySlotMate
+            The Idea Behind Myslotmate
           </h3>
           <p className="mt-1 text-sm text-[#A5A8C3]">
             Find your kind of people for real-world experiences.

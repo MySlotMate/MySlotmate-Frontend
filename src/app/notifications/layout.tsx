@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Notifications | MySlotMate",
+  title: "Notifications | Myslotmate",
   robots: { index: false },
 };
 

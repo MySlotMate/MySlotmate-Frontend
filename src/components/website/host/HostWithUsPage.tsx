@@ -22,14 +22,14 @@ function Eyebrow({ children }: { children: React.ReactNode }) {
 const H2 =
   "font-outfit msm-r mt-5 text-[clamp(32px,4.2vw,54px)] leading-[1.06] font-normal tracking-tight text-balance";
 
-/** What a host pays to use MySlotMate: nothing, line by line. */
+/** What a host pays to use Myslotmate: nothing, line by line. */
 const FREE = [
   ["Sign-up fee", "₹0"],
   ["Listing fee", "₹0"],
   ["Commission on bookings", "0%"],
 ] as const;
 
-/** What people host: real MySlotMate events where we have them. */
+/** What people host: real Myslotmate events where we have them. */
 const KINDS = [
   {
     title: "Workshops",
@@ -91,7 +91,7 @@ const STEPS = [
 const FAQS = [
   {
     q: "Is hosting really free?",
-    a: "Yes. There’s no fee to sign up, no fee to list an event, and no commission taken from your bookings. Hosting on MySlotMate is completely free. If you’re GST-registered or sell over ₹5 lakh a year, the law requires us to deduct a small amount of tax (GST TCS, income tax TDS) from payouts; it’s credited back to you, not kept by us.",
+    a: "Yes. There’s no fee to sign up, no fee to list an event, and no commission taken from your bookings. Hosting on Myslotmate is completely free. If you’re GST-registered or sell over ₹5 lakh a year, the law requires us to deduct a small amount of tax (GST TCS, income tax TDS) from payouts; it’s credited back to you, not kept by us.",
   },
   {
     q: "Who can host?",
@@ -119,7 +119,7 @@ const FAQS = [
   },
 ] as const;
 
-/** Public "Host with us" page: how hosting on MySlotMate works. */
+/** Public "Host with us" page: how hosting on Myslotmate works. */
 export default function HostWithUsPage() {
   return (
     <div className="relative isolate flex min-h-screen w-full flex-col bg-[#080914] font-[family-name:var(--font-inter)] text-white">

@@ -133,7 +133,7 @@ export const boostPlanMock: BoostPlanApi = {
       status: "active",
       applied_at: now(),
       decided_at: now(),
-      manager_name: "Riya (MySlotMate)",
+      manager_name: "Riya (Myslotmate)",
       manager_contact: "partners@myslotmate.com",
       decline_reason: null,
       remove_reason: null,

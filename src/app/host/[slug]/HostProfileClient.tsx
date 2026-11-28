@@ -207,7 +207,7 @@ export default function HostProfileClient({
               className={`mt-0.5 h-4 w-4 shrink-0 ${host.is_identity_verified ? "text-emerald-300" : "text-white/35"}`}
             />
             {host.is_identity_verified
-              ? "Identity verified by MySlotMate"
+              ? "Identity verified by Myslotmate"
               : "Identity not verified yet"}
           </li>
           {beenTo > 0 && (
@@ -219,7 +219,7 @@ export default function HostProfileClient({
           )}
           <li className="flex items-start gap-2.5">
             <Ticket className="mt-0.5 h-4 w-4 shrink-0 text-white/40" />
-            Book and pay only on MySlotMate
+            Book and pay only on Myslotmate
           </li>
         </ul>
       </InfoBlock>

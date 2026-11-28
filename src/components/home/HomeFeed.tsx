@@ -843,7 +843,7 @@ export default function HomeFeed({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/assets/brand/logo-horizontal-white.png"
-          alt="MySlotMate"
+          alt="Myslotmate"
           width={1048}
           height={209}
           className="h-6 w-auto"
@@ -1000,7 +1000,7 @@ export default function HomeFeed({
 
         {topHosts.length > 0 && (
           <section>
-            <SectionHeader title="Hosts on MySlotMate" href="/hosts" />
+            <SectionHeader title="Hosts on Myslotmate" href="/hosts" />
             <div className="-mx-5 flex gap-6 overflow-x-auto px-5 pb-1 [scrollbar-width:none] md:mx-0 md:gap-8 md:px-0 [&::-webkit-scrollbar]:hidden">
               {topHosts.map((h) => {
                 const rating = ratingOf(h.avg_rating_override ?? h.avg_rating);
@@ -1119,7 +1119,7 @@ export default function HomeFeed({
             <div className="order-2 flex flex-col px-5 pt-2 pb-6 md:order-1 md:justify-center md:p-12">
               <span className="flex w-fit items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-[#E9D8FD] uppercase">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#F472B6]" />
-                {isHost ? "For hosts" : "Host on MySlotMate"}
+                {isHost ? "For hosts" : "Host on Myslotmate"}
               </span>
               <h2 className="font-outfit mt-3 text-[22px] leading-[1.15] font-semibold tracking-[-0.02em] text-white md:mt-4 md:text-[40px]">
                 {isHost ? (

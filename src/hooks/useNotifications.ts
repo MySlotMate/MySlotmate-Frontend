@@ -235,7 +235,7 @@ export function useNotifications() {
         title: label,
         body: failed
           ? `${rupees(p.amount_cents)} didn't go through. Please try again.`
-          : `${rupees(p.amount_cents)}${p.type === "refund" ? " is back in your wallet." : p.type === "topup" ? " added to your MySlotMate wallet." : " is on its way to your bank."}`,
+          : `${rupees(p.amount_cents)}${p.type === "refund" ? " is back in your wallet." : p.type === "topup" ? " added to your Myslotmate wallet." : " is on its way to your bank."}`,
         at: p.updated_at ?? p.created_at,
         href: "/wallet",
       });

@@ -7,7 +7,7 @@ import { LuBadgeCheck } from "react-icons/lu";
 import { useConnections } from "~/lib/connections";
 
 /**
- * Building blocks for the one profile layout every MySlotMate member gets —
+ * Building blocks for the one profile layout every Myslotmate member gets —
  * explorers and hosts alike. A host's profile is an explorer's profile with
  * hosting sections switched on, so people look the same wherever you meet them.
  */
@@ -38,7 +38,7 @@ export interface Stat {
  * No cover image: most people would never upload one, so it would be a
  * decorative band pushing the useful part (their experiences, the Connect
  * button) below the fold on phones. Experience posters are the visual side
- * of a MySlotMate profile, shown as content instead.
+ * of a Myslotmate profile, shown as content instead.
  *
  * Phones: avatar with the stats beside it, then name, one-line tagline, a
  * two-line bio and the actions; the tabs start right after.

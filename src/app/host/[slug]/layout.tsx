@@ -38,7 +38,7 @@ export async function generateMetadata({
     const description = clamp(
       host.tagline ??
         host.bio ??
-        `Book experiences with ${name} on MySlotMate.`,
+        `Book experiences with ${name} on Myslotmate.`,
     );
 
     return {
@@ -46,7 +46,7 @@ export async function generateMetadata({
       description,
       alternates: { canonical: `/host/${slug}` },
       openGraph: {
-        title: `${title} | MySlotMate`,
+        title: `${title} | Myslotmate`,
         description,
         url: `/host/${slug}`,
         images: host.avatar_url ? [{ url: host.avatar_url }] : undefined,

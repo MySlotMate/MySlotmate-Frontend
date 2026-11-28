@@ -25,7 +25,7 @@ export async function generateMetadata({
     const description = clamp(
       event.hook_line ??
         event.description ??
-        `Book ${event.title} and other unique experiences on MySlotMate.`,
+        `Book ${event.title} and other unique experiences on Myslotmate.`,
     );
 
     return {
@@ -33,7 +33,7 @@ export async function generateMetadata({
       description,
       alternates: { canonical: `/experience/${slug}` },
       openGraph: {
-        title: `${event.title} | MySlotMate`,
+        title: `${event.title} | Myslotmate`,
         description,
         url: `/experience/${slug}`,
         images: event.cover_image_url

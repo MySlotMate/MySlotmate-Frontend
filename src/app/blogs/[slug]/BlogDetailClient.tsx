@@ -253,7 +253,7 @@ export default function BlogDetailClient({
     );
   }
 
-  const authorName = getBlogValue(blog.author_name) || "MySlotMate Team";
+  const authorName = getBlogValue(blog.author_name) || "Myslotmate Team";
   const displayTitle = getBlogValue(blog.title) || "Untitled story";
   const displayCategory = getBlogValue(blog.category);
   const displayDate = formatBlogDate(blog.published_at ?? blog.created_at);

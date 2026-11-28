@@ -90,7 +90,7 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
       setGrantWithdraw(false);
       toast.success(
         res.data?.status === "awaiting_signup"
-          ? "Invitation sent. They're not a host yet, so it will be waiting for them once they join MySlotMate as a host with this email."
+          ? "Invitation sent. They're not a host yet, so it will be waiting for them once they join Myslotmate as a host with this email."
           : "Invitation sent",
       );
       await load();
@@ -188,7 +188,7 @@ export default function CoHostManager({ eventId }: { eventId: string }) {
       </div>
 
       <p className="mb-2 text-xs text-[#777B98]">
-        Use the email they sign in to MySlotMate with. Not on MySlotMate yet?
+        Use the email they sign in to Myslotmate with. Not on Myslotmate yet?
         We&apos;ll email them, and the invite waits until they become a host.
       </p>
 

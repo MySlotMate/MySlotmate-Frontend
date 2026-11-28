@@ -25,7 +25,7 @@ export default function BookingFeeNote() {
     <p className="mt-3 text-sm leading-6 text-[#A5A8C3]">
       Right now guests pay a booking fee of{" "}
       <span className="font-semibold text-white">{amount}</span> (GST included)
-      on top of your price. It goes to MySlotMate, not out of your earnings.
+      on top of your price. It goes to Myslotmate, not out of your earnings.
     </p>
   );
 }

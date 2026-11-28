@@ -76,7 +76,7 @@ export default function WebsiteFooter({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/assets/brand/logo-horizontal-white.png"
-              alt="MySlotMate"
+              alt="Myslotmate"
               width={1048}
               height={209}
               className="h-7 w-fit opacity-90"
@@ -129,7 +129,7 @@ export default function WebsiteFooter({
         </div>
 
         <div className="mt-10 flex flex-col gap-1 border-t border-white/[0.06] pt-5 text-xs text-white/40 sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} MySlotMate</p>
+          <p>© {new Date().getFullYear()} Myslotmate</p>
           <p>A product of Moodverse Private Limited</p>
         </div>
       </div>

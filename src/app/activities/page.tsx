@@ -584,7 +584,7 @@ function MemoryTimeline({
       ))}
       <div className="ml-[5px] flex items-center gap-3 pl-0">
         <span className="-ml-[5px] h-3 w-3 rounded-full bg-[#D8B4FE]" />
-        <p className="text-xs text-white/45">You joined MySlotMate</p>
+        <p className="text-xs text-white/45">You joined Myslotmate</p>
       </div>
     </div>
   );

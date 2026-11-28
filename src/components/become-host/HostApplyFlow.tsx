@@ -743,7 +743,7 @@ export default function HostApplyFlow() {
         </div>
 
         <p className="mt-6 text-center text-xs text-white/40">
-          Verification keeps MySlotMate safe and trusted for everyone.
+          Verification keeps Myslotmate safe and trusted for everyone.
         </p>
       </div>
     );

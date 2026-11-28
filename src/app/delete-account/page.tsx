@@ -5,12 +5,12 @@ import { SupportBreadcrumb, SupportPageShell } from "~/components/support";
 export const metadata: Metadata = {
   title: "Delete Your Account",
   description:
-    "Request deletion of your MySlotMate account and personal data, and see exactly what is removed and what is kept.",
+    "Request deletion of your Myslotmate account and personal data, and see exactly what is removed and what is kept.",
   alternates: { canonical: "/delete-account" },
   openGraph: {
-    title: "Delete Your Account | MySlotMate",
+    title: "Delete Your Account | Myslotmate",
     description:
-      "Request deletion of your MySlotMate account and personal data.",
+      "Request deletion of your Myslotmate account and personal data.",
     url: "/delete-account",
   },
 };
@@ -81,7 +81,7 @@ export default function DeleteAccountPage() {
           Delete your account
         </h1>
         <p className="mt-3 text-[#A5A8C3]">
-          You can ask us to delete your MySlotMate account and the personal
+          You can ask us to delete your Myslotmate account and the personal
           information attached to it. Here is how to do it, and exactly what
           happens afterwards.
         </p>
@@ -94,11 +94,11 @@ export default function DeleteAccountPage() {
             Write to{" "}
             <a
               className="font-semibold text-[#D8B4FE] hover:underline"
-              href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20MySlotMate%20account`}
+              href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20Myslotmate%20account`}
             >
               {CONTACT_EMAIL}
             </a>{" "}
-            with the subject &quot;Delete my MySlotMate account&quot;. Sending
+            with the subject &quot;Delete my Myslotmate account&quot;. Sending
             it from the email address on the account is how we confirm the
             request is really yours.
           </Step>

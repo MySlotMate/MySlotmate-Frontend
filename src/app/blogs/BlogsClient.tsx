@@ -50,7 +50,7 @@ import {
 
 const delay = (s: number) => ({ "--d": `${s}s` }) as React.CSSProperties;
 
-/** Real MySlotMate events, one photo each. */
+/** Real Myslotmate events, one photo each. */
 const MOMENTS = [
   ["/Event Photos/sip-and-paint/sip-and-paint.webp", "Sip & Paint"],
   ["/Event Photos/open-mic/openmic.webp", "Open Mic"],
@@ -777,7 +777,7 @@ export default function BlogsClient({
     }
     if (!backendUserId) {
       toast.error(
-        "This admin account is not linked to a MySlotmate user profile yet. Complete signup once with the admin email, then try again.",
+        "This admin account is not linked to a Myslotmate user profile yet. Complete signup once with the admin email, then try again.",
       );
       return;
     }
@@ -990,7 +990,7 @@ export default function BlogsClient({
             <Reveal className="flex flex-col items-center">
               <p className="msm-r flex items-center gap-3 text-xs font-bold tracking-[0.18em] text-[#D8B4FE] uppercase">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#D8B4FE] shadow-[0_0_10px_#D8B4FE]" />
-                MySlotMate Stories
+                Myslotmate Stories
               </p>
               <h1
                 className="font-outfit msm-r mt-6 max-w-[15ch] text-[clamp(40px,6.4vw,84px)] leading-[1.02] font-light tracking-[-0.03em] text-balance"
@@ -1038,7 +1038,7 @@ export default function BlogsClient({
                     <p className="mt-1 text-sm text-[#A5A8C3]">
                       {editingBlog
                         ? "Update the selected article and save your changes."
-                        : "Write a new article for the MySlotmate community."}
+                        : "Write a new article for the Myslotmate community."}
                     </p>
                   </div>
 
@@ -1446,7 +1446,7 @@ export default function BlogsClient({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
-                    alt={`People at a MySlotMate ${caption} event`}
+                    alt={`People at a Myslotmate ${caption} event`}
                     loading="lazy"
                     className="aspect-[3/4] w-full object-cover transition duration-700 group-hover:scale-105"
                   />

@@ -392,7 +392,7 @@ export default function TicketsClient({
                   This is a community event
                 </p>
                 <p>
-                  The host hasn&apos;t been verified by MySlotMate, so we
+                  The host hasn&apos;t been verified by Myslotmate, so we
                   can&apos;t vouch for it. Never pay or share bank details
                   outside the app, and report the event if anything feels off.
                 </p>

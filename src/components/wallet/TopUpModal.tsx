@@ -138,7 +138,7 @@ export default function TopUpModal({
         key: orderData.key_id,
         amount: orderData.amount_cents,
         currency: orderData.currency ?? "INR",
-        name: "MySlotMate",
+        name: "Myslotmate",
         description: "Wallet Top-up",
         order_id: orderData.order_id,
         handler: (response: RazorpayResponse) => {

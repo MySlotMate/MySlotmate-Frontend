@@ -60,7 +60,7 @@ export default function Preloader() {
             {/* Round logo with gentle float/scale/rotate animation */}
             <img
               src="/assets/brand/app-icon.png"
-              alt="MySlotMate"
+              alt="Myslotmate"
               loading="lazy"
               className="h-24 w-24 transform-gpu rounded-full object-contain drop-shadow-lg md:h-32 md:w-32"
               style={{ animation: "logoFloat 2.6s ease-in-out infinite" }}

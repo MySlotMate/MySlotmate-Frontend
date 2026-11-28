@@ -484,7 +484,7 @@ export default function HostOnSpotBookingModal({
         amount: res.amount_cents ?? 0,
         currency: res.currency ?? "INR",
         order_id: res.order_id ?? "",
-        name: "MySlotMate",
+        name: "Myslotmate",
         description: `On-spot booking — ${eventTitle}`,
         prefill: { name: name.trim(), contact: fullPhone },
         theme: { color: "#A020F0" },

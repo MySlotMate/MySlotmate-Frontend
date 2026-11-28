@@ -1,5 +1,5 @@
 /**
- * The Host Guide: how hosts use MySlotMate, step by step. One source for the
+ * The Host Guide: how hosts use Myslotmate, step by step. One source for the
  * /host-guide page and, later, the dashboard tour and the onboarding deck, so
  * the three never disagree.
  *
@@ -40,7 +40,7 @@ const CURRENT_GUIDE: GuideSection[] = [
     id: "getting-started",
     title: "Getting started",
     summary:
-      "Hosting on MySlotMate is free. Get verified to sell tickets and get paid.",
+      "Hosting on Myslotmate is free. Get verified to sell tickets and get paid.",
     where: { label: "Host dashboard", href: "/host-dashboard" },
     steps: [
       {
@@ -96,7 +96,7 @@ const CURRENT_GUIDE: GuideSection[] = [
       },
     ],
     tips: [
-      "Guests pay your ticket price plus MySlotMate's booking fee. Hosts pay nothing to list.",
+      "Guests pay your ticket price plus Myslotmate's booking fee. Hosts pay nothing to list.",
       "Changed a ticket's price after people booked? Their bookings keep the price they paid.",
     ],
   },
@@ -160,7 +160,7 @@ const CURRENT_GUIDE: GuideSection[] = [
       },
       {
         title: "Messages and Co-hosts",
-        body: "Talk to your guests, and invite co-hosts to help run an event from its edit page, by email. Co-hosts can manage the event; earnings stay with you unless you let them withdraw. Not on MySlotMate yet? They get an email, and the invite waits until they become a host with that email.",
+        body: "Talk to your guests, and invite co-hosts to help run an event from its edit page, by email. Co-hosts can manage the event; earnings stay with you unless you let them withdraw. Not on Myslotmate yet? They get an email, and the invite waits until they become a host with that email.",
       },
     ],
   },
@@ -248,7 +248,7 @@ const CURRENT_GUIDE: GuideSection[] = [
       },
       {
         title: "Your guests' receipts",
-        body: "Guests get a receipt for MySlotMate's booking fee with their booking, by email and in their bookings. You don't need to issue anything for it.",
+        body: "Guests get a receipt for Myslotmate's booking fee with their booking, by email and in their bookings. You don't need to issue anything for it.",
       },
     ],
   },
@@ -274,7 +274,7 @@ const CURRENT_GUIDE: GuideSection[] = [
 
 const PREMIUM_SECTION: GuideSection = {
   id: "premium",
-  title: "Premium Hosts: MySlotMate as your marketing partner",
+  title: "Premium Hosts: Myslotmate as your marketing partner",
   summary:
     "Free to join, by approval. Premium unlocks Boost and gives you a named campaign manager.",
   where: { label: "Premium", href: "/host-dashboard/premium" },

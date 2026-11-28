@@ -11,7 +11,7 @@ import {
 } from "~/lib/api";
 
 /**
- * Connections between people on MySlotMate (phase 1: you connect with hosts,
+ * Connections between people on Myslotmate (phase 1: you connect with hosts,
  * and their upcoming experiences show up first for you).
  *
  * Stored on the backend (/users/me/connections), so they follow you across

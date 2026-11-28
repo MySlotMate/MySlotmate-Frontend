@@ -270,7 +270,7 @@ function HostRow({ host }: { host: PublicHostProfileDTO }) {
             <span className="font-semibold text-amber-200">
               Community event.
             </span>{" "}
-            This host isn&apos;t verified by MySlotMate. Never pay outside the
+            This host isn&apos;t verified by Myslotmate. Never pay outside the
             app, and report anything that feels off.
           </span>
         </p>

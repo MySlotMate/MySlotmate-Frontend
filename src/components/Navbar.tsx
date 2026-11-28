@@ -277,13 +277,13 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
           <Link href="/" className={`flex-shrink-0 ${dark ? "lg:hidden" : ""}`}>
             {dark ? (
               <span className="font-outfit text-2xl font-bold text-white">
-                MySlotMate
+                Myslotmate
               </span>
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src="/assets/brand/logo-horizontal-white.png"
-                alt="MySlotMate"
+                alt="Myslotmate"
                 width={1048}
                 height={209}
                 className="h-8 w-auto"
@@ -488,7 +488,7 @@ export default function Navbar({ dark = false }: { dark?: boolean } = {}) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/assets/brand/logo-horizontal-white.png"
-                alt="MySlotMate"
+                alt="Myslotmate"
                 width={1048}
                 height={209}
                 className="h-7 w-auto"

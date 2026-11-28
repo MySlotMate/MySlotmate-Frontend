@@ -6,7 +6,7 @@ import { BecomeHostButton } from "~/components/become-host";
 import CitySky from "./CitySky";
 import { GRADIENT } from "./shared";
 
-/** Every photo from the community section: real MySlotMate events. */
+/** Every photo from the community section: real Myslotmate events. */
 const MOMENTS = [
   ["/Event Photos/sip-and-paint/sip-and-paint.webp", "Sip & Paint"],
   ["/Event Photos/plate-to-fame/IMG-20260621-WA0023.webp", "Plate to Fame"],
@@ -81,7 +81,7 @@ export default function Hero() {
 
   return (
     <section
-      aria-label="Welcome to MySlotMate"
+      aria-label="Welcome to Myslotmate"
       className="relative isolate flex min-h-[calc(100svh-80px)] w-full flex-col justify-center gap-12 overflow-hidden sm:justify-start sm:gap-10"
     >
       <CitySky />
@@ -122,7 +122,7 @@ export default function Hero() {
         onPointerLeave={() => setPaused(false)}
         role="region"
         aria-roledescription="carousel"
-        aria-label="Photos from MySlotMate community events"
+        aria-label="Photos from Myslotmate community events"
       >
         {MOMENTS.map(([src, caption], i) => {
           const slot = slotOf(i);
@@ -144,7 +144,7 @@ export default function Hero() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={src}
-                  alt={`People at a MySlotMate ${caption} event`}
+                  alt={`People at a Myslotmate ${caption} event`}
                   loading={i < 3 ? "eager" : "lazy"}
                   className="aspect-[4/3] w-full rounded-[4px] object-cover"
                 />

@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 
 /**
- * MySlotMate is a single-market (India) product, so every event scheduling time
+ * Myslotmate is a single-market (India) product, so every event scheduling time
  * is meant to be read and written in India Standard Time, regardless of the
  * viewer's or host's device timezone.
  *

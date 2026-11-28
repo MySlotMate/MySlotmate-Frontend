@@ -3,8 +3,8 @@
 /**
  * Host tax details for the Earnings page (PRD: Payout and tax spec).
  *
- * MySlotmate pays GST on its own guest platform fee, so nothing here is a
- * MySlotmate charge. The only deductions a host can see are the ones the
+ * Myslotmate pays GST on its own guest platform fee, so nothing here is a
+ * Myslotmate charge. The only deductions a host can see are the ones the
  * government requires us to make for them, and both are credited back:
  *   - GST TCS (Section 52 CGST Act), 0.5%, only if the host has a GSTIN
  *   - Income-tax TDS (Section 194-O), 0.1%, only for companies/firms, or
@@ -114,7 +114,7 @@ export function TaxDetailsCard({
         <div>
           <h3 className="text-sm font-semibold text-white">Tax details</h3>
           <p className="mt-1 text-xs text-[#A5A8C3]">
-            Needed by law to send your earnings. MySlotmate never charges you a
+            Needed by law to send your earnings. Myslotmate never charges you a
             fee for hosting.
           </p>
         </div>
@@ -209,7 +209,7 @@ export function TaxDetailsCard({
       )}
 
       <p className="mt-4 text-[11px] leading-4 text-[#777B98]">
-        MySlotmate pays GST on its own platform fee. TCS applies only if
+        Myslotmate pays GST on its own platform fee. TCS applies only if
         you&apos;re GST-registered; TDS only for businesses or once you sell
         over ₹5 lakh in a year. Both are credited back to you.
       </p>
@@ -440,8 +440,8 @@ export function PayoutBreakdownList({
         {row("Paid to your bank", fmt(b.paid_cents), true)}
       </div>
       <p className="text-[11px] text-[#777B98]">
-        MySlotmate pays GST on its own platform fee. Nothing here is a
-        MySlotmate fee unless it says Marketing Boost or Ad cost recovery. Held
+        Myslotmate pays GST on its own platform fee. Nothing here is a
+        Myslotmate fee unless it says Marketing Boost or Ad cost recovery. Held
         amounts are yours and are paid after the event.
       </p>
     </div>

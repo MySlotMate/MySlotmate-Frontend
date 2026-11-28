@@ -388,7 +388,7 @@ const ShowcaseSections = ({
       overlayTitle: event.title,
       overlaySubtitle: event.location
         ? `In ${event.location}`
-        : "Hosted on MySlotMate",
+        : "Hosted on Myslotmate",
     }));
 
     return mapped.length > 0 ? mapped : FEATURED_FALLBACK_DATA;
@@ -496,7 +496,7 @@ const ShowcaseSections = ({
         copy:
           host.bio ??
           host.tagline ??
-          `${host.first_name} is hosting meaningful local experiences on MySlotMate.`,
+          `${host.first_name} is hosting meaningful local experiences on Myslotmate.`,
         statOne: `${host.total_reviews ?? 0}`,
         statOneLabel: "Reviews",
         statTwo:

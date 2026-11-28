@@ -14,8 +14,8 @@ const appUrl = "https://www.myslotmate.com";
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "MySlotMate | Events & Things to Do in Northeast India",
-    template: "%s | MySlotMate",
+    default: "Myslotmate | Events & Things to Do in Northeast India",
+    template: "%s | Myslotmate",
   },
   description:
     "Workshops, open mics, meetups, treks and one-on-one sessions in Guwahati, Shillong and across Northeast India. Book a slot, or host your own for free.",
@@ -31,12 +31,12 @@ export const metadata: Metadata = {
     "host an event",
     "host events for free",
     "one-on-one sessions",
-    "MySlotMate",
+    "Myslotmate",
   ],
-  applicationName: "MySlotMate",
-  creator: "MySlotMate Team",
-  publisher: "MySlotMate",
-  authors: [{ name: "MySlotMate Team", url: "https://myslotmate.com" }],
+  applicationName: "Myslotmate",
+  creator: "Myslotmate Team",
+  publisher: "Myslotmate",
+  authors: [{ name: "Myslotmate Team", url: "https://myslotmate.com" }],
   generator: "Next.js",
 
   /* Open Graph Tags */
@@ -44,8 +44,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     url: appUrl,
-    siteName: "MySlotMate",
-    title: "MySlotMate | Life happens when you show up.",
+    siteName: "Myslotmate",
+    title: "Myslotmate | Life happens when you show up.",
     description:
       "Events, workshops and meetups across Northeast India, hosted by real people. Find one, step outside, and meet them.",
     images: [
@@ -53,14 +53,14 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "MySlotMate: events and things to do in Northeast India",
+        alt: "Myslotmate: events and things to do in Northeast India",
         type: "image/jpeg",
       },
       {
         url: "/og-image-square.jpg",
         width: 800,
         height: 800,
-        alt: "MySlotMate",
+        alt: "Myslotmate",
         type: "image/jpeg",
       },
     ],
@@ -69,9 +69,9 @@ export const metadata: Metadata = {
   /* Twitter Card Tags */
   twitter: {
     card: "summary_large_image",
-    site: "@MySlotMate",
-    creator: "@MySlotMate",
-    title: "MySlotMate | Life happens when you show up.",
+    site: "@Myslotmate",
+    creator: "@Myslotmate",
+    title: "Myslotmate | Life happens when you show up.",
     description:
       "Events, workshops and meetups across Northeast India, hosted by real people. Find one, step outside, and meet them.",
     images: ["/og-image.jpg"],
@@ -164,11 +164,11 @@ export default function RootLayout({
       {
         "@type": "Organization",
         "@id": `${appUrl}/#organization`,
-        name: "MySlotMate",
+        name: "Myslotmate",
         url: appUrl,
         logo: `${appUrl}/assets/brand/logo-mark.png`,
         description:
-          "MySlotMate is where people across Northeast India find and host events, workshops, meetups and one-on-one sessions.",
+          "Myslotmate is where people across Northeast India find and host events, workshops, meetups and one-on-one sessions.",
         areaServed: [
           "Assam",
           "Meghalaya",
@@ -188,7 +188,7 @@ export default function RootLayout({
       {
         "@type": "WebSite",
         "@id": `${appUrl}/#website`,
-        name: "MySlotMate",
+        name: "Myslotmate",
         url: appUrl,
         inLanguage: "en-IN",
         publisher: { "@id": `${appUrl}/#organization` },
@@ -253,7 +253,7 @@ export default function RootLayout({
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
-        <meta name="apple-mobile-web-app-title" content="MySlotMate" />
+        <meta name="apple-mobile-web-app-title" content="Myslotmate" />
       </head>
       <body className="max-w-screen overflow-x-clip bg-[#080914] text-white">
         <Providers>

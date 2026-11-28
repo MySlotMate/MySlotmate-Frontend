@@ -517,7 +517,7 @@ export default function HostBulkImportModal({
                         <strong className="block">
                           I have collected payment from these guests myself.
                         </strong>
-                        MySlotMate isn&apos;t handling this money, so these
+                        Myslotmate isn&apos;t handling this money, so these
                         bookings won&apos;t add to your earnings or payouts.
                         They&apos;ll be recorded as collected offline.
                       </span>
@@ -676,7 +676,7 @@ export default function HostBulkImportModal({
                       {formatRupees(job.unit_price_cents)} per guest
                     </strong>
                   )}{" "}
-                  These bookings don&apos;t count towards your MySlotMate
+                  These bookings don&apos;t count towards your Myslotmate
                   earnings or payouts.
                 </div>
               )}

@@ -3,12 +3,12 @@ import { type Metadata } from "next";
 export const metadata: Metadata = {
   title: "Help & Support",
   description:
-    "MySlotMate help and support. Find answers about bookings, hosting, payments, and your account, or get in touch with our team.",
+    "Myslotmate help and support. Find answers about bookings, hosting, payments, and your account, or get in touch with our team.",
   alternates: { canonical: "/support" },
   openGraph: {
-    title: "Help & Support | MySlotMate",
+    title: "Help & Support | Myslotmate",
     description:
-      "Find answers about bookings, hosting, payments, and your account on MySlotMate.",
+      "Find answers about bookings, hosting, payments, and your account on Myslotmate.",
     url: "/support",
   },
 };

@@ -449,6 +449,25 @@ export function useCalendarEvents(hostId: string | null) {
  * to hold — without it React Query treats the seed as fetched at epoch, sees it
  * as stale against `staleTime`, and refetches on mount anyway.
  */
+/**
+ * The join link of an online event, for people allowed to join (the host, an
+ * admin, or a guest who booked). Null when the caller may not see it or the
+ * event has none. Ask only when signed in: the API needs a token.
+ */
+export function useEventJoinLink(
+  eventId: string | null | undefined,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: ["event-join-link", eventId ?? ""] as const,
+    queryFn: () => api.getEventJoinLink(eventId!),
+    enabled: !!eventId && enabled,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+    select: (res) => res.data.meeting_link || null,
+  });
+}
+
 export function useEvent(
   eventId: string | null,
   initialData?: api.Envelope<api.EventDTO>,

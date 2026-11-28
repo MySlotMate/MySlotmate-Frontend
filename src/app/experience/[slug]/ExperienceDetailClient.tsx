@@ -17,6 +17,7 @@ import {
   useSaveExperience,
   useUnsaveExperience,
   useEventAvailability,
+  useEventJoinLink,
 } from "~/hooks/useApi";
 import { useStoredAuth } from "~/hooks/useStoredAuth";
 import { useIdToken } from "~/hooks/useIdToken";
@@ -311,10 +312,12 @@ function LocationSection({
               Online experience
             </p>
             <p className="text-sm text-white/55">
-              Join from anywhere on a video call.
+              {meetingLink
+                ? "Join from anywhere on a video call."
+                : "The join link unlocks once you book."}
             </p>
           </div>
-          {meetingLink && (
+          {meetingLink ? (
             <a
               href={meetingLink}
               target="_blank"
@@ -323,6 +326,11 @@ function LocationSection({
             >
               Join
             </a>
+          ) : (
+            <LuLock
+              className="h-4 w-4 shrink-0 text-white/40"
+              aria-hidden="true"
+            />
           )}
         </div>
       ) : (
@@ -540,6 +548,12 @@ export default function ExperienceDetailClient({
   const { data: ratingData } = useEventRating(eventId);
   const { data: availability } = useEventAvailability(eventId);
   const { data: savedStatus } = useIsExperienceSaved(eventId, userId);
+  // The join link comes only to guests who booked (and the host): the event
+  // itself never carries it.
+  const { data: joinLink } = useEventJoinLink(
+    eventId,
+    mounted && !!userId && !!event?.is_online,
+  );
 
   const saveExperience = useSaveExperience();
   const unsaveExperience = useUnsaveExperience();
@@ -852,7 +866,7 @@ export default function ExperienceDetailClient({
               <LocationSection
                 location={event.location}
                 isOnline={event.is_online}
-                meetingLink={event.meeting_link}
+                meetingLink={joinLink}
                 googleMapsUrl={event.google_maps_url}
               />
 

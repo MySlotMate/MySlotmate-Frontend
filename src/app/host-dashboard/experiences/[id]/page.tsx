@@ -20,6 +20,7 @@ import { RichTextEditor } from "~/components/RichTextEditor";
 import {
   useMyHost,
   useEvent,
+  useEventJoinLink,
   useUpdateEvent,
   useUploadFiles,
   usePublishEvent,
@@ -799,6 +800,9 @@ export default function EditEventPage({
   const uploadFiles = useUploadFiles();
   const queryClient = useQueryClient();
 
+  // The meeting link is read on its own (hosts and admins only). Fill the field
+  // when it arrives, unless the host has already typed one.
+  const { data: joinLink } = useEventJoinLink(event?.id, !!event?.is_online);
   // Populate form when event loads
   useEffect(() => {
     if (event) {
@@ -831,7 +835,8 @@ export default function EditEventPage({
         galleryPreviews: event.gallery_urls ?? [],
         isOnline: event.is_online ?? false,
         location: event.location ?? "",
-        meetingLink: event.meeting_link ?? "",
+        // Filled from the join link below: the event never carries it.
+        meetingLink: "",
         googleMapsUrl: event.google_maps_url ?? "",
         durationMinutes: event.duration_minutes ?? 60,
         minGroupSize: event.min_group_size ?? 1,
@@ -900,6 +905,12 @@ export default function EditEventPage({
       });
     }
   }, [event]);
+
+  // After the populate effect, so a cached link is not reset to "" by it.
+  useEffect(() => {
+    if (joinLink)
+      setForm((f) => (f.meetingLink ? f : { ...f, meetingLink: joinLink }));
+  }, [joinLink, event]);
 
   // For a private event, refetch with the owning host_id to load the passkey
   // (the plain event fetch strips it) so the field prefills for re-sharing.

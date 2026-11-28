@@ -1166,7 +1166,8 @@ export interface EventDTO {
   /** When the host is paid for this event; absent means after the event. */
   payout_mode?: PayoutMode | null;
   ai_suggestion: string | null;
-  meeting_link: string | null;
+  /** Never sent by the API any more; read it with getEventJoinLink. */
+  meeting_link?: string | null;
   google_maps_url: string | null;
   status: string;
   published_at: string | null;
@@ -1849,6 +1850,15 @@ export interface EventAttentionItemDTO {
 /** GET /events/{id}/attention — the "Needs attention" list (host or admin). */
 export function getEventAttention(eventId: string) {
   return authedFetch<EventAttentionItemDTO[]>(`/events/${eventId}/attention`);
+}
+
+/**
+ * An online event's join link. The event itself never carries it: the API
+ * answers only the host, an admin or a guest with a confirmed booking (403
+ * for anyone else).
+ */
+export function getEventJoinLink(eventId: string) {
+  return authedFetch<{ meeting_link: string }>(`/events/${eventId}/join`);
 }
 
 export function getEventAttendees(eventId: string, date?: string) {

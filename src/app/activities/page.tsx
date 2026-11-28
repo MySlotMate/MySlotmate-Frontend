@@ -14,6 +14,7 @@ import {
   useCancelBooking,
   useSavedExperiences,
   useUserProfile,
+  useEventJoinLink,
 } from "~/hooks/useApi";
 import * as api from "~/lib/api";
 import {
@@ -103,6 +104,11 @@ function UpcomingCard({
   /** The platform fee receipt, when the booking has one. */
   feeReceipt?: api.FeeDocumentDTO;
 }) {
+  // The event never carries the join link; a confirmed guest asks for it.
+  const { data: joinLink } = useEventJoinLink(
+    event.id,
+    event.is_online && booking.status === "confirmed",
+  );
   return (
     <article className={`flex flex-col overflow-hidden ${CARD}`}>
       <Link
@@ -135,9 +141,9 @@ function UpcomingCard({
           ) : (
             <FiMapPin className="h-3.5 w-3.5 shrink-0" />
           )}
-          {event.is_online && event.meeting_link ? (
+          {event.is_online && joinLink ? (
             <a
-              href={event.meeting_link}
+              href={joinLink}
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#D8B4FE] hover:underline"

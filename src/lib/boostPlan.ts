@@ -6,8 +6,9 @@
  *
  * The backend is the authority. This file holds the types of the PRD's API,
  * the calls to it, and a preview of the same numbers so the host sees the cost
- * while planning. Until the backend serves these routes, `boostPlanApi` runs on
- * an in-browser stand-in (boostPlanMock.ts) so the screens can be used.
+ * while planning. The backend serves every route (myslotmate-backend
+ * docs/premium-and-paid-boost.md); NEXT_PUBLIC_BOOST_PLAN_MOCK="true" swaps in
+ * an in-browser stand-in (boostPlanMock.ts) for trying the screens without it.
  */
 import { env } from "~/env";
 import { apiFetch } from "~/lib/api";
@@ -22,8 +23,8 @@ const flag = (v: "true" | "false" | undefined) =>
 
 /** The paid-budget Boost and Premium. Off in production until the backend ships. */
 export const BOOST_PLAN_ENABLED = flag(env.NEXT_PUBLIC_ENABLE_BOOST_PLAN);
-/** Use the in-browser stand-in instead of the backend. */
-export const BOOST_PLAN_MOCK = flag(env.NEXT_PUBLIC_BOOST_PLAN_MOCK);
+/** Test mode, only when asked for: the backend serves every route now. */
+export const BOOST_PLAN_MOCK = env.NEXT_PUBLIC_BOOST_PLAN_MOCK === "true";
 
 // ─── Rules (preview only; the backend decides) ──────────────────────────────
 

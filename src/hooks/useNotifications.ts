@@ -45,6 +45,15 @@ export interface AppNotification {
   pinned?: boolean;
 }
 
+/** One Boost or Premium update from GET /host/boost-activity. */
+interface BoostActivity {
+  id: string;
+  title: string;
+  body: string;
+  at: string;
+  href: string;
+}
+
 const SEEN_KEY = "msm_notifications_seen_at";
 const SEEN_EVENT = "msm-notifications-seen";
 
@@ -103,6 +112,20 @@ export function useNotifications() {
     queryFn: () => api.listSharedEvents(idToken!),
     enabled: Boolean(hostId && idToken),
     staleTime: 60 * 1000,
+    select: (res) => res.data ?? [],
+  });
+
+  // Boost and Premium: what the team did (proposal sent or revised, declined,
+  // live, ended, payments, creatives, reports, Premium decisions).
+  const { data: boostActivity } = useQuery({
+    queryKey: ["boost-activity", idToken ? "me" : null],
+    queryFn: () =>
+      api.apiFetch<BoostActivity[]>("/host/boost-activity", {
+        headers: { Authorization: `Bearer ${idToken}` },
+      }),
+    enabled: Boolean(hostId && idToken),
+    staleTime: 60 * 1000,
+    retry: false,
     select: (res) => res.data ?? [],
   });
 
@@ -305,6 +328,16 @@ export function useNotifications() {
           href: "/host-dashboard/co-hosting",
         });
       }
+      for (const a of boostActivity ?? []) {
+        out.push({
+          id: a.id,
+          kind: "host",
+          title: a.title,
+          body: a.body,
+          at: a.at,
+          href: a.href,
+        });
+      }
       if (pendingJoins && pendingJoins > 0) {
         out.push({
           id: `joins-${pendingJoins}`,
@@ -331,6 +364,7 @@ export function useNotifications() {
     attention,
     pendingJoins,
     shared,
+    boostActivity,
     hostId,
   ]);
 

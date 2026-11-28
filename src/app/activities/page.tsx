@@ -323,68 +323,67 @@ function JourneyHero({
       )
     : null;
 
+  // One compact band: the story and its numbers on the left, the next
+  // booking as a short horizontal card on the right (below on phones).
   return (
     <section className="relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-[#3B1772] via-[#1D1140] to-[#100E1C]">
-      <div className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full bg-[#A020F0]/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-28 left-10 h-64 w-64 rounded-full bg-[#F59E0B]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 -right-16 h-60 w-60 rounded-full bg-[#A020F0]/30 blur-3xl" />
 
-      <div className="relative grid gap-6 p-6 md:grid-cols-[minmax(0,1fr)_260px] md:p-9">
-        <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold tracking-wide text-[#E9D5FF] uppercase">
-            <LuSparkles className="h-3.5 w-3.5" /> My journey
+      <div className="relative flex flex-col gap-5 p-5 md:flex-row md:items-center md:gap-8 md:p-7">
+        <div className="min-w-0 flex-1">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide text-[#E9D5FF] uppercase">
+            <LuSparkles className="h-3 w-3" /> My journey
           </span>
-          <h1 className="font-outfit mt-3 text-[28px] leading-tight font-bold md:text-[36px]">
+          <h1 className="font-outfit mt-2 text-[24px] leading-tight font-bold md:text-[30px]">
             {firstName ? `${firstName}'s story` : "Your story"} on{" "}
-            <span className="text-[#D8B4FE]">MySlotMate</span>
+            <span className="text-[#D8B4FE]">Myslotmate</span>
           </h1>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-white/70 md:text-[15px]">
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-white/70">
             {memberSince ? (
               <>
-                It began in {formatIST(memberSince, "MMMM yyyy")}
-                {days ? ` — ${days} day${days === 1 ? "" : "s"} ago` : ""}.{" "}
+                Since {formatIST(memberSince, "MMMM yyyy")}
+                {days ? ` (${days} day${days === 1 ? "" : "s"})` : ""}.{" "}
               </>
             ) : null}
             {firstMoment ? (
               <>
-                Your first chapter was{" "}
+                First chapter:{" "}
                 <Link
                   href={`/experience/${firstMoment.event.slug}`}
                   className="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white"
                 >
                   {firstMoment.event.title}
-                </Link>{" "}
-                on {formatIST(firstMoment.at, "MMM d, yyyy")}.
+                </Link>
+                , {formatIST(firstMoment.at, "MMM d, yyyy")}.
               </>
             ) : (
               "Your first chapter is waiting. Book something that sounds like you."
             )}
           </p>
 
-          <div className="mt-5 grid max-w-xl grid-cols-4 gap-2">
+          <dl className="mt-4 flex w-full max-w-xl divide-x divide-white/10 rounded-2xl bg-white/[0.06] py-2.5 backdrop-blur">
             {stats.map(([value, label]) => (
-              <div
-                key={label}
-                className="rounded-2xl bg-white/[0.06] px-2 py-3 text-center backdrop-blur"
-              >
-                <p className="font-outfit text-xl font-bold md:text-2xl">
+              <div key={label} className="min-w-0 flex-1 px-2 text-center">
+                <dt className="sr-only">{label}</dt>
+                <dd className="font-outfit text-lg leading-none font-bold md:text-xl">
                   {value}
-                </p>
-                <p className="mt-0.5 text-[10px] leading-tight text-white/55 md:text-[11px]">
+                </dd>
+                <dd className="mt-1 truncate text-[10px] leading-tight text-white/55 md:text-[11px]">
                   {label}
-                </p>
+                </dd>
               </div>
             ))}
-          </div>
+          </dl>
         </div>
 
         {/* Next chapter */}
-        <div className="flex flex-col justify-center">
+        <div className="md:w-[300px] md:shrink-0">
           {next ? (
             <Link
               href={`/experience/${next.event.slug}`}
-              className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 p-3 transition hover:border-white/25 md:flex-col md:items-stretch"
+              className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-black/25 p-2.5 transition hover:border-white/25"
             >
-              <div className="aspect-[4/5] w-20 shrink-0 overflow-hidden rounded-xl md:w-full">
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl">
                 <EventCover
                   src={next.event.cover_image_url}
                   alt=""
@@ -395,10 +394,10 @@ function JourneyHero({
                 <p className="text-[10px] font-bold tracking-wider text-[#D8B4FE] uppercase">
                   Next chapter
                 </p>
-                <p className="font-outfit mt-1 line-clamp-2 text-[15px] leading-5 font-semibold">
+                <p className="font-outfit mt-0.5 line-clamp-2 text-sm leading-5 font-semibold">
                   {next.event.title}
                 </p>
-                <p className="mt-1 text-xs text-white/60">
+                <p className="mt-0.5 text-xs text-white/60">
                   {formatIST(
                     next.booking.occurrence_date,
                     "EEE, MMM d · h:mm a",
@@ -409,19 +408,19 @@ function JourneyHero({
           ) : (
             <Link
               href="/explore"
-              className="flex items-center gap-4 rounded-2xl border border-dashed border-white/15 bg-black/20 p-4 transition hover:border-white/30 md:flex-col md:text-center"
+              className="flex items-center gap-3 rounded-2xl border border-dashed border-white/15 bg-black/20 p-2.5 transition hover:border-white/30"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/assets/badges/first-step.webp"
                 alt=""
-                className="h-20 w-20 md:h-32 md:w-32"
+                className="h-16 w-16 shrink-0"
               />
               <div>
-                <p className="font-outfit text-[15px] font-semibold">
+                <p className="font-outfit text-sm font-semibold">
                   Write the next chapter
                 </p>
-                <p className="mt-1 text-xs text-white/55">
+                <p className="mt-0.5 text-xs text-white/55">
                   Find something to do this week →
                 </p>
               </div>

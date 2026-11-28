@@ -7,6 +7,8 @@
  */
 
 import { FiDownload, FiFileText } from "react-icons/fi";
+import { toast } from "sonner";
+import { downloadFeeDocument, type FeeDocumentDTO } from "~/lib/api";
 import { useIdToken } from "~/hooks/useIdToken";
 import {
   usePlanDocuments,
@@ -186,14 +188,23 @@ export default function BoostPlanResults({ boost }: { boost: PlanBoostDTO }) {
                   })}
                 </span>
                 {d.pdf_url ? (
-                  <a
-                    href={d.pdf_url}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void downloadFeeDocument({
+                        id: d.id,
+                        number: d.number,
+                      } as FeeDocumentDTO).catch(() =>
+                        toast.error(
+                          "Couldn’t download the invoice. Try again.",
+                        ),
+                      )
+                    }
                     className="shrink-0 text-[#D8B4FE] hover:underline"
+                    aria-label={`Download invoice ${d.number}`}
                   >
                     {rupees(d.amount_cents)}
-                  </a>
+                  </button>
                 ) : (
                   <span className="shrink-0 text-white">
                     {rupees(d.amount_cents)}

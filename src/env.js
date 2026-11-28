@@ -34,8 +34,8 @@ export const env = createEnv({
     // Boost with a paid ad budget for Premium hosts (PRD: Premium Hosts and
     // paid Boost marketing). Unset: on in development, off in production.
     NEXT_PUBLIC_ENABLE_BOOST_PLAN: z.enum(["true", "false"]).optional(),
-    // Run those screens on the in-browser stand-in (src/lib/boostPlanMock.ts)
-    // until the backend serves them. Unset: on in development only.
+    // "true" runs those screens on the in-browser stand-in
+    // (src/lib/boostPlanMock.ts) instead of the backend. Off unless set.
     NEXT_PUBLIC_BOOST_PLAN_MOCK: z.enum(["true", "false"]).optional(),
     // Google Places key for host event location search (src/lib/placeSearch.ts).
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string().optional(),
